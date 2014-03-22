@@ -22,13 +22,32 @@ mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;} //table rank
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);R z;}
 
+//allow a to be scalar
+#define OP(op) \
+    if(a->r) DO(n,z->p[i]=a->p[i] op w->p[i]) \
+    else DO(n,z->p[i]=*a->p op w->p[i]) \
+    R z;
+
 V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
 V2(plus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    DO(n,z->p[i]=a->p[i]+w->p[i]);R z;}
+    //DO(n,z->p[i]=a->p[i]+w->p[i]);R z;
+    OP(+)
+}
 V2(minus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    DO(n,z->p[i]=a->p[i]-w->p[i]);R z;}
+    //DO(n,z->p[i]=a->p[i]-w->p[i]);R z;
+    OP(-)
+}
 V2(times){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    DO(n,z->p[i]=a->p[i]*w->p[i]);R z;}
+    //DO(n,z->p[i]=a->p[i]*w->p[i]);R z;
+    OP(*)
+}
+V2(divide){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    OP(/)
+}
+V2(modulus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    A t=a;a=w;w=t; //swap args: w%a
+    OP(%)
+}
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
 V1(box){A z=ga(1,0,0);*z->p=(I)w;R z;}
@@ -48,10 +67,10 @@ nl(){P("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
-C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*' };
-A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times},
- (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0};
-I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1};
+C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '/',    '%' };
+A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus},
+ (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      0};
+I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2};
 I st[26];
 qp(a){R a>='a'&&a<='z';}
 qv(unsigned a){R a<'a';}
@@ -80,5 +99,5 @@ I*wd(C*s){I a,n=strlen(s),*e=ma(n+1);C c;
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
 
 main(){C s[99];
-    vid[6]=vid[8]=noun('0');vid[9]=noun('1');
+    vid[6]=vid[8]=noun('0');vid[9]=vid[10]=noun('1');vid[11]=noun('2');
     while(gets(s))pr(ex(wd(s)));}
