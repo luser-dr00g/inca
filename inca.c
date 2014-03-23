@@ -22,10 +22,15 @@ mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;} //table rank
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);R z;}
 
-//allow a to be scalar
+//allow a or w to be scalar
 #define OP(op) \
-    if(a->r) DO(n,z->p[i]=a->p[i] op w->p[i]) \
-    else DO(n,z->p[i]=*a->p op w->p[i]) \
+    if(a->r && w->r) \
+        DO(n,z->p[i]=a->p[i] op w->p[i]) \
+    else if(w->r) \
+        DO(n,z->p[i]=*a->p op w->p[i]) \
+    else if(a->r) \
+        { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=a->p[i] op *w->p) } \
+    else *z->p = *a->p op *w->p; \
     R z;
 
 V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
@@ -90,7 +95,7 @@ A ex(I*e){I a=*e,w=e[1];
         R (*vd[d])(a,w);
     }
     if (qp(a)) a=st[a-'a'];
-    R (A)a;  // perhaps here is the reason for p[2], so we copy 2 elements by return
+    R (A)a; 
 }
 
 noun(c){A z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R z;}
