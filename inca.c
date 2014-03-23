@@ -50,12 +50,17 @@ V2(modulus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     A t=a;a=w;w=t; //swap args: w%a
     OP(%)
 }
+V1(absolute){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    DO(n,z->p[i]=abs(w->p[i]));R z;
+}
 V2(and){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(&&)
 }
 V2(or){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(||)
 }
+V1(not){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    DO(n,z->p[i]=!w->p[i]);R z;}
 
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
@@ -76,10 +81,10 @@ nl(){P("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
-C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',    '&', '^' };
-A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus, and, or},
- (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      0,       0,   0};
-I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,       1,   0};
+C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',    '&', '^', '`' };
+A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus, and, or, 0},
+ (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,  not};
+I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,       1,   0,  0};
 I st[26];
 qp(a){R a>='a'&&a<='z';}
 qv(unsigned a){R a<'a';}
