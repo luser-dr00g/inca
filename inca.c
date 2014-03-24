@@ -81,10 +81,10 @@ nl(){P("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
-C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',     '&',  '^', '`', ' ', 0 };
-A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,  and, or,  0,   cat},
- (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,   not, 0};
-I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,        1,   0,   0,   0};
+C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',     '&',  '^', '`', 0 };
+A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,  and, or,  0},
+ (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,   not};
+I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,        1,   0,   0};
 I st[26];
 qp(a){R a>='a'&&a<='z';}
 qv(unsigned a){R a<'a';}
