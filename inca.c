@@ -114,13 +114,25 @@ EX:
         R (*vd[d])(a,w);
     }
     if (qp(a)) a=st[a-'a'];
+    if (w){ //!qv
+        A _a=a, _w=w;
+        if (qp(w)) w=st[w-'a'];
+        if (_a->r==0 && _w->r==0){
+            *_a->p*=10;
+            *_a->p+=*_w->p;
+            ++e;
+            w=e[1];
+            goto EX;
+        }
+    }
     R (A)a; 
 }
 
 noun(c){A z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R z;}
 verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)R i;R 0;}
 I*wd(C*s){I a,n=strlen(s),*e=ma(n+1);C c;
-    DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
+    DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
+    e[n]=0;R e;}
 
 main(){C s[99];
     vid[6]=vid[8]=noun('0');vid[9]=vid[10]=noun('1');vid[11]=noun('2');vid[12]=noun('1');vid[13]=noun('0');
