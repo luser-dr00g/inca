@@ -100,12 +100,27 @@ EX:
         R (*vm[m])(ex(e+1));
     }
     if (w&&qv(w)){I d=w;
-        if (w==' '){ //e:"a bc..." A=cat(a,b)  e:"Ac..."
+        if (w==' '){ //e:"a bc..." A=cat(a,b)
+            A _d,_w;
             w=e[2];
             if (qp(a)) a=st[a-'a'];
             if (qp(w)) w=st[w-'a'];
+            e+=2;                  //e:"Ac..."
+            d=e[1];
+            while (!qv(d)){
+                if (qp(d)) d=st[d-'a'];
+                _d=d;
+                if (_d->r==0){
+                    _w=w;
+                    *_w->p*=10;
+                    *_w->p+=*_d->p;
+                    ++e;
+                    d=e[1];
+                    continue;
+                }
+                break;
+            }
             a=cat((A)a,(A)w);
-            e+=2;
             w=e[1];
             goto EX;
         }
