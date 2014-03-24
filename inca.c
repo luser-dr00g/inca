@@ -81,15 +81,16 @@ nl(){P("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
-C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',    '&', '^', '`' };
-A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus, and, or, 0},
- (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,  not};
-I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,       1,   0,  0};
+C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',     '&',  '^', '`', ' ', 0 };
+A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,  and, or,  0,   cat},
+ (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,   not, 0};
+I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,        1,   0,   0,   0};
 I st[26];
 qp(a){R a>='a'&&a<='z';}
 qv(unsigned a){R a<'a';}
 
 A ex(I*e){I a=*e,w=e[1];
+EX:
     if(qp(a)&&w=='=')R st[a-'a']=ex(e+2);
     if (qv(a)){I m=a;
         if (vm[m]==0){
@@ -99,6 +100,15 @@ A ex(I*e){I a=*e,w=e[1];
         R (*vm[m])(ex(e+1));
     }
     if (w&&qv(w)){I d=w;
+        if (w==' '){ //e:"a bc..." A=cat(a,b)  e:"Ac..."
+            w=e[2];
+            if (qp(a)) a=st[a-'a'];
+            if (qp(w)) w=st[w-'a'];
+            a=cat((A)a,(A)w);
+            e+=2;
+            w=e[1];
+            goto EX;
+        }
         w=ex(e+2);
         if (qp(a)) a=st[a-'a'];
         R (*vd[d])(a,w);
