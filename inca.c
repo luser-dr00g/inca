@@ -21,6 +21,10 @@ I ma(I n){R malloc(n*sizeof(I));}
 mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;} //table rank
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);R z;}
+A cp(A w){
+    A z=ga(w->t,w->r,w->d);if(w->r)mv(z->p,w->p,tr(w->r,w->d));else *z->p=*w->p;
+    R z;
+}
 
 //allow a or w to be scalar
 #define OP(op) \
@@ -76,23 +80,36 @@ V1(shape){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
 V1(identity){R w;}
 V1(size){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
 
+A reduce(A w,I f){
+}
+
 pi(i){P("%d ",i);}
 nl(){P("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
+I st[26];
+qp(a){R a>='a'&&a<='z';}
+
+enum   {      PLUS=1,   FROM, IOTA, BOX, SHAPE,   CAT, UNBOX, MINUS, TIMES, DIVIDE, BAR,      AND, OR,  NOT, NV  };
 C vt[]={      '+',      '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',     '&',  '^', '`', 0 };
 A(*vd[])()={0,plus,     from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,  and, or,  0},
  (*vm[])()={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,   not};
 I vid[]={0,   0,        0,    0,    0,   0,       0,   0,     0,     1,     1,      2,        1,   0,   0};
-I st[26];
-qp(a){R a>='a'&&a<='z';}
-qv(unsigned a){R a<'a';}
+qv(unsigned a){R a<'a'&&a<NV;}
+
+enum   {       SLASH=1, DOT, NO  };
+C ot[]={       '/',     '.', 0};
+A(*od[])()={ 0, 0,      dot },
+ (*om[])()={ 0, reduce, 0 };
+qo(unsigned a){R a<'a'&&a>NV&&a<NV+NO;}
 
 A ex(I*e){I a=*e,w=e[1];
 EX:
     if(qp(a)&&w=='=')R st[a-'a']=ex(e+2);
     if (qv(a)){I m=a;
+        if (qo(w)){
+        }
         if (vm[m]==0){
             a=vid[m];
             R (*vd[m])(a,ex(e+1));
@@ -124,6 +141,8 @@ EX:
             w=e[1];
             goto EX;
         }
+        if (qo(e[2])){
+        }
         w=ex(e+2);
         if (qp(a)) a=st[a-'a'];
         R (*vd[d])(a,w);
@@ -144,7 +163,8 @@ EX:
 }
 
 noun(c){A z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R z;}
-verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)R i;R 0;}
+verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)R i;
+    for(i=0;ot[i];)if(ot[i++]==c)R i+NV;R 0;}
 I*wd(C*s){I a,n=strlen(s),*e=ma(n+1);C c;
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
     e[n]=0;R e;}
