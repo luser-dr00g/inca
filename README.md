@@ -8,28 +8,33 @@ new functions minus,times,unbox.
 identity element for monadic use of minus,times,cat.
 
 Implements monadic functions 
- + identity 
- { size 
- ~ iota 
- < box 
- # shape 
- > unbox 
- | absolute 
- ! not 
+
+     + identity 
+     { size 
+     ~ iota 
+     < box 
+     # shape 
+     > unbox 
+     | absolute 
+     ! not 
+
 dyadic functions 
- + plus 
- { from 
- < assign (not really a function, but an interpreter action) 
- # reshape 
- , cat 
- - minus 
- * times 
- % divide 
- | modulus 
- & and 
- ^ or 
+
+     + plus 
+     { from 
+     < assign (not really a function, but an interpreter action) 
+     # reshape 
+     , cat 
+     - minus 
+     * times 
+     % divide 
+     | modulus 
+     & and 
+     ^ or 
+
 monadic operator 
- / reduce 
+
+     / reduce 
 
 over multidigit numbers and variables '_', '`', and"a-z" 
 '_' is set to the result of the previous line. 

@@ -34,6 +34,10 @@ V1(unbox){R (A)*w->p;}
 #define OP(op,func) \
     if(a->t && w->t) \
         z = (I)box(func(unbox(a),unbox(w))); \
+    else if(a->t) \
+        z = (I)func(unbox(a),w); \
+    else if(w->t) \
+        z = (I)func(a,unbox(w)); \
     else if(a->r && w->r) \
         DO(n,z->p[i]=a->p[i] op w->p[i]) \
     else if(w->r) \
