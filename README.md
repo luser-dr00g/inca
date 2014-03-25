@@ -36,7 +36,7 @@ monadic operator
 
      / reduce 
 
-over multidigit numbers and variables `'_'`, `'`'`, and `"a-z"` 
+over multidigit numbers and variables `'_'`, `'\`'`, and `"a-z"` 
 `'_'` is set to the result of the previous line. 
 
 The interpreter also implements a non-greedy "cat" for 
