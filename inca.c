@@ -27,9 +27,14 @@ A cp(A w){I n=tr(w->r,w->d);
     R z;
 }
 
+V1(box){A z=ga(1,0,0);*z->p=(I)w;R z;}
+V1(unbox){R (A)*w->p;}
+
 //allow a or w to be scalar
-#define OP(op) \
-    if(a->r && w->r) \
+#define OP(op,func) \
+    if(a->t && w->t) \
+        z = (I)box(func(unbox(a),unbox(w))); \
+    else if(a->r && w->r) \
         DO(n,z->p[i]=a->p[i] op w->p[i]) \
     else if(w->r) \
         DO(n,z->p[i]=*a->p op w->p[i]) \
@@ -42,37 +47,35 @@ V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
 V2(plus){
     //printf("plus %d %d\n", *a->p, *w->p);
     I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    OP(+)
+    OP(+,plus)
 }
 V2(minus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    OP(-)
+    OP(-,minus)
 }
 V2(times){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    OP(*)
+    OP(*,times)
 }
 V2(divide){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    OP(/)
+    OP(/,divide)
 }
 V2(modulus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     A t=a;a=w;w=t; //swap args: w%a
-    OP(%)
+    OP(%,modulus)
 }
 V1(absolute){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     DO(n,z->p[i]=abs(w->p[i]));R z;
 }
 V2(and){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    OP(&&)
+    OP(&&,and)
 }
 V2(or){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    OP(||)
+    OP(||,or)
 }
 V1(not){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     DO(n,z->p[i]=!w->p[i]);R z;}
 
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
-V1(box){A z=ga(1,0,0);*z->p=(I)w;R z;}
-V1(unbox){R (A)*w->p;}
 V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
     A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);R z;}
 V2(find){}
