@@ -91,18 +91,18 @@ nl(){P("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
-I st[26];
-qp(a){R a>='a'&&a<='z';}
+I st[28];
+qp(a){R a>='_'&&a<='z';}
 
-enum   {         PLUS=1, FROM, IOTA, BOX, SHAPE,   CAT, UNBOX, MINUS, TIMES, DIVIDE, BAR,      AND, OR,  NOT, SLASH,   DOT, NV  };
-C vt[]={         '+',    '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',     '&',  '^', '`', '/',     '.', 0 };
+enum   {         PLUS=1, FROM, IOTA, BOX, SHAPE,   CAT, UNBOX, MINUS, TIMES, DIVIDE, BAR,      AND, OR,  NOT, SLASH,   DOT, NV};
+C vt[]={         '+',    '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',     '&',  '^', '!', '/',     '.', 0};
 A(*vd[])(A,A)={0,plus,   from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,  and, or,  0,    0,      0,   0},
  (*vm[])(A)={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute, 0,   0,   not,  0,      0,   0};
 A(*od[])(A,I,I,A)={0,0,  0,    0,    0,   0,       0,   0,     0,     0,     0,      0,        0,   0,   0,    0,      dot, 0},
  (*om[])(A,I)={0, 0,     0,    0,    0,   0,       0,   0,     0,     0,     0,      0,        0,   0,   0,    reduce, 0,   0};
-I vid[]={0,       '0',   0,    0,    0,   0,       0,   0,     0,     '1',   1,      2,        '1', '0',  0,    0,      0,   0};
-qv(unsigned a){R a<'a'&&a<NV&&(vd[a]||vm[a]);}
-qo(unsigned a){R a<'a'&&a<NV&&(od[a]||om[a]);}
+I vid[]={0,       '0',   0,    0,    0,   0,       '0', 0,     '0',   '1',   '1',    0,        '1', '0', 0,    0,      0,   0};
+qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
+qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
 
 A reduce(A w,I f){
     I r=w->r,*d=w->d,n=tr(r,d);
@@ -122,12 +122,12 @@ A dot(A a,I f,I g,A w){
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
 EX:
-    if(qp(a)&&w==BOX)R st[a-'a']=ex(e+2);
+    if(qp(a)&&w==BOX)R st[a-'_']=ex(e+2); //use '<' for assignment
     if (qv(a)){I m=a;
         if (qo(w)){
             R (*om[w])(ex(e+2),a);
         }
-        if (vm[m]==0){
+        if (vm[m]==0&&vid[m]){
             a=noun(vid[m]);
             R (*vd[m])(a,ex(e+1));
         }
@@ -140,20 +140,20 @@ EX:
                 R (*od[e[2]])(a,w,e[3],ex(e+4));
             }
             w=ex(e+2);
-            if (qp(a)) a=st[a-'a'];
+            if (qp(a)) a=st[a-'_'];
             R (*vd[d])(a,w);
         }
-        if (qp(a)) a=st[a-'a'];
+        if (qp(a)) a=st[a-'_'];
 
         if (w==' '){ //e:"a bc..." A=cat(a,b)
             A _d,_w;
             w=e[2];
             if (w){
-                if (qp(w)) w=cp(st[w-'a']);
+                if (qp(w)) w=cp(st[w-'_']);
                 e+=2;                  //e:"Ac..."
                 d=e[1];
                 while (d&&!qv(d)&&d!=' '){
-                    if (qp(d)) cp(d=st[d-'a']);
+                    if (qp(d)) cp(d=st[d-'_']);
                     _d=d;
                     if (_d->r==0){
                         _w=w;
@@ -171,7 +171,7 @@ EX:
             }
         } else {
             A _a=a, _w=w;
-            if (qp(w)) cp(w=st[w-'a']);
+            if (qp(w)) cp(w=st[w-'_']);
             if (_a->r==0 && _w->r==0){
                 *_w->p+=*_a->p*10;
                 a=w;
@@ -181,6 +181,7 @@ EX:
             }
         }
     }
+    if (qp(a)) a=st[a-'_'];
     R (A)a; 
 }
 
@@ -192,4 +193,4 @@ I*wd(C*s){I a,n=strlen(s),*e=ma(n+1);C c;
 
 main(){C s[99];
     //vid[1]=vid[6]=vid[8]=noun('0');vid[9]=vid[10]=noun('1');vid[11]=noun('2');vid[12]=noun('1');vid[13]=noun('0');
-    while(gets(s))pr(ex(wd(s)));}
+    while(gets(s))pr(st[0]=ex(wd(s)));}
