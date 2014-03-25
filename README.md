@@ -36,10 +36,10 @@ monadic operator
 
      / reduce 
 
-over multidigit numbers and variables '_', '`', and"a-z" 
-'_' is set to the result of the previous line. 
+over multidigit numbers and variables `'_'`, `'`'`, and `"a-z"` 
+`'_'` is set to the result of the previous line. 
 
 The interpreter also implements a non-greedy "cat" for 
-number vectors separated by spaces. Hence 1 2 3+~3 => 1 3 5 
-where ~ is the zero-based iota. 
+number vectors separated by spaces. Hence `1 2 3+~3` => `1 3 5`
+where `~` is the zero-based iota. 
 
