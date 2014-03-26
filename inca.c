@@ -118,7 +118,9 @@ A reduce(A w,I f){
     //printf("n = %d, z = %d, *w->p = %d\n", n, *z->p, *w->p); fflush(0);
     if (w->r){
         A ind = noun('0');;
-        DO(n,*ind->p=i;z=(*vd[f])(z,from(ind,w));/*printf("z = %d\n", *z->p);*/);
+        *ind->p = n-1;
+        z = from(ind,w);
+        DO(n-1,*ind->p=n-2-i;z=(*vd[f])(from(ind,w),z);/*printf("z = %d\n", *z->p);*/);
     } else {
         z=(*vd[f])(z,w);
     }
