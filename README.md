@@ -7,6 +7,11 @@ lightly extended to allow propagating specifications "a+2+a<3",
 new functions minus,times,unbox. multi-digit integers.
 identity element for monadic use of minus,times,cat.
 
+The file inca.c compiles for me with cygwin32 gcc.
+The code does not consistently adhere to any particular
+version of the C standard, and may fail to compile with -pedantic,
+or any other options to enforce standards-conformance.
+
 Implements monadic functions 
 
      + identity 
