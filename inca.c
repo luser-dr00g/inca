@@ -89,8 +89,18 @@ V2(reshape){I r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
 V1(shape){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
 V1(identity){R w;}
 V1(size){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
-V2(compress){}
-V2(expand){}
+V2(compress){I an=tr(a->r,a->d),n=0,j=0;
+    DO(an,if(a->p[i])++n);
+    A z=ga(0,1,&n);
+    DO(an,if(a->p[i])z->p[j++]=w->p[i]);
+    R z;
+}
+V2(expand){
+    I an=tr(a->r,a->d);
+    A z=ga(0,a->r,a->d);
+    DO(an,z->p[i]=a->p[i]?w->p[i]:0);
+    R z;
+}
 
 V2(find){I wn=tr(w->r,w->d);A z=0; I i;
     if(a->r==0){
@@ -103,7 +113,7 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
         }
     }else{
         I an=tr(a->r,a->d);
-        A ind=noun('0');
+        A ind=(A)noun('0');
         z=ga(0,a->r,a->d);
         for(i=0;i<an;i++){
             *ind->p=i;
