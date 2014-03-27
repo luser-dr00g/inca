@@ -106,6 +106,18 @@ V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
 V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
     A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);R z;}
+V2(rowcat){A z;I an;
+    switch(w->r){
+    case 0:z=ga(0,1,(I[]){1});*z->p=(I)w;w=z;
+    case 1:z=ga(0,2,(I[]){2,w->d[0]});
+           mv(z->p,a->p,an=tr(a->r,a->d));
+           mv(z->p+an,w->p,tr(w->r,w->d)); break;
+    default:z=ga(0,w->r,(I[]){w->d[0]+1,w->d[1],w->d[2]});
+            mv(z->p,a->p,an=tr(a->r,a->d));
+            mv(z->p+an,w->p,tr(w->r,w->d)); break;
+    }
+    R z;
+}
 V2(reshape){I r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
     A z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n); //wn=min(wn,n) 
     if(n-=wn)mv(z->p+wn,z->p,n);R z;}
@@ -169,26 +181,33 @@ A dot(A a,I f,I g,A w);
 
 pi(i){P("%d ",i);}
 nl(){P("\n");}
-pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
-    if(w->t)DO(n,P("< ");pr((A)w->p[i]))else DO(n,pi(w->p[i]));nl();}
+pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
+    DO(r,pi(d[i]));nl();
+    if(w->t)DO(n,P("< ");pr((A)w->p[i]))else
+    switch(r){
+    case 1: DO(n,pi(w->p[i]));nl(); break;
+    case 2: DO(d[0], j=i;DO(d[1],pi(w->p[j*d[1]+i]));nl();); break;
+    case 3: DO(d[0], k=i;DO(d[1], j=i;DO(d[2],pi(w->p[(k*d[1]+j)*d[2] +i]));nl();)nl();nl();); break;
+    }
+}
 
 I st[28];
 qp(a){R a>='_'&&a<='z';}
 
 enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
-                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, NV};
+                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, NV};
 C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*',  '%',    '|',
-                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   0};
+                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   ';',  0};
 A(*vd[])(A,A)={0,plus,   from,   find,  0,    reshape, cat,   0,    minus, power, divide, modulus,
-                 and, or,     0,    compress, times, expand,  0,         0,   equal, 0},
+                 and, or,     0,    compress, times, expand,  0,         0,   equal, rowcat, 0},
  (*vm[])(A)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
-                 0,   0,      not,  0,        0,   0,         transpose, reverse, 0, 0};
+                 0,   0,      not,  0,        0,   0,         transpose, reverse, 0, 0,    0};
 A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    0,        dot, 0,         0,         0,   0,     0},
+                 0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0},
  (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0};
-I vid[]={0,       '0',   0,      0,     0,    0,       '0',   0,    '0',   '1',   '1',    0,
-                 '1', '0',    0,    0,        0,   0,         0,         0,   0,     0};
+                 0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0,    0};
+I vid[]={0,       '0',   0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
+                 '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
 qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
 qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
 
@@ -208,10 +227,11 @@ A reduce(A w,I f){
     R z;
 }
 A dot(A a,I f,I g,A w){
+    R reduce((*vd[g])(a,transpose(w)),f);
 }
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
-    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");}
+    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
     if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
     if (qv(a)){I m=a;
@@ -283,5 +303,4 @@ I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
     e[n]=0;R e;}
 
 main(){C s[99];
-    //vid[1]=vid[6]=vid[8]=noun('0');vid[9]=vid[10]=noun('1');vid[11]=noun('2');vid[12]=noun('1');vid[13]=noun('0');
-    while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}
+    while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}  // st['_'-'_']
