@@ -185,6 +185,7 @@ pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
     DO(r,pi(d[i]));nl();
     if(w->t)DO(n,P("< ");pr((A)w->p[i]))else
     switch(r){
+    case 0: pi(*w->p);nl();break;
     case 1: DO(n,pi(w->p[i]));nl(); break;
     case 2: DO(d[0], j=i;DO(d[1],pi(w->p[j*d[1]+i]));nl();); break;
     case 3: DO(d[0], k=i;DO(d[1], j=i;DO(d[2],pi(w->p[(k*d[1]+j)*d[2] +i]));nl();)nl();nl();); break;
@@ -231,7 +232,8 @@ A dot(A a,I f,I g,A w){
 }
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
-    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+    //if (a==0){A z=ga(0,0,0);*z->p=0;R z;}
+    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
     if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
     if (qv(a)){I m=a;
@@ -293,6 +295,7 @@ EX:
         }
     }
     if (qp(a)) a=st[a-'_'];
+    if (a==0)R noun('0');
     R (A)a; 
 }
 
