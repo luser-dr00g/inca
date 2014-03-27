@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -267,7 +268,7 @@ EX:
         }
         if (qp(a)) a=st[a-'_'];
 
-        if (w==' '){ //e:"a bc..." A=cat(a,b)
+        if (w==' '){ //e:"a bc..." A=cat(a,b) concatenate space-delimited integer vector
             A _d,_w;
             w=e[2];
             if (w){
@@ -291,8 +292,8 @@ EX:
                 d=w=e[1];
                 goto EX;
             }
-        } else {
-            A _a=(A)a, _w=(A)w;
+        } else {  // not verb, not a space
+            A _a=(A)a, _w=(A)w;  // accumulate integer
             if (qp(w)) cp((A)(w=st[w-'_']));
             if (_a->r==0 && _w->r==0){
                 *_w->p+=*_a->p*10;
@@ -315,4 +316,5 @@ I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
     e[n]=0;R e;}
 
 main(){C s[999];
+    printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
     while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}  // st['_'-'_']
