@@ -123,6 +123,19 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
     }
     R z;
 }
+V1(transpose){I r=w->r,d[3],t;A z;
+    DO(r,d[i]=w->d[i]);
+    //printf("r=%d,d[0]=%d,d[1]=%d\n",r,d[0],d[1]);
+    if(r==1){r=2;d[1]=1;}              //vector->column matrix
+    t=d[0]; d[0]=d[1]; d[1]=t;
+    //printf("r=%d,d[0]=%d,d[1]=%d\n",r,d[0],d[1]);
+    z=ga(0,w->r,d);
+    int i,j;
+    for(i=0;i<d[1];i++)
+        for(j=0;j<d[0];j++)
+            z->p[j*d[0]+i]=w->p[i*d[0]+j];
+    R z;
+}
 
 A reduce(A w,I f);
 A dot(A a,I f,I g,A w);
@@ -136,19 +149,19 @@ I st[28];
 qp(a){R a>='_'&&a<='z';}
 
 enum   {         PLUS=1, FROM, IOTA, BOX, SHAPE,   CAT, UNBOX, MINUS, TIMES, DIVIDE, BAR,
-                 AND, OR,  NOT, SLASH,     DOT, BACKSLASH, NV};
+                 AND, OR,  NOT, SLASH,     DOT, BACKSLASH, QUOTE,     NV};
 C vt[]={         '+',    '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',
-                 '&', '^', '!', '/',       '.', '\\',      0};
+                 '&', '^', '!', '/',       '.', '\\',      '\'',      0};
 A(*vd[])(A,A)={0,plus,   from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,
-                 and, or,  0,    compress, 0,   expand,    0},
+                 and, or,  0,    compress, 0,   expand,    0,         0},
  (*vm[])(A)={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute,
-                 0,   0,   not,  0,        0,   0,         0};
+                 0,   0,   not,  0,        0,   0,         transpose, 0};
 A(*od[])(A,I,I,A)={0,0,  0,    0,    0,   0,       0,   0,     0,     0,     0,      0,
-                 0,   0,   0,    0,        dot, 0,         0},
+                 0,   0,   0,    0,        dot, 0,         0,         0},
  (*om[])(A,I)={0, 0,     0,    0,    0,   0,       0,   0,     0,     0,     0,      0,
-                 0,   0,   0,    reduce,   0,   0,         0};
+                 0,   0,   0,    reduce,   0,   0,         0,         0};
 I vid[]={0,       '0',   0,    0,    0,   0,       '0', 0,     '0',   '1',   '1',    0,
-                 '1', '0', 0,    0,        0,   0,         0};
+                 '1', '0', 0,    0,        0,   0,         0,         0};
 qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
 qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
 
@@ -243,4 +256,4 @@ I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
 
 main(){C s[99];
     //vid[1]=vid[6]=vid[8]=noun('0');vid[9]=vid[10]=noun('1');vid[11]=noun('2');vid[12]=noun('1');vid[13]=noun('0');
-    while(gets(s))pr((A)(st[0]=(I)ex(wd(s))));}
+    while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}
