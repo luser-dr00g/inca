@@ -39,7 +39,11 @@ dyadic functions
 
 monadic operator 
 
-     / reduce 
+     / reduce  f/X  => x0 f (x1 f (x2 f ( ... xn-2 f xn-1)))
+
+dyadic operator
+
+     . matrix product Af.gW => f/Ag'W
 
 over multidigit numbers and variables
      '_'(underscore), '`'(backtick), and a-z 
@@ -52,3 +56,5 @@ where `~` is the zero-based iota.
 If the length of the command string exceeds 98 characters,
 the behavior is undefined.
 
+If array operands have incompatible sizes, the behavior
+is undefined.
