@@ -51,7 +51,9 @@ over multidigit numbers and variables
 
 The interpreter also implements a non-greedy "cat" for 
 number vectors separated by spaces. Hence `1 2 3+~3` => `1 3 5`
-where `~` is the zero-based iota. 
+where `~` is the zero-based iota. Spaces must only be used between
+numbers. You may not pad operators with extra space or it will be
+misinterpreted.
 
 If the length of the command string exceeds 98 characters,
 the behavior is undefined.
