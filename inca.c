@@ -40,12 +40,12 @@ V1(unbox){R (A)*w->p;}
     else if(w->t) \
         z = (A)func(a,unbox(w)); \
     else if(a->r && w->r) \
-        DO(n,z->p[i]=a->p[i] op w->p[i]) \
+        DO(n,z->p[i]=(a->p[i]) op (w->p[i])) \
     else if(w->r) \
-        DO(n,z->p[i]=*a->p op w->p[i]) \
+        DO(n,z->p[i]=(*a->p) op (w->p[i])) \
     else if(a->r) \
-        { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=a->p[i] op *w->p) } \
-    else *z->p = *a->p op *w->p; \
+        { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
+    else *z->p = (*a->p) op (*w->p); \
     R z;
 
 #define OPF(op,func) \
@@ -102,7 +102,7 @@ V2(equal){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(=,equal)
 }
 
-V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
+V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
 V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
     A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);R z;}
@@ -161,7 +161,7 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
 V1(transpose){I r=w->r,d[3],t;A z;
     if(r==0)R w;
     DO(r,d[i]=w->d[i]);
-    if(r==1){r=2;d[1]=1;}              //vector->row matrix
+    if(r==1){r=2;d[1]=d[0];d[0]=1;}              //vector->row matrix
     t=d[0]; d[0]=d[1]; d[1]=t;
     //printf("r=%d,d[0]=%d,d[1]=%d\n",r,d[0],d[1]);
     z=ga(0,r,d);
@@ -207,20 +207,24 @@ A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,   
                  0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0},
  (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
                  0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0,    0};
-I vid[]={0,       '0',   0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
+I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
                  '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
 qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
 qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
 
 A reduce(A w,I f){
     I r=w->r,*d=w->d,n=tr(r,d);
-    //printf("reduce: %u %u\n",w,f); pr(w);
+    //printf("reduce(%c): %u %u\n",vt[f-1],w,f); pr(w);
     A z=(A)noun(vid[f]);
     //printf("n = %d, z = %d, *w->p = %d\n", n, *z->p, *w->p); fflush(0);
     if (w->r){
         A ind = (A)noun('0');;
         *ind->p = n-1;
+        //printf("*ind->p=%d\n",*ind->p);
         z = from(ind,w);
+        //printf("z=%d,*z->p=%d\n",z,*z->p);
+        //printf("w->p[n-1]=%d\n",w->p[n-1]);
+        //z = w->p[n-1];
         DO(n-1,*ind->p=n-2-i;z=(*vd[f])(from(ind,w),z);/*printf("z = %d\n", *z->p);*/);
     } else {
         z=(*vd[f])(z,w);
@@ -229,11 +233,11 @@ A reduce(A w,I f){
 }
 A dot(A a,I f,I g,A w){
     R reduce((*vd[g])(a,transpose(w)),f);
+    //R reduce((*vd[g])(a,w),f);
 }
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
-    //if (a==0){A z=ga(0,0,0);*z->p=0;R z;}
-    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
     if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
     if (qv(a)){I m=a;
@@ -295,7 +299,7 @@ EX:
         }
     }
     if (qp(a)) a=st[a-'_'];
-    if (a==0)R noun('0');
+    if (a==0)R (A)noun('0');
     R (A)a; 
 }
 
