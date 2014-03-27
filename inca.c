@@ -240,6 +240,7 @@ A ex(I*e){I a=*e,w=e[1]; I d=w;
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
     if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
+
     if (qv(a)){I m=a;
         if (qo(w)){
             R (*om[w])(ex(e+2),a);
@@ -250,13 +251,17 @@ EX:
         }
         R (*vm[m])(ex(e+1));
     }
+
     if (w){
         if (qv(w)){
 
             if (qo(e[2])){
-                R (*od[e[2]])((A)a,w,e[3],(A)ex(e+4));
+                w=(I)ex(e+4);
+                if (qp(a)) a=st[a-'_'];
+                R (*od[e[2]])((A)a,d,e[3],(A)w);
             }
             w=(I)ex(e+2);
+            //printf("lookup a\n");
             if (qp(a)) a=st[a-'_'];
             R (*vd[d])((A)a,(A)w);
         }
