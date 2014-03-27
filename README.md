@@ -55,7 +55,7 @@ where `~` is the zero-based iota. Spaces must only be used between
 numbers. You may not pad operators with extra space or it will be
 misinterpreted.
 
-If the length of the command string exceeds 98 characters,
+If the length of the command string exceeds 998 characters,
 the behavior is undefined.
 
 If array operands have incompatible sizes, the behavior

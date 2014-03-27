@@ -18,11 +18,11 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 #define V2(f) A f(A a,A w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 
-I ma(I n){R (I)malloc(n*sizeof(I));}
-mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
+I ma(I n){R (I)malloc(n*sizeof(I));} //malloc an array
+mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;} //table rank
-A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);R z;}
-A cp(A w){I n=tr(w->r,w->d);
+A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);R z;} //construct(malloc) array with dims
+A cp(A w){I n=tr(w->r,w->d); //copy an array structure and contents
     A z=(A)ma(5+ (n?n:1));z->t=w->t;z->r=0;*z->p=*w->p;
     DO(n,z->p[i]=w->p[i]);
     R z;
@@ -309,5 +309,5 @@ I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
     e[n]=0;R e;}
 
-main(){C s[99];
+main(){C s[999];
     while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}  // st['_'-'_']
