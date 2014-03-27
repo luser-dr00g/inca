@@ -98,6 +98,9 @@ V2(or){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
 }
 V1(not){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     DO(n,z->p[i]=!w->p[i]);R z;}
+V2(equal){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    OP(=,equal)
+}
 
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
@@ -173,19 +176,19 @@ I st[28];
 qp(a){R a>='_'&&a<='z';}
 
 enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
-                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  NV};
+                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, NV};
 C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*',  '%',    '|',
-                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', 0};
+                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   0};
 A(*vd[])(A,A)={0,plus,   from,   find,  0,    reshape, cat,   0,    minus, power, divide, modulus,
-                 and, or,     0,    compress, times, expand,  0,         0,   0},
+                 and, or,     0,    compress, times, expand,  0,         0,   equal, 0},
  (*vm[])(A)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
-                 0,   0,      not,  0,        0,   0,         transpose, reverse, 0};
+                 0,   0,      not,  0,        0,   0,         transpose, reverse, 0, 0};
 A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    0,        dot, 0,         0,         0,   0},
+                 0,   0,      0,    0,        dot, 0,         0,         0,   0,     0},
  (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    reduce,   0,   0,         0,         0,   0};
+                 0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0};
 I vid[]={0,       '0',   0,      0,     0,    0,       '0',   0,    '0',   '1',   '1',    0,
-                 '1', '0',    0,    0,        0,   0,         0,         0,   0};
+                 '1', '0',    0,    0,        0,   0,         0,         0,   0,     0};
 qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
 qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
 
@@ -208,6 +211,7 @@ A dot(A a,I f,I g,A w){
 }
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
+    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");}
 EX:
     if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
     if (qv(a)){I m=a;
