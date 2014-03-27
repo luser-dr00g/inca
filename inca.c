@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +48,22 @@ V1(unbox){R (A)*w->p;}
     else *z->p = *a->p op *w->p; \
     R z;
 
+#define OPF(op,func) \
+    if(a->t && w->t) \
+        z = (A)box(func(unbox(a),unbox(w))); \
+    else if(a->t) \
+        z = (A)func(unbox(a),w); \
+    else if(w->t) \
+        z = (A)func(a,unbox(w)); \
+    else if(a->r && w->r) \
+        DO(n,z->p[i]=op(a->p[i], w->p[i])) \
+    else if(w->r) \
+        DO(n,z->p[i]=op(*a->p, w->p[i])) \
+    else if(a->r) \
+        { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=op(a->p[i], *w->p)) } \
+    else *z->p =op( *a->p, *w->p); \
+    R z;
+
 V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
 
 V2(plus){
@@ -59,6 +76,9 @@ V2(minus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
 }
 V2(times){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(*,times)
+}
+V2(power){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    OPF(pow,power)
 }
 V2(divide){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(/,divide)
@@ -124,16 +144,20 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
     R z;
 }
 V1(transpose){I r=w->r,d[3],t;A z;
+    if(r==0)R w;
     DO(r,d[i]=w->d[i]);
-    //printf("r=%d,d[0]=%d,d[1]=%d\n",r,d[0],d[1]);
-    if(r==1){r=2;d[1]=1;}              //vector->column matrix
+    if(r==1){r=2;d[1]=1;}              //vector->row matrix
     t=d[0]; d[0]=d[1]; d[1]=t;
     //printf("r=%d,d[0]=%d,d[1]=%d\n",r,d[0],d[1]);
-    z=ga(0,w->r,d);
+    z=ga(0,r,d);
     int i,j;
-    for(i=0;i<d[1];i++)
-        for(j=0;j<d[0];j++)
-            z->p[j*d[0]+i]=w->p[i*d[0]+j];
+    for(i=0;i<d[0];i++)
+        for(j=0;j<d[1];j++)
+            z->p[i*d[1]+j]=w->p[j*d[0]+i];
+    R z;
+}
+V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
+    DO(n,z->p[i]=w->p[n-1-i]);
     R z;
 }
 
@@ -148,20 +172,20 @@ pr(A w){I r=w->r,*d=w->d,n=tr(r,d); DO(r,pi(d[i]));nl();
 I st[28];
 qp(a){R a>='_'&&a<='z';}
 
-enum   {         PLUS=1, FROM, IOTA, BOX, SHAPE,   CAT, UNBOX, MINUS, TIMES, DIVIDE, BAR,
-                 AND, OR,  NOT, SLASH,     DOT, BACKSLASH, QUOTE,     NV};
-C vt[]={         '+',    '{',  '~', '<', '#',      ',', '>',    '-',   '*',  '%',    '|',
-                 '&', '^', '!', '/',       '.', '\\',      '\'',      0};
-A(*vd[])(A,A)={0,plus,   from, find, 0,   reshape, cat, 0,     minus, times, divide, modulus,
-                 and, or,  0,    compress, 0,   expand,    0,         0},
- (*vm[])(A)={0,identity, size, iota, box, shape,   0,   unbox, 0,     0,     0,      absolute,
-                 0,   0,   not,  0,        0,   0,         transpose, 0};
-A(*od[])(A,I,I,A)={0,0,  0,    0,    0,   0,       0,   0,     0,     0,     0,      0,
-                 0,   0,   0,    0,        dot, 0,         0,         0},
- (*om[])(A,I)={0, 0,     0,    0,    0,   0,       0,   0,     0,     0,     0,      0,
-                 0,   0,   0,    reduce,   0,   0,         0,         0};
-I vid[]={0,       '0',   0,    0,    0,   0,       '0', 0,     '0',   '1',   '1',    0,
-                 '1', '0', 0,    0,        0,   0,         0,         0};
+enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
+                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  NV};
+C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*',  '%',    '|',
+                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', 0};
+A(*vd[])(A,A)={0,plus,   from,   find,  0,    reshape, cat,   0,    minus, power, divide, modulus,
+                 and, or,     0,    compress, times, expand,  0,         0,   0},
+ (*vm[])(A)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
+                 0,   0,      not,  0,        0,   0,         transpose, reverse, 0};
+A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
+                 0,   0,      0,    0,        dot, 0,         0,         0,   0},
+ (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
+                 0,   0,      0,    reduce,   0,   0,         0,         0,   0};
+I vid[]={0,       '0',   0,      0,     0,    0,       '0',   0,    '0',   '1',   '1',    0,
+                 '1', '0',    0,    0,        0,   0,         0,         0,   0};
 qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
 qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
 
@@ -185,7 +209,7 @@ A dot(A a,I f,I g,A w){
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
 EX:
-    if(qp(a)&&w==BOX)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
+    if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
     if (qv(a)){I m=a;
         if (qo(w)){
             R (*om[w])(ex(e+2),a);
