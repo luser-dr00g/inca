@@ -18,11 +18,11 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 
 I ma(I n){return (I)malloc(n*sizeof(I));} //malloc an array
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
-I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank (total # of elements in array)
+I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank (total # of elements in array) >= 1
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;} //construct(malloc) array with dims
-A cp(A w){I n=tr(w->r,w->d); //copy an array structure and contents
-    A z=(A)ma(5+ (n?n:1));z->t=w->t;z->r=0;*z->p=*w->p;
-    DO(n,z->p[i]=w->p[i]);
+A cp(A w){I n=tr(w->r,w->d); //dup an array structure and contents
+    A z=ga(w->t,w->r,w->d);
+    mv(z->p,w->p,n);
     return z;
 }
 
@@ -234,29 +234,31 @@ I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2', 
 I qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
 I qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
-/* perform reduction over array w using function f */
+/* operators: monadic operator / (reduce) applies to a function on its left
+              dyadic operator . (dot) applies to functions on left and right */
+
+/* perform right-to-left reduction over array w using function f */
 A reduce(A w,I f){
     I r=w->r,*d=w->d,n=tr(r,d);
     //printf("reduce(%c): %u %u\n",vt[f-1],w,f); pr(w);
-    A z=(A)noun(vid[f]);
+    A z=(A)noun(vid[f]);   /* default left arg for w=scalar */
     //printf("n = %d, z = %d, *w->p = %d\n", n, *z->p, *w->p); fflush(0);
-    if (w->r){
-        A ind = (A)noun('0');;
-        *ind->p = n-1;
+    if (w->r){             /* w!=scalar */
+        A ind = (A)noun('0'); /* ind is a scalar for use with from() */
+        *ind->p = n-1;        /* set payload of ind to last element of w */
         //printf("*ind->p=%d\n",*ind->p);
-        z = from(ind,w);
+        z = from(ind,w);      /* get last element of w */
         //printf("z=%d,*z->p=%d\n",z,*z->p);
         //printf("w->p[n-1]=%d\n",w->p[n-1]);
-        //z = w->p[n-1];
+        //z = w->p[n-1];       /* loop right->left through w. f(w[0],f(...f(w[n-3],f(w[n-2],w[n-1])))) */
         DO(n-1,*ind->p=n-2-i;z=(*vd[f])(from(ind,w),z);/*printf("z = %d\n", *z->p);*/);
     } else {
-        z=(*vd[f])(z,w);
+        z=(*vd[f])(z,w);  /* ie. return f(vid[f],w) if w is a scalar */
     }
     return z;
 }
 /* perform general matrix multiplication Af.gW ::== f/Ag'W
-   f-reduce rows of A g-function transpose of W
- */
+   f-reduce rows of (A {g-function} transpose-of-W) */
 A dot(A a,I f,I g,A w){
     return reduce((*vd[g])(a,transpose(w)),f);
     //return reduce((*vd[g])(a,w),f);
@@ -298,37 +300,39 @@ EX:
 
         if (w==' '){ //e:"a bc..." A=cat(a,b) concatenate space-delimited integer vector
             A _d,_w;
-            w=e[2];
-            if (w){
-                if (qp(w)) w=(I)cp((A)st[w-'_']);
-                e+=2;                  //e:"Ac..."
-                d=e[1];
-                while (d&&!qv(d)&&d!=' '){  // accumulate integer
-                    if (qp(d)) cp((A)(d=st[d-'_']));
-                    _d=(A)d;
-                    if (_d->r==0){
-                        _w=(A)w;
-                        *_d->p+=*_w->p*10;
-                        w=d;
-                        ++e;
-                        d=e[1];
-                        continue;
+            w=e[2];  /* read past the space */
+            if (w){  /* something there? */
+                if (qp(w)) w=(I)cp((A)st[w-'_']); /* if it's a variable, substitute it */
+                e+=2;                  /*e:"Ac..."   advance the int-string pointer */
+                d=e[1];                /* d is the next int */
+                while (d&&!qv(d)&&d!=' '){  /* if nonzero, not a verb, not a space, accumulate integer*/
+                    if (qp(d)) d=(I)cp((A)(st[d-'_']));  /* interpolate variable d? */
+                    _d=(A)d;                          /* treat d like a pointer */
+                    if (_d->r==0){                    /* if scalar */
+                        _w=(A)w;                      /* treat w like a pointer */
+                        *_d->p+=*_w->p*10;            /* d = d + w*10 */
+                        w=d;                          /* w = d */
+                        ++e;                          /* advance e (int-string pointer) */
+                        d=e[1];                       /* d is the next int */
+                        continue;                     /* loop */
                     }
-                    break;
+                    break;                            /* break if d not scalar */
                 }
                 a=(I)cat((A)a,(A)w);  // cat new integer w into integer vector a
-                d=w=e[1];
-                goto EX;
+                d=w=e[1];             /* update d and w to next int */
+                goto EX;              /* tail-recurse */
             }
-        } else {  // not verb, not a space
-            A _a=(A)a, _w=(A)w;  // accumulate integer
-            if (qp(w)) cp((A)(w=st[w-'_']));
-            if (_a->r==0 && _w->r==0){
-                *_w->p+=*_a->p*10;
-                a=w;
-                ++e;
-                d=w=e[1];
-                goto EX;
+        } else {  // not verb, not a space  // accumulate integer
+            A _a,_w;
+            _a=(A)a;
+            if (qp(w)) w=(I)cp((A)(st[w-'_']));  /* interpolate variable w? */
+            _w=(A)w;  /* treat a and w like pointers */
+            if (_a->r==0 && _w->r==0){  /* a and w both scalar */
+                *_w->p+=*_a->p*10;     /* w = w + a*10 */
+                a=w;                   /* a = w */
+                ++e;                   /* advance e (int-string pointer) */
+                d=w=e[1];              /* update d and w to next int */
+                goto EX;               /* tail-recurse */
             }
         }
     }
