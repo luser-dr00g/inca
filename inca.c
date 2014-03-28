@@ -205,6 +205,7 @@ V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
 }
 
 A reduce(A w,I f);
+A xpose(A w,I f);
 A dot(A a,I f,I g,A w);
 
 void pi(i){printf("%d ",i);}
@@ -234,7 +235,7 @@ A(*vd[])(A,A)={0,plus,   from,   find,  less, reshape, cat, greater, minus, powe
 A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
                  0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0},
  (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0,    0};
+                 0,   0,      0,    reduce,   0,   0,         0,         xpose,   0,     0,    0};
 I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
                  '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
 I qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
@@ -242,6 +243,33 @@ I qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
 /* operators: monadic operator / (reduce) applies to a function on its left
               dyadic operator . (dot) applies to functions on left and right */
+
+A xpose(A w,I f){
+    A z;I j;I t;
+    switch(f){
+    default: printf("error bad function arg to operator @: try .-|/\\+<> ie. -@ or >@ \n");
+    case DOT:       // . identity
+             //z=ga(0,w->r,w->d);DO(tr(w->r,w->d),z->p[i]=w->p[i]); break;
+             z=ga(0,w->r,w->d);DO(z->d[1],j=i;DO(z->d[0],z->p[i*w->d[1]+j]=w->p[i*w->d[1]+j])); break;
+    case MINUS:     // - vertical 
+             z=ga(0,w->r,w->d);DO(z->d[1],j=i;DO(z->d[0],z->p[i*w->d[1]+j]=w->p[(w->d[0]-1-i)*w->d[1]+j])); break;
+    case BAR:       // | horizontal
+             z=ga(0,w->r,w->d);DO(z->d[1],j=i;DO(z->d[0],z->p[i*w->d[1]+j]=w->p[i*w->d[1]+w->d[1]-1-j])); break;
+    case SLASH:     // / y=-x
+             z=ga(0,w->r,w->d); t=z->d[0];z->d[0]=z->d[1];z->d[1]=t;
+             DO(z->d[0],j=i;DO(z->d[1],z->p[j*w->d[0]+i]=w->p[(w->d[0]-1-i)*w->d[1]+w->d[1]-1-j])); break;
+    case BACKSLASH: // \ y=x
+             z=ga(0,w->r,w->d); t=z->d[0];z->d[0]=z->d[1];z->d[1]=t;
+             DO(z->d[0],j=i;DO(z->d[1],z->p[j*w->d[0]+i]=w->p[i*w->d[1]+j])); break;
+    case PLUS:      // + vert+horz
+             z=xpose(xpose(w,MINUS),BAR); break;
+    case LANG:      // < slash+horz
+             z=xpose(xpose(w,MINUS),SLASH); break;
+    case RANG:      // > backslash+horz
+             z=xpose(xpose(w,MINUS),BACKSLASH); break;
+    }
+    return z;
+}
 
 /* perform right-to-left reduction over array w using function f */
 A reduce(A w,I f){
@@ -263,6 +291,7 @@ A reduce(A w,I f){
     }
     return z;
 }
+
 /* perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 A dot(A a,I f,I g,A w){
