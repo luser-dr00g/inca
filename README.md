@@ -12,6 +12,11 @@ The code does not consistently adhere to any particular
 version of the C standard, and may fail to compile with -pedantic,
 or any other options to enforce standards-conformance.
 
+I first found the J incunabulum through this SO question:
+http://stackoverflow.com/questions/13827096/how-can-i-compile-and-run-this-1989-written-c-program
+And I've added links to various explanatory pages as comments to that question
+(click "add/show more comments" under the question).
+
 Implements monadic functions 
 
      + identity 
