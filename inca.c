@@ -215,7 +215,7 @@ pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
 }
 
 I st[28];
-qp(a){return a>='_'&&a<='z';}
+qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
 enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
                  AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, NV};
@@ -338,11 +338,11 @@ EX:
 }
 
 /* construct an integer string from from command string */
-noun(c){A z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (I)z;}
-verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}
-I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
-    DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
-    e[n]=0;return e;}
+noun(c){A z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (I)z;} /* constr (ptr to) scalar */
+verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
+I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;       /* allocate int-string */
+    DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with scalars and funcs with ints*/
+    e[n]=0;return e;}    /* zero-terminate. nb. variables ('_'-'z') remain as ascii values */
 
 /* var('_')=REPL */
 main(){C s[999];
