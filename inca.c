@@ -7,10 +7,10 @@
 typedef char C;
 typedef intptr_t I;
 typedef struct a{I t,r,d[3],p[2];} *A;
-//t=0:regular array, t=1:boxed
-//r:significant dims in d
-//d:dims of p
-//p is a flexible array member. why [2]? ??!
+//t (type): t=0:regular array, t=1:boxed
+//r (rank): significant dims in d
+//d (dims): dimensions of p
+//p ("physical" data)is a flexible array member. why [2]? ??!
 
 #define V1(f) A f(A w)
 #define V2(f) A f(A a,A w)
@@ -18,7 +18,7 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 
 I ma(I n){return (I)malloc(n*sizeof(I));} //malloc an array
 mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
-I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank
+I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank (total # of elements in array)
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;} //construct(malloc) array with dims
 A cp(A w){I n=tr(w->r,w->d); //copy an array structure and contents
     A z=(A)ma(5+ (n?n:1));z->t=w->t;z->r=0;*z->p=*w->p;
@@ -29,7 +29,15 @@ A cp(A w){I n=tr(w->r,w->d); //copy an array structure and contents
 V1(box){A z=ga(1,0,0);*z->p=(I)w;return z;}
 V1(unbox){return (A)*w->p;}
 
+//Perform C operation "op" upon left arg 'a' and right arg 'w' (alpha and wmega)
+//recursing to the calling function func for boxed args
 //allow a or w to be scalar
+//nb. ->t is the type field (1==boxed,0==normal)
+//    ->r is the "rank" field, how many dimensions of data (0..3)?
+//for this macro, the actual value of rank is not important just zero/non-zero.
+//zero rank means arg is a scalar and ->p[0] is the value.
+//non-zero rank means arg is an array and ->p[0..n] contain the values
+//    where n is the total size of the array (Product of dims 0..r)
 #define OP(op,func) \
     if(a->t && w->t) \
         z = (A)box(func(unbox(a),unbox(w))); \
@@ -41,11 +49,13 @@ V1(unbox){return (A)*w->p;}
         DO(n,z->p[i]=(a->p[i]) op (w->p[i])) \
     else if(w->r) \
         DO(n,z->p[i]=(*a->p) op (w->p[i])) \
-    else if(a->r) \
+    else if(a->r) /* w is scalar: allocate z with dims from a */ \
         { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
     else *z->p = (*a->p) op (*w->p); \
     return z;
 
+//Perform C math function "op" upon args a and w
+//recursing for boxed args
 #define OPF(op,func) \
     if(a->t && w->t) \
         z = (A)box(func(unbox(a),unbox(w))); \
@@ -62,8 +72,10 @@ V1(unbox){return (A)*w->p;}
     else *z->p =op( *a->p, *w->p); \
     return z;
 
+/* iota: generate j=0 index vector */
 V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);return z;}
 
+/* arithmetic/logical functions */
 V2(plus){
     //printf("plus %d %d\n", *a->p, *w->p);
     I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
@@ -100,10 +112,13 @@ V2(equal){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(=,equal)
 }
 
+/* extract row from matrix or scalar from vector */
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);return z;}
+/* catenate two arrays (yields a rank=1 vector) */
 V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
     A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);return z;}
+/* catenate two "rows" FIXME: doesn't work if w is rank>1 */
 V2(rowcat){A z;I an;
     switch(w->r){
     case 0:z=ga(0,1,(I[]){1});*z->p=(I)w;w=z;
@@ -116,18 +131,24 @@ V2(rowcat){A z;I an;
     }
     return z;
 }
+/* use data in a as new dims for array containing data from w */
 V2(reshape){I r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
-    A z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n); //wn=min(wn,n) 
+    A z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n);    //wn=min(wn,n) 
     if(n-=wn)mv(z->p+wn,z->p,n);return z;}
+/* return the dims of w */
 V1(shape){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
+/* return w unmolested */
 V1(identity){return w;}
+/* suspiciously similar to shape */
 V1(size){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
+/* catenate elements of w selected by nonzero elements of a */
 V2(compress){I an=tr(a->r,a->d),n=0,j=0;
     DO(an,if(a->p[i])++n);
     A z=ga(0,1,&n);
     DO(an,if(a->p[i])z->p[j++]=w->p[i]);
     return z;
 }
+/* fill array with 0 or element from w by nonzero elements of a */
 V2(expand){
     I an=tr(a->r,a->d);
     A z=ga(0,a->r,a->d);
@@ -135,6 +156,7 @@ V2(expand){
     return z;
 }
 
+/* dyadic iota: find index of a in w */
 V2(find){I wn=tr(w->r,w->d);A z=0; I i;
     if(a->r==0){
         for(i=0;i<wn;i++){
@@ -156,6 +178,7 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
     }
     return z;
 }
+/* exchange dims 0 and 1, possibly promoting vector to row-matrix first */
 V1(transpose){I r=w->r,d[3],t;A z;
     if(r==0)return w;
     DO(r,d[i]=w->d[i]);
@@ -169,6 +192,7 @@ V1(transpose){I r=w->r,d[3],t;A z;
             z->p[i*d[1]+j]=w->p[j*d[0]+i];
     return z;
 }
+/* reverse elements in w */
 V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
     DO(n,z->p[i]=w->p[n-1-i]);
     return z;
@@ -210,6 +234,7 @@ I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2', 
 qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
 qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
+/* perform reduction over array w using function f */
 A reduce(A w,I f){
     I r=w->r,*d=w->d,n=tr(r,d);
     //printf("reduce(%c): %u %u\n",vt[f-1],w,f); pr(w);
@@ -229,41 +254,47 @@ A reduce(A w,I f){
     }
     return z;
 }
+/* perform general matrix multiplication Af.gW ::== f/Ag'W
+   f-reduce rows of A g-function transpose of W
+ */
 A dot(A a,I f,I g,A w){
     return reduce((*vd[g])(a,transpose(w)),f);
     //return reduce((*vd[g])(a,w),f);
 }
 
+/* execute an encoded expression, an "int" string, terminated by a zero int.
+ */
 A ex(I*e){I a=*e,w=e[1]; I d=w;
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
+    /* if a is a variable followed by Left ANGle bracket, assign to variable result of ex(remainder) */
     if(qp(a)&&w==LANG)return (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
 
-    if (qv(a)){I m=a;
-        if (qo(w)){
-            return (*om[w])(ex(e+2),a);
+    if (qv(a)){I m=a;  /* if a is a verb, it is in monadic position, so call it 'm' */
+        if (qo(w)){    /* if w is an operator, */
+            return (*om[w])(ex(e+2),a);  /* call operator function with function a on result of ex(rem)*/
         }
-        if (vm[m]==0&&vid[m]){
-            a=noun(vid[m]);
-            return (*vd[m])((A)a,ex(e+1));
+        if (vm[m]==0&&vid[m]){  /* if no monadic verb, but there is a verb "identity" element, */
+            a=noun(vid[m]);     /* load the identity element */
+            return (*vd[m])((A)a,ex(e+1));  /* call dyadic verb with w=ex(rem) */
         }
-        return (*vm[m])(ex(e+1));
+        return (*vm[m])(ex(e+1));  /* call monadic verb with w=ex(rem) */
     }
 
-    if (w){
-        if (qv(w)){
+    if (w){  /* both ifs have failed. so w is not assignment and a is not a function */
+        if (qv(w)){  /* if w is a verb, */
 
-            if (qo(e[2])){
-                w=(I)ex(e+4);
-                if (qp(a)) a=st[a-'_'];
-                return (*od[e[2]])((A)a,d,e[3],(A)w);
+            if (qo(e[2])){  /* if followed by an operator */
+                w=(I)ex(e+4);   /* w=ex(rem) */
+                if (qp(a)) a=st[a-'_'];   /* w may have assigned to variable a; if so, load it */
+                return (*od[e[2]])((A)a,d,e[3],(A)w);  /* call dyadic operator */
             }
-            w=(I)ex(e+2);
+            w=(I)ex(e+2);   /* ::not followed by an operator, w=ex(rem) */
             //printf("lookup a\n");
-            if (qp(a)) a=st[a-'_'];
-            return (*vd[d])((A)a,(A)w);
+            if (qp(a)) a=st[a-'_'];  /* if a is a var, load it now */
+            return (*vd[d])((A)a,(A)w);  /* call dyadic function */
         }
-        if (qp(a)) a=st[a-'_'];
+        if (qp(a)) a=st[a-'_'];  /* a is not function, w is not a function */
 
         if (w==' '){ //e:"a bc..." A=cat(a,b) concatenate space-delimited integer vector
             A _d,_w;
@@ -272,7 +303,7 @@ EX:
                 if (qp(w)) w=(I)cp((A)st[w-'_']);
                 e+=2;                  //e:"Ac..."
                 d=e[1];
-                while (d&&!qv(d)&&d!=' '){
+                while (d&&!qv(d)&&d!=' '){  // accumulate integer
                     if (qp(d)) cp((A)(d=st[d-'_']));
                     _d=(A)d;
                     if (_d->r==0){
@@ -285,7 +316,7 @@ EX:
                     }
                     break;
                 }
-                a=(I)cat((A)a,(A)w);
+                a=(I)cat((A)a,(A)w);  // cat new integer w into integer vector a
                 d=w=e[1];
                 goto EX;
             }
@@ -301,17 +332,19 @@ EX:
             }
         }
     }
-    if (qp(a)) a=st[a-'_'];
-    if (a==0)return (A)noun('0');
-    return (A)a; 
+    if (qp(a)) a=st[a-'_'];  /* a not a function, w is zero (end of string). load var a if a is a var */
+    if (a==0)return (A)noun('0');  /* if somehow a is zero (the end of string), return scalar zero */
+    return (A)a;             /* return a, whatever it is now, a non-null "something", hopefully */
 }
 
+/* construct an integer string from from command string */
 noun(c){A z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (I)z;}
 verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}
 I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
     e[n]=0;return e;}
 
+/* var('_')=REPL */
 main(){C s[999];
-    printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
+    //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
     while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}  // st['_'-'_']
