@@ -17,7 +17,7 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 
 I ma(I n){return (I)malloc(n*sizeof(I));} //malloc an array
-mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
+void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank (total # of elements in array)
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;} //construct(malloc) array with dims
 A cp(A w){I n=tr(w->r,w->d); //copy an array structure and contents
@@ -201,9 +201,9 @@ V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
 A reduce(A w,I f);
 A dot(A a,I f,I g,A w);
 
-pi(i){printf("%d ",i);}
-nl(){printf("\n");}
-pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
+void pi(i){printf("%d ",i);}
+void nl(){printf("\n");}
+void pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
     DO(r,pi(d[i]));nl();
     if(w->t)DO(n,printf("< ");pr((A)w->p[i]))else
     switch(r){
@@ -215,7 +215,7 @@ pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
 }
 
 I st[28];
-qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
+I qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
 enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
                  AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, NV};
@@ -231,8 +231,8 @@ A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,   
                  0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0,    0};
 I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
                  '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
-qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
-qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
+I qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
+I qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
 /* perform reduction over array w using function f */
 A reduce(A w,I f){
@@ -338,13 +338,13 @@ EX:
 }
 
 /* construct an integer string from from command string */
-noun(c){A z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (I)z;} /* constr (ptr to) scalar */
-verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
+I noun(c){A z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (I)z;} /* constr (ptr to) scalar */
+I verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
 I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;       /* allocate int-string */
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with scalars and funcs with ints*/
     e[n]=0;return e;}    /* zero-terminate. nb. variables ('_'-'z') remain as ascii values */
 
 /* var('_')=REPL */
-main(){C s[999];
+int main(){C s[999];
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
-    while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));}  // st['_'-'_']
+    while(putchar('\t'),gets(s))pr((A)(st[0]=(I)ex(wd(s))));return 0;}  // st['_'-'_']
