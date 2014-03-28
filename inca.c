@@ -12,25 +12,22 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 //d:dims of p
 //p is a flexible array member. why [2]? ??!
 
-#define P printf
-#define R return
-
 #define V1(f) A f(A w)
 #define V2(f) A f(A a,A w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 
-I ma(I n){R (I)malloc(n*sizeof(I));} //malloc an array
+I ma(I n){return (I)malloc(n*sizeof(I));} //malloc an array
 mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
-I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;} //table rank
-A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);R z;} //construct(malloc) array with dims
+I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank
+A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;} //construct(malloc) array with dims
 A cp(A w){I n=tr(w->r,w->d); //copy an array structure and contents
     A z=(A)ma(5+ (n?n:1));z->t=w->t;z->r=0;*z->p=*w->p;
     DO(n,z->p[i]=w->p[i]);
-    R z;
+    return z;
 }
 
-V1(box){A z=ga(1,0,0);*z->p=(I)w;R z;}
-V1(unbox){R (A)*w->p;}
+V1(box){A z=ga(1,0,0);*z->p=(I)w;return z;}
+V1(unbox){return (A)*w->p;}
 
 //allow a or w to be scalar
 #define OP(op,func) \
@@ -47,7 +44,7 @@ V1(unbox){R (A)*w->p;}
     else if(a->r) \
         { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
     else *z->p = (*a->p) op (*w->p); \
-    R z;
+    return z;
 
 #define OPF(op,func) \
     if(a->t && w->t) \
@@ -63,9 +60,9 @@ V1(unbox){R (A)*w->p;}
     else if(a->r) \
         { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=op(a->p[i], *w->p)) } \
     else *z->p =op( *a->p, *w->p); \
-    R z;
+    return z;
 
-V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
+V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);return z;}
 
 V2(plus){
     //printf("plus %d %d\n", *a->p, *w->p);
@@ -89,7 +86,7 @@ V2(modulus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(%,modulus)
 }
 V1(absolute){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    DO(n,z->p[i]=abs(w->p[i]));R z;
+    DO(n,z->p[i]=abs(w->p[i]));return z;
 }
 V2(and){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(&&,and)
@@ -98,15 +95,15 @@ V2(or){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(||,or)
 }
 V1(not){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
-    DO(n,z->p[i]=!w->p[i]);R z;}
+    DO(n,z->p[i]=!w->p[i]);return z;}
 V2(equal){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(=,equal)
 }
 
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
-    A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
+    A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);return z;}
 V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
-    A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);R z;}
+    A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);return z;}
 V2(rowcat){A z;I an;
     switch(w->r){
     case 0:z=ga(0,1,(I[]){1});*z->p=(I)w;w=z;
@@ -117,25 +114,25 @@ V2(rowcat){A z;I an;
             mv(z->p,a->p,an=tr(a->r,a->d));
             mv(z->p+an,w->p,tr(w->r,w->d)); break;
     }
-    R z;
+    return z;
 }
 V2(reshape){I r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
     A z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n); //wn=min(wn,n) 
-    if(n-=wn)mv(z->p+wn,z->p,n);R z;}
-V1(shape){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
-V1(identity){R w;}
-V1(size){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
+    if(n-=wn)mv(z->p+wn,z->p,n);return z;}
+V1(shape){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
+V1(identity){return w;}
+V1(size){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
 V2(compress){I an=tr(a->r,a->d),n=0,j=0;
     DO(an,if(a->p[i])++n);
     A z=ga(0,1,&n);
     DO(an,if(a->p[i])z->p[j++]=w->p[i]);
-    R z;
+    return z;
 }
 V2(expand){
     I an=tr(a->r,a->d);
     A z=ga(0,a->r,a->d);
     DO(an,z->p[i]=a->p[i]?w->p[i]:0);
-    R z;
+    return z;
 }
 
 V2(find){I wn=tr(w->r,w->d);A z=0; I i;
@@ -144,7 +141,7 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
             if(*a->p==w->p[i]){
                 z=ga(0,0,0);
                 *z->p=i;
-                R z;
+                return z;
             }
         }
     }else{
@@ -157,10 +154,10 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
             z->p[i]=*ind->p;
         }
     }
-    R z;
+    return z;
 }
 V1(transpose){I r=w->r,d[3],t;A z;
-    if(r==0)R w;
+    if(r==0)return w;
     DO(r,d[i]=w->d[i]);
     if(r==1){r=2;d[1]=d[0];d[0]=1;}              //vector->row matrix
     t=d[0]; d[0]=d[1]; d[1]=t;
@@ -170,21 +167,21 @@ V1(transpose){I r=w->r,d[3],t;A z;
     for(i=0;i<d[0];i++)
         for(j=0;j<d[1];j++)
             z->p[i*d[1]+j]=w->p[j*d[0]+i];
-    R z;
+    return z;
 }
 V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
     DO(n,z->p[i]=w->p[n-1-i]);
-    R z;
+    return z;
 }
 
 A reduce(A w,I f);
 A dot(A a,I f,I g,A w);
 
-pi(i){P("%d ",i);}
-nl(){P("\n");}
+pi(i){printf("%d ",i);}
+nl(){printf("\n");}
 pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
     DO(r,pi(d[i]));nl();
-    if(w->t)DO(n,P("< ");pr((A)w->p[i]))else
+    if(w->t)DO(n,printf("< ");pr((A)w->p[i]))else
     switch(r){
     case 0: pi(*w->p);nl();break;
     case 1: DO(n,pi(w->p[i]));nl(); break;
@@ -194,7 +191,7 @@ pr(A w){I r=w->r,*d=w->d,n=tr(r,d);I j,k;
 }
 
 I st[28];
-qp(a){R a>='_'&&a<='z';}
+qp(a){return a>='_'&&a<='z';}
 
 enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
                  AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, NV};
@@ -210,8 +207,8 @@ A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,   
                  0,   0,      0,    reduce,   0,   0,         0,         0,   0,     0,    0};
 I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
                  '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
-qv(unsigned a){R a<'_'&&a<NV&&(vd[a]||vm[a]);}
-qo(unsigned a){R a<'_'&&a<NV&&(od[a]||om[a]);}
+qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
+qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
 A reduce(A w,I f){
     I r=w->r,*d=w->d,n=tr(r,d);
@@ -230,27 +227,27 @@ A reduce(A w,I f){
     } else {
         z=(*vd[f])(z,w);
     }
-    R z;
+    return z;
 }
 A dot(A a,I f,I g,A w){
-    R reduce((*vd[g])(a,transpose(w)),f);
-    //R reduce((*vd[g])(a,w),f);
+    return reduce((*vd[g])(a,transpose(w)),f);
+    //return reduce((*vd[g])(a,w),f);
 }
 
 A ex(I*e){I a=*e,w=e[1]; I d=w;
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
-    if(qp(a)&&w==LANG)R (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
+    if(qp(a)&&w==LANG)return (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
 
     if (qv(a)){I m=a;
         if (qo(w)){
-            R (*om[w])(ex(e+2),a);
+            return (*om[w])(ex(e+2),a);
         }
         if (vm[m]==0&&vid[m]){
             a=noun(vid[m]);
-            R (*vd[m])((A)a,ex(e+1));
+            return (*vd[m])((A)a,ex(e+1));
         }
-        R (*vm[m])(ex(e+1));
+        return (*vm[m])(ex(e+1));
     }
 
     if (w){
@@ -259,12 +256,12 @@ EX:
             if (qo(e[2])){
                 w=(I)ex(e+4);
                 if (qp(a)) a=st[a-'_'];
-                R (*od[e[2]])((A)a,d,e[3],(A)w);
+                return (*od[e[2]])((A)a,d,e[3],(A)w);
             }
             w=(I)ex(e+2);
             //printf("lookup a\n");
             if (qp(a)) a=st[a-'_'];
-            R (*vd[d])((A)a,(A)w);
+            return (*vd[d])((A)a,(A)w);
         }
         if (qp(a)) a=st[a-'_'];
 
@@ -305,15 +302,15 @@ EX:
         }
     }
     if (qp(a)) a=st[a-'_'];
-    if (a==0)R (A)noun('0');
-    R (A)a; 
+    if (a==0)return (A)noun('0');
+    return (A)a; 
 }
 
-noun(c){A z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R (I)z;}
-verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)R i;R 0;}
+noun(c){A z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (I)z;}
+verb(c){I i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}
 I*wd(C*s){I a,n=strlen(s),*e=(I*)ma(n+1);C c;
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
-    e[n]=0;R e;}
+    e[n]=0;return e;}
 
 main(){C s[999];
     printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
