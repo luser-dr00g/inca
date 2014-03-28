@@ -288,8 +288,8 @@ EX:
 
             if (qo(e[2])){  /* if followed by an operator */
                 w=(I)ex(e+4);   /* w=ex(rem) */
-                if (qp(a)) a=st[a-'_'];   /* w may have assigned to variable a; if so, load it */
-                return (*od[e[2]])((A)a,d,e[3],(A)w);  /* call dyadic operator */
+                if (qp(a)) a=(I)cp((A)st[a-'_']); /* ex(w) may have assigned to var a; if so, load it */
+                return (*od[e[2]])((A)a,d,e[3],(A)w);/*call dyadic operator e[2] with f=d(=w=e[1]),g=e[3] */
             }
             w=(I)ex(e+2);   /* ::not followed by an operator, w=ex(rem) */
             //printf("lookup a\n");
@@ -336,7 +336,7 @@ EX:
             }
         }
     }
-    if (qp(a)) a=st[a-'_'];  /* a not a function, w is zero (end of string). load var a if a is a var */
+    if (qp(a)) a=(I)cp((A)st[a-'_']); /*a not a function, w is zero (end-string). load var a if a is a var */
     if (a==0)return (A)noun('0');  /* if somehow a is zero (the end of string), return scalar zero */
     return (A)a;             /* return a, whatever it is now, a non-null "something", hopefully */
 }
