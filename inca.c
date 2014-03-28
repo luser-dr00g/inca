@@ -111,6 +111,12 @@ V1(not){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
 V2(equal){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
     OP(=,equal)
 }
+V2(less){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    OP(<,less)
+}
+V2(greater){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
+    OP(>,greater)
+}
 
 /* extract row from matrix or scalar from vector */
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
@@ -221,7 +227,7 @@ enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR,
                  AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, NV};
 C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*',  '%',    '|',
                  '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   ';',  0};
-A(*vd[])(A,A)={0,plus,   from,   find,  0,    reshape, cat,   0,    minus, power, divide, modulus,
+A(*vd[])(A,A)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide, modulus,
                  and, or,     0,    compress, times, expand,  0,         0,   equal, rowcat, 0},
  (*vm[])(A)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
                  0,   0,      not,  0,        0,   0,         transpose, reverse, 0, 0,    0};
