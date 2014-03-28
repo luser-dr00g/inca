@@ -17,7 +17,7 @@ http://stackoverflow.com/questions/13827096/how-can-i-compile-and-run-this-1989-
 And I've added links to various explanatory pages as comments to that question
 (click "add/show more comments" under the question).
 
-Implements monadic functions 
+Implements monadic functions m  mW
 
      + identity 
      { size 
@@ -30,22 +30,25 @@ Implements monadic functions
      ' transpose
      @ reverse
 
-dyadic functions 
+dyadic functions d  AdW
 
-     + plus 
+     + plus   (monadic: a=0)
      { from 
      ~ find
-     < assign (not really a function, but an interpreter action) 
+     < assign if a is a var (not really a function, but an interpreter action) 
      # reshape 
      , cat 
-     - minus 
-     . times 
-     * power
-     % divide 
-     | modulus 
+     ; rowcat
+     - minus   (monadic: a=0)
+     . times   (monadic: a=1)
+     * power   (monadic: a=2)  <-- this will be e with floating-point
+     % divide  (monadic: a=1)  <-- this will make more sense with floating-point
+     | modulus   (reverse of C: w%a, divisor on the right)
      & and 
      ^ or 
      = equals?
+     / compress
+     \ expand
 
 monadic operator 
 
@@ -54,6 +57,8 @@ monadic operator
 dyadic operator
 
      . matrix product Af.gW => f/Ag'W
+        eg. plus over times:  +..
+            plus over plus:   +.+
 
 over multidigit numbers and variables
      '_'(underscore), '`'(backtick), and a-z 
