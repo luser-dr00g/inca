@@ -300,7 +300,7 @@ A dot(A a,I f,I g,A w){
 }
 
 I digits(I w){
-    I r=labs(w)>1?ceil(log10((double)w)):1;
+    I r=labs(w)>1?ceil(log10((double)w+1)):1;
     printf("digits(%d)=%d\n", w, r);
     return r;
 }
