@@ -14,8 +14,11 @@ or any other options to enforce standards-conformance.
 
 I first found the J incunabulum through this SO question:
 http://stackoverflow.com/questions/13827096/how-can-i-compile-and-run-this-1989-written-c-program
-And I've added links to various explanatory pages as comments to that question
-(click "add/show more comments" under the question).
+And I've added links to various explanatory pages as comments to that question, and a bugfix 
+for the original. Here are the helpful links:
+http://www.jsoftware.com/papers/AIOJ/AIOJ.htm
+https://groups.google.com/d/msg/sayeret-lambda/Oxffk3aeUP4/QEuZocgVh5UJ
+http://archive.vector.org.uk/trad/v094/hui094_85.pdf
 
 Implements monadic functions m  mW
 
