@@ -299,6 +299,12 @@ A dot(A a,I f,I g,A w){
     //return reduce((*vd[g])(a,w),f);
 }
 
+I digits(I w){
+    I r=labs(w)>1?ceil(log10((double)w)):1;
+    printf("digits(%d)=%d\n", w, r);
+    return r;
+}
+
 /* execute an encoded expression, an "int" string, terminated by a zero int.
  */
 A ex(I*e){I a=*e,w=e[1]; I d=w;
@@ -331,7 +337,7 @@ EX:
             if (qp(a)) a=st[a-'_'];  /* if a is a var, load it now */
             return (*vd[d])((A)a,(A)w);  /* call dyadic function */
         }
-        if (qp(a)) a=st[a-'_'];  /* a is not function, w is not a function */
+        if (qp(a)) a=(I)cp((A)st[a-'_']);  /* a is not function, w is not a function */
 
         if (w==' '){ //e:"a bc..." A=cat(a,b) concatenate space-delimited integer vector
             A _d,_w;
@@ -345,7 +351,7 @@ EX:
                     _d=(A)d;                          /* treat d like a pointer */
                     if (_d->r==0){                    /* if scalar */
                         _w=(A)w;                      /* treat w like a pointer */
-                        *_d->p+=*_w->p*10;            /* d = d + w*10 */
+                        *_d->p+=*_w->p*pow(10,digits(*_d->p));            /* d = d + w*10^digits(d) */
                         w=d;                          /* w = d */
                         ++e;                          /* advance e (int-string pointer) */
                         d=e[1];                       /* d is the next int */
@@ -363,7 +369,7 @@ EX:
             if (qp(w)) w=(I)cp((A)(st[w-'_']));  /* interpolate variable w? */
             _w=(A)w;  /* treat a and w like pointers */
             if (_a->r==0 && _w->r==0){  /* a and w both scalar */
-                *_w->p+=*_a->p*10;     /* w = w + a*10 */
+                *_w->p+=*_a->p*pow(10,digits(*_w->p));     /* w = w + a*10^digits(d) */
                 a=w;                   /* a = w */
                 ++e;                   /* advance e (int-string pointer) */
                 d=w=e[1];              /* update d and w to next int */
