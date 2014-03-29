@@ -358,7 +358,7 @@ I digits(I w){
 /* execute an encoded expression, an "int" string, terminated by a zero int.
  */
 A ex(I*e){I a=*e,w=e[1]; I d=w;
-    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
     if (a==COLON){
         int i;
