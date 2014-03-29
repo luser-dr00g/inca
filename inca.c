@@ -16,17 +16,29 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 #define V2(f) A f(A a,A w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 
-I ma(I n){return (I)malloc(n*sizeof(I));} //malloc an array
-void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);} //copy n ints from s to d
-I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;} //table rank (total # of elements in array) >= 1
-A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;} //construct(malloc) array with dims
-A cp(A w){I n=tr(w->r,w->d); //dup an array structure and contents
+//malloc an array
+I ma(I n){return (I)malloc(n*sizeof(I));}
+
+//copy n ints from s to d
+void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
+
+//table rank (total # of elements in array) >= 1
+I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);return z;}
+
+//construct(malloc) array with dims
+A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;}
+
+//dup an array structure and contents
+A cp(A w){I n=tr(w->r,w->d);
     A z=ga(w->t,w->r,w->d);
     mv(z->p,w->p,n);
     return z;
 }
 
+//pack an array into a scalar
 V1(box){A z=ga(1,0,0);*z->p=(I)w;return z;}
+
+//unpack an array from a scalar
 V1(unbox){return (A)*w->p;}
 
 //Perform C operation "op" upon left arg 'a' and right arg 'w' (alpha and wmega)
@@ -121,32 +133,68 @@ V2(greater){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
 /* extract row from matrix or scalar from vector */
 V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
     A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);return z;}
+
 /* catenate two arrays (yields a rank=1 vector) */
 V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
     A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);return z;}
-/* catenate two "rows" FIXME: doesn't work if w is rank>1 */
-V2(rowcat){A z;I an;
-    switch(w->r){
-    case 0:z=ga(0,1,(I[]){1});*z->p=(I)w;w=z;
-    case 1:z=ga(0,2,(I[]){2,w->d[0]});
-           mv(z->p,a->p,an=tr(a->r,a->d));
-           mv(z->p+an,w->p,tr(w->r,w->d)); break;
-    default:z=ga(0,w->r,(I[]){w->d[0]+1,w->d[1],w->d[2]});
-            mv(z->p,a->p,an=tr(a->r,a->d));
-            mv(z->p+an,w->p,tr(w->r,w->d)); break;
+
+/* catenate two "rows", promoting (and padding) scalars and vectors as necessary */
+V2(rowcat){A z;I an;A b;
+    printf("a->r=%d a->d=%d,%d,%d, w->r=%d w->d=%d,%d,%d\n",
+            a->r, a->d[0], a->d[1], a->d[2],
+            w->r, w->d[0], w->d[1], w->d[2]);
+    switch(a->r){
+    case 0:
+        switch(w->r){
+        case 0: z=ga(0,2,(I[]){2,1}); break;
+        case 1: z=ga(0,2,(I[]){2,w->d[0]});
+                b=ga(0,1,w->d);
+                *b->p=*a->p;
+                memset(b->p+1,0,tr(b->r,b->d)-1);
+                a=b;
+                break;
+        default: z=ga(0,w->r,(I[]){w->d[0]+1,w->d[1],w->d[2]});
+                 b=ga(0,w->r-1,(I[]){w->d[1],w->d[2]});
+                 *b->p=*a->p;
+                 memset(b->p+1,0,tr(b->r,b->d)-1);
+                 a=b;
+                 break;
+        }
+        break;
+    case 1:
+        switch(w->r){
+        case 0: z=ga(0,2,(I[]){2,a->d[0]}); break;
+        case 1: z=ga(0,2,(I[]){2,a->d[0]}); break;
+        default: z=ga(0,w->r,(I[]){w->d[0]+1,w->d[1],w->d[2]}); break;
+        }
+        break;
+    default:
+        switch(w->r){
+        case 0: z=ga(0,a->r,(I[]){a->d[0]+1,a->d[1],a->d[2]}); break;
+        case 1: z=ga(0,a->r,(I[]){a->d[0]+1,a->d[1],a->d[2]}); break;
+        default: z=ga(0,a->r,(I[]){a->d[0]+w->d[0],a->d[1],a->d[2]}); break;
+        }
+        break;
     }
+    mv(z->p,a->p,an=tr(a->r,a->d));
+    mv(z->p+an,w->p,tr(w->r,w->d));
+    printf("z->r=%d z->d=%d,%d,%d\n",
+            z->r, z->d[0], z->d[1], z->d[2]);
     return z;
 }
+
 /* use data in a as new dims for array containing data from w */
 V2(reshape){I r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
     A z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n);    //wn=min(wn,n) 
     if(n-=wn)mv(z->p+wn,z->p,n);return z;}
 /* return the dims of w */
 V1(shape){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
+
 /* return w unmolested */
 V1(identity){return w;}
 /* suspiciously similar to shape */
 V1(size){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
+
 /* catenate elements of w selected by nonzero elements of a */
 V2(compress){I an=tr(a->r,a->d),n=0,j=0;
     DO(an,if(a->p[i])++n);
@@ -154,6 +202,7 @@ V2(compress){I an=tr(a->r,a->d),n=0,j=0;
     DO(an,if(a->p[i])z->p[j++]=w->p[i]);
     return z;
 }
+
 /* fill array with 0 or element from w by nonzero elements of a */
 V2(expand){
     I an=tr(a->r,a->d);
