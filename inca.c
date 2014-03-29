@@ -12,6 +12,11 @@ typedef struct a{I t,r,d[3],p[2];} *A;
 //d (dims): dimensions of p
 //p ("physical" data)is a flexible array member. why [2]? ??!
 
+A ex(I*e);
+A reduce(A w,I f);
+A transpose(A w,I f);
+A dot(A a,I f,I g,A w);
+
 #define V1(f) A f(A w)
 #define V2(f) A f(A a,A w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
@@ -239,9 +244,9 @@ V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
     return z;
 }
 
-A reduce(A w,I f);
-A transpose(A w,I f);
-A dot(A a,I f,I g,A w);
+V1(execute){
+    return ex(w->p);
+}
 
 void pi(i){printf("%d ",i);}
 void nl(){printf("\n");}
@@ -260,19 +265,19 @@ I st[28];
 I qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
 enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
-                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, NV};
+                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, COLON, NV};
 C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*',  '%',    '|',
-                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   ';',  0};
+                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   ';',  ':',   0};
 A(*vd[])(A,A)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide, modulus,
-                 and, or,     0,    compress, times, expand,  0,         0,   equal, rowcat, 0},
+                 and, or,     0,    compress, times, expand,  0,         0,   equal,rowcat,0,     0},
  (*vm[])(A)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
-                 0,   0,      not,  0,        0,   0,         0,         reverse, 0, 0,    0};
+                 0,   0,      not,  0,        0,   0,         0,         reverse, 0, execute, 0,  0};
 A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0},
+                 0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0,     0},
  (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    reduce,   0,   0,         0,         transpose,   0,     0,    0};
+                 0,   0,      0,    reduce,   0,   0,         0,        transpose, 0, 0,   0,     0};
 I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
-                 '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
+                 '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0,     0};
 I qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
 I qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
@@ -353,8 +358,19 @@ I digits(I w){
 /* execute an encoded expression, an "int" string, terminated by a zero int.
  */
 A ex(I*e){I a=*e,w=e[1]; I d=w;
-    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
+    if (a==COLON){
+        int i;
+        A _a;
+        ++e;
+        for(i=0;e[i];i++) ;
+        ++i;
+        a=(I)ga(0,1,&i);
+        _a=(A)a;
+        mv(_a->p,e,i);
+        return (A)a;
+    }
     if (a=='('){
         int i,p;
         for(i=1,p=1;p&&e[i];i++){
@@ -365,8 +381,12 @@ EX:
             //printf("%d(%d) %d ",i, p, e[i]);
         }
         //printf("%d\n", i);
+        if (e[i-1] != ')'){
+            printf("err: unmatched parens\n");
+            return (A)noun('0');
+        }
         e[i-1]=0;
-        a=ex(e+1);
+        a=(I)ex(e+1);
         e+=i-1;
         d=w=e[1];
         goto EX;
