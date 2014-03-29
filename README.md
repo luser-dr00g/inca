@@ -16,9 +16,9 @@ I first found the J incunabulum through this SO question:
 http://stackoverflow.com/questions/13827096/how-can-i-compile-and-run-this-1989-written-c-program
 And I've added links to various explanatory pages as comments to that question, and a bugfix 
 for the original. Here are the helpful links:
-http://www.jsoftware.com/papers/AIOJ/AIOJ.htm
-https://groups.google.com/d/msg/sayeret-lambda/Oxffk3aeUP4/QEuZocgVh5UJ
-http://archive.vector.org.uk/trad/v094/hui094_85.pdf
+http://www.jsoftware.com/papers/AIOJ/AIOJ.htm  
+https://groups.google.com/d/msg/sayeret-lambda/Oxffk3aeUP4/QEuZocgVh5UJ  
+http://archive.vector.org.uk/trad/v094/hui094_85.pdf  
 
 Implements monadic functions m  mW
 
@@ -30,7 +30,6 @@ Implements monadic functions m  mW
      > unbox 
      | absolute 
      ! not 
-     ' transpose
      @ reverse
 
 dyadic functions d  AdW
@@ -53,19 +52,27 @@ dyadic functions d  AdW
      / compress
      \ expand
 
-monadic operator 
+monadic operators
 
-     / reduce  f/X  => x0 f (x1 f (x2 f ( ... xn-2 f xn-1)))
+     / reduce  f/W  => w0 f (w1 f (w2 f ( ... wn-2 f wn-1)))
+     @ transpose   .@  identity transpose
+                   -@  vertical transpose
+                   |@  horizontal transpose
+                   \@  y=x transpose
+                   /@  y=-x transpose
+                   +@  horz then vert
+                   >@  horz then y=x
+                   <@  horz then y=-x
 
 dyadic operator
 
-     . matrix product Af.gW => f/Ag'W
+     . matrix product Af.gW => f/Ag\@W
         eg. plus over times:  +..
             plus over plus:   +.+
 
-over multidigit numbers and variables
-     '_'(underscore), '`'(backtick), and a-z 
-`'_'`(underscore) is set to the result of the previous line. 
+over multidigit numbers and variables  
+     _ (underscore), ` (backtick), and a-z   
+_ (underscore) is set to the result of the previous line.   
 
 The interpreter also implements a non-greedy "cat" for 
 number vectors separated by spaces. Hence `1 2 3+~3` => `1 3 5`
@@ -111,11 +118,17 @@ Example session: monadic functions.
             !0
 
     1 
-            '1 2 3;4 5 6;7 8 9;10 11 12
+            \@1 2 3;4 5 6;7 8 9;10 11 12
     3 4 
     1 4 7 10 
     2 5 8 11 
     3 6 9 12 
+            \@4 3#1+~12
+    3 4 
+    1 4 7 10 
+    2 5 8 11 
+    3 6 9 12 
+
             @_
     3 4 
     12 9 6 3 

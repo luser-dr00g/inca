@@ -184,20 +184,6 @@ V2(find){I wn=tr(w->r,w->d);A z=0; I i;
     }
     return z;
 }
-/* exchange dims 0 and 1, possibly promoting vector to row-matrix first */
-V1(transpose){I r=w->r,d[3],t;A z;
-    if(r==0)return w;
-    DO(r,d[i]=w->d[i]);
-    if(r==1){r=2;d[1]=d[0];d[0]=1;}              //vector->row matrix
-    t=d[0]; d[0]=d[1]; d[1]=t;
-    //printf("r=%d,d[0]=%d,d[1]=%d\n",r,d[0],d[1]);
-    z=ga(0,r,d);
-    int i,j;
-    for(i=0;i<d[0];i++)
-        for(j=0;j<d[1];j++)
-            z->p[i*d[1]+j]=w->p[j*d[0]+i];
-    return z;
-}
 /* reverse elements in w */
 V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
     DO(n,z->p[i]=w->p[n-1-i]);
@@ -205,7 +191,7 @@ V1(reverse){I n=tr(w->r,w->d);A z=ga(0,w->r,w->d);
 }
 
 A reduce(A w,I f);
-A xpose(A w,I f);
+A transpose(A w,I f);
 A dot(A a,I f,I g,A w);
 
 void pi(i){printf("%d ",i);}
@@ -231,11 +217,11 @@ C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*', 
 A(*vd[])(A,A)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide, modulus,
                  and, or,     0,    compress, times, expand,  0,         0,   equal, rowcat, 0},
  (*vm[])(A)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
-                 0,   0,      not,  0,        0,   0,         transpose, reverse, 0, 0,    0};
+                 0,   0,      not,  0,        0,   0,         0,         reverse, 0, 0,    0};
 A(*od[])(A,I,I,A)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
                  0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0},
  (*om[])(A,I)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    reduce,   0,   0,         0,         xpose,   0,     0,    0};
+                 0,   0,      0,    reduce,   0,   0,         0,         transpose,   0,     0,    0};
 I vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
                  '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0};
 I qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
@@ -244,8 +230,18 @@ I qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 /* operators: monadic operator / (reduce) applies to a function on its left
               dyadic operator . (dot) applies to functions on left and right */
 
-A xpose(A w,I f){
+A transpose(A w,I f){
     A z;I j;I t;
+    if (w->r == 0){
+        z=ga(0,2,(I[]){1,1});
+        z->p[0] = w->p[0];
+        w = z;
+    }
+    if (w->r == 1){
+        z=ga(0,2,(I[]){1,w->d[0]});
+        mv(z->p,w->p,w->d[0]);
+        w = z;
+    }
     switch(f){
     default: printf("error bad function arg to operator @: try .-|/\\+<> ie. -@ or >@ \n");
     case DOT:       // . identity
@@ -262,11 +258,11 @@ A xpose(A w,I f){
              z=ga(0,w->r,w->d); t=z->d[0];z->d[0]=z->d[1];z->d[1]=t;
              DO(z->d[0],j=i;DO(z->d[1],z->p[j*w->d[0]+i]=w->p[i*w->d[1]+j])); break;
     case PLUS:      // + vert+horz
-             z=xpose(xpose(w,MINUS),BAR); break;
+             z=transpose(transpose(w,MINUS),BAR); break;
     case LANG:      // < slash+horz
-             z=xpose(xpose(w,MINUS),SLASH); break;
+             z=transpose(transpose(w,MINUS),SLASH); break;
     case RANG:      // > backslash+horz
-             z=xpose(xpose(w,MINUS),BACKSLASH); break;
+             z=transpose(transpose(w,MINUS),BACKSLASH); break;
     }
     return z;
 }
@@ -295,13 +291,13 @@ A reduce(A w,I f){
 /* perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 A dot(A a,I f,I g,A w){
-    return reduce((*vd[g])(a,transpose(w)),f);
+    return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
     //return reduce((*vd[g])(a,w),f);
 }
 
 I digits(I w){
     I r=labs(w)>1?ceil(log10((double)w+1)):1;
-    printf("digits(%d)=%d\n", w, r);
+    //printf("digits(%d)=%d\n", w, r);
     return r;
 }
 
