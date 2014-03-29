@@ -306,6 +306,22 @@ I digits(I w){
 A ex(I*e){I a=*e,w=e[1]; I d=w;
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
+    if (a=='('){
+        int i,p;
+        for(i=1,p=1;p&&e[i];i++){
+            switch(e[i]){
+            case '(': ++p; break;
+            case ')': --p; break;
+            }
+            //printf("%d(%d) %d ",i, p, e[i]);
+        }
+        //printf("%d\n", i);
+        e[i-1]=0;
+        a=ex(e+1);
+        e+=i-1;
+        d=w=e[1];
+        goto EX;
+    }
     /* if a is a variable followed by Left ANGle bracket, assign to variable result of ex(remainder) */
     if(qp(a)&&w==LANG)return (A)(st[a-'_']=(I)ex(e+2)); //use '<' for assignment
 
