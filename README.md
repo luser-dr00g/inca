@@ -1,6 +1,12 @@
 inca
 ====
 
+mon: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
+dy: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
+    * pow  % divide  | mod  & and  ^ or  = eq  / compress  \ expand  
+mon ops: / reduce  (.-|/\+><)@ transpose    dy op: . matrix product  
+variable _ is set to result of the previous command.
+
 based on the J-incunabulum,
       http://www.jsoftware.com/jwiki/Essays/Incunabulum
 lightly extended to allow propagating specifications "a+2+a<3",
