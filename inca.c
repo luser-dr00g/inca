@@ -145,9 +145,11 @@ V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
 
 /* catenate two "rows", promoting (and padding) scalars and vectors as necessary */
 V2(rowcat){A z;I an;A b;
+    /*
     printf("a->r=%d a->d=%d,%d,%d, w->r=%d w->d=%d,%d,%d\n",
             a->r, a->d[0], a->d[1], a->d[2],
             w->r, w->d[0], w->d[1], w->d[2]);
+            */
     switch(a->r){
     case 0:
         switch(w->r){
@@ -183,8 +185,10 @@ V2(rowcat){A z;I an;A b;
     }
     mv(z->p,a->p,an=tr(a->r,a->d));
     mv(z->p+an,w->p,tr(w->r,w->d));
+    /*
     printf("z->r=%d z->d=%d,%d,%d\n",
             z->r, z->d[0], z->d[1], z->d[2]);
+            */
     return z;
 }
 
