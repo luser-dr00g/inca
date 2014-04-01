@@ -371,7 +371,12 @@ INT digits(INT w){
 
 /* execute an encoded expression, an "int" string, terminated by a zero int.
  */
-ARC ex(INT*e){INT a=*e,w=e[1]; INT d=w;
+ARC ex(INT*e){INT a=*e,w=e[1],d=w,o;
+    while(a==' '){ /* eat space */
+        ++e;
+        a=*e;
+        d=w=e[1];
+    }
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
     if (a==COLON){
@@ -413,6 +418,10 @@ EX:
     if(qp(a)&&w==LANG)return (ARC)(st[a-'_']=(INT)ex(e+2)); //use '<' for assignment
 
     if (qv(a)){INT m=a;  /* if a is a verb, it is in monadic position, so call it 'm' */
+        while (w==' '){ /* eat space */
+            ++e;
+            d=w=e[1];
+        }
         if (qo(w)){    /* if w is an operator, */
             return (*om[w])(ex(e+2),a);  /* call operator function with function a on result of ex(rem)*/
         }
@@ -425,11 +434,16 @@ EX:
 
     if (w){  /* both ifs have failed. so w is not assignment and a is not a function */
         if (qv(w)){  /* if w is a verb, */
-
-            if (qo(e[2])){  /* if followed by an operator */
+            while (e[2]==' '){ /* eat space */
+                ++e;
+            }
+            if (qo(o=e[2])){  /* if followed by an operator */
+                while (e[3]==' '){ /* eat space */
+                    ++e;
+                }
                 w=(INT)ex(e+4);   /* w=ex(rem) */
                 if (qp(a)) a=(INT)cp((ARC)st[a-'_']); /* ex(w) may have assigned to var a; if so, load it */
-                return (*od[e[2]])((ARC)a,d,e[3],(ARC)w);/*call dyadic operator e[2] with f=d(=w=e[1]),g=e[3] */
+                return (*od[o])((ARC)a,d,e[3],(ARC)w);/*call dyadic operator e[2] with f=d(=w=e[1]),g=e[3] */
             }
             w=(INT)ex(e+2);   /* ::not followed by an operator, w=ex(rem) */
             //printf("lookup a\n");
@@ -442,6 +456,11 @@ EX:
             ARC _d,_w;
             w=e[2];  /* read past the space */
             if (w){  /* something there? */
+                if (qv(w)){ /* if it's a verb, eat the space */
+                    ++e;
+                    d=w=e[1];
+                    goto EX;
+                }
                 if (qp(w)) w=(INT)cp((ARC)st[w-'_']); /* if it's a variable, substitute it */
                 e+=2;                  /*e:"Ac..."   advance the int-string pointer */
                 d=e[1];                /* d is the next int */
