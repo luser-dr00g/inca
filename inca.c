@@ -40,11 +40,29 @@ ARC cp(ARC w){INT n=tr(w->r,w->d);
     return z;
 }
 
-//pack an array into a scalar
+//pack an array into a scalar (enclose)
 V1(box){ARC z=ga(1,0,0);*z->p=(INT)w;return z;}
 
-//unpack an array from a scalar
-V1(unbox){return (ARC)*w->p;}
+//unpack an array from a scalar (disclose)
+V1(unbox){
+    if (w->t) {
+        if (w->r){
+            int i,r,n=tr(w->r,w->d);
+            ARC t=(ARC)*w->p;
+            ARC z=ga(0,2,(INT[]){n,t->d[0],t->d[1]});
+            for(i=0,r=0; i<n; i++){
+                int tn;
+                t=(ARC)w->p[i];
+                mv(z->p+r, t->p, tn=tr(t->r,t->d));
+                r+=tn;
+            }
+            return z;
+        } else {
+            return (ARC)*w->p;
+        }
+    } else
+        return w;
+}
 
 //Perform C operation "op" upon left arg 'a' and right arg 'w' (alpha and wmega)
 //recursing to the calling function func for boxed args
@@ -138,6 +156,9 @@ V2(greater){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
 /* extract row from matrix or scalar from vector */
 V2(from){INT r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
     ARC z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);return z;}
+
+/* reshape w into a vector */
+V1(ravel){INT n=tr(w->r,w->d);ARC z=ga(0,1,&n);DO(n,z->p[i]=w->p[i]);return z;}
 
 /* catenate two arrays (yields a rank=1 vector) */
 V2(cat){INT an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
@@ -268,20 +289,20 @@ void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
 INT st[28];
 INT qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
-enum   {         PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG, MINUS, STAR, PERCENT, BAR,
-                 AND, CARET,  BANG, SLASH,    DOT, BACKSLASH, QUOTE,     AT,  EQUAL, SEMI, COLON, NV};
-C vt[]={         '+',    '{',    '~',   '<',  '#',     ',',   '>',  '-',   '*',  '%',    '|',
-                 '&', '^',    '!',  '/',      '.', '\\',      '\'',      '@', '=',   ';',  ':',   0};
-ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide, modulus,
-                 and, or,     0,    compress, times, expand,  0,         0,   equal,rowcat,0,     0},
- (*vm[])(ARC)={0,identity, size,   iota,  box,  shape,   0,     unbox, 0,     0,     0,      absolute,
-                 0,   0,      not,  0,        0,   0,         0,         reverse, 0, execute, 0,  0};
-ARC(*od[])(ARC,INT,INT,ARC)={0,0,  0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    0,        dot, 0,         0,         0,   0,     0,    0,     0},
- (*om[])(ARC,INT)={0, 0,     0,      0,     0,    0,       0,     0,    0,     0,     0,      0,
-                 0,   0,      0,    reduce,   0,   0,         0,        transpose, 0, 0,   0,     0};
-INT vid[]={0,      '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',   '1',    0,
-                 '1', '0',    0,    0,        '0', 0,         0,         0,   0,     0,    0,     0};
+enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,
+                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,  EQUAL,  SEMI, COLON, NV};
+C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',
+                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@', '=',    ';',  ':',   0};
+ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,
+                     and, or,     0,    compress, times, expand,    0,         0,   equal,  rowcat,0,    0},
+ (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute,
+                     0,   0,      not,  0,        0,     0,         0,         reverse, 0,  execute,0,   0};
+ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,
+                     0,   0,      0,    0,        dot,   0,         0,         0,   0,      0,    0,     0},
+ (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,
+                     0,   0,      0,    reduce,   0,     0,         0,         transpose,0, 0,    0,     0};
+INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,
+                     '1', '0',    0,    0,        '0',   0,         0,         0,   0,      0,    0,     0};
 INT qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
 INT qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
