@@ -390,7 +390,7 @@ EX:
             }
             //printf("%d(%d) %d ",i, p, e[i]);
         }
-        printf("%d\n", i);
+        //printf("%d\n", i);
         if (e[i-1] != ')'){
             printf("err: unmatched parens\n");
             return (A)noun('0');
