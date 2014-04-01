@@ -1,9 +1,9 @@
 inca
 ====
 
-mon: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
-dy: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
-    * pow  % divide  | mod  & and  ^ or  = eq  / compress  \ expand  
+monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
+dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
+&nbsp;&nbsp;    * pow  % divide  | mod  & and  ^ or  = eq  / compress  \ expand  
 mon ops: / reduce  (.-|/\+><)@ transpose    dy op: . matrix product  
 variable _ is set to result of the previous command.
 
