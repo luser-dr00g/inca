@@ -284,14 +284,24 @@ I qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 /* operators: monadic operator / (reduce) applies to a function on its left
               dyadic operator . (dot) applies to functions on left and right */
 
+/*
+   .@ identity transpose
+   -@ vertical transpose
+   |@ horizontal transpose
+   /@ transpose about the line y=-x 
+   \@ transpose about the line y=x
+   +@ horizontal, then vertical
+   <@ horizontal, then y=-x
+   >@ horizonatl, then y=x
+*/
 A transpose(A w,I f){
     A z;I j;I t;
-    if (w->r == 0){
+    if (w->r == 0){ // w is a scalar, promote to 1x1 matrix
         z=ga(0,2,(I[]){1,1});
         z->p[0] = w->p[0];
         w = z;
     }
-    if (w->r == 1){
+    if (w->r == 1){ // w is a vector, promote to 1-row matrix
         z=ga(0,2,(I[]){1,w->d[0]});
         mv(z->p,w->p,w->d[0]);
         w = z;
@@ -380,13 +390,17 @@ EX:
             }
             //printf("%d(%d) %d ",i, p, e[i]);
         }
-        //printf("%d\n", i);
+        printf("%d\n", i);
         if (e[i-1] != ')'){
             printf("err: unmatched parens\n");
             return (A)noun('0');
         }
-        e[i-1]=0;
-        a=(I)ex(e+1);
+        //e[i-1]=0;
+        //a=(I)ex(e+1);
+        I t = ma(i-1);
+        mv((I*)t,e+1,i-1);
+        ((I*)t)[i-2]=0;
+        a=(I)ex((I*)t);
         e+=i-1;
         d=w=e[1];
         goto EX;
