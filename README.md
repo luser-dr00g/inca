@@ -7,11 +7,16 @@ dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - 
 mon ops: / reduce  (.-|/\+><)@ transpose    dy op: . matrix product  
 variable _ is set to result of the previous command.
 
-based on the J-incunabulum,
-      http://www.jsoftware.com/jwiki/Essays/Incunabulum
-lightly extended to allow propagating specifications "a+2+a<3",
+Based on the J-incunabulum,  
+      http://www.jsoftware.com/jwiki/Essays/Incunabulum  
+and extended to allow propagating specifications "a+2+a<3",
 new functions minus,times,unbox. multi-digit integers.
 identity element for monadic use of minus,times,cat.
+
+The name "inca" was chosen for its obvious similarity to "incunabulum",
+as well as its obvious decomposition "In C, A",
+as well as the apparent similarity between array-structured data
+and the ancient Incan data-storage device, the quipu.
 
 The file inca.c compiles for me with cygwin32 gcc.
 The code does not consistently adhere to any particular
