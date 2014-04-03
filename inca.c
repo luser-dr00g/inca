@@ -318,12 +318,13 @@ V1(reverse){INT n=tr(w->r,w->d);ARC z=ga(0,w->r,w->d);
 }
 
 /*
-V2(encode)
-V2(decode)
-V2(leftrotate)
-V2(rightrotate)
+V2(encode) '['
+V2(decode) ']'
+V2(leftrotate) '{@'
+V2(rightrotate) '}@'
 V2(max)
 V2(min)
+remaining symbols '$' '\'' '"'
 */
 
 /* ';' */
@@ -458,7 +459,7 @@ ARC ex(INT*e){INT a=*e,w=e[1],d=w,o;
     }
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
-    if (a==COLON){
+    if (a==COLON){ /* monadic ':' denotes capture of remaining command string */
         int i;
         ARC _a;
         ++e;
@@ -469,9 +470,9 @@ EX:
         mv(_a->p,e,i);
         return (ARC)a;
     }
-    if (a=='('){
+    if (a=='('){ /* parenthesized subexpression */
         int i,p;
-        for(i=1,p=1;p&&e[i];i++){
+        for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
             switch(e[i]){
             case '(': ++p; break;
             case ')': --p; break;
@@ -485,10 +486,10 @@ EX:
         }
         //e[i-1]=0;
         //a=(INT)ex(e+1);
-        INT t = ma(i-1);
+        INT t = ma(i-1); /* copy subexpression and zero-terminate */
         mv((INT*)t,e+1,i-1);
         ((INT*)t)[i-2]=0;
-        a=(INT)ex((INT*)t);
+        a=(INT)ex((INT*)t); /* a=ex(subexpr) */
         e+=i-1;
         d=w=e[1];
         goto EX;
@@ -586,7 +587,12 @@ INT*wd(C*s){INT a,n=strlen(s),*e=(INT*)ma(n+1);C c;       /* allocate int-string
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with scalars and funcs with ints*/
     e[n]=0;return e;}    /* zero-terminate. nb. variables ('_'-'z') remain as ascii values */
 
-/* var('_')=REPL */
 int main(){C s[999];
+    int i;
+    for (i=0; i < sizeof(st)/sizeof*st; i++)
+        st[i]=noun('0');
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
-    while(putchar('\t'),gets(s))pr((ARC)(st[0]=(INT)ex(wd(s))));return 0;}  // st['_'-'_']
+    while(putchar('\t'),gets(s))          /* var('_')=REPL */
+        pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['_'-'_'] */
+    return 0;
+}
