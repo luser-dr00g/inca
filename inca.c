@@ -317,6 +317,17 @@ V1(reverse){INT n=tr(w->r,w->d);ARC z=ga(0,w->r,w->d);
     return z;
 }
 
+/* '@' rotate array w by scalar a, positive a rotates to the left */
+V2(rotate){INT n=tr(w->r,w->d),ap=*a->p;ARC z=ga(0,w->r,w->d);
+    if (ap < 0){
+        ap = n + ap;
+    }
+    ap %= n;
+    mv(z->p, w->p+ap, n-ap);
+    mv(z->p+(n-ap), w->p, ap);
+    return z;
+}
+
 /*
 V2(encode) '['
 V2(decode) ']'
@@ -350,25 +361,25 @@ void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
 INT st[28];
 INT qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
-enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR, RBRACE,
-                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,  EQUAL,  SEMI, COLON, NV};
-C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|', '}',
-                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@', '=',    ';',  ':',   0};
-ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus, 0,
-                     and, or,     unequal, compress, times, expand, 0,         0,   equal,  rowcat,match,0},
+enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
+                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,        EQUAL,  SEMI,   COLON, NV};
+C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',      '}',
+                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@',       '=',    ';',    ':',   0};
+ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,  0,
+                     and, or,     unequal, compress, times, expand, 0,         rotate,    equal,  rowcat, match,0},
  (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute, 0,
-                     0,   0,      not,  0,        0,     0,         0,         reverse, 0,  execute,0,   0};
-ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0, 0,
-                     0,   0,      0,    0,        dot,   0,         0,         0,   0,      0,    0,     0},
- (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0, 0,
-                     0,   0,      0,    reduce,   0,     0,         0,         transpose,0, 0,    0,     0};
-INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0, 0,
-                     '1', '0',    0,    0,        '0',   0,         0,         0,   0,      0,    0,     0};
+                     0,   0,      not,  0,        0,     0,         0,         reverse,   0,      execute,0,   0};
+ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
+                     0,   0,      0,    0,        dot,   0,         0,         0,         0,      0,      0,     0},
+ (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
+                     0,   0,      0,    reduce,   0,     0,         0,         transpose, 0,      0,      0,     0};
+INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,        0,
+                     '1', '0',    0,    0,        '0',   0,         0,         0,         0,      0,      0,     0};
 INT qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
 INT qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
 /* operators: monadic operator / (reduce) applies to a function on its left
-              monadic operator @ transpose/rotate function selected by function on its left
+              monadic operator @ transpose function selected by function on its left
               dyadic operator . (dot) applies to functions on left and right */
 
 /*
