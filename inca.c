@@ -40,10 +40,10 @@ ARC cp(ARC w){INT n=tr(w->r,w->d);
     return z;
 }
 
-//pack an array into a scalar (enclose)
+// '<' pack an array into a scalar (enclose)
 V1(box){ARC z=ga(1,0,0);*z->p=(INT)w;return z;}
 
-//unpack an array from a scalar (disclose)
+// '>' unpack an array from a scalar (disclose)
 V1(unbox){
     if (w->t) {
         if (w->r){
@@ -107,55 +107,84 @@ V1(unbox){
     else *z->p =op( *a->p, *w->p); \
     return z;
 
-/* iota: generate j=0 index vector */
+/* '~' iota: generate j=0 index vector */
 V1(iota){INT n=*w->p;ARC z=ga(0,1,&n);DO(n,z->p[i]=i);return z;}
 
 /* arithmetic/logical functions */
+
+/* '+' */
 V2(plus){
     //printf("plus %d %d\n", *a->p, *w->p);
     INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(+,plus)
 }
+
+/* '-' */
 V2(minus){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(-,minus)
 }
+
+/* '.' */
 V2(times){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(*,times)
 }
+
+/* '*' */
 V2(power){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OPF(pow,power)
 }
+
+/* '%' */
 V2(divide){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(/,divide)
 }
+
+/* '|' */
 V2(modulus){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     ARC t=a;a=w;w=t; //swap args: w%a
     OP(%,modulus)
 }
+
+/* '|' */
 V1(absolute){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=abs(w->p[i]));return z;
 }
+
+/* '&' */
 V2(and){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(&&,and)
 }
+
+/* '^' */
 V2(or){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(||,or)
 }
+
+/* '!' */
 V1(not){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=!w->p[i]);return z;}
+
+/* '=' */
 V2(equal){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(==,equal)
 }
+
+/* '!' */
 V2(unequal){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(!=,unequal)
 }
+
+/* '<' */
 V2(less){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(<,less)
 }
+
+/* '>' */
 V2(greater){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(>,greater)
 }
 
+/* ':' */
 V2(match){INT n;
     if (!!a->r | !!w->r){
         if (a->r == w->r){
@@ -170,18 +199,18 @@ V2(match){INT n;
     }
 }
 
-/* extract row from matrix or scalar from vector */
+/* '{' extract row from matrix or scalar from vector */
 V2(from){INT r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
     ARC z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);return z;}
 
-/* reshape w into a vector */
+/* ',' reshape w into a vector */
 V1(ravel){INT n=tr(w->r,w->d);ARC z=ga(0,1,&n);DO(n,z->p[i]=w->p[i]);return z;}
 
-/* catenate two arrays (yields a rank=1 vector) */
+/* ',' catenate two arrays (yields a rank=1 vector) */
 V2(cat){INT an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
     ARC z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);return z;}
 
-/* catenate two "rows", promoting (and padding) scalars and vectors as necessary */
+/* ';' catenate two "rows", promoting (and padding) scalars and vectors as necessary */
 V2(rowcat){ARC z;INT an;ARC b;
     /*
     printf("a->r=%d a->d=%d,%d,%d, w->r=%d w->d=%d,%d,%d\n",
@@ -230,19 +259,21 @@ V2(rowcat){ARC z;INT an;ARC b;
     return z;
 }
 
-/* use data in a as new dims for array containing data from w */
+/* '#' use data in a as new dims for array containing data from w */
 V2(reshape){INT r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
     ARC z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n);    //wn=min(wn,n) 
     if(n-=wn)mv(z->p+wn,z->p,n);return z;}
-/* return the dims of w */
+
+/* '#' return the dims of w */
 V1(shape){ARC z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
 
-/* return w unmolested */
+/* '+' return w unmolested */
 V1(identity){return w;}
-/* suspiciously similar to shape */
+
+/* '{' suspiciously similar to shape */
 V1(size){ARC z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
 
-/* catenate elements of w selected by nonzero elements of a */
+/* '/' catenate elements of w selected by nonzero elements of a */
 V2(compress){INT an=tr(a->r,a->d),n=0,j=0;
     DO(an,if(a->p[i])++n);
     ARC z=ga(0,1,&n);
@@ -250,7 +281,7 @@ V2(compress){INT an=tr(a->r,a->d),n=0,j=0;
     return z;
 }
 
-/* fill array with 0 or element from w by nonzero elements of a */
+/* '\' fill array with 0 or element from w by nonzero elements of a */
 V2(expand){
     INT an=tr(a->r,a->d);
     ARC z=ga(0,a->r,a->d);
@@ -258,7 +289,7 @@ V2(expand){
     return z;
 }
 
-/* dyadic iota: find index of a in w */
+/* '~' dyadic iota: find index of a in w */
 V2(find){INT wn=tr(w->r,w->d);ARC z=0; INT i;
     if(a->r==0){
         for(i=0;i<wn;i++){
@@ -280,12 +311,22 @@ V2(find){INT wn=tr(w->r,w->d);ARC z=0; INT i;
     }
     return z;
 }
-/* reverse elements in w */
+/* '@' reverse elements in w */
 V1(reverse){INT n=tr(w->r,w->d);ARC z=ga(0,w->r,w->d);
     DO(n,z->p[i]=w->p[n-1-i]);
     return z;
 }
 
+/*
+V2(encode)
+V2(decode)
+V2(leftrotate)
+V2(rightrotate)
+V2(max)
+V2(min)
+*/
+
+/* ';' */
 V1(execute){
     return ex(w->p);
 }
@@ -327,14 +368,14 @@ INT qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
               dyadic operator . (dot) applies to functions on left and right */
 
 /*
-   .@ identity transpose
-   -@ vertical transpose
-   |@ horizontal transpose
-   /@ transpose about the line y=-x 
-   \@ transpose about the line y=x
-   +@ horizontal, then vertical
-   <@ horizontal, then y=-x
-   >@ horizonatl, then y=x
+   '.@' identity transpose
+   '-@' vertical transpose
+   '|@' horizontal transpose
+   '/@' transpose about the line y=-x 
+   '\@' transpose about the line y=x
+   '+@' horizontal, then vertical
+   '<@' horizontal, then y=-x
+   '>@' horizonatl, then y=x
 */
 ARC transpose(ARC w,INT f){
     ARC z;INT j;INT t;
@@ -373,7 +414,7 @@ ARC transpose(ARC w,INT f){
     return z;
 }
 
-/* perform right-to-left reduction over array w using function f */
+/* 'f/' perform right-to-left reduction over array w using function f */
 ARC reduce(ARC w,INT f){
     INT r=w->r,*d=w->d,n=tr(r,d);
     //printf("reduce(%c): %u %u\n",vt[f-1],w,f); pr(w);
@@ -394,7 +435,7 @@ ARC reduce(ARC w,INT f){
     return z;
 }
 
-/* perform general matrix multiplication Af.gW ::== f/Ag'W
+/* 'f.g' perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
     return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
