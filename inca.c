@@ -320,8 +320,6 @@ V1(reverse){INT n=tr(w->r,w->d);ARC z=ga(0,w->r,w->d);
 /*
 V2(encode) '['
 V2(decode) ']'
-V2(leftrotate) '{@'
-V2(rightrotate) '}@'
 V2(max)
 V2(min)
 remaining symbols '$' '\'' '"'
@@ -352,24 +350,25 @@ void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
 INT st[28];
 INT qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
-enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,
+enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR, RBRACE,
                      AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,  EQUAL,  SEMI, COLON, NV};
-C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',
+C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|', 0,
                      '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@', '=',    ';',  ':',   0};
-ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,
+ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus, 0,
                      and, or,     unequal, compress, times, expand, 0,         0,   equal,  rowcat,match,0},
- (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute,
+ (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute, 0,
                      0,   0,      not,  0,        0,     0,         0,         reverse, 0,  execute,0,   0};
-ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,
+ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0, 0,
                      0,   0,      0,    0,        dot,   0,         0,         0,   0,      0,    0,     0},
- (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,
+ (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0, 0,
                      0,   0,      0,    reduce,   0,     0,         0,         transpose,0, 0,    0,     0};
-INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,
+INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0, 0,
                      '1', '0',    0,    0,        '0',   0,         0,         0,   0,      0,    0,     0};
 INT qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
 INT qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
 
 /* operators: monadic operator / (reduce) applies to a function on its left
+              monadic operator @ transpose/rotate function selected by function on its left
               dyadic operator . (dot) applies to functions on left and right */
 
 /*
@@ -461,8 +460,8 @@ ARC ex(INT*e){INT a=*e,w=e[1],d=w,o;
         a=*e;
         d=w=e[1];
     }
-    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
 EX:
+    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
     if (a==COLON){ /* monadic ':' denotes capture of remaining command string */
         int i;
         ARC _a;
@@ -506,7 +505,7 @@ EX:
             ++e;
             d=w=e[1];
         }
-        if (qo(w)){    /* if w is an operator, */
+        if (qo(w) && om[w]){    /* if w is a monadic operator, */
             return (*om[w])(ex(e+2),a);  /* call operator function with function a on result of ex(rem)*/
         }
         if (vm[m]==0&&vid[m]){  /* if no monadic verb, but there is a verb "identity" element, */
@@ -545,8 +544,37 @@ EX:
                     d=w=e[1];
                     goto EX;
                 }
-                if (qp(w)) w=(INT)cp((ARC)st[w-'_']); /* if it's a variable, substitute it */
                 e+=2;                  /*e:"Ac..."   advance the int-string pointer */
+                if (w=='('){ /* parenthesized subexpression */
+                    int i,p;
+                    for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
+                        switch(e[i]){
+                        case '(': ++p; break;
+                        case ')': --p; break;
+                        }
+                        //printf("%d(%d) %d ",i, p, e[i]);
+                    }
+                    //printf("%d\n", i);
+                    if (e[i-1] != ')'){
+                        printf("err: unmatched parens\n");
+                        return (ARC)noun('0');
+                    }
+                    //e[i-1]=0;
+                    //a=(INT)ex(e+1);
+                    INT t = ma(i-1); /* copy subexpression and zero-terminate */
+                    mv((INT*)t,e+1,i-1);
+                    ((INT*)t)[i-2]=0;
+                    w=(INT)ex((INT*)t); /* a=ex(subexpr) */
+                    e+=i-1;
+                    pr(a);
+                    pr(w);
+                    a=(INT)cat((ARC)a,(ARC)w);  // cat new integer w into integer vector a
+                    d=w=e[1];             /* update d and w to next int */
+                    goto EX;              /* tail-recurse */
+                }
+
+                if (qp(w)) w=(INT)cp((ARC)st[w-'_']); /* if it's a variable, substitute it */
+
                 d=e[1];                /* d is the next int */
                 while (d&&!qv(d)&&d!=' '){  /* if nonzero, not a verb, not a space, accumulate integer*/
                     if (qp(d)) d=(INT)cp((ARC)(st[d-'_']));  /* interpolate variable d? */
