@@ -7,7 +7,7 @@
 typedef char C;
 typedef intptr_t INT;
 typedef struct a{INT t,r,d[3],p[2];} *ARC;
-//t (type): t=0:regular array, t=1:boxed
+//t (type): t=0:regular array, t=1:boxed, t=2:captured command
 //r (rank): significant dims in d
 //d (dims): dimensions of p
 //p ("physical" data)is a flexible array member. why [2]? ??!
@@ -329,6 +329,10 @@ remaining symbols '$' '\'' '"'
 
 /* ';' */
 V1(execute){
+    if (w->t != 2){
+        printf("execute requires a command");
+        return (ARC)noun('0');
+    }
     return ex(w->p);
 }
 
@@ -336,7 +340,7 @@ void pi(i){printf("%d ",i);}
 void nl(){printf("\n");}
 void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
     DO(r,pi(d[i]));nl();
-    if(w->t)DO(n,printf("< ");pr((ARC)w->p[i]))else
+    if(w->t % 2)DO(n,printf("< ");pr((ARC)w->p[i]))else
     switch(r){
     case 0: pi(*w->p);nl();break;
     case 1: DO(n,pi(w->p[i]));nl(); break;
@@ -465,7 +469,7 @@ EX:
         ++e;
         for(i=0;e[i];i++) ;
         ++i;
-        a=(INT)ga(0,1,&i);
+        a=(INT)ga(2,1,&i);
         _a=(ARC)a;
         mv(_a->p,e,i);
         return (ARC)a;
