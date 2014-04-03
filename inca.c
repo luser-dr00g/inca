@@ -352,7 +352,7 @@ INT qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. n
 
 enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR, RBRACE,
                      AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,  EQUAL,  SEMI, COLON, NV};
-C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|', 0,
+C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|', '}',
                      '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@', '=',    ';',  ':',   0};
 ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus, 0,
                      and, or,     unequal, compress, times, expand, 0,         0,   equal,  rowcat,match,0},
@@ -461,7 +461,7 @@ ARC ex(INT*e){INT a=*e,w=e[1],d=w,o;
         d=w=e[1];
     }
 EX:
-    {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+    //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
     if (a==COLON){ /* monadic ':' denotes capture of remaining command string */
         int i;
         ARC _a;
@@ -566,8 +566,8 @@ EX:
                     ((INT*)t)[i-2]=0;
                     w=(INT)ex((INT*)t); /* a=ex(subexpr) */
                     e+=i-1;
-                    pr(a);
-                    pr(w);
+                    //pr(a);
+                    //pr(w);
                     a=(INT)cat((ARC)a,(ARC)w);  // cat new integer w into integer vector a
                     d=w=e[1];             /* update d and w to next int */
                     goto EX;              /* tail-recurse */
