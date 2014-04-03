@@ -146,6 +146,9 @@ V1(not){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
 V2(equal){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(==,equal)
 }
+V2(unequal){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
+    OP(!=,unequal)
+}
 V2(less){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     OP(<,less)
 }
@@ -308,7 +311,7 @@ enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS
 C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',
                      '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@', '=',    ';',  ':',   0};
 ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,
-                     and, or,     0,    compress, times, expand,    0,         0,   equal,  rowcat,match,0},
+                     and, or,     unequal, compress, times, expand, 0,         0,   equal,  rowcat,match,0},
  (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute,
                      0,   0,      not,  0,        0,     0,         0,         reverse, 0,  execute,0,   0};
 ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,
