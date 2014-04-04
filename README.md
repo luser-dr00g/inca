@@ -13,8 +13,8 @@ and extended to allow propagating specifications "a+2+a<3",
 new functions minus,times,unbox. multi-digit integers.
 identity element for monadic use of minus,times,cat.
 
-The name "inca" was chosen for its obvious similarity to "incunabulum",
-as well as its obvious decomposition "In C, A",
+The name "inca" was chosen for its similarity to "incunabulum",
+as well as its obvious (to me) decomposition "In C, A",
 as well as the apparent similarity between array-structured data
 and the ancient Incan data-storage device, the quipu.
 
