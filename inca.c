@@ -73,7 +73,9 @@ V1(unbox){
 //zero rank means arg is a scalar and ->p[0] is the value.
 //non-zero rank means arg is an array and ->p[0..n] contain the values
 //    where n is the total size of the array (Product of dims 0..r)
-#define OP(op,func) \
+#define OP(op,func,prehook) \
+    INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d); \
+    prehook; \
     if(a->t && w->t) \
         z = (ARC)box(func(unbox(a),unbox(w))); \
     else if(a->t) \
@@ -91,7 +93,9 @@ V1(unbox){
 
 //Perform C math function "op" upon args a and w
 //recursing for boxed args
-#define OPF(op,func) \
+#define OPF(op,func,prehook) \
+    INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d); \
+    prehook; \
     if(a->t && w->t) \
         z = (ARC)box(func(unbox(a),unbox(w))); \
     else if(a->t) \
@@ -115,34 +119,62 @@ V1(iota){INT n=*w->p;ARC z=ga(0,1,&n);DO(n,z->p[i]=i);return z;}
 /* '+' */
 V2(plus){
     //printf("plus %d %d\n", *a->p, *w->p);
-    INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(+,plus)
+    OP(+,plus,)
 }
 
 /* '-' */
-V2(minus){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(-,minus)
+V2(minus){
+    OP(-,minus,)
+}
+
+/* '&' */
+V2(and){
+    OP(&&,and,)
+}
+
+/* '^' */
+V2(or){
+    OP(||,or,)
 }
 
 /* '.' */
-V2(times){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(*,times)
+V2(times){
+    OP(*,times,)
 }
 
 /* '*' */
-V2(power){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OPF(pow,power)
+V2(power){
+    OPF(pow,power,)
 }
 
 /* '%' */
-V2(divide){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(/,divide)
+V2(divide){
+    OP(/,divide,)
+}
+
+/* '=' */
+V2(equal){
+    OP(==,equal,)
+}
+
+/* '!' */
+V2(unequal){
+    OP(!=,unequal,)
+}
+
+/* '<' */
+V2(less){
+    OP(<,less,)
+}
+
+/* '>' */
+V2(greater){
+    OP(>,greater,)
 }
 
 /* '|' */
-V2(modulus){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    ARC t=a;a=w;w=t; //swap args: w%a
-    OP(%,modulus)
+V2(modulus){
+    OP(%,modulus, ARC t=a;a=w;w=t;)  //swap args: w%a
 }
 
 /* '|' */
@@ -150,39 +182,10 @@ V1(absolute){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=abs(w->p[i]));return z;
 }
 
-/* '&' */
-V2(and){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(&&,and)
-}
-
-/* '^' */
-V2(or){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(||,or)
-}
-
 /* '!' */
 V1(not){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=!w->p[i]);return z;}
 
-/* '=' */
-V2(equal){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(==,equal)
-}
-
-/* '!' */
-V2(unequal){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(!=,unequal)
-}
-
-/* '<' */
-V2(less){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(<,less)
-}
-
-/* '>' */
-V2(greater){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    OP(>,greater)
-}
 
 /* ':' */
 V2(match){INT n;
@@ -474,7 +477,7 @@ ARC reduce(ARC w,INT f){
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
     return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
-    return reduce((*vd[g])(a,w),f);
+    //return reduce((*vd[g])(a,w),f);
 }
 
 INT digits(INT w){
