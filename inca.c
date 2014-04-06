@@ -199,9 +199,20 @@ V2(match){INT n;
     }
 }
 
-/* '{' extract row from matrix or scalar from vector */
-V2(from){INT r=w->r-1,*d=w->d+1,n=tr(r,d);n=n?n:1;
-    ARC z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);return z;}
+/* '{' extract row(s) from matrix or scalar from vector */
+V2(from){
+    if (a->r){ /* a non-scalar */
+        INT an=tr(a->r,a->d),r=w->r,*d=w->d+1,n=tr(r-1,d);
+        ARC z=ga(w->t,r,(INT[]){an,d[0],d[1]});
+        DO(an,mv(z->p+i,w->p+(n*a->p[i]),n));
+        return z;
+    } else {
+        INT r=w->r-1,*d=w->d+1,n=tr(r,d);
+        ARC z=ga(w->t,r,d);
+        mv(z->p,w->p+(n**a->p),n);
+        return z;
+    }
+}
 
 /* ',' reshape w into a vector */
 V1(ravel){INT n=tr(w->r,w->d);ARC z=ga(0,1,&n);DO(n,z->p[i]=w->p[i]);return z;}
@@ -261,7 +272,7 @@ V2(rowcat){ARC z;INT an;ARC b;
 
 /* '#' use data in a as new dims for array containing data from w */
 V2(reshape){INT r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
-    ARC z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n);    //wn=min(wn,n) 
+    ARC z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n);
     if(n-=wn)mv(z->p+wn,z->p,n);return z;}
 
 /* '#' return the dims of w */
@@ -361,6 +372,10 @@ void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
 INT st[28];
 INT qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
 
+#define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
+#define dotmask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
+#define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
+
 enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
                      AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,        EQUAL,  SEMI,   COLON, NV};
 C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',      '}',
@@ -373,6 +388,10 @@ ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,   
                      0,   0,      0,    0,        dot,   0,         0,         0,         0,      0,      0,     0},
  (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
                      0,   0,      0,    reduce,   0,     0,         0,         transpose, 0,      0,      0,     0};
+C odv[NV+1][NV+1] ={{0},  {0},    {0},  {0},      {0},       {0},   {0},   {0},   {0},   {0},     {0},      {0},
+                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},       {0},       {0},    {0},    {0},  {0}};
+C omv[NV+1][NV+1] ={{0},  {0},     {0},    {0},   {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},      {0},
+                     {0}, {0},    {0},  {reducemask},{0},{0},       {0},       {transposemask},{0},{0},   {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,        0,
                      '1', '0',    0,    0,        '0',   0,         0,         0,         0,      0,      0,     0};
 INT qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
@@ -425,6 +444,7 @@ ARC transpose(ARC w,INT f){
              z=transpose(transpose(w,MINUS),SLASH); break;
     case RANG:      // > backslash+horz
              z=transpose(transpose(w,MINUS),BACKSLASH); break;
+    //case RBRACE: // whoops!  z=from(a,reverse(w)); break;
     }
     return z;
 }
@@ -454,7 +474,7 @@ ARC reduce(ARC w,INT f){
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
     return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
-    //return reduce((*vd[g])(a,w),f);
+    return reduce((*vd[g])(a,w),f);
 }
 
 INT digits(INT w){
@@ -516,7 +536,7 @@ EX:
             ++e;
             d=w=e[1];
         }
-        if (qo(w) && om[w]){    /* if w is a monadic operator, */
+        if (qo(w) && om[w] && strchr(omv[m],w)){    /* if w is a monadic operator and v is in omv[m] */
             return (*om[w])(ex(e+2),a);  /* call operator function with function a on result of ex(rem)*/
         }
         if (vm[m]==0&&vid[m]){  /* if no monadic verb, but there is a verb "identity" element, */
@@ -531,7 +551,7 @@ EX:
             while (e[2]==' '){ /* eat space */
                 ++e;
             }
-            if (qo(o=e[2])){  /* if followed by an operator */
+            if (qo(o=e[2]) && od[o] && strchr(odv[o],w)){/* if followed by a dyadic operator and v is in odv[d] */
                 while (e[3]==' '){ /* eat space */
                     ++e;
                 }
@@ -630,10 +650,23 @@ INT*wd(C*s){INT a,n=strlen(s),*e=(INT*)ma(n+1);C c;       /* allocate int-string
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with scalars and funcs with ints*/
     e[n]=0;return e;}    /* zero-terminate. nb. variables ('_'-'z') remain as ascii values */
 
-int main(){C s[999];
+int main(int argc, char **argv){
+    C s[999];
     int i;
+    int an=0;
     for (i=0; i < sizeof(st)/sizeof*st; i++)
         st[i]=noun('0');
+    for (i=1; i < argc; i++)
+        an=an<strlen(argv[i])?strlen(argv[i]):an;
+    st[1]=(INT)ga(0,1,(INT[]){argc-1});
+    for (i=1; i < argc; i++){
+        ARC z=ga(2,1,(INT[]){strlen(argv[i])+1});
+        mv(z->p,wd(argv[i]),strlen(argv[i])+1);
+        z=box(z);
+        //pr(z);
+        //pr(unbox(z));
+        ((ARC)st[1])->p[i-1]=(INT)z;
+    }
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
     while(putchar('\t'),gets(s))          /* var('_')=REPL */
         pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['_'-'_'] */
