@@ -1,6 +1,7 @@
 inca
 ====
 
+Summary:
 monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
 dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
 &nbsp;&nbsp;    * pow  % divide  | mod  & and  ^ or  = eq  / compress  \ expand  
@@ -33,23 +34,23 @@ http://archive.vector.org.uk/trad/v094/hui094_85.pdf
 
 Implements monadic functions m  mW
 
-     + identity 
-     { size 
-     ~ iota 
-     < box 
-     # shape 
-     > unbox 
-     | absolute 
-     ! not 
-     @ reverse
+     + identity   +1  =>  1
+     { size      1 1 1  =>  3
+     ~ iota       ~9   =>   0 1 2 3 4 5 6 7 8
+     < box        <1 1 1  =>   <1 1 1  (bad example)
+     # shape      #~9  =>  9
+     > unbox      ><1 1 1  =>   1 1 1
+     | absolute    |-12   =>   12
+     ! not         !0 1 0   =>   1 0 1
+     @ reverse     @~9    =>   8 7 6 5 4 3 2 1 0
 
 dyadic functions d  AdW
 
-     + plus   (monadic: a=0)
-     { from 
-     ~ find
+     + plus
+     { from       2 3{@~9   =>   6 5
+     ~ find       6 5~@~9   =>   2 3
      < assign if a is a var (not really a function, but an interpreter action) 
-     # reshape 
+     # reshape
      , cat 
      ; rowcat
      - minus   (monadic: a=0)
@@ -60,8 +61,12 @@ dyadic functions d  AdW
      & and 
      ^ or 
      = equals?
+     ! not-equal?
+     < less-than   (if a is not a var, see assign above)
      / compress
      \ expand
+     : yield array of remaining command string
+     ; execute command string array
 
 monadic operators
 
