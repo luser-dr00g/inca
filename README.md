@@ -6,7 +6,7 @@ monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  
 dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
 &nbsp;&nbsp;    * pow  % divide  | mod  & and  ^ or  = eq  / compress  \ expand  
 mon ops: / reduce  (.-|/\+><)@ transpose    dy op: . matrix product  
-variable _ is set to result of the previous command.
+variable ` (backtick) is set to result of the previous command. (was underscore)
 
 Based on the J-incunabulum,  
       http://www.jsoftware.com/jwiki/Essays/Incunabulum  
@@ -87,8 +87,8 @@ dyadic operator
             plus over plus:   +.+
 
 over multidigit numbers and variables  
-     _ (underscore), ` (backtick), and a-z   
-_ (underscore) is set to the result of the previous line.   
+     ` (backtick), and a-z   
+` (backtick) is set to the result of the previous line.   (was underscore)
 
 The interpreter also implements a non-greedy "cat" for 
 number vectors separated by spaces. Hence `1 2 3+~3` => `1 3 5`
@@ -102,7 +102,9 @@ the behavior is undefined.
 If array operands have incompatible sizes, the behavior
 is undefined.
 
-Example session: monadic functions.
+Example (early) sessions: (underscore was the result of previous line, now backtick)
+
+monadic functions.
 
     josh@Z1 ~/inca
     $ ./inca

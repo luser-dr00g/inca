@@ -373,7 +373,7 @@ void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
 }
 
 INT st[28];
-INT qp(a){return a>='_'&&a<='z';}  /* int a is a variable iff '_' <= a <= 'z'. nb. '_'=='a'-2 */
+INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
 
 #define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
 #define dotmask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
@@ -397,8 +397,8 @@ C omv[NV+1][NV+1] ={{0},  {0},     {0},    {0},   {0},  {0},     {0},   {0},   {
                      {0}, {0},    {0},  {reducemask},{0},{0},       {0},       {transposemask},{0},{0},   {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,        0,
                      '1', '0',    0,    0,        '0',   0,         0,         0,         0,      0,      0,     0};
-INT qv(unsigned a){return a<'_'&&a<NV&&(vd[a]||vm[a]);}
-INT qo(unsigned a){return a<'_'&&a<NV&&(od[a]||om[a]);}
+INT qv(unsigned a){return a<'`'&&a<NV&&(vd[a]||vm[a]);}
+INT qo(unsigned a){return a<'`'&&a<NV&&(od[a]||om[a]);}
 
 /* operators: monadic operator / (reduce) applies to a function on its left
               monadic operator @ transpose function selected by function on its left
@@ -532,7 +532,7 @@ EX:
         goto EX;
     }
     /* if a is a variable followed by Left ANGle bracket, assign to variable result of ex(remainder) */
-    if(qp(a)&&w==LANG)return (ARC)(st[a-'_']=(INT)ex(e+2)); //use '<' for assignment
+    if(qp(a)&&w==LANG)return (ARC)(st[a-'`']=(INT)ex(e+2)); //use '<' for assignment
 
     if (qv(a)){INT m=a;  /* if a is a verb, it is in monadic position, so call it 'm' */
         while (w==' '){ /* eat space */
@@ -559,15 +559,15 @@ EX:
                     ++e;
                 }
                 w=(INT)ex(e+4);   /* w=ex(rem) */
-                if (qp(a)) a=(INT)cp((ARC)st[a-'_']); /* ex(w) may have assigned to var a; if so, load it */
+                if (qp(a)) a=(INT)cp((ARC)st[a-'`']); /* ex(w) may have assigned to var a; if so, load it */
                 return (*od[o])((ARC)a,d,e[3],(ARC)w);/*call dyadic operator e[2] with f=d(=w=e[1]),g=e[3] */
             }
             w=(INT)ex(e+2);   /* ::not followed by an operator, w=ex(rem) */
             //printf("lookup a\n");
-            if (qp(a)) a=st[a-'_'];  /* if a is a var, load it now */
+            if (qp(a)) a=st[a-'`'];  /* if a is a var, load it now */
             return (*vd[d])((ARC)a,(ARC)w);  /* call dyadic function */
         }
-        if (qp(a)) a=(INT)cp((ARC)st[a-'_']);  /* a is not function, w is not a function */
+        if (qp(a)) a=(INT)cp((ARC)st[a-'`']);  /* a is not function, w is not a function */
 
         if (w==' '){ //e:"a bc..." A=cat(a,b) concatenate space-delimited integer vector
             ARC _d,_w;
@@ -607,11 +607,11 @@ EX:
                     goto EX;              /* tail-recurse */
                 }
 
-                if (qp(w)) w=(INT)cp((ARC)st[w-'_']); /* if it's a variable, substitute it */
+                if (qp(w)) w=(INT)cp((ARC)st[w-'`']); /* if it's a variable, substitute it */
 
                 d=e[1];                /* d is the next int */
                 while (d&&!qv(d)&&d!=' '){  /* if nonzero, not a verb, not a space, accumulate integer*/
-                    if (qp(d)) d=(INT)cp((ARC)(st[d-'_']));  /* interpolate variable d? */
+                    if (qp(d)) d=(INT)cp((ARC)(st[d-'`']));  /* interpolate variable d? */
                     _d=(ARC)d;                          /* treat d like a pointer */
                     if (_d->r==0){                    /* if scalar */
                         _w=(ARC)w;                      /* treat w like a pointer */
@@ -630,7 +630,7 @@ EX:
         } else {  // not verb, not a space  // accumulate integer
             ARC _a,_w;
             _a=(ARC)a;
-            if (qp(w)) w=(INT)cp((ARC)(st[w-'_']));  /* interpolate variable w? */
+            if (qp(w)) w=(INT)cp((ARC)(st[w-'`']));  /* interpolate variable w? */
             _w=(ARC)w;  /* treat a and w like pointers */
             if (_a->r==0 && _w->r==0){  /* a and w both scalar */
                 *_w->p+=*_a->p*pow(10,digits(*_w->p));     /* w = w + a*10^digits(d) */
@@ -641,7 +641,7 @@ EX:
             }
         }
     }
-    if (qp(a)) a=(INT)cp((ARC)st[a-'_']); /*a not a function, w is zero (end-string). load var a if a is a var */
+    if (qp(a)) a=(INT)cp((ARC)st[a-'`']); /*a not a function, w is zero (end-string). load var a if a is a var */
     if (a==0)return (ARC)noun('0');  /* if somehow a is zero (the end of string), return scalar zero */
     return (ARC)a;             /* return a, whatever it is now, a non-null "something", hopefully */
 }
@@ -651,7 +651,7 @@ INT noun(c){ARC z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (INT)z
 INT verb(c){INT i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
 INT*wd(C*s){INT a,n=strlen(s),*e=(INT*)ma(n+1);C c;       /* allocate int-string */
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with scalars and funcs with ints*/
-    e[n]=0;return e;}    /* zero-terminate. nb. variables ('_'-'z') remain as ascii values */
+    e[n]=0;return e;}    /* zero-terminate. nb. variables ('`'-'z') remain as ascii values */
 
 int main(int argc, char **argv){
     C s[999];
@@ -671,7 +671,7 @@ int main(int argc, char **argv){
         ((ARC)st[1])->p[i-1]=(INT)z;
     }
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
-    while(putchar('\t'),gets(s))          /* var('_')=REPL */
-        pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['_'-'_'] */
+    while(putchar('\t'),gets(s))          /* var('`')=REPL */
+        pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['`'-'`'] */
     return 0;
 }
