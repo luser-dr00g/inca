@@ -43,6 +43,8 @@ Implements monadic functions m  mW
      | absolute    |-12   =>   12
      ! not         !0 1 0   =>   1 0 1
      @ reverse     @~9    =>   8 7 6 5 4 3 2 1 0
+     : yield array of remaining command string
+     ; execute command string array
 
 dyadic functions d  AdW
 
@@ -62,11 +64,10 @@ dyadic functions d  AdW
      ^ or 
      = equals?
      ! not-equal?
+     : match
      < less-than   (if a is not a var, see assign above)
      / compress
      \ expand
-     : yield array of remaining command string
-     ; execute command string array
 
 monadic operators
 
