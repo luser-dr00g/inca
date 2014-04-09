@@ -301,15 +301,15 @@ V2(rowcat){ARC z;INT an;ARC b;
     switch(a->r){
     case 0:
         switch(w->r){
-        case 0: z=ga(0,2,(INT[]){2,1}); break;
-        case 1: z=ga(0,2,(INT[]){2,w->d[0]});
-                b=ga(0,1,w->d);
+        case 0: z=ga(w->t,2,(INT[]){2,1}); break;
+        case 1: z=ga(w->t,2,(INT[]){2,w->d[0]});
+                b=ga(w->t,1,w->d);
                 *b->p=*a->p;
                 memset(b->p+1,0,tr(b->r,b->d)-1);
                 a=b;
                 break;
-        default: z=ga(0,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]});
-                 b=ga(0,w->r-1,(INT[]){w->d[1],w->d[2]});
+        default: z=ga(w->t,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]});
+                 b=ga(w->t,w->r-1,(INT[]){w->d[1],w->d[2]});
                  *b->p=*a->p;
                  memset(b->p+1,0,tr(b->r,b->d)-1);
                  a=b;
@@ -318,16 +318,16 @@ V2(rowcat){ARC z;INT an;ARC b;
         break;
     case 1:
         switch(w->r){
-        case 0: z=ga(0,2,(INT[]){2,a->d[0]}); break;
-        case 1: z=ga(0,2,(INT[]){2,a->d[0]}); break;
-        default: z=ga(0,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]}); break;
+        case 0: z=ga(w->t,2,(INT[]){2,a->d[0]}); break;
+        case 1: z=ga(w->t,2,(INT[]){2,a->d[0]}); break;
+        default: z=ga(w->t,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]}); break;
         }
         break;
     default:
         switch(w->r){
-        case 0: z=ga(0,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
-        case 1: z=ga(0,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
-        default: z=ga(0,a->r,(INT[]){a->d[0]+w->d[0],a->d[1],a->d[2]}); break;
+        case 0: z=ga(w->t,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
+        case 1: z=ga(w->t,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
+        default: z=ga(w->t,a->r,(INT[]){a->d[0]+w->d[0],a->d[1],a->d[2]}); break;
         }
         break;
     }
