@@ -444,23 +444,23 @@ INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. n
 #define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
 
 enum   {ZERO,          PLUS,   LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
-                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,        EQUAL,  SEMI,   COLON, NV};
+                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE, DBLQUOTE,    AT,        EQUAL,  SEMI,   COLON, NV};
 C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',      '}',
-                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@',       '=',    ';',    ':',   0};
+                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',  '\"',        '@',       '=',    ';',    ':',   0};
 ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,  0,
-                     and, or,     unequal, compress, times, expand, 0,         rotate,    equal,  rowcat, match,0},
+                     and, or,     unequal, compress, times, expand, 0,     0,           rotate,    equal,  rowcat, match,0},
  (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute, 0,
-                     0,   0,      not,  0,        0,     0,         0,         reverse,   0,      execute,0,   0};
+                     0,   0,      not,  0,        0,     0,         0,     0,           reverse,   0,      execute,0,   0};
 ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
-                     0,   0,      0,    0,        dot,   0,         0,         0,         0,      0,      0,     0},
+                     0,   0,      0,    0,        dot,   0,         0,     0,           0,         0,      0,      0,     0},
  (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
-                     0,   0,      0,    reduce,   0,     0,         0,         transpose, 0,      0,      0,     0};
+                     0,   0,      0,    reduce,   0,     0,         0,     0,           transpose, 0,      0,      0,     0};
 C odv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
-                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},       {0},       {0},    {0},    {0},   {0}};
+                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},   {0},         {0},       {0},    {0},    {0},   {0}};
 C omv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
-                     {0}, {0},    {0},  {reducemask},{0},   {0},    {0},       {transposemask},{0},{0},   {0},   {0}};
-INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,        0,
-                     '1', '0',    0,    0,        '0',   0,         0,         0,         0,      0,      0,     0};
+                     {0}, {0},    {0},  {reducemask},{0},   {0},    {0},   {0},         {transposemask},{0},{0},   {0},   {0}};
+INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,     '0',   '2',   '1',     0,       0,
+                     '1', '0',    0,    0,        '0',   0,         0,     0,           0,         0,      0,      0,     0};
 INT qv(unsigned a){return a<'`'&&a<NV&&(vd[a]||vm[a]);}
 INT qo(unsigned a){return a<'`'&&a<NV&&(od[a]||om[a]);}
 
