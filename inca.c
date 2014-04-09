@@ -95,9 +95,9 @@ V2(from){
     ARC ind=(ARC)noun('0'),zero=(ARC)noun('0'); \
     INT wn=tr(w->r-1,w->d+1); \
     INT an=tr(a->r-1,a->d+1); \
-    printf("%s %d %d\n", #func, *a->p, *w->p); \
-    pr(a); \
-    pr(w); \
+    /*printf("%s %d %d\n", #func, *a->p, *w->p);*/ \
+    /*pr(a);*/ \
+    /*pr(w);*/ \
     prehook; \
     if(a->t && w->t) \
         z = (ARC)box(func(unbox(a),unbox(w))); \
@@ -170,8 +170,8 @@ V2(from){
         z=ga(0,0,0); \
         *z->p = (*a->p) op (*w->p); \
     } \
-    printf("=>\n"); \
-    pr(z); \
+    /*printf("=>\n");*/ \
+    /*pr(z);*/ \
     return z;
 
 //Perform C math function "op" upon args a and w
