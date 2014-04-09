@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,6 +13,7 @@ typedef struct a{INT t,r,d[3],p[2];} *ARC;
 //d (dims): dimensions of p
 //p ("physical" data)is a flexible array member. why [2]? ??!
 
+void pr(ARC w);
 ARC ex(INT*e);
 ARC reduce(ARC w,INT f);
 ARC transpose(ARC w,INT f);
@@ -414,7 +416,7 @@ V2(encode) '['
 V2(decode) ']'
 V2(max)
 V2(min)
-remaining symbols '$' '\'' '"'
+remaining symbols '$' '\'' '"' '_'
 */
 
 /* ';' */
@@ -432,19 +434,6 @@ V1(execute){
         return z;
     }
     return ex(w->p);
-}
-
-void pi(i){printf("%d ",i);}
-void nl(){printf("\n");}
-void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
-    DO(r,pi(d[i]));nl();
-    if(w->t % 2)DO(n,printf("< ");pr((ARC)w->p[i]))else
-    switch(r){
-    case 0: pi(*w->p);nl();break;
-    case 1: DO(n,pi(w->p[i]));nl(); break;
-    case 2: DO(d[0], j=i;DO(d[1],pi(w->p[j*d[1]+i]));nl();); break;
-    case 3: DO(d[0], k=i;DO(d[1], j=i;DO(d[2],pi(w->p[(k*d[1]+j)*d[2] +i]));nl();)nl();nl();); break;
-    }
 }
 
 INT st[28];
@@ -559,6 +548,40 @@ ARC dot(ARC a,INT f,INT g,ARC w){
     //return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
     //return reduce((*vd[g])(transpose(a,BACKSLASH),w),f);
     //return reduce((*vd[g])(a,w),f);
+}
+
+void pi(INT i){printf("%d ",i);}
+void nl(){printf("\n");}
+void no(){}
+void pv(INT i){
+    if (i==0)
+        printf("\n");
+    else if (abs(i) < NV)
+        printf("%c", vt[abs(i)-1]);
+    else if (abs(i) < 255) {
+        if (isprint(i))
+            printf("%c", i);
+        else
+            printf("0%o", i);
+    } else
+        //pr((ARC)i);
+        printf("%d", ((ARC)i)->p[0]);
+}
+void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
+    void (*p)(INT) = pi;
+    void (*eol)() = nl;
+    DO(r,p(d[i]));eol();
+    if(w->t == 2){
+        p = pv;
+        eol = no;
+    }
+    if(w->t % 2)DO(n,printf("< ");pr((ARC)w->p[i]))else
+    switch(r){
+    case 0: p(*w->p);eol();break;
+    case 1: DO(n,p(w->p[i]));eol(); break;
+    case 2: DO(d[0], j=i;DO(d[1],p(w->p[j*d[1]+i]));eol();); break;
+    case 3: DO(d[0], k=i;DO(d[1], j=i;DO(d[2],p(w->p[(k*d[1]+j)*d[2] +i]));eol();)eol();eol();); break;
+    }
 }
 
 INT digits(INT w){
