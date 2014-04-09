@@ -419,9 +419,17 @@ remaining symbols '$' '\'' '"'
 
 /* ';' */
 V1(execute){
+    ARC zero = (ARC)noun('0');
     if (w->t != 2){
         printf("execute requires a command");
-        return (ARC)noun('0');
+        return zero;
+    }
+    if (w->r>1){ //execute each "row", return result of last row
+        INT n=w->d[0];
+        ARC z;
+        ARC ind = zero;
+        DO(n,*ind->p=i;z=ex(from(ind,w)->p));
+        return z;
     }
     return ex(w->p);
 }
