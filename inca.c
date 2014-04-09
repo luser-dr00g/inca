@@ -19,6 +19,9 @@ ARC dot(ARC a,INT f,INT g,ARC w);
 
 #define V1(f) ARC f(ARC w)
 #define V2(f) ARC f(ARC a,ARC w)
+V2(plus);
+V2(minus);
+
 #define DO(n,x) {INT i=0,_n=(n);for(;i<_n;++i){x;}}
 
 //malloc an array
@@ -64,17 +67,37 @@ V1(unbox){
         return w;
 }
 
+/* '{' extract row(s) from matrix or scalar from vector */
+V2(from){
+    if (a->r){ /* a non-scalar */
+        INT an=tr(a->r,a->d),r=w->r,*d=w->d+1,n=tr(r-1,d);
+        ARC z=ga(w->t,r,(INT[]){an,d[0],d[1]});
+        DO(an,mv(z->p+i,w->p+(n*a->p[i]),n));
+        return z;
+    } else {
+        INT r=w->r-1,*d=w->d+1,n=tr(r,d);
+        ARC z=ga(w->t,r,d);
+        mv(z->p,w->p+(n**a->p),n);
+        return z;
+    }
+}
+
 //Perform C operation "op" upon left arg 'a' and right arg 'w' (alpha and wmega)
 //recursing to the calling function func for boxed args
 //allow a or w to be scalar
 //nb. ->t is the type field (1==boxed,0==normal)
 //    ->r is the "rank" field, how many dimensions of data (0..3)?
-//for this macro, the actual value of rank is not important just zero/non-zero.
 //zero rank means arg is a scalar and ->p[0] is the value.
 //non-zero rank means arg is an array and ->p[0..n] contain the values
 //    where n is the total size of the array (Product of dims 0..r)
 #define OP(op,func,prehook) \
-    INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d); \
+    INT r=w->r,*d=w->d,n=tr(r,d);ARC z; \
+    ARC ind=(ARC)noun('0'),zero=(ARC)noun('0'); \
+    INT wn=tr(w->r-1,w->d+1); \
+    INT an=tr(a->r-1,a->d+1); \
+    printf("%s %d %d\n", #func, *a->p, *w->p); \
+    pr(a); \
+    pr(w); \
     prehook; \
     if(a->t && w->t) \
         z = (ARC)box(func(unbox(a),unbox(w))); \
@@ -82,13 +105,73 @@ V1(unbox){
         z = (ARC)func(unbox(a),w); \
     else if(w->t) \
         z = (ARC)func(a,unbox(w)); \
-    else if(a->r && w->r) \
-        DO(n,z->p[i]=(a->p[i]) op (w->p[i])) \
-    else if(w->r) \
+    else if(a->r>1 && w->r>1) { /* both higher rank */\
+        if (a->d[0]>1 && w->d[0]>1) { \
+            r=a->r>w->r?a->r:w->r; \
+            d=(INT[]){a->d[0],w->d[1],w->d[2]}; \
+            n=d[0]; \
+            z=ga(0,r,d); \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(ind, w))->p,wn)) \
+        } else if (w->d[0]>1) { \
+            z=ga(0,r,d); \
+            n=d[0]; \
+            /*printf("w->d[0]>1\n");*/ \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(zero, a), from(ind, w))->p,wn)) \
+        } else if (a->d[0]>1) { \
+            r=a->r;d=a->d; \
+            n=d[0]; \
+            z=ga(0,r,(INT[]){d[0],w->d[1],w->d[2]}); \
+            /*printf("a->d[0]>1\n");*/ \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(zero, w))->p,wn)) \
+        } else { \
+            /*z=ga(0,r,d);*/ \
+            /*DO(n,z->p[i]=(a->p[i]) op (w->p[i]))*/ \
+            z=func(from(zero,a), from(zero,w)); \
+        } \
+    } else if (w->r>1) { /* w higher but not a */\
+        n=d[0]; \
+        z=ga(0,r,d); \
+        /*printf("w->d[0]>1\n");*/ \
+        if (a->r) \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(zero, a), from(ind, w))->p,wn)) \
+        else \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(a, from(ind, w))->p,wn)) \
+    } else if (a->r>1) { /* a higher but not w */\
+        r=a->r;d=a->d;n=d[0]; \
+        z=ga(0,r,d); \
+        /*printf("a->d[0]>1\n");*/ \
+        if (w->r) \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(zero, w))->p,wn)) \
+        else \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), w)->p,wn)) \
+    } else if(a->r && w->r) { /* both rank 1 */\
+        if (a->d[0]>1 && w->d[0]>1){ \
+            z=ga(0,r,d); \
+            DO(n,z->p[i]=(a->p[i]) op (w->p[i])) \
+            /*z=func(from(zero,a), from(zero,w));*/ \
+        } else if (w->d[0]>1) { \
+            z=ga(0,r,d); \
+            DO(n,z->p[i]=(*a->p) op (w->p[i])) \
+        } else if (a->d[0]>1) { \
+            z=ga(0,r,d); \
+            DO(n,z->p[i]=(a->p[i]) op (*w->p)) \
+        } else { \
+            z=ga(0,r,d); \
+            DO(n,*z->p=(*a->p) op (*w->p)) \
+        } \
+    } else if(w->r) { /* w rank 1 but not a */\
+        z=ga(0,r,d); \
+        /*DO(n,*ind->p=i;mv(z->p+i*wn,func(a, from(ind, w))->p,wn))*/ \
         DO(n,z->p[i]=(*a->p) op (w->p[i])) \
-    else if(a->r) /* w is scalar: allocate z with dims from a */ \
-        { n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
-    else *z->p = (*a->p) op (*w->p); \
+    } else if(a->r) { /* w is scalar: allocate z with dims from a */ \
+        /*{ n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,*ind->p=i;mv(z->p+i*an,func(from(ind, a), w)->p,an)) }*/ \
+        { n=tr(a->r,a->d); z=ga(0,a->r,a->d);DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
+    } else { /* both scalar */\
+        z=ga(0,0,0); \
+        *z->p = (*a->p) op (*w->p); \
+    } \
+    printf("=>\n"); \
+    pr(z); \
     return z;
 
 //Perform C math function "op" upon args a and w
@@ -118,7 +201,6 @@ V1(iota){INT n=*w->p;ARC z=ga(0,1,&n);DO(n,z->p[i]=i);return z;}
 
 /* '+' */
 V2(plus){
-    //printf("plus %d %d\n", *a->p, *w->p);
     OP(+,plus,)
 }
 
@@ -199,21 +281,6 @@ V2(match){INT n;
         return (ARC)noun('0');
     } else {
         return (ARC)noun('0' + (*a->p==*w->p));
-    }
-}
-
-/* '{' extract row(s) from matrix or scalar from vector */
-V2(from){
-    if (a->r){ /* a non-scalar */
-        INT an=tr(a->r,a->d),r=w->r,*d=w->d+1,n=tr(r-1,d);
-        ARC z=ga(w->t,r,(INT[]){an,d[0],d[1]});
-        DO(an,mv(z->p+i,w->p+(n*a->p[i]),n));
-        return z;
-    } else {
-        INT r=w->r-1,*d=w->d+1,n=tr(r,d);
-        ARC z=ga(w->t,r,d);
-        mv(z->p,w->p+(n**a->p),n);
-        return z;
     }
 }
 
@@ -379,7 +446,7 @@ INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. n
 #define dotmask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
 #define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
 
-enum   {               PLUS=1, LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
+enum   {ZERO,          PLUS,   LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
                      AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE,     AT,        EQUAL,  SEMI,   COLON, NV};
 C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',      '}',
                      '&', '^',    '!',  '/',      '.',   '\\',      '\'',      '@',       '=',    ';',    ':',   0};
@@ -391,10 +458,10 @@ ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,   
                      0,   0,      0,    0,        dot,   0,         0,         0,         0,      0,      0,     0},
  (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
                      0,   0,      0,    reduce,   0,     0,         0,         transpose, 0,      0,      0,     0};
-C odv[NV+1][NV+1] ={{0},  {0},    {0},  {0},      {0},       {0},   {0},   {0},   {0},   {0},     {0},      {0},
-                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},       {0},       {0},    {0},    {0},  {0}};
-C omv[NV+1][NV+1] ={{0},  {0},     {0},    {0},   {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},      {0},
-                     {0}, {0},    {0},  {reducemask},{0},{0},       {0},       {transposemask},{0},{0},   {0},   {0}};
+C odv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
+                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},       {0},       {0},    {0},    {0},   {0}};
+C omv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
+                     {0}, {0},    {0},  {reducemask},{0},   {0},    {0},       {transposemask},{0},{0},   {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,    '0',   '2',    '1',     0,        0,
                      '1', '0',    0,    0,        '0',   0,         0,         0,         0,      0,      0,     0};
 INT qv(unsigned a){return a<'`'&&a<NV&&(vd[a]||vm[a]);}
@@ -447,7 +514,6 @@ ARC transpose(ARC w,INT f){
              z=transpose(transpose(w,MINUS),SLASH); break;
     case RANG:      // > backslash+horz
              z=transpose(transpose(w,MINUS),BACKSLASH); break;
-    //case RBRACE: // whoops!  z=from(a,reverse(w)); break;
     }
     return z;
 }
@@ -476,7 +542,14 @@ ARC reduce(ARC w,INT f){
 /* 'f.g' perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
-    return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
+    if (f == AT)
+        //return vd[g](transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH));
+        return vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH));
+    else
+        return reduce(vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH)),f);
+    //return reduce((*vd[g])(transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH)),f);
+    //return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
+    //return reduce((*vd[g])(transpose(a,BACKSLASH),w),f);
     //return reduce((*vd[g])(a,w),f);
 }
 
@@ -539,7 +612,7 @@ EX:
             ++e;
             d=w=e[1];
         }
-        if (qo(w) && om[w] && strchr(omv[m],w)){    /* if w is a monadic operator and v is in omv[m] */
+        if (qo(w) && om[w] && strchr(omv[w],a)){    /* if w is a monadic operator and a is in omv[m] */
             return (*om[w])(ex(e+2),a);  /* call operator function with function a on result of ex(rem)*/
         }
         if (vm[m]==0&&vid[m]){  /* if no monadic verb, but there is a verb "identity" element, */
