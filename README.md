@@ -83,8 +83,11 @@ monadic operators
 dyadic operator
 
      . matrix product Af.gW => f/Ag\@W
-        eg. plus over times:  +..
-            plus over plus:   +.+
+       ( @ for the left function designates "jot-dot", a null-scan over the matrix product )
+        eg. plus over times:       +..
+            plus over plus:        +.+
+            addition table:        @.+
+            multiplication table:  @..
 
 over multidigit numbers and variables  
      ` (backtick), and a-z   
