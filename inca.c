@@ -659,11 +659,11 @@ EX:
                 return (ARC)noun('0');
             }
             //INT t = ma(i-1); /* copy subexpression and zero-terminate */
-            INT t = ga(2,1,(INT[]){i-1});
-            ARC _t = t;
+            ARC _t = ga(2,1,(INT[]){i-1});
+            INT t = (INT)_t;
             mv(_t->p,e+1,i-1);
             _t->p[i-2]=0;
-            pr(t);
+            //pr(t);
             a=t;
             e+=i-1;
         }
@@ -671,7 +671,7 @@ EX:
         INT y,z;
         ARC _a;
         y=(INT)ex(e+1); /* execute remainder */
-        pr(y);
+        //pr(y);
         holdy = st['y'-'`'];
         holdz = st['z'-'`'];
         st['y'-'`'] = y; /* specify arg */
@@ -705,22 +705,44 @@ EX:
     if (w){  /* both ifs have failed. so w is not assignment and a is not a function */
         if (w==DBLQUOTE){ /* dyadic function call */
             w=e[2];
+            ++e;
             if (qp(w)){
                 w=st[w-'`'];
                 ++e;
             } else if (w=='('){
+                int i,p;
+                ++e;
+                for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
+                    switch(e[i]){
+                    case '(': ++p; break;
+                    case ')': --p; break;
+                    }
+                    //printf("%d(%d) %d ",i, p, e[i]);
+                }
+                if (e[i-1] != ')'){
+                    printf("err: unmatched parens\n");
+                    return (ARC)noun('0');
+                }
+                //INT t = ma(i-1); /* copy subexpression and zero-terminate */
+                ARC _t = ga(2,1,(INT[]){i-1});
+                INT t = (INT)_t;
+                mv(_t->p,e+1,i-1);
+                _t->p[i-2]=0;
+                //pr(t);
+                w=t;
+                e+=i-1;
             }
             INT holdx, holdy, holdz;
             INT x,y,z;
             ARC _w;
-            pr((ARC)w);
+            //pr((ARC)a);
+            //pr((ARC)w);
             if (qp(a)) a=(INT)cp((ARC)st[a-'`']);  /* a is not function, w is not a function */
             x=a;
-            ++e;
-        {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+        //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
             y=(INT)ex(e+1);
-            pr((ARC)x);
-            pr((ARC)y);
+            //pr((ARC)x);
+            //pr((ARC)y);
             holdx = st['x'-'`'];
             holdy = st['y'-'`'];
             holdz = st['z'-'`'];
