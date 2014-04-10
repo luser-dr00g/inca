@@ -46,7 +46,7 @@ ARC cp(ARC w){INT n=tr(w->r,w->d);
 }
 
 // '<' pack an array into a scalar (enclose)
-V1(box){ARC z=ga(1,0,0);*z->p=(INT)w;return z;}
+V1(box){ARC z=ga(w->t|1,0,0);*z->p=(INT)w;return z;}
 
 // '>' unpack an array from a scalar (disclose)
 V1(unbox){
@@ -422,19 +422,23 @@ remaining symbols '$' '\'' '"' '_'
 /* ';' */
 V1(execute){
     ARC zero = (ARC)noun('0');
-    if (w->t != 2){
+    ARC z;
+    if (!(w->t & 2)){
         printf("execute requires a command");
         return zero;
     }
     if (w->r>1){ //execute each "row", return result of last row
         INT n=w->d[0];
-        ARC z;
         ARC ind = zero;
         DO(n,*ind->p=i;z=ex(from(ind,w)->p));
         return z;
     }
-    return ex(w->p);
+    z = ex(w->p);
+    return z;
 }
+
+V1(mfunc){ } /* handled specially in ex() */
+V2(dfunc){ }
 
 INT st[28];
 INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
@@ -448,9 +452,9 @@ enum   {ZERO,          PLUS,   LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS
 C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',      '}',
                      '&', '^',    '!',  '/',      '.',   '\\',      '\'',  '\"',        '@',       '=',    ';',    ':',   0};
 ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,  0,
-                     and, or,     unequal, compress, times, expand, 0,     0,           rotate,    equal,  rowcat, match,0},
+                     and, or,     unequal, compress, times, expand, 0,     dfunc,       rotate,    equal,  rowcat, match,0},
  (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute, 0,
-                     0,   0,      not,  0,        0,     0,         0,     0,           reverse,   0,      execute,0,   0};
+                     0,   0,      not,  0,        0,     0,         mfunc, 0,           reverse,   0,      execute,0,   0};
 ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
                      0,   0,      0,    0,        dot,   0,         0,     0,           0,         0,      0,      0,     0},
  (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
@@ -635,6 +639,29 @@ EX:
         d=w=e[1];
         goto EX;
     }
+    if (a==QUOTE){ /* monadic function call */
+        if (qp(w)){
+            a=st[w-'`'];
+            ++e;
+            d=w=e[1];
+        } else if (w=='('){
+        }
+        INT holdy,holdz;
+        INT y,z;
+        ARC _a;
+        y=(INT)ex(e+1); /* execute remainder */
+        pr(y);
+        holdy = st['y'-'`'];
+        holdz = st['z'-'`'];
+        st['y'-'`'] = y; /* specify arg */
+        st['z'-'`'] = 0;
+        _a = (ARC)a;
+        z=(INT)ex(_a->p); /* call proc */
+        if (st['z'-'`']) z=st['z'-'`']; /* z was specified, return value from z, else value from expression */
+        st['y'-'`'] = holdy;
+        st['z'-'`'] = holdz;
+        return (ARC)z;
+    }
     /* if a is a variable followed by Left ANGle bracket, assign to variable result of ex(remainder) */
     if(qp(a)&&w==LANG)return (ARC)(st[a-'`']=(INT)ex(e+2)); //use '<' for assignment
 
@@ -654,6 +681,8 @@ EX:
     }
 
     if (w){  /* both ifs have failed. so w is not assignment and a is not a function */
+        if (w==DBLQUOTE){ /* dyadic function (boxed proc) call */
+        }
         if (qv(w)){  /* if w is a verb, */
             while (e[2]==' '){ /* eat space */
                 ++e;
