@@ -716,10 +716,10 @@ EX:
             pr((ARC)w);
             x=a;
             ++e;
-        //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+        {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
             y=(INT)ex(e+1);
-            //pr((ARC)x);
-            //pr((ARC)y);
+            pr((ARC)x);
+            pr((ARC)y);
             holdx = st['x'-'`'];
             holdy = st['y'-'`'];
             holdz = st['z'-'`'];

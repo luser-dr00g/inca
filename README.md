@@ -18,6 +18,7 @@ The name "inca" was chosen for its similarity to "incunabulum",
 as well as its obvious (to me) decomposition "In C, A",
 as well as the apparent similarity between array-structured data
 and the ancient Incan data-storage device, the quipu.
+http://en.wikipedia.org/wiki/Quipu
 
 The file inca.c compiles for me with cygwin32 gcc.
 The code does not consistently adhere to any particular
