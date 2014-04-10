@@ -714,6 +714,7 @@ EX:
             INT x,y,z;
             ARC _w;
             pr((ARC)w);
+            if (qp(a)) a=(INT)cp((ARC)st[a-'`']);  /* a is not function, w is not a function */
             x=a;
             ++e;
         {int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
