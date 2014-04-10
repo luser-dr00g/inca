@@ -677,7 +677,8 @@ EX:
         st['y'-'`'] = y; /* specify arg */
         st['z'-'`'] = 0;
         _a = (ARC)a;
-        z=(INT)ex(_a->p); /* call proc */
+        //z=(INT)ex(_a->p); /* call proc */
+        z=(INT)execute(_a);
         if (st['z'-'`']) z=st['z'-'`']; /* z was specified, return value from z, else value from expression */
         st['y'-'`'] = holdy;
         st['z'-'`'] = holdz;
@@ -726,7 +727,8 @@ EX:
             st['y'-'`'] = y;
             st['z'-'`'] = 0;
             _w = (ARC)w;
-            z=(INT)ex(_w->p);
+            //z=(INT)ex(_w->p);
+            z=(INT)execute(_w);
             //pr((ARC)z);
             if (st['z'-'`']) z=st['z'-'`']; /* z was specified, return value from z, else value from expression */
             st['x'-'`'] = holdx;
