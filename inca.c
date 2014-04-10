@@ -645,6 +645,28 @@ EX:
             ++e;
             d=w=e[1];
         } else if (w=='('){
+            int i,p;
+            ++e;
+            for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
+                switch(e[i]){
+                case '(': ++p; break;
+                case ')': --p; break;
+                }
+                printf("%d(%d) %d ",i, p, e[i]);
+            }
+            if (e[i-1] != ')'){
+                printf("err: unmatched parens\n");
+                return (ARC)noun('0');
+            }
+            //INT t = ma(i-1); /* copy subexpression and zero-terminate */
+            INT t = ga(2,1,(INT[]){i-1});
+            ARC _t = t;
+            mv(_t->p,e+1,i-1);
+            _t->p[i-2]=0;
+            //{int i;for(i=0;((INT*)t)[i];i++)printf("%d ",((INT*)t)[i]);printf("\n");} // dump command-"string"
+            //pr(t);
+            a=t;
+            e+=i-1;
         }
         INT holdy,holdz;
         INT y,z;
