@@ -663,8 +663,7 @@ EX:
             ARC _t = t;
             mv(_t->p,e+1,i-1);
             _t->p[i-2]=0;
-            //{int i;for(i=0;((INT*)t)[i];i++)printf("%d ",((INT*)t)[i]);printf("\n");} // dump command-"string"
-            //pr(t);
+            pr(t);
             a=t;
             e+=i-1;
         }
@@ -703,7 +702,37 @@ EX:
     }
 
     if (w){  /* both ifs have failed. so w is not assignment and a is not a function */
-        if (w==DBLQUOTE){ /* dyadic function (boxed proc) call */
+        if (w==DBLQUOTE){ /* dyadic function call */
+            w=e[2];
+            if (qp(w)){
+                w=st[w-'`'];
+                ++e;
+            } else if (w=='('){
+            }
+            INT holdx, holdy, holdz;
+            INT x,y,z;
+            ARC _w;
+            pr((ARC)w);
+            x=a;
+            ++e;
+        //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
+            y=(INT)ex(e+1);
+            //pr((ARC)x);
+            //pr((ARC)y);
+            holdx = st['x'-'`'];
+            holdy = st['y'-'`'];
+            holdz = st['z'-'`'];
+            st['x'-'`'] = x; /* specify args */
+            st['y'-'`'] = y;
+            st['z'-'`'] = 0;
+            _w = (ARC)w;
+            z=(INT)ex(_w->p);
+            //pr((ARC)z);
+            if (st['z'-'`']) z=st['z'-'`']; /* z was specified, return value from z, else value from expression */
+            st['x'-'`'] = holdx;
+            st['y'-'`'] = holdy;
+            st['z'-'`'] = holdz;
+            return (ARC)z;
         }
         if (qv(w)){  /* if w is a verb, */
             while (e[2]==' '){ /* eat space */
