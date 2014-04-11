@@ -263,13 +263,16 @@ V2(modulus){
 }
 
 /* '|' */
-V1(absolute){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
+V1(absolute){
+    INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=abs(w->p[i]));return z;
 }
 
 /* '!' */
-V1(not){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
-    DO(n,z->p[i]=!w->p[i]);return z;}
+V1(not){
+    INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
+    DO(n,z->p[i]=!w->p[i]);return z;
+}
 
 
 /* ':' */
@@ -296,6 +299,9 @@ V2(cat){INT an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
 
 /* ';' catenate two "rows", promoting (and padding) scalars and vectors as necessary */
 V2(rowcat){ARC z;INT an;ARC b;
+    INT t=0;
+    t|=(a->t&1)&(w->t&1);
+    t|=(a->t&2)&(w->t&2);
     /*
     printf("a->r=%d a->d=%d,%d,%d, w->r=%d w->d=%d,%d,%d\n",
             a->r, a->d[0], a->d[1], a->d[2],
@@ -304,15 +310,15 @@ V2(rowcat){ARC z;INT an;ARC b;
     switch(a->r){
     case 0:
         switch(w->r){
-        case 0: z=ga(w->t,2,(INT[]){2,1}); break;
-        case 1: z=ga(w->t,2,(INT[]){2,w->d[0]});
-                b=ga(w->t,1,w->d);
+        case 0: z=ga(t,2,(INT[]){2,1}); break;
+        case 1: z=ga(t,2,(INT[]){2,w->d[0]});
+                b=ga(t,1,w->d);
                 *b->p=*a->p;
                 memset(b->p+1,0,tr(b->r,b->d)-1);
                 a=b;
                 break;
-        default: z=ga(w->t,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]});
-                 b=ga(w->t,w->r-1,(INT[]){w->d[1],w->d[2]});
+        default: z=ga(t,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]});
+                 b=ga(t,w->r-1,(INT[]){w->d[1],w->d[2]});
                  *b->p=*a->p;
                  memset(b->p+1,0,tr(b->r,b->d)-1);
                  a=b;
@@ -321,16 +327,16 @@ V2(rowcat){ARC z;INT an;ARC b;
         break;
     case 1:
         switch(w->r){
-        case 0: z=ga(w->t,2,(INT[]){2,a->d[0]}); break;
-        case 1: z=ga(w->t,2,(INT[]){2,a->d[0]}); break;
-        default: z=ga(w->t,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]}); break;
+        case 0: z=ga(t,2,(INT[]){2,a->d[0]}); break;
+        case 1: z=ga(t,2,(INT[]){2,a->d[0]}); break;
+        default: z=ga(t,w->r,(INT[]){w->d[0]+1,w->d[1],w->d[2]}); break;
         }
         break;
     default:
         switch(w->r){
-        case 0: z=ga(w->t,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
-        case 1: z=ga(w->t,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
-        default: z=ga(w->t,a->r,(INT[]){a->d[0]+w->d[0],a->d[1],a->d[2]}); break;
+        case 0: z=ga(t,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
+        case 1: z=ga(t,a->r,(INT[]){a->d[0]+1,a->d[1],a->d[2]}); break;
+        default: z=ga(t,a->r,(INT[]){a->d[0]+w->d[0],a->d[1],a->d[2]}); break;
         }
         break;
     }
@@ -417,7 +423,7 @@ V2(encode) '['
 V2(decode) ']'
 V2(max)
 V2(min)
-remaining symbols '$' '\'' '"' '_'
+remaining symbols '$' '_'
 */
 
 /* ';' */
@@ -438,6 +444,13 @@ V1(execute){
     return z;
 }
 
+/* '$' */
+V1(makeexe){
+    ARC z=w;
+    z->t|=2;
+    return z;
+}
+
 V1(mfunc){ } /* handled specially in ex() */
 V2(dfunc){ }
 
@@ -449,23 +462,32 @@ INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. n
 #define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
 
 enum   {ZERO,          PLUS,   LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
-                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE, DBLQUOTE,    AT,        EQUAL,  SEMI,   COLON, NV};
+                     AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE, DBLQUOTE,    AT,        EQUAL,  SEMI,
+                     COLON, DOLLAR, UNDER, NV};
 C vt[]={               '+',    '{',    '~',   '<',  '#',     ',',   '>',   '-',   '*',   '%',     '|',      '}',
-                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',  '\"',        '@',       '=',    ';',    ':',   0};
+                     '&', '^',    '!',  '/',      '.',   '\\',      '\'',  '\"',        '@',       '=',    ';', 
+                     ':',   '$',    '_',   0};
 ARC(*vd[])(ARC,ARC)={0,plus,   from,   find,  less, reshape, cat, greater, minus, power, divide,  modulus,  0,
-                     and, or,     unequal, compress, times, expand, 0,     dfunc,       rotate,    equal,  rowcat, match,0},
+                     and, or,     unequal, compress, times, expand, 0,     dfunc,       rotate,    equal,  rowcat,
+                     match, 0,      0,     0},
  (*vm[])(ARC)={0,      identity, size, iota,  box,  shape,   ravel, unbox, 0,     0,     0,       absolute, 0,
-                     0,   0,      not,  0,        0,     0,         mfunc, 0,           reverse,   0,      execute,0,   0};
+                     0,   0,      not,  0,        0,     0,         mfunc, 0,           reverse,   0,      execute,
+                     0,     makeexe,0,     0};
 ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
-                     0,   0,      0,    0,        dot,   0,         0,     0,           0,         0,      0,      0,     0},
+                     0,   0,      0,    0,        dot,   0,         0,     0,           0,         0,      0,
+                     0,     0,      0,     0},
  (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
-                     0,   0,      0,    reduce,   0,     0,         0,     0,           transpose, 0,      0,      0,     0};
+                     0,   0,      0,    reduce,   0,     0,         0,     0,           transpose, 0,      0,
+                     0,     0,      0,     0};
 C odv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
-                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},   {0},         {0},       {0},    {0},    {0},   {0}};
+                     {0}, {0},    {0},  {0},      {dotmask},{0},    {0},   {0},         {0},       {0},    {0},
+                     {0},   {0},    {0},   {0}};
 C omv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
-                     {0}, {0},    {0},  {reducemask},{0},   {0},    {0},   {0},         {transposemask},{0},{0},   {0},   {0}};
+                     {0}, {0},    {0},  {reducemask},{0},   {0},    {0},   {0},         {transposemask},{0},{0},
+                     {0},   {0},    {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,     '0',   '2',   '1',     0,       0,
-                     '1', '0',    0,    0,        '0',   0,         0,     0,           0,         0,      0,      0,     0};
+                     '1', '0',    0,    0,        '0',   0,         0,     0,           0,         0,      0,
+                     0,     0,      0,     0};
 INT qv(unsigned a){return a<'`'&&a<NV&&(vd[a]||vm[a]);}
 INT qo(unsigned a){return a<'`'&&a<NV&&(od[a]||om[a]);}
 
@@ -839,6 +861,7 @@ EX:
             }
         } else {  // not verb, not a space  // accumulate integer
             ARC _a,_w;
+	
             _a=(ARC)a;
             if (qp(w)) w=(INT)cp((ARC)(st[w-'`']));  /* interpolate variable w? */
             _w=(ARC)w;  /* treat a and w like pointers */
