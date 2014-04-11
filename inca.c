@@ -88,6 +88,7 @@ V2(from){
 //recursing to the calling function func for boxed args
 //allow a or w to be scalar
 //nb. ->t is the type field (1==boxed,0==normal)
+//                           2==command_string, 3==boxed+command_string
 //    ->r is the "rank" field, how many dimensions of data (0..3)?
 //zero rank means arg is a scalar and ->p[0] is the value.
 //non-zero rank means arg is an array and ->p[0..n] contain the values
@@ -101,11 +102,11 @@ V2(from){
     /*pr(a);*/ \
     /*pr(w);*/ \
     prehook; \
-    if(a->t && w->t) \
+    if(a->t&1 && w->t&1) \
         z = (ARC)box(func(unbox(a),unbox(w))); \
-    else if(a->t) \
+    else if(a->t&1) \
         z = (ARC)func(unbox(a),w); \
-    else if(w->t) \
+    else if(w->t&1) \
         z = (ARC)func(a,unbox(w)); \
     else if(a->r>1 && w->r>1) { /* both higher rank */\
         if (a->d[0]>1 && w->d[0]>1) { \
@@ -870,11 +871,11 @@ int main(int argc, char **argv){
         st[i]=noun('0');
     for (i=1; i < argc; i++)
         an=an<strlen(argv[i])?strlen(argv[i]):an;
-    st[1]=(INT)ga(0,1,(INT[]){argc-1});
+    st[1]=(INT)ga(3,1,(INT[]){argc-1});
     for (i=1; i < argc; i++){
         ARC z=ga(2,1,(INT[]){strlen(argv[i])+1});
         mv(z->p,wd(argv[i]),strlen(argv[i])+1);
-        z=box(z);
+        //z=box(z);
         //pr(z);
         //pr(unbox(z));
         ((ARC)st[1])->p[i-1]=(INT)z;
