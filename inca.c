@@ -54,7 +54,7 @@ V1(unbox){
         if (w->r){
             int i,r,n=tr(w->r,w->d);
             ARC t=(ARC)*w->p;
-            ARC z=ga(0,2,(INT[]){n,t->d[0],t->d[1]});
+            ARC z=ga(0,1,(INT[]){n,t->d[0],t->d[1]});
             for(i=0,r=0; i<n; i++){
                 int tn;
                 t=(ARC)w->p[i];
@@ -86,6 +86,7 @@ V2(from){
 
 //Perform C operation "op" upon left arg 'a' and right arg 'w' (alpha and wmega)
 //recursing to the calling function func for boxed args
+//          and for decomposing matrices into vectors and vectors down to scalars.
 //allow a or w to be scalar
 //nb. ->t is the type field (1==boxed,0==normal)
 //                           2==command_string, 3==boxed+command_string
@@ -98,42 +99,48 @@ V2(from){
     ARC ind=(ARC)noun('0'),zero=(ARC)noun('0'); \
     INT wn=tr(w->r-1,w->d+1); \
     INT an=tr(a->r-1,a->d+1); \
+    INT ty=a->t|w->t; \
     /*printf("%s %d %d\n", #func, *a->p, *w->p);*/ \
     /*pr(a);*/ \
     /*pr(w);*/ \
     prehook; \
-    if(a->t&1 && w->t&1) \
+    if(a->t&1 && w->t&1) { \
         z = (ARC)box(func(unbox(a),unbox(w))); \
-    else if(a->t&1) \
-        z = (ARC)func(unbox(a),w); \
-    else if(w->t&1) \
-        z = (ARC)func(a,unbox(w)); \
-    else if(a->r>1 && w->r>1) { /* both higher rank */\
+    } else if(a->t&1) { \
+        z = (ARC)box(func(unbox(a),w)); \
+    } else if(w->t&1) { \
+        if (w->r){ \
+            z=ga(ty,1,&n); \
+            DO(n,z->p[i]=(INT)func(a,(ARC)w->p[i])); \
+        } else { \
+            z = (ARC)box(func(a,unbox(w))); \
+        } \
+    } else if(a->r>1 && w->r>1) { /* both higher rank */\
         if (a->d[0]>1 && w->d[0]>1) { \
             r=a->r>w->r?a->r:w->r; \
             d=(INT[]){a->d[0],w->d[1],w->d[2]}; \
             n=d[0]; \
-            z=ga(0,r,d); \
+            z=ga(ty,r,d); \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(ind, w))->p,wn)) \
         } else if (w->d[0]>1) { \
-            z=ga(0,r,d); \
+            z=ga(ty,r,d); \
             n=d[0]; \
             /*printf("w->d[0]>1\n");*/ \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(zero, a), from(ind, w))->p,wn)) \
         } else if (a->d[0]>1) { \
             r=a->r;d=a->d; \
             n=d[0]; \
-            z=ga(0,r,(INT[]){d[0],w->d[1],w->d[2]}); \
+            z=ga(ty,r,(INT[]){d[0],w->d[1],w->d[2]}); \
             /*printf("a->d[0]>1\n");*/ \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(zero, w))->p,wn)) \
         } else { \
-            /*z=ga(0,r,d);*/ \
+            /*z=ga(ty,r,d);*/ \
             /*DO(n,z->p[i]=(a->p[i]) op (w->p[i]))*/ \
             z=func(from(zero,a), from(zero,w)); \
         } \
     } else if (w->r>1) { /* w higher but not a */\
         n=d[0]; \
-        z=ga(0,r,d); \
+        z=ga(ty,r,d); \
         /*printf("w->d[0]>1\n");*/ \
         if (a->r) \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(zero, a), from(ind, w))->p,wn)) \
@@ -141,7 +148,7 @@ V2(from){
             DO(n,*ind->p=i;mv(z->p+i*wn,func(a, from(ind, w))->p,wn)) \
     } else if (a->r>1) { /* a higher but not w */\
         r=a->r;d=a->d;n=d[0]; \
-        z=ga(0,r,d); \
+        z=ga(ty,r,d); \
         /*printf("a->d[0]>1\n");*/ \
         if (w->r) \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(zero, w))->p,wn)) \
@@ -149,28 +156,28 @@ V2(from){
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), w)->p,wn)) \
     } else if(a->r && w->r) { /* both rank 1 */\
         if (a->d[0]>1 && w->d[0]>1){ \
-            z=ga(0,r,d); \
+            z=ga(ty,r,d); \
             DO(n,z->p[i]=(a->p[i]) op (w->p[i])) \
             /*z=func(from(zero,a), from(zero,w));*/ \
         } else if (w->d[0]>1) { \
-            z=ga(0,r,d); \
+            z=ga(ty,r,d); \
             DO(n,z->p[i]=(*a->p) op (w->p[i])) \
         } else if (a->d[0]>1) { \
-            z=ga(0,r,d); \
+            z=ga(ty,r,d); \
             DO(n,z->p[i]=(a->p[i]) op (*w->p)) \
         } else { \
-            z=ga(0,r,d); \
+            z=ga(ty,r,d); \
             DO(n,*z->p=(*a->p) op (*w->p)) \
         } \
     } else if(w->r) { /* w rank 1 but not a */\
-        z=ga(0,r,d); \
+        z=ga(ty,r,d); \
         /*DO(n,*ind->p=i;mv(z->p+i*wn,func(a, from(ind, w))->p,wn))*/ \
         DO(n,z->p[i]=(*a->p) op (w->p[i])) \
     } else if(a->r) { /* w is scalar: allocate z with dims from a */ \
-        /*{ n=tr(a->r,a->d); z=ga(0,a->r,a->d); DO(n,*ind->p=i;mv(z->p+i*an,func(from(ind, a), w)->p,an)) }*/ \
-        { n=tr(a->r,a->d); z=ga(0,a->r,a->d);DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
+        /*{ n=tr(a->r,a->d); z=ga(ty,a->r,a->d); DO(n,*ind->p=i;mv(z->p+i*an,func(from(ind, a), w)->p,an)) }*/ \
+        { n=tr(a->r,a->d); z=ga(ty,a->r,a->d);DO(n,z->p[i]=(a->p[i]) op (*w->p)) } \
     } else { /* both scalar */\
-        z=ga(0,0,0); \
+        z=ga(ty,0,0); \
         *z->p = (*a->p) op (*w->p); \
     } \
     /*printf("=>\n");*/ \
@@ -198,7 +205,20 @@ V2(from){
     return z;
 
 /* '~' iota: generate j=0 index vector */
-V1(iota){INT n=*w->p;ARC z=ga(0,1,&n);DO(n,z->p[i]=i);return z;}
+V1(iota){
+    if (w->t&1){
+        INT n=*unbox(w)->p;
+        ARC z=ga(1,1,&n);
+        ARC ind;
+        DO(n,ind=(ARC)noun('0');*ind->p=i;z->p[i]=(INT)ind);
+        return z;
+    } else {
+        INT n=*w->p;
+        ARC z=ga(0,1,&n);
+        DO(n,z->p[i]=i);
+        return z;
+    }
+}
 
 /* arithmetic/logical functions */
 
@@ -365,9 +385,20 @@ V1(size){ARC z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
 
 /* '/' catenate elements of w selected by nonzero elements of a */
 V2(compress){INT an=tr(a->r,a->d),n=0,j=0;
-    DO(an,if(a->p[i])++n);
-    ARC z=ga(0,1,&n);
-    DO(an,if(a->p[i])z->p[j++]=w->p[i]);
+    ARC z;
+    //printf("compress\n"); pr(a); pr(w);
+    if (a->r>1){
+        ARC ind=(ARC)noun('0');
+        z=0;
+        if(a->d[0]) z=box(compress(from(ind,a),w));  // make a box-array to allow for ragged right edges
+        DO(a->d[0]-1,*ind->p=i+1;z=rowcat(z,box(compress(from(ind,a),w))))
+    } else {
+        //DO(an,if(a->p[i])++n)
+        DO(an,n+=!!a->p[i])
+        z=ga(0,1,&n);
+        DO(an,if(a->p[i])z->p[j++]=w->p[i])
+    }
+    //pr(z);
     return z;
 }
 
@@ -381,15 +412,7 @@ V2(expand){
 
 /* '~' dyadic iota: find index of a in w */
 V2(find){INT wn=tr(w->r,w->d);ARC z=0; INT i;
-    if(a->r==0){
-        for(i=0;i<wn;i++){
-            if(*a->p==w->p[i]){
-                z=ga(0,0,0);
-                *z->p=i;
-                return z;
-            }
-        }
-    }else{
+    if(a->r){
         INT an=tr(a->r,a->d);
         ARC ind=(ARC)noun('0');
         z=ga(0,a->r,a->d);
@@ -398,9 +421,18 @@ V2(find){INT wn=tr(w->r,w->d);ARC z=0; INT i;
             ind=find(from(ind,a),w);
             z->p[i]=*ind->p;
         }
+    }else{
+        for(i=0;i<wn;i++){
+            if(*a->p==w->p[i]){
+                z=ga(0,0,0);
+                *z->p=i;
+                return z;
+            }
+        }
     }
     return z;
 }
+
 /* '@' reverse elements in w */
 V1(reverse){INT n=tr(w->r,w->d);ARC z=ga(0,w->r,w->d);
     DO(n,z->p[i]=w->p[n-1-i]);
@@ -448,6 +480,7 @@ V1(execute){
 V1(makeexe){
     ARC z=w;
     z->t|=2;
+    z->t&=~1;
     return z;
 }
 
@@ -457,8 +490,8 @@ V2(dfunc){ }
 INT st[28];
 INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
 
-#define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
-#define dotmask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0
+#define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
+#define dotmask    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
 #define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
 
 enum   {ZERO,          PLUS,   LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
@@ -486,7 +519,7 @@ C omv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0}, 
                      {0}, {0},    {0},  {reducemask},{0},   {0},    {0},   {0},         {transposemask},{0},{0},
                      {0},   {0},    {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,     '0',   '2',   '1',     0,       0,
-                     '1', '0',    0,    0,        '0',   0,         0,     0,           0,         0,      0,
+                     '1', '0',    0,    0,        '1',   0,         0,     0,           0,         0,      0,
                      0,     0,      0,     0};
 INT qv(unsigned a){return a<'`'&&a<NV&&(vd[a]||vm[a]);}
 INT qo(unsigned a){return a<'`'&&a<NV&&(od[a]||om[a]);}
@@ -548,17 +581,29 @@ ARC reduce(ARC w,INT f){
     //printf("reduce(%c): %u %u\n",vt[f-1],w,f); pr(w);
     ARC z=(ARC)noun(vid[f]);   /* default left arg for w=scalar */
     //printf("n = %d, z = %d, *w->p = %d\n", n, *z->p, *w->p); fflush(0);
-    if (w->r){             /* w!=scalar */
-        ARC ind = (ARC)noun('0'); /* ind is a scalar for use with from() */
-        *ind->p = n-1;        /* set payload of ind to last element of w */
-        //printf("*ind->p=%d\n",*ind->p);
-        z = from(ind,w);      /* get last element of w */
-        //printf("z=%d,*z->p=%d\n",z,*z->p);
-        //printf("w->p[n-1]=%d\n",w->p[n-1]);
-        //z = w->p[n-1];       /* loop right->left through w. f(w[0],f(...f(w[n-3],f(w[n-2],w[n-1])))) */
-        DO(n-1,*ind->p=n-2-i;z=(*vd[f])(from(ind,w),z);/*printf("z = %d\n", *z->p);*/);
+    if (w->t&1){
+        if (w->r){
+            //z=(ARC)w->p[n-1]; DO(n-1,z=vd[f]((ARC)w->p[n-2-i],z))
+            if (w->d[0]){
+                z=reduce((ARC)w->p[0],f);
+                DO(n-1,z=rowcat(z,reduce((ARC)w->p[i+1],f)));
+            } // else return vid
+        } else {
+            z=vd[f](z,(ARC)*w->p);
+        }
+    } else if (w->r){             /* w!=scalar */
+        if (w->d[0]){
+            ARC ind = (ARC)noun('0'); /* ind is a scalar for use with from() */
+            *ind->p = n-1;        /* set payload of ind to last element of w */
+            //printf("*ind->p=%d\n",*ind->p);
+            z = from(ind,w);      /* get last element of w */
+            //printf("z=%d,*z->p=%d\n",z,*z->p);
+            //printf("w->p[n-1]=%d\n",w->p[n-1]);
+            //z = w->p[n-1];       /* loop right->left through w. f(w[0],f(...f(w[n-3],f(w[n-2],w[n-1])))) */
+            DO(n-1,*ind->p=n-2-i;z=vd[f](from(ind,w),z);/*printf("z = %d\n", *z->p);*/);
+        } // else return vid
     } else {
-        z=(*vd[f])(z,w);  /* ie. return f(vid[f],w) if w is a scalar */
+        z=vd[f](z,w);  /* ie. return f(vid[f],w) if w is a scalar */
     }
     return z;
 }
@@ -566,15 +611,30 @@ ARC reduce(ARC w,INT f){
 /* 'f.g' perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
-    if (f == AT)
+    if (f == AT) {
         //return vd[g](transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH));
-        return vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH));
-    else
-        return reduce(vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH)),f);
-    //return reduce((*vd[g])(transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH)),f);
-    //return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
-    //return reduce((*vd[g])(transpose(a,BACKSLASH),w),f);
-    //return reduce((*vd[g])(a,w),f);
+        //return vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH));
+        if (a->r < 2) {
+            //a=transpose(transpose(a,BACKSLASH),BACKSLASH);
+            //w=transpose(w,BACKSLASH);
+            a=transpose(a,BACKSLASH);
+            w=transpose(transpose(w,BACKSLASH),BACKSLASH);
+        }
+        return vd[g](a, w);
+    } else {
+        if (a->r < 2) {
+            //a=transpose(transpose(a,BACKSLASH),BACKSLASH);
+            //w=transpose(w,BACKSLASH);
+            a=transpose(a,BACKSLASH);
+            w=transpose(transpose(w,BACKSLASH),BACKSLASH);
+        }
+        return reduce(vd[g](a, w), f);
+        //return reduce(vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH)),f);
+        //return reduce((*vd[g])(transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH)),f);
+        //return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
+        //return reduce((*vd[g])(transpose(a,BACKSLASH),w),f);
+        //return reduce((*vd[g])(a,w),f);
+    }
 }
 
 void pi(INT i){printf("%d ",i);}
