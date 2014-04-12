@@ -371,8 +371,10 @@ V2(rowcat){ARC z;INT an;ARC b;
 
 /* '#' use data in a as new dims for array containing data from w */
 V2(reshape){INT r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
-    ARC z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n);
-    if(n-=wn)mv(z->p+wn,z->p,n);return z;}
+    ARC z=ga(w->t,r,a->p);
+    mv(z->p,w->p,wn);
+    while(n-=wn)mv(z->p+wn,z->p,n);
+    return z;}
 
 /* '#' return the dims of w */
 V1(shape){ARC z=ga(0,1,&w->r);mv(z->p,w->d,w->r);return z;}
