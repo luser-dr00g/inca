@@ -614,29 +614,20 @@ ARC reduce(ARC w,INT f){
 /* 'f.g' perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
-    if (f == AT) {
-        //return vd[g](transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH));
-        //return vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH));
+    if (f == AT) { // f==AT indicates a "jot dot" with no secondary scan
         if (a->r < 2) {
-            //a=transpose(transpose(a,BACKSLASH),BACKSLASH);
-            //w=transpose(w,BACKSLASH);
             a=transpose(a,BACKSLASH);
             w=transpose(transpose(w,BACKSLASH),BACKSLASH);
         }
         return vd[g](a, w);
     } else {
+#if 0
         if (a->r < 2) {
-            //a=transpose(transpose(a,BACKSLASH),BACKSLASH);
-            //w=transpose(w,BACKSLASH);
             a=transpose(a,BACKSLASH);
             w=transpose(transpose(w,BACKSLASH),BACKSLASH);
         }
+#endif
         return reduce(vd[g](a, w), f);
-        //return reduce(vd[g](transpose(a,BACKSLASH),transpose(transpose(w,BACKSLASH),BACKSLASH)),f);
-        //return reduce((*vd[g])(transpose(transpose(a,BACKSLASH),BACKSLASH),transpose(w,BACKSLASH)),f);
-        //return reduce((*vd[g])(a,transpose(w,BACKSLASH)),f);
-        //return reduce((*vd[g])(transpose(a,BACKSLASH),w),f);
-        //return reduce((*vd[g])(a,w),f);
     }
 }
 
