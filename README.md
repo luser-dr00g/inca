@@ -46,6 +46,8 @@ Implements monadic functions m  mW
      @ reverse     @~9    =>   8 7 6 5 4 3 2 1 0
      : yield array of remaining command string
      ; execute command string array
+     $ convert array to command-string type
+     'w  call function w with y as right arg
 
 dyadic functions d  AdW
 
@@ -69,6 +71,7 @@ dyadic functions d  AdW
      < less-than   (if a is not a var, see assign above)
      / compress
      \ expand
+     "w  call function w with x as left arg and y as right arg
 
 monadic operators
 
@@ -92,8 +95,8 @@ dyadic operator
             multiplication table:  @..
 
 over multidigit numbers and variables  
-     ` (backtick), and a-z   
-` (backtick) is set to the result of the previous line.   (was underscore)
+     <pre>`</pre> (backtick), and [a-z]   
+<pre>`</pre> (backtick) is set to the result of the previous line.   (was underscore)
 
 The interpreter also implements a non-greedy "cat" for 
 number vectors separated by spaces. Hence `1 2 3+~3` => `1 3 5`
@@ -107,12 +110,13 @@ the behavior is undefined.
 If array operands have incompatible sizes, the behavior
 is undefined.
 
-Example (early) sessions: (underscore was the result of previous line, now backtick)
+Example sessions: 
 
 monadic functions.
 
     josh@Z1 ~/inca
-    $ ./inca
+    $ !.
+    ./inca
             +5
 
     5 
@@ -122,6 +126,9 @@ monadic functions.
             ~9
     9 
     0 1 2 3 4 5 6 7 8 
+            ~0
+    0 
+
             <12
 
     < 
@@ -129,9 +136,6 @@ monadic functions.
             #1 2 3;4 5 6
     2 
     2 3 
-            ><12
-
-    12 
             |-25
 
     25 
@@ -151,15 +155,18 @@ monadic functions.
     1 4 7 10 
     2 5 8 11 
     3 6 9 12 
-
-            @_
+            @`
     3 4 
     12 9 6 3 
     11 8 5 2 
     10 7 4 1 
 
+    josh@Z1 ~/inca
+    $ 
 
-Example session: dyadic functions and operators. long lines have been manually wrapped and indicated with '\'.
+Example session: dyadic functions and operators.  
+long lines have been manually wrapped and indicated with '\'.  
+(early version: _ underscore was result of previous line, now ` backtick)
 
     josh@Z1 ~/inca
     $ ./inca
