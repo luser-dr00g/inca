@@ -464,10 +464,15 @@ remaining symbols '$' '_'
 /* ';' */
 V1(execute){
     ARC zero = (ARC)noun('0');
-    ARC z;
+    ARC z = zero;
     if (!(w->t & 2)){
         printf("execute requires a command");
         return zero;
+    }
+    if (w->t&1){ //boxed, command array
+        INT n=tr(w->r,w->d);
+        DO(n,z=execute((ARC)w->p[i]));
+        return z;
     }
     if (w->r>1){ //execute each "row", return result of last row
         INT n=w->d[0];
@@ -483,7 +488,7 @@ V1(execute){
 V1(makeexe){
     ARC z=w;
     z->t|=2;
-    z->t&=~1;
+    //z->t&=~1;
     return z;
 }
 
@@ -651,6 +656,7 @@ void pv(INT i){
 void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
     void (*p)(INT) = pi;
     void (*eol)() = nl;
+    printf("%d:", w->t);
     DO(r,p(d[i]));eol();
     if(w->t == 2){
         p = pv;
@@ -948,7 +954,7 @@ int main(int argc, char **argv){
         st[i]=noun('0');
     for (i=1; i < argc; i++)
         an=an<strlen(argv[i])?strlen(argv[i]):an;
-    st[1]=(INT)ga(3,1,(INT[]){argc-1});
+    st[1]=(INT)ga(1,1,(INT[]){argc-1});
     for (i=1; i < argc; i++){
         ARC z=ga(2,1,(INT[]){strlen(argv[i])+1});
         mv(z->p,wd(argv[i]),strlen(argv[i])+1);
