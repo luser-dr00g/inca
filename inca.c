@@ -16,6 +16,7 @@ typedef struct a{INT t,r,d[3],p[2];} *ARC;
 void pr(ARC w);
 ARC ex(INT*e);
 ARC reduce(ARC w,INT f);
+ARC scan(ARC w,INT f);
 ARC transpose(ARC w,INT f);
 ARC dot(ARC a,INT f,INT g,ARC w);
 
@@ -518,13 +519,13 @@ ARC(*od[])(ARC,INT,INT,ARC)={0,0,0,    0,     0,    0,       0,     0,     0,   
                      0,   0,      0,    0,        dot,   0,         0,     0,           0,         0,      0,
                      0,     0,      0,     0},
  (*om[])(ARC,INT)={0,  0,      0,      0,     0,    0,       0,     0,     0,     0,     0,       0,        0,
-                     0,   0,      0,    reduce,   0,     0,         0,     0,           transpose, 0,      0,
+                     0,   0,      0,    reduce,   0,     scan,      0,     0,           transpose, 0,      0,
                      0,     0,      0,     0};
 C odv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
                      {0}, {0},    {0},  {0},      {dotmask},{0},    {0},   {0},         {0},       {0},    {0},
                      {0},   {0},    {0},   {0}};
 C omv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
-                     {0}, {0},    {0},  {reducemask},{0},   {0},    {0},   {0},         {transposemask},{0},{0},
+                     {0}, {0},    {0},  {reducemask},{0},{reducemask},    {0},   {0},         {transposemask},{0},{0},
                      {0},   {0},    {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,     '0',   '2',   '1',     0,       0,
                      '1', '0',    0,    0,        '1',   0,         0,     0,           0,         0,      0,
@@ -612,6 +613,26 @@ ARC reduce(ARC w,INT f){
         } // else return vid
     } else {
         z=vd[f](z,w);  /* ie. return f(vid[f],w) if w is a scalar */
+    }
+    return z;
+}
+
+/* 'f\' perform left-to-right scan, applying f reduction to initial sequences */
+ARC scan(ARC w,INT f){
+    INT r=w->r,*d=w->d,n=tr(r,d);
+    ARC x=(ARC)noun(vid[f]); /* default left arg for w=scalar*/
+    ARC z;
+    printf("scan\n");
+    pr(w);
+    if (w->r){
+        if (w->d[0]){
+            ARC ind=(ARC)noun('0');
+            x=cp(z=from(ind,w));
+            DO(n-1,*ind->p=i+1;z=cat(z,x=vd[f](x,from(ind,w))));
+        } // else return vid
+    } //else if(w->r){ z=ga(w->t,r,d); DO(n,z->p[i]= }
+    else {
+        z=vd[f](x,w);  /* if w is scalar */
     }
     return z;
 }
