@@ -624,7 +624,13 @@ ARC scan(ARC w,INT f){
     ARC z;
     printf("scan\n");
     pr(w);
-    if (w->r){
+    if (w->r>1){
+        if (w->d[0]){
+            ARC ind=(ARC)noun('0');
+            z=x=cp(from(ind,w));
+            DO(d[0]-1,*ind->p=i+1;z=rowcat(z,x=vd[f](x,from(ind,w))));
+        } // else return vid
+    } else if (w->r){
         if (w->d[0]){
             ARC ind=(ARC)noun('0');
             x=cp(z=from(ind,w));
