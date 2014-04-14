@@ -48,6 +48,14 @@ Implements monadic functions m  mW
      ; execute command string array
      $ convert array to command-string type
      'w  call function w with y as right arg
+         function may be a variable containing code (with colon :), eg. square
+             s<:y.y
+             's6
+        36
+         or a parenthesized expression, without colon :
+             '(y.y)6
+        36
+                                                            
 
 dyadic functions d  AdW
 
@@ -72,10 +80,18 @@ dyadic functions d  AdW
      / compress
      \ expand
      "w  call function w with x as left arg and y as right arg
+         function may be a variable containing code (with colon :), eg x+1-y
+             f<:x+1-y
+             3"f2
+        2
+         or a parenthesized expression, without colon :
+             3"(x+1-y)2
+        2
 
 monadic operators
 
      / reduce  f/W  => w0 f (w1 f (w2 f ( ... wn-2 f wn-1)))
+     \ scan    f\W  => (w0 f w1), ((w0 f w1) f w2), ... ) f wn-2) f wn-1)
      @ transpose   .@  identity transpose
                    -@  vertical transpose
                    |@  horizontal transpose
