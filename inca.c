@@ -257,6 +257,8 @@ V2(power){
 
 /* '%' */
 V2(divide){
+    if (*w->p == 0 && *a->p == 0) return (ARC)noun('1');
+    if (*w->p == 0) w=(ARC)noun('0'); *w->p=INTPTR_MAX; return w;
     OP(/,divide,)
 }
 
@@ -286,6 +288,7 @@ V2(greater){
 
 /* '|' */
 V2(modulus){
+    if (*a->p==0) return w;
     OP(%,modulus, ARC t=a;a=w;w=t;)  //swap args: w%a
 }
 
@@ -908,7 +911,8 @@ EX:
 
                 d=e[1];                /* d is the next int */
                 while (d&&!qv(d)&&d!=' '){  /* if nonzero, not a verb, not a space, accumulate integer*/
-                    if (qp(d)) d=(INT)cp((ARC)(st[d-'`']));  /* interpolate variable d? */
+                    if (qp(d)) d=st[d-'`'];  /* interpolate variable d? */
+                    d=(INT)cp((ARC)d);
                     _d=(ARC)d;                          /* treat d like a pointer */
                     if (_d->r==0){                    /* if scalar */
                         _w=(ARC)w;                      /* treat w like a pointer */
@@ -928,7 +932,8 @@ EX:
             ARC _a,_w;
 	
             _a=(ARC)a;
-            if (qp(w)) w=(INT)cp((ARC)(st[w-'`']));  /* interpolate variable w? */
+            if (qp(w)) w=st[w-'`'];  /* interpolate variable w? */
+            w=(INT)cp((ARC)w);
             _w=(ARC)w;  /* treat a and w like pointers */
             if (_a->r==0 && _w->r==0){  /* a and w both scalar */
                 *_w->p+=*_a->p*pow(10,digits(*_w->p));     /* w = w + a*10^digits(d) */
