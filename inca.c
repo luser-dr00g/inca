@@ -40,7 +40,9 @@ INT tr(INT r,INT*d){INT z=1;DO(r,z=z*d[i]);return z;}
 ARC ga(INT t,INT r,INT*d){ARC z=(ARC)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;}
 
 //dup an array structure and contents
-ARC cp(ARC w){INT n=tr(w->r,w->d);
+ARC cp(ARC w){
+    if (!w) return 0;
+    INT n=tr(w->r,w->d);
     ARC z=ga(w->t,w->r,w->d);
     mv(z->p,w->p,n);
     return z;
@@ -260,21 +262,25 @@ V2(divide){
 
 /* '=' */
 V2(equal){
+    if (a==0||w==0) return (ARC)(a==w);
     OP(==,equal,)
 }
 
 /* '!' */
 V2(unequal){
+    if (a==0||w==0) return (ARC)(a!=w);
     OP(!=,unequal,)
 }
 
 /* '<' */
 V2(less){
+    if (a==0||w==0) return (ARC)(a<w);
     OP(<,less,)
 }
 
 /* '>' */
 V2(greater){
+    if (a==0||w==0) return (ARC)(a>w);
     OP(>,greater,)
 }
 
@@ -285,12 +291,14 @@ V2(modulus){
 
 /* '|' */
 V1(absolute){
+    if (w==0) return 0;
     INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=abs(w->p[i]));return z;
 }
 
 /* '!' */
 V1(not){
+    if (w==0) return (ARC)1;
     INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=!w->p[i]);return z;
 }
@@ -298,6 +306,7 @@ V1(not){
 
 /* ':' */
 V2(match){INT n;
+    if (a==0||w==0) return (ARC)(a==w);
     if (!!a->r | !!w->r){
         if (a->r == w->r){
             if ((n=tr(a->r,a->d)) == tr(w->r,w->d)){
@@ -680,7 +689,9 @@ void pv(INT i){
         //pr((ARC)i);
         printf("%d", ((ARC)i)->p[0]);
 }
-void pr(ARC w){INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
+void pr(ARC w){
+    if (w==0){printf("null\n"); return;}
+    INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
     void (*p)(INT) = pi;
     void (*eol)() = nl;
     printf("%d:", w->t);
@@ -704,6 +715,22 @@ INT digits(INT w){
     return r;
 }
 
+#define READPAREN \
+    int i,p; \
+    for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */ \
+        switch(e[i]){ \
+        case '(': ++p; break; \
+        case ')': --p; break; \
+        } \
+        /*printf("%d(%d) %d ", i, p, e[i]); */ \
+    } \
+    /*printf("%d\n", i);*/ \
+    if (e[i-1] != ')'){ \
+        printf("err: unmatched parens\n"); \
+        return (ARC)noun('0'); \
+    }
+
+
 /* execute an encoded expression, an "int" string, terminated by a zero int.
  */
 ARC ex(INT*e){INT a=*e,w=e[1],d=w,o;
@@ -726,22 +753,8 @@ EX:
         return (ARC)a;
     }
     if (a=='('){ /* parenthesized subexpression */
-        int i,p;
-        for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
-            switch(e[i]){
-            case '(': ++p; break;
-            case ')': --p; break;
-            }
-            //printf("%d(%d) %d ",i, p, e[i]);
-        }
-        //printf("%d\n", i);
-        if (e[i-1] != ')'){
-            printf("err: unmatched parens\n");
-            return (ARC)noun('0');
-        }
-        //e[i-1]=0;
-        //a=(INT)ex(e+1);
-        INT t = ma(i-1); /* copy subexpression and zero-terminate */
+        READPAREN
+        INT t=ma(i-1); /* copy subexpression and zero-terminate */
         mv((INT*)t,e+1,i-1);
         ((INT*)t)[i-2]=0;
         a=(INT)ex((INT*)t); /* a=ex(subexpr) */
@@ -755,20 +768,8 @@ EX:
             ++e;
             d=w=e[1];
         } else if (w=='('){
-            int i,p;
             ++e;
-            for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
-                switch(e[i]){
-                case '(': ++p; break;
-                case ')': --p; break;
-                }
-                printf("%d(%d) %d ",i, p, e[i]);
-            }
-            if (e[i-1] != ')'){
-                printf("err: unmatched parens\n");
-                return (ARC)noun('0');
-            }
-            //INT t = ma(i-1); /* copy subexpression and zero-terminate */
+            READPAREN
             ARC _t = ga(2,1,(INT[]){i-1});
             INT t = (INT)_t;
             mv(_t->p,e+1,i-1);
@@ -777,19 +778,22 @@ EX:
             a=t;
             e+=i-1;
         }
-        INT holdy,holdz;
+        INT holdx,holdy,holdz;
         INT y,z;
         ARC _a;
         y=(INT)ex(e+1); /* execute remainder */
         //pr(y);
+        holdx = st['x'-'`'];
         holdy = st['y'-'`'];
         holdz = st['z'-'`'];
+        st['x'-'`'] = 0;
         st['y'-'`'] = y; /* specify arg */
         st['z'-'`'] = 0;
         _a = (ARC)a;
         //z=(INT)ex(_a->p); /* call proc */
         z=(INT)execute(_a);
         if (st['z'-'`']) z=st['z'-'`']; /* z was specified, return value from z, else value from expression */
+        st['x'-'`'] = holdx;
         st['y'-'`'] = holdy;
         st['z'-'`'] = holdz;
         return (ARC)z;
@@ -820,20 +824,8 @@ EX:
                 w=st[w-'`'];
                 ++e;
             } else if (w=='('){
-                int i,p;
                 ++e;
-                for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
-                    switch(e[i]){
-                    case '(': ++p; break;
-                    case ')': --p; break;
-                    }
-                    //printf("%d(%d) %d ",i, p, e[i]);
-                }
-                if (e[i-1] != ')'){
-                    printf("err: unmatched parens\n");
-                    return (ARC)noun('0');
-                }
-                //INT t = ma(i-1); /* copy subexpression and zero-terminate */
+                READPAREN
                 ARC _t = ga(2,1,(INT[]){i-1});
                 INT t = (INT)_t;
                 mv(_t->p,e+1,i-1);
@@ -899,21 +891,7 @@ EX:
                 }
                 e+=2;                  /*e:"Ac..."   advance the int-string pointer */
                 if (w=='('){ /* parenthesized subexpression */
-                    int i,p;
-                    for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */
-                        switch(e[i]){
-                        case '(': ++p; break;
-                        case ')': --p; break;
-                        }
-                        //printf("%d(%d) %d ",i, p, e[i]);
-                    }
-                    //printf("%d\n", i);
-                    if (e[i-1] != ')'){
-                        printf("err: unmatched parens\n");
-                        return (ARC)noun('0');
-                    }
-                    //e[i-1]=0;
-                    //a=(INT)ex(e+1);
+                    READPAREN
                     INT t = ma(i-1); /* copy subexpression and zero-terminate */
                     mv((INT*)t,e+1,i-1);
                     ((INT*)t)[i-2]=0;
@@ -962,7 +940,7 @@ EX:
         }
     }
     if (qp(a)) a=(INT)cp((ARC)st[a-'`']); /*a not a function, w is zero (end-string). load var a if a is a var */
-    if (a==0)return (ARC)noun('0');  /* if somehow a is zero (the end of string), return scalar zero */
+    //if (a==0)return (ARC)noun('0');  /* if somehow a is zero (the end of string), return scalar zero */
     return (ARC)a;             /* return a, whatever it is now, a non-null "something", hopefully */
 }
 
