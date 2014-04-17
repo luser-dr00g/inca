@@ -264,25 +264,25 @@ V2(divide){
 
 /* '=' */
 V2(equal){
-    if (a==0||w==0) return (ARC)(a==w);
+    if (a==0||w==0) return (ARC)noun('0'+(a==w));
     OP(==,equal,)
 }
 
 /* '!' */
 V2(unequal){
-    if (a==0||w==0) return (ARC)(a!=w);
+    if (a==0||w==0) return (ARC)noun('0'+(a!=w));
     OP(!=,unequal,)
 }
 
 /* '<' */
 V2(less){
-    if (a==0||w==0) return (ARC)(a<w);
+    if (a==0||w==0) return (ARC)noun('0'+(a<w));
     OP(<,less,)
 }
 
 /* '>' */
 V2(greater){
-    if (a==0||w==0) return (ARC)(a>w);
+    if (a==0||w==0) return (ARC)noun('0'+(a>w));
     OP(>,greater,)
 }
 
@@ -301,7 +301,7 @@ V1(absolute){
 
 /* '!' */
 V1(not){
-    if (w==0) return (ARC)1;
+    if (w==0) return (ARC)noun('1');
     INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
     DO(n,z->p[i]=!w->p[i]);return z;
 }
@@ -309,7 +309,7 @@ V1(not){
 
 /* ':' */
 V2(match){INT n;
-    if (a==0||w==0) return (ARC)(a==w);
+    if (a==0||w==0) return (ARC)noun('0'+(a==w));
     if (!!a->r | !!w->r){
         if (a->r == w->r){
             if ((n=tr(a->r,a->d)) == tr(w->r,w->d)){
@@ -537,7 +537,7 @@ C odv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0}, 
                      {0}, {0},    {0},  {0},      {dotmask},{0},    {0},   {0},         {0},       {0},    {0},
                      {0},   {0},    {0},   {0}};
 C omv[NV+1][NV+1]={{0},{0},    {0},   {0},    {0},  {0},     {0},   {0},   {0},   {0},   {0},     {0},     {0},
-                     {0}, {0},    {0},  {reducemask},{0},{reducemask},    {0},   {0},         {transposemask},{0},{0},
+                     {0}, {0},    {0},  {reducemask},{0},{reducemask},{0}, {0},         {transposemask},{0},{0},
                      {0},   {0},    {0},   {0}};
 INT vid[]={0,          '0',    0,      0,     0,    0,       '0',   0,     '0',   '2',   '1',     0,       0,
                      '1', '0',    0,    0,        '1',   0,         0,     0,           0,         0,      0,
@@ -718,6 +718,7 @@ INT digits(INT w){
     return r;
 }
 
+/* READPAREN produces an int i which is the length of the parenthesized subexpression starting at *e */
 #define READPAREN \
     int i,p; \
     for(i=1,p=1;p&&e[i];i++){ /* find matching close paren */ \
