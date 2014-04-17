@@ -265,25 +265,25 @@ V2(divide){
 /* '=' */
 V2(equal){
     if (a==0||w==0) return (ARC)noun('0'+(a==w));
-    OP(==,equal,)
+    OP(==,equal,ty=0)
 }
 
 /* '!' */
 V2(unequal){
     if (a==0||w==0) return (ARC)noun('0'+(a!=w));
-    OP(!=,unequal,)
+    OP(!=,unequal,ty=0)
 }
 
 /* '<' */
 V2(less){
     if (a==0||w==0) return (ARC)noun('0'+(a<w));
-    OP(<,less,)
+    OP(<,less,ty=0)
 }
 
 /* '>' */
 V2(greater){
     if (a==0||w==0) return (ARC)noun('0'+(a>w));
-    OP(>,greater,)
+    OP(>,greater,ty=0)
 }
 
 /* '|' */
@@ -411,7 +411,7 @@ V2(compress){INT an=tr(a->r,a->d),n=0,j=0;
     } else {
         //DO(an,if(a->p[i])++n)
         DO(an,n+=!!a->p[i])
-        z=ga(0,1,&n);
+        z=ga(w->t,1,&n);
         DO(an,if(a->p[i])z->p[j++]=w->p[i])
     }
     //pr(z);
@@ -500,8 +500,8 @@ V1(execute){
 /* '$' */
 V1(makeexe){
     ARC z=w;
-    z->t|=2;
-    //z->t&=~1;
+    z->t|=2;  // add executable flag
+    z->t&=~1; // remove box flag
     return z;
 }
 
@@ -972,10 +972,12 @@ int main(int argc, char **argv){
         //z=box(z);
         //pr(z);
         //pr(unbox(z));
-        ((ARC)st[1])->p[i-1]=(INT)z;
+        ((ARC)st[1])->p[i-1]=(INT)z;     /* st['a'-'`'] */
     }
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
-    while(putchar('\t'),gets(s))          /* var('`')=REPL */
+    while(putchar('\t'),fgets(s,sizeof s,stdin)){         /* var('`')=REPL */
+        if (s[strlen(s)-1]=='\n') s[strlen(s)-1]='\0';
         pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['`'-'`'] */
+    }
     return 0;
 }
