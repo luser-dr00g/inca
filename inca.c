@@ -471,7 +471,7 @@ V2(encode) '['
 V2(decode) ']'
 V2(max)
 V2(min)
-remaining symbols '$' '_'
+remaining symbols '_'
 */
 
 /* ';' */
