@@ -3,16 +3,26 @@ b<;>0{a
 c<((-1)@b>~#a)/a
 d<;>(1+b){a
 e<((-2+b)@d>~#a)/a
+s<:((!(0{x)=y)\y)+((0{x)=y)\(0!1+~#y).(1{x)
 f<>0{e
-g<,((!(0{:,)=f)\f)+((0{:,)=f)\(0!1+~#f).(0{:;)
-h<,((!(0{:.)=g)\g)+((0{:.)=g)\(0!1+~#g).(0{: )
+g<$,(:,;)"sf
+h<$,(:. )"sg
 i<;$,h
 f<>1{e
-g<,((!(0{:,)=f)\f)+((0{:,)=f)\(0!1+~#f).(0{:;)
-h<,((!(0{:.)=g)\g)+((0{:.)=g)\(0!1+~#g).(0{: )
+g<$,(:,;)"sf
+h<$,(:. )"sg
 i<;$,h
 
 END
+
+#f<>0{e
+#g<,((!(0{:,)=f)\f)+((0{:,)=f)\(0!1+~#f).(0{:;)
+#h<,((!(0{:.)=g)\g)+((0{:.)=g)\(0!1+~#g).(0{: )
+#i<;$,h
+#f<>1{e
+#g<,((!(0{:,)=f)\f)+((0{:,)=f)\(0!1+~#f).(0{:;)
+#h<,((!(0{:.)=g)\g)+((0{:.)=g)\(0!1+~#g).(0{: )
+#i<;$,h
 
 #the variable a is set to the box-command-array of the argv[] strings
 #     0{a fetches argv[0]
@@ -52,4 +62,7 @@ END
 #   repeating the process for vertex 1, yields incorrect results, since the negative
 #   function in the y coordinate extends to the z coordinate as well.
 
+# substitution function s:
+# s<:((!(0{x)=y)\y)+((0{x)=y)\(0!1+~#y).(1{x)
+# replaces occurrences of 0{x in y with 1{x
 
