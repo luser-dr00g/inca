@@ -7,7 +7,7 @@
 
 typedef char C;
 typedef intptr_t INT;
-typedef struct a{INT t,r,d[3],p[2];} *ARC;
+typedef struct a{INT x;INT t,r,d[3],p[2];} *ARC;
 //t (type): t=0:regular array, t=1:boxed, t=2:captured command
 //r (rank): significant dims in d
 //d (dims): dimensions of p
@@ -27,8 +27,84 @@ V2(minus);
 
 #define DO(n,x) {INT i=0,_n=(n);for(;i<_n;++i){x;}}
 
+INT st[28] = {0}; /* symbol table */
+INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
+
+struct alist { INT x; int mark; struct alist *next; } *ahead = NULL;
+
+INT apush(struct alist **node, INT a){
+    if(*node) return apush(&(*node)->next, a);
+    *node = malloc(sizeof(struct alist));
+    (*node)->x = a;
+    (*node)->mark = 0;
+    (*node)->next = NULL;
+    ((ARC)a)->x = (INT)*node;
+    return a;
+}
+
+#define asize(a) (sizeof a/sizeof*a)
+
+void mark(INT x){
+    if (x){
+        ARC a = (ARC)x;
+        struct alist *node = (struct alist *)a->x;
+        node->mark = 1;
+
+        INT y;
+        int j,n;
+
+        if (a->t & 2){
+            n=tr(a->r,a->d);
+            for (j=0; j < n; j++){
+                y = a->p[j];
+                if (abs(y)>255)
+                    mark(y);
+            }
+        } else if (a->t & 1){
+            n=tr(a->r,a->d);
+            for (j=0; j < n; j++)
+                mark(a->p[j]);
+        }
+    }
+}
+
+int discard(struct alist **node){
+    struct alist *next = (*node)->next;
+#ifdef TRACEGC
+    printf("discarding %d\n", (*node)->x);
+#endif
+    free((ARC)(*node)->x);
+    free(*node);
+    *node = next;
+    return 1;
+}
+
+INT collect(struct alist **anode){
+    int i,j,n;
+    if (*anode == NULL) return 0;
+    if (*anode == ahead)  /* mark live allocations */
+        for (i=0; i < asize(st); i++)
+            if (st[i])
+                mark(st[i]);
+
+    i = 0;
+    i += collect(&(*anode)->next);
+    if (!(*anode)->mark)
+        i += discard(anode);
+    else
+        (*anode)->mark = 0;
+    return i;
+}
+
 //malloc an array
-INT ma(INT n){return (INT)malloc(n*sizeof(INT));}
+INT ma(INT n){
+    INT x;
+    x = apush(&ahead, (INT)malloc(n*sizeof(INT)));
+#ifdef TRACEGC
+    printf("new array %d len %d\n", x, n);
+#endif
+    return x;
+}
 
 //copy n ints from s to d
 void mv(INT*d,INT*s,INT n){DO(n,d[i]=s[i]);}
@@ -508,9 +584,6 @@ V1(makeexe){
 V1(mfunc){ } /* handled specially in ex() */
 V2(dfunc){ }
 
-INT st[28];
-INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
-
 #define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
 #define dotmask    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
 #define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
@@ -932,17 +1005,20 @@ EX:
         } else {  // not verb, not a space  // accumulate integer
             ARC _a,_w;
 	
-            _a=(ARC)a;
-            if (qp(w)) w=st[w-'`'];  /* interpolate variable w? */
-            w=(INT)cp((ARC)w);
-            _w=(ARC)w;  /* treat a and w like pointers */
-            if (_a->r==0 && _w->r==0){  /* a and w both scalar */
-                *_w->p+=*_a->p*pow(10,digits(*_w->p));     /* w = w + a*10^digits(d) */
-                a=w;                   /* a = w */
-                ++e;                   /* advance e (int-string pointer) */
-                d=w=e[1];              /* update d and w to next int */
-                goto EX;               /* tail-recurse */
+            if (a){
+                _a=(ARC)a;
+                if (qp(w)) w=st[w-'`'];  /* interpolate variable w? */
+                w=(INT)cp((ARC)w);
+                _w=(ARC)w;  /* treat a and w like pointers */
+                if (_a->r==0 && _w->r==0){  /* a and w both scalar */
+                    *_w->p+=*_a->p*pow(10,digits(*_w->p));     /* w = w + a*10^digits(d) */
+                    a=w;                   /* a = w */
+                    ++e;                   /* advance e (int-string pointer) */
+                    d=w=e[1];              /* update d and w to next int */
+                    goto EX;               /* tail-recurse */
+                }
             }
+
         }
     }
     if (qp(a)) a=(INT)cp((ARC)st[a-'`']); /*a not a function, w is zero (end-string). load var a if a is a var */
@@ -961,6 +1037,7 @@ int main(int argc, char **argv){
     C s[999];
     int i;
     int an=0;
+
     for (i=0; i < sizeof(st)/sizeof*st; i++)
         st[i]=noun('0');
     for (i=1; i < argc; i++)
@@ -974,10 +1051,16 @@ int main(int argc, char **argv){
         //pr(unbox(z));
         ((ARC)st[1])->p[i-1]=(INT)z;     /* st['a'-'`'] */
     }
+
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
     while(putchar('\t'),fgets(s,sizeof s,stdin)){         /* var('`')=REPL */
         if (s[strlen(s)-1]=='\n') s[strlen(s)-1]='\0';
         pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['`'-'`'] */
+
+        int c=collect(&ahead);
+#ifdef TRACEGC
+        printf("collected %d\n",c);
+#endif
     }
     return 0;
 }
