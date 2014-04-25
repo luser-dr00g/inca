@@ -7,7 +7,7 @@
 
 typedef char C;
 typedef intptr_t INT;
-typedef struct a{INT x;INT t,r,d[3],p[2];} *ARC;
+typedef struct a{INT x;INT t,r,d[3],p[1];} *ARC;
 //t (type): t=0:regular array, t=1:boxed, t=2:captured command
 //r (rank): significant dims in d
 //d (dims): dimensions of p
@@ -124,7 +124,7 @@ void mv(INT*d,INT*s,INT n){DO(n,d[i]=s[i]);}
 INT tr(INT r,INT*d){INT z=1;DO(r,z=z*d[i]);return z;}
 
 //construct(malloc) array with dims
-ARC ga(INT t,INT r,INT*d){ARC z=(ARC)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;}
+ARC ga(INT t,INT r,INT*d){ARC z=(ARC)ma(6+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;}
 
 //dup an array structure and contents
 ARC cp(ARC w){
