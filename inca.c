@@ -76,7 +76,7 @@ int discard(struct alist **node){
     x = (ARC)((*node)->x);
 
 #ifdef TRACEGC
-    printf("discarding %d len %d\n", (INT)x, 5+tr(x->r,x->d));
+    printf("discarding %d len %d\n", (INT)x, 6+tr(x->r,x->d));
     pr(x);
 #endif
     free(x);
@@ -346,7 +346,7 @@ V2(power){
 /* '%' */
 V2(divide){
     if (*w->p == 0 && *a->p == 0) return (ARC)noun('1');
-    if (*w->p == 0) w=(ARC)noun('0'); *w->p=INTPTR_MAX; return w;
+    if (*w->p == 0) { w=(ARC)noun('0'); *w->p=INTPTR_MAX; return w; }
     OP(/,divide,)
 }
 
@@ -562,17 +562,26 @@ V2(min)
 remaining symbols '_'
 */
 
+/* '$' */
+V1(makeexe){
+    ARC z=w;
+    z->t|=2;  // add executable flag
+    //z->t&=~1; // remove box flag
+    return z;
+}
+
 /* ';' */
 V1(execute){
     ARC zero = (ARC)noun('0');
     ARC z = zero;
+    //printf("execute: "); pr(w);
     if (!(w->t & 2)){
         printf("execute requires a command");
         return zero;
     }
     if (w->t&1){ //boxed, command array
         INT n=tr(w->r,w->d);
-        DO(n,z=execute((ARC)w->p[i]));
+        DO(n,z=execute(makeexe((ARC)w->p[i])));
         return z;
     }
     if (w->r>1){ //execute each "row", return result of last row
@@ -581,15 +590,8 @@ V1(execute){
         DO(n,*ind->p=i;z=ex(from(ind,w)->p));
         return z;
     }
-    z = ex(w->p);
-    return z;
-}
-
-/* '$' */
-V1(makeexe){
-    ARC z=w;
-    z->t|=2;  // add executable flag
-    z->t&=~1; // remove box flag
+    if (w->r)
+        z = ex(w->p);
     return z;
 }
 
