@@ -33,8 +33,9 @@ INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. n
 struct alist { INT x; int mark; struct alist *next; } *ahead = NULL;
 
 INT apush(struct alist **node, INT a){
-    if(*node) return apush(&(*node)->next, a);
+    if(*node) return apush(&(*node)->next, a);  /* seek to the end */
     *node = malloc(sizeof(struct alist));
+    if (!*node) exit(1);
     (*node)->x = a;
     (*node)->mark = 0;
     (*node)->next = NULL;
@@ -47,12 +48,10 @@ INT apush(struct alist **node, INT a){
 void mark(INT x){
     if (x){
         ARC a = (ARC)x;
-        struct alist *node = (struct alist *)a->x;
-        node->mark = 1;
-
         INT y;
         int j,n;
-
+        struct alist *node = (struct alist *)(a->x);
+        node->mark = 1;
         if (a->t & 2){
             n=tr(a->r,a->d);
             for (j=0; j < n; j++){
@@ -68,31 +67,43 @@ void mark(INT x){
     }
 }
 
+static
 int discard(struct alist **node){
-    struct alist *next = (*node)->next;
+    struct alist *next;
+    ARC x;
+    if (abs((INT)*node) < 255) return 0;
+    next = (*node)->next;
+    x = (ARC)((*node)->x);
+
 #ifdef TRACEGC
-    printf("discarding %d\n", (*node)->x);
+    printf("discarding %d len %d\n", (INT)x, 5+tr(x->r,x->d));
+    pr(x);
 #endif
-    free((ARC)(*node)->x);
+    free(x);
+
+#ifdef TRACEGC
+    printf("discarding node %p\n", *node);
+#endif
     free(*node);
     *node = next;
+
     return 1;
 }
 
-INT collect(struct alist **anode){
+INT collect(struct alist **node){
     int i,j,n;
-    if (*anode == NULL) return 0;
-    if (*anode == ahead)  /* mark live allocations */
+    if (*node == NULL) return 0;
+    if (*node == ahead)  /* mark live allocations */
         for (i=0; i < asize(st); i++)
             if (st[i])
                 mark(st[i]);
 
     i = 0;
-    i += collect(&(*anode)->next);
-    if (!(*anode)->mark)
-        i += discard(anode);
+    i += collect(&(*node)->next);
+    if ((*node)->mark == 0)
+        i += discard(node);
     else
-        (*anode)->mark = 0;
+        (*node)->mark = 0;
     return i;
 }
 
@@ -101,7 +112,7 @@ INT ma(INT n){
     INT x;
     x = apush(&ahead, (INT)malloc(n*sizeof(INT)));
 #ifdef TRACEGC
-    printf("new array %d len %d\n", x, n);
+    printf("new array %d alloc %d len %d\n", x, ((ARC)x)->x, n);
 #endif
     return x;
 }
@@ -117,9 +128,11 @@ ARC ga(INT t,INT r,INT*d){ARC z=(ARC)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);re
 
 //dup an array structure and contents
 ARC cp(ARC w){
+    INT n;
+    ARC z;
     if (!w) return 0;
-    INT n=tr(w->r,w->d);
-    ARC z=ga(w->t,w->r,w->d);
+    n=tr(w->r,w->d);
+    z=ga(w->t,w->r,w->d);
     mv(z->p,w->p,n);
     return z;
 }
@@ -141,11 +154,10 @@ V1(unbox){
                 r+=tn;
             }
             return z;
-        } else {
-            return (ARC)*w->p;
-        }
-    } else
-        return w;
+        } 
+        return (ARC)*w->p;
+    }
+    return w;
 }
 
 /* '{' extract row(s) from matrix or scalar from vector */
@@ -767,6 +779,7 @@ void pv(INT i){
 }
 void pr(ARC w){
     if (w==0){printf("null\n"); return;}
+    if (abs(w->t)>4){printf("bad type\n"); return;}
     INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
     void (*p)(INT) = pi;
     void (*eol)() = nl;
@@ -1029,17 +1042,18 @@ EX:
 /* construct an integer string from from command string */
 INT noun(c){ARC z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (INT)z;} /* constr (ptr to) scalar */
 INT verb(c){INT i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
-INT*wd(C*s){INT a,n=strlen(s),*e=(INT*)ma(n+1);C c;       /* allocate int-string */
-    DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with scalars and funcs with ints*/
+INT*wd(C*s){INT a,n=strlen(s),*e=(INT*)malloc((n+1)*sizeof(INT));C c;       /* allocate int-string */
+    DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with ptr-to-scalars and funcs with small ints*/
     e[n]=0;return e;}    /* zero-terminate. nb. variables ('`'-'z') remain as ascii values */
 
 int main(int argc, char **argv){
-    C s[999];
+    C s[999] = "";
     int i;
     int an=0;
+    INT zero=noun('0');
 
     for (i=0; i < sizeof(st)/sizeof*st; i++)
-        st[i]=noun('0');
+        st[i]=zero;
     for (i=1; i < argc; i++)
         an=an<strlen(argv[i])?strlen(argv[i]):an;
     st[1]=(INT)ga(1,1,(INT[]){argc-1});
@@ -1054,13 +1068,18 @@ int main(int argc, char **argv){
 
     //printf("sizeof(intptr_t)=%u\n",sizeof(intptr_t));
     while(putchar('\t'),fgets(s,sizeof s,stdin)){         /* var('`')=REPL */
+        INT *cs;
         if (s[strlen(s)-1]=='\n') s[strlen(s)-1]='\0';
-        pr((ARC)(st[0]=(INT)ex(wd(s))));  /* nb. st['`'-'`'] */
+        pr((ARC)(st[0]=(INT)ex(cs=wd(s))));  /* nb. st['`'-'`'] */
 
+        free(cs);
         int c=collect(&ahead);
 #ifdef TRACEGC
+        for (i=0; i < sizeof(st)/sizeof*st; i++)
+            printf("%c= %d ", i+'`', st[i]), pr((ARC)st[i]);
         printf("collected %d\n",c);
 #endif
+        memset(s,0,sizeof s);
     }
     return 0;
 }
