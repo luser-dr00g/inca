@@ -8,11 +8,19 @@ dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - 
 mon ops: / reduce  (.-|/\+><)@ transpose    dy op: . matrix product  
 variable ` (backtick) is set to result of the previous command. (was underscore)
 
-Based on the J-incunabulum,  
+An online version is available courtesy of Thomas Baruchel.
+http://baruchel.hd.free.fr/apps/apl/inca/ 
+which is awesome and even handles cut+paste.
+
+The program is based on and directly derived from the J-incunabulum,  
       http://www.jsoftware.com/jwiki/Essays/Incunabulum  
 and extended to allow propagating specifications "a+2+a<3",
 new functions minus,times,unbox. multi-digit integers.
 identity element for monadic use of minus,times,cat.
+Most extensions have been incorporated "ad-hoc", with
+an attempt to maintain consistency of style, balanced 
+against a need (demand) for more commentary and more visible
+type identifiers.
 
 The name "inca" was chosen for its similarity to "incunabulum",
 as well as its obvious (to me) decomposition "In C, A",
@@ -32,6 +40,69 @@ for the original. Here are the helpful links:
 http://www.jsoftware.com/papers/AIOJ/AIOJ.htm  
 https://groups.google.com/d/msg/sayeret-lambda/Oxffk3aeUP4/QEuZocgVh5UJ  
 http://archive.vector.org.uk/trad/v094/hui094_85.pdf  
+
+Inca has been submitted for critique on comp.lang.c and and comp.lang.apl.
+And *some* of the advice given has been followed. It has not been tested
+with a 64-bit intptr_t. The code may make 32bit assumptions, although I've
+tried to be careful not to do this. I may not have been completely succesful.
+The basis of the interpreter is the ability to treat a pointer as an integer
+and pack them in the same-sized fields. Additionally, it assumes that pointer
+values may be distinguished from character values from their integer 
+representations. This assumption is not guaranteed by the standard, but 
+appears empirically to be true on my cygwin and ubuntu gnu linux testbeds.
+The original code also assumed that these pointer values will be positive,
+which is empirically *not* true on cygwin. Not sure about ubuntu, the code
+was fixed to use abs(intptr) before the range::type comparison well before
+it was ported.
+
+Inca will also accept command-line arguments into the program. These are
+available in the 'a' variable as a box-array of command-string arrays.
+Also included with the distribution is the small lib.inca file which
+accumulates a few functions that arose in postings to comp.lang.apl.
+If inca is invoked thusly:
+
+     ./inca `cat lib.inca`
+
+Then the library can be executed by putting the box-array a in a box '<',
+making it executeable '$', and executing it ';'.
+
+               ;$<a
+
+Which should respond with the friendly message:
+
+     2:11 
+     lib_loaded
+
+With the simple code representation of small integers for operators,
+ascii for variables and other non-operator punctuation, and pointers
+(boxed arrays, which here are just scalars (array rank=0)), code can 
+be generated and executed on the fly. The r function in lib.inca
+illustrates this:
+
+     r<:(40.'iy);(1+~<y);((0{:").'iy);((0{:u).'iy);(@~<y);(41.'iy);((0{:;).'iy-1),0
+
+The basic structure here is a series of parenthesized expressions which are 
+strung together with ; (rowcat). (40.'iy) makes a vector of y left parens.
+(1+~<y) makes a boxed iota vector 1..y. (0{:") is the quote literal, used the
+same way the 40 was for left paren. Since double-quote " is a function,
+its code representation is not the same as its ascii representation, so we extract
+it from a short code sequence which starts at the colon and goes until the closing
+paren, so just the double-quote *function*. ((0{:u).'iy) is the same, but with 
+the 'u' variable, which could be accessed by ascii, if you want to, or by pulling
+it out of a short code sequence. (@~<y) gives a reversed box iota y-1..0. 
+(41.'iy) is a vector of closing parens. And the final row is y-1 semicolons, and
+a final terminating null.
+
+This produces the transpose of several expresions (j"uk); with j and k varying.
+And it can be executed by transposing, ravelling, making executable and then
+executing. ;$,\@ which the s function does.
+
+Executing the s function calls r to generate a procedure to produce a triangular
+matrices by a run-length encoded representation, built using iotas, directly
+into the form of function calls to the function u which takes two numbers 
+and produces a row of the matrix.
+
+
 
 Implements monadic functions m  mW
 
