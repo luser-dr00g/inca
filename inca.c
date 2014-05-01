@@ -56,7 +56,7 @@ void mark(INT x){
             n=tr(a->r,a->d);
             for (j=0; j < n; j++){
                 y = a->p[j];
-                if (abs(y)>255)
+                if (abs(y)>255) // elements of type 2 arrays may be small integers or pointers
                     mark(y);
             }
         } else if (a->t & 1){
@@ -526,9 +526,10 @@ V2(find){INT wn=tr(w->r,w->d);ARC z=0; INT i;
             z->p[i]=*ind->p;
         }
     }else{
+        z=ga(0,0,0);
+        *z->p=wn;
         for(i=0;i<wn;i++){
             if(*a->p==w->p[i]){
-                z=ga(0,0,0);
                 *z->p=i;
                 return z;
             }
