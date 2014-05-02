@@ -102,7 +102,23 @@ matrices by a run-length encoded representation, built using iotas, directly
 into the form of function calls to the function u which takes two numbers 
 and produces a row of the matrix.
 
+Functions can also call themselves recursively. Factorial function:
 
+     f<:;(y>1){(<:1);<:('fy-1)+'fy-2
+
+In the run-length-encoded triangular matrix example, the rows were all the
+same length, so rowcat has an easy time to combine rows. But here, the two
+code sequences
+
+     :1
+     :('fy-1)+'fy-2
+
+are different lengths. So we box them, so rowcat doesn't screw things up.
+(FIXME: fix rowcat to pad unequal widths).
+     <:1
+     <:('fy-1)+'fy-2
+rowcat them together `((...);...)`, select one using a boolean expression `(y>1){`, and execute
+the resulting expression `;`.
 
 Implements monadic functions m  mW
 
