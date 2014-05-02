@@ -2,7 +2,8 @@
 # attempt to re-write the math from my postscript program
 # which draws the Utah Teapot.
 # http://codegolf.stackexchange.com/a/25900/2381
-# lack of floating-point in inca is a big hurdle.
+# some discussion:
+# https://groups.google.com/d/topic/comp.lang.apl/Y2nZZfWUo5w/discussion
 
 ./inca `cat ./teapot` <<END
 p<((-1)@(b<;>0{a)>~#a)/a
@@ -11,15 +12,31 @@ h<:((x~y)>~#y)/y
 t<:((x~y)<~#y)/y
 n<:(((x<0{:.)"hy),(y<x"ty)),((0{:0).0!1+~5-#y),0
 s<:3#(;<$'nx"hy);(;<$'nx"hx"ty);(;<$'nx"tx"ty)
-c<:((~(#y)-1)/y)
-x<(0{:,)
+c<:(((#y)-1)>~#y)/y
+'c1 2 3 4
+x<0{:,
 q<;>0{p
-0!~#p
-u<'c>2{v
+0!~#q
+u<'c>4{v
 i<x"hu
 $'ni
 x"su
 END
+
+#p<((-1)@(b<;>0{a)>~#a)/a       load patch data into p
+#v<((-2+b)@(;>(1+b){a)>~#a)/a   load vertex data into v
+#h<:((x~y)>~#y)/y               head of list y delimited by x
+#t<:((x~y)<~#y)/y               tail of list y delimited by x
+#n<:(((x<0{:.)"hy),(y<x"ty)),((0{:0).0!1+~5-#y),0   float to scaled int
+#s<:3#(;<$'nx"hy);(;<$'nx"hx"ty);(;<$'nx"tx"ty)     3 floats to 3 ints
+#c<:(((#y)-1)>~#y)/y                                chop string
+#x<(0{:,)    set x as comma delimiter
+#q<;>0{p     q is patch 0 indices
+#0!~#p       a tail vector of p
+#u<'c>2{v    u is chopped unboxed vertex line 2
+#i<x"hu      i is comma-head of u
+#$'ni        executable number (int) from i
+#x"su        convert 3 floats from u
 
 #x"hu
 #x"tu
