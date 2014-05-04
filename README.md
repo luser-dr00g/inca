@@ -102,7 +102,7 @@ matrices by a run-length encoded representation, built using iotas, directly
 into the form of function calls to the function u which takes two numbers 
 and produces a row of the matrix.
 
-Functions can also call themselves recursively. Factorial function:
+Functions can also call themselves recursively. Fibonacci function:
 
      f<:;(y>1){(<:1);<:('fy-1)+'fy-2
 
@@ -115,10 +115,44 @@ code sequences
 
 are different lengths. So we box them, so rowcat doesn't screw things up.
 (FIXME: fix rowcat to pad unequal widths).
+
      <:1
      <:('fy-1)+'fy-2
+
 rowcat them together `((...);...)`, select one using a boolean expression `(y>1){`, and execute
 the resulting expression `;`.
+
+And also *not* executing a command-string prints the string, so:
+
+        :Hello World!
+    Hello World!
+
+
+Recalling the syntax for *executing* code from the command-line.
+
+       ;$<a
+
+This illustrates a means by which "multi-line" functions may
+be conveniently constructed, via a confusing arrangement of
+vaguely-defined concepts like "box" and "box-array".
+The text lines of the file from `cat file` are, again,
+defined in the variable a as a box-array, an array of pointers,
+of command-strings. To execute the box-array as a whole, it
+must be put into a single box. (Errmm. This feels like an 
+artificial restriction, and it is with difficulty that I document
+the current behavior of the implementation here...)
+
+Following this pattern, one might define a multi-statement 
+function in the same manner, as an executable box of a box-array
+of command strings.
+
+        f<$<(<:a<1);(<:b<2);(<:c<3)
+
+Executing ;f should then be equivalent to the separate statements.
+
+        a<1
+        b<2
+        c<3
 
 Implements monadic functions m  mW
 
