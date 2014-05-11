@@ -760,7 +760,7 @@ ARC dot(ARC a,INT f,INT g,ARC w){
         return vd[g](a, w);
     } else {
         if (a->r > 1) {
-            if (a->d[0] != w->d[1]) return (ARC)noun('0');
+            if (a->d[1] != w->d[0]) return (ARC)noun('0');
             ARC ind=(ARC)noun('0'), row, z;
             *ind->p=a->d[0]-1;
             row=from(ind,a);
