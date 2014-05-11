@@ -751,15 +751,26 @@ ARC scan(ARC w,INT f){
 /* 'f.g' perform general matrix multiplication Af.gW ::== f/Ag'W
    f-reduce rows of (A {g-function} transpose-of-W) */
 ARC dot(ARC a,INT f,INT g,ARC w){
-    if (f == AT) { // f==AT indicates a "jot dot" with no secondary scan
+    if (f == AT) { // f=='@' indicates a "jot dot" with no secondary scan
         if (a->r < 2) {
+            if (a->d[0] != w->d[0]) return (ARC)noun('0');
             a=transpose(a,BACKSLASH);
             w=transpose(transpose(w,BACKSLASH),BACKSLASH);
         }
         return vd[g](a, w);
     } else {
         if (a->r > 1) {
-            w=transpose(w,BACKSLASH);
+            if (a->d[0] != w->d[1]) return (ARC)noun('0');
+            ARC ind=(ARC)noun('0'), row, z;
+            *ind->p=a->d[0]-1;
+            row=from(ind,a);
+            z=transpose(vd[g](row,w), BACKSLASH);
+            DO(a->d[0]-1,*ind->p=a->d[0]-2-i;row=from(ind,a);z=rowcat(transpose(vd[g](row,w), BACKSLASH), z));
+            z=reduce(transpose(z, BACKSLASH), f);
+            z->r=2;
+            z->d[0]=a->d[0];
+            z->d[1]=w->d[1];
+            return z;
         }
         return reduce(vd[g](a, w), f);
     }
