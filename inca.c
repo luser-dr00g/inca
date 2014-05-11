@@ -234,7 +234,7 @@ V2(from){
         z=ga(ty,r,d); \
         /*printf("w->d[0]>1\n");*/ \
         if (a->r) \
-            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(zero, a), from(ind, w))->p,wn)) \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(ind, w))->p,wn)) \
         else \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(a, from(ind, w))->p,wn)) \
     } else if (a->r>1) { /* a higher but not w */\
@@ -242,7 +242,7 @@ V2(from){
         z=ga(ty,r,d); \
         /*printf("a->d[0]>1\n");*/ \
         if (w->r) \
-            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(zero, w))->p,wn)) \
+            DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), from(ind, w))->p,wn)) \
         else \
             DO(n,*ind->p=i;mv(z->p+i*wn,func(from(ind, a), w)->p,wn)) \
     } else if(a->r && w->r) { /* both rank 1 */\
@@ -297,7 +297,7 @@ V2(from){
 
 /* '~' iota: generate j=0 index vector */
 V1(iota){
-    if (w->t&1){
+    if (w->t&1){ // argument is boxed: produce a box-array suitable for execute
         INT n=*unbox(w)->p;
         ARC z=ga(1,1,&n);
         ARC ind;
@@ -599,10 +599,14 @@ V1(execute){
 V1(mfunc){ } /* handled specially in ex() */
 V2(dfunc){ }
 
+// these masks define the set of functions permitted by operators
 #define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
 #define dotmask    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
 #define transposemask PLUS,MINUS,SLASH,BACKSLASH,DOT,BAR,LANG,RANG,0
 
+// these tables describe the function and operator set and mappings to various function pointers
+// vt=verb table, vd=verb dyadic, vm=verb monadic, od=operator dyadic, om=operator monadic,
+// odv=operator dyadic's verbs, omv=operator monadic's verbs, vid=verb identity element
 enum   {ZERO,          PLUS,   LBRACE, TILDE, LANG, HASH,    COMMA, RANG,  MINUS, STAR,  PERCENT, BAR,      RBRACE,
                      AND, CARET,  BANG, SLASH,    DOT,   BACKSLASH, QUOTE, DBLQUOTE,    AT,        EQUAL,  SEMI,
                      COLON, DOLLAR, UNDER, NV};
@@ -702,6 +706,7 @@ ARC reduce(ARC w,INT f){
         }
     } else if (w->r){             /* w!=scalar */
         if (w->d[0]){
+            n = w->d[0];
             ARC ind = (ARC)noun('0'); /* ind is a scalar for use with from() */
             *ind->p = n-1;        /* set payload of ind to last element of w */
             //printf("*ind->p=%d\n",*ind->p);
@@ -753,12 +758,9 @@ ARC dot(ARC a,INT f,INT g,ARC w){
         }
         return vd[g](a, w);
     } else {
-#if 0
-        if (a->r < 2) {
-            a=transpose(a,BACKSLASH);
-            w=transpose(transpose(w,BACKSLASH),BACKSLASH);
+        if (a->r > 1) {
+            w=transpose(w,BACKSLASH);
         }
-#endif
         return reduce(vd[g](a, w), f);
     }
 }
