@@ -13,25 +13,15 @@ t<:((x~y)<~#y)/y
 n<:(((x<0{:.)"hy),(y<x"ty)),((0{:0).0!1+~5-#y),0
 s<:3#(;<$'nx"hy);(;<$'nx"hx"ty);(;<$'nx"tx"ty)
 c<:(((#y)-1)>~#y)/y
-'c1 2 3 4
-x<0{:,
-q<;>0{p
-0!~#q
-(q-1){v
-q
-f<:4+y
-w<:;(1<#y){(<:'fy);<:('w(0=~#y)/y);'w(0!~#y)/y
-q
-'wq
-y<q
-(0!~#y)/y
+w<:;(1<#y){(<:'xy);<:(x"w(0=~#y)/y);x"w(0!~#y)/y
 f<:(0{:,)"s'c>0{y
-'w(q-1){v
-'w1
-u<'c>4{v
-i<x"hu
-$'ni
-x"su
+q<;>0{p
+(q-1){v
+r<f"w(q-1){v
+x<4 4#0{\@r
+y<4 4#1{\@r
+z<4 4#2{\@r
+
 END
 
 #p<((-1)@(b<;>0{a)>~#a)/a       load patch data into p
@@ -41,6 +31,17 @@ END
 #n<:(((x<0{:.)"hy),(y<x"ty)),((0{:0).0!1+~5-#y),0   float to scaled int
 #s<:3#(;<$'nx"hy);(;<$'nx"hx"ty);(;<$'nx"tx"ty)     3 floats to 3 ints
 #c<:(((#y)-1)>~#y)/y                                chop string
+#w<:;(1<#y){(<:'fy);<:('w(0=~#y)/y);'w(0!~#y)/y     'wy  map func f over y
+#w<:;(1<#y){(<:'xy);<:(x"w(0=~#y)/y);x"w(0!~#y)/y  x"wy  map func x over y
+#f<:(0{:,)"s'c>0{y               helper func: convert 1 vertex
+#q<;>0{p                         q is patch 0 indices
+#(q-1){v                         load vertices
+#r<'w(q-1){v                     r is:  converted vertices of q, a 16x3 array
+#r<f"w(q-1){v                    using dyadic w  ^^^
+#x<4 4#0{\@r                     x,y,z 4x4 patch matrices
+#y<4 4#1{\@r
+#z<4 4#2{\@r
+
 #x<(0{:,)    set x as comma delimiter
 #q<;>0{p     q is patch 0 indices
 #0!~#p       a tail vector of p
@@ -48,6 +49,20 @@ END
 #i<x"hu      i is comma-head of u
 #$'ni        executable number (int) from i
 #x"su        convert 3 floats from u
+
+#x<0{:,
+
+#f<:4+y
+#q
+#'wq
+#y<q
+#(0!~#y)/y
+
+#'w1
+#u<'c>4{v
+#i<x"hu
+#$'ni
+#x"su
 
 #x"hu
 #x"tu
