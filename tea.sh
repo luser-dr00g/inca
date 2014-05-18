@@ -17,11 +17,20 @@ w<:;(1<#y){(<:'xy);<:(x"w(0=~#y)/y);x"w(0!~#y)/y
 f<:(0{:,)"s'c>0{y
 q<;>0{p
 (q-1){v
-r<f"w(q-1){v
-x<4 4#0{\@r
-y<4 4#1{\@r
-z<4 4#2{\@r
-
+m<f"w(q-1){v
+x<4 4#0{\@m
+y<4 4#1{\@m
+z<4 4#2{\@m
+b<4 4#(-1),3,(-3),1,3,(-6),3,0,(-3),3,0,0,1,0,0,0
+b+..x+..b
+b+..y+..b
+b+..z+..b
+c<0 7 4
+e<0 0 40
+j<:(y<y-c),(x<(2{e)%2{y),z<x.((1{y)-1{e),(0{y)-0{e
+j<:(y<y-c),(x<(2{e)),z<x.((1{y)-1{e),((0{y)-0{e),2{y
+'j0{m
+j"wm
 END
 
 #p<((-1)@(b<;>0{a)>~#a)/a       load patch data into p
@@ -37,10 +46,18 @@ END
 #q<;>0{p                         q is patch 0 indices
 #(q-1){v                         load vertices
 #r<'w(q-1){v                     r is:  converted vertices of q, a 16x3 array
-#r<f"w(q-1){v                    using dyadic w  ^^^
-#x<4 4#0{\@r                     x,y,z 4x4 patch matrices
-#y<4 4#1{\@r
-#z<4 4#2{\@r
+#m<f"w(q-1){v                    using dyadic w  ^^^
+#x<4 4#0{\@m                     x,y,z 4x4 patch matrices
+#y<4 4#1{\@m
+#z<4 4#2{\@m
+#b<4 4#(-1),3,(-3),1,3,(-6),3,0,(-3),3,0,0,1,0,0,0   bezier basis
+#b+..x+..b                multiplies
+#b+..y+..b
+#b+..z+..b
+#c<0 7 4                  camera
+#e<0 0 40                 eye
+#j<:(y-c)
+#END
 
 #x<(0{:,)    set x as comma delimiter
 #q<;>0{p     q is patch 0 indices
