@@ -8,6 +8,7 @@
 typedef char C;
 typedef intptr_t INT;
 typedef struct a{INT x;INT t,r,d[3],p[1];} *ARC;
+//x: link to allocation list node
 //t (type): t=0:regular array, t=1:boxed, t=2:captured command
 //r (rank): significant dims in d
 //d (dims): dimensions of p
@@ -31,7 +32,12 @@ INT st[28] = {0}; /* symbol table */
 INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
 
 struct alist { INT x; int mark; struct alist *next; } *ahead = NULL;
+//allocation list
+//x: link to ARC struct
+//mark: scratch for mark/sweep alg
+//next: next node or NULL
 
+//push a on allocation list
 INT apush(struct alist **node, INT a){
     if(*node) return apush(&(*node)->next, a);  /* seek to the end */
     *node = malloc(sizeof(struct alist));
@@ -45,6 +51,7 @@ INT apush(struct alist **node, INT a){
 
 #define asize(a) (sizeof a/sizeof*a)
 
+//mark all allocations reachable from st[]
 void mark(INT x){
     if (x){
         ARC a = (ARC)x;
@@ -67,6 +74,7 @@ void mark(INT x){
     }
 }
 
+//free an allocation node and associated array data
 static
 int discard(struct alist **node){
     struct alist *next;
@@ -76,7 +84,7 @@ int discard(struct alist **node){
     x = (ARC)((*node)->x);
 
 #ifdef TRACEGC
-    printf("discarding %d len %d\n", (INT)x, 6+tr(x->r,x->d));
+    printf("discarding %d len %d\n", (INT)x, (sizeof(ARC)/sizeof(INT))+tr(x->r,x->d));
     pr(x);
 #endif
     free(x);
@@ -90,6 +98,7 @@ int discard(struct alist **node){
     return 1;
 }
 
+//perform a mark/sweep garbage collection
 INT collect(struct alist **node){
     int i,j,n;
     if (*node == NULL) return 0;
@@ -124,7 +133,7 @@ void mv(INT*d,INT*s,INT n){DO(n,d[i]=s[i]);}
 INT tr(INT r,INT*d){INT z=1;DO(r,z=z*d[i]);return z;}
 
 //construct(malloc) array with dims
-ARC ga(INT t,INT r,INT*d){ARC z=(ARC)ma(6+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;}
+ARC ga(INT t,INT r,INT*d){ARC z=(ARC)ma((sizeof(ARC)/sizeof(INT))+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);return z;}
 
 //dup an array structure and contents
 ARC cp(ARC w){
