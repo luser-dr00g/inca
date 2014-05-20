@@ -102,9 +102,15 @@ matrices by a run-length encoded representation, built using iotas, directly
 into the form of function calls to the function u which takes two numbers 
 and produces a row of the matrix.
 
-Functions can also call themselves recursively. Fibonacci function:
+Functions can also call themselves recursively.
+
+Fibonacci function:
 
      f<:;(y>1){(<:1);<:('fy-1)+'fy-2
+
+Factorial function:
+
+     f<:;(y>1){(<:1);<:y.fy-1
 
 In the run-length-encoded triangular matrix example, the rows were all the
 same length, so rowcat has an easy time to combine rows. But here, the two
