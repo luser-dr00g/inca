@@ -887,6 +887,7 @@ EX:
         INT holdx,holdy,holdz;
         INT y,z;
         ARC _a;
+monadic_user_function:
         y=(INT)ex(e+1); /* execute remainder */
         //pr(y);
         holdx = st['x'-'`'];
@@ -1051,6 +1052,7 @@ EX:
         }
     }
     if (qp(a)) a=(INT)cp((ARC)st[a-'`']); /*a not a function, w is zero (end-string). load var a if a is a var */
+    if (((ARC)a)->t&2) goto monadic_user_function;
     //if (a==0)return (ARC)noun('0');  /* if somehow a is zero (the end of string), return scalar zero */
     return (ARC)a;             /* return a, whatever it is now, a non-null "something", hopefully */
 }
