@@ -944,6 +944,7 @@ monadic_user_function:
             INT holdx, holdy, holdz;
             INT x,y,z;
             ARC _w;
+dyadic_user_function:
             //pr((ARC)a);
             //pr((ARC)w);
             if (qp(a)) a=(INT)cp((ARC)st[a-'`']);  /* a is not function, w is not a function */
@@ -1038,6 +1039,10 @@ monadic_user_function:
             if (a){
                 _a=(ARC)a;
                 if (qp(w)) w=st[w-'`'];  /* interpolate variable w? */
+                if (((ARC)w)->t&2) {
+                    ++e;
+                    goto dyadic_user_function;
+                }
                 w=(INT)cp((ARC)w);
                 _w=(ARC)w;  /* treat a and w like pointers */
                 if (_a->r==0 && _w->r==0){  /* a and w both scalar */
