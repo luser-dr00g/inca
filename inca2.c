@@ -39,17 +39,23 @@ nl(){printf("\n");}
 pr(w)ARC w;{INT r=w->r,*d=w->d,n=tr(r,d);DO(r,pi(d[i]));nl();
  if(w->t)DO(n,printf("< ");pr(w->p[i]))else DO(n,pi(w->p[i]));nl();}
 
-C vt[]="+{~<#,";
-ARC(*vd[])()={0,plus,from,find,0,rsh,cat},
- (*vm[])()={0,id,size,iota,box,sha,0};
+struct{ C c; ARC(*vd)(); ARC(*vm)(); }ftab[]={
+    { 0, 0, 0},
+    { '+', plus, id },
+    { '{', from, size },
+    { '~', find, iota },
+    { '<', 0, box },
+    { '#', rsh, sha },
+    { ',', cat, 0 }
+};
 INT st[26];
 qp(unsigned a){R  a>='a'&&a<='z';}
 qv(unsigned a){R a<'a';}
 ARC ex(e)INT *e;{INT a=*e;
  if(qp(a)){if(e[1]=='=')R (ARC)(st[a-'a']=(INT)ex(e+2));a= st[ a-'a'];}
- R qv(a)?(*vm[a])(ex(e+1)):e[1]?(*vd[e[1]])(a,ex(e+2)):(ARC)a;}
+ R qv(a)?(ftab[a].vm)(ex(e+1)):e[1]?(ftab[e[1]].vd)(a,ex(e+2)):(ARC)a;}
 noun(c){ARC z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R (INT)z;}
-verb(c){INT i=0;for(;vt[i];)if(vt[i++]==c)R i;R 0;}
+verb(c){INT i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 INT *wd(s)C *s;{INT a,n=strlen(s),*e=ma(n+1);C c;
  DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
 
