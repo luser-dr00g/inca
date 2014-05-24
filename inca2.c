@@ -8,6 +8,10 @@
 typedef char C;
 typedef intptr_t INT;
 typedef struct a{INT t,r,d[3],p[2];}*ARC;
+#define AT(a) (a->t) /*type*/
+#define AR(a) (a->r) /*rank*/
+#define AD(a) (a->d) /*dims*/
+#define AV(a) (a->p) /*values (ravel)*/
 
 #define R return
 #define V1(f) ARC f(ARC w)
@@ -17,29 +21,39 @@ typedef struct a{INT t,r,d[3],p[2];}*ARC;
 INT *ma(n){R(INT*)malloc(n*4);}
 mv(d,s,n)INT *d,*s;{DO(n,d[i]=s[i]);}
 tr(r,d)INT *d;{INT z=1;DO(r,z=z*d[i]);R z;}
-ARC ga(t,r,d)INT *d;{ARC z=(ARC)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);
- R z;}
-V1(iota){INT n=*w->p;ARC z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
-V2(plus){INT r=w->r,*d=w->d,n=tr(r,d);ARC z=ga(0,r,d);
- DO(n,z->p[i]=a->p[i]+w->p[i]);R z;}
-V2(from){INT r=w->r-1,*d=w->d+1,n=tr(r,d);
- ARC z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
-V1(box){ARC z=ga(1,0,0);*z->p=(INT)w;R z;}
-V2(cat){INT an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
- ARC z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);R z;}
+ARC ga(t,r,d)INT *d;{
+    ARC z=(ARC)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);
+    R z;}
+V1(iota){
+    INT n=*AV(w);ARC z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
+V2(plus){
+    INT r=AR(w),*d=AD(w),n=tr(r,d);ARC z=ga(0,r,d);
+    DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+V2(from){
+    INT r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
+    ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
+V1(box){
+    ARC z=ga(1,0,0);*AV(z)=(INT)w;R z;}
+V2(cat){
+    INT an=tr(AR(a),AD(a)),wn=tr(AR(w),AD(w)),n=an+wn;
+    ARC z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
 V2(find){}
-V2(rsh){INT r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
- ARC z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n);
- if(n-=wn)mv(z->p+wn,z->p,n);R z;}
-V1(sha){ARC z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
+V2(rsh){
+    INT r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=tr(AR(w),AD(w));
+    ARC z=ga(AT(w),r,AV(a));mv(AV(z),AV(w),wn=n>wn?wn:n);
+    if(n-=wn)mv(AV(z)+wn,AV(z),n);R z;}
+V1(sha){
+    ARC z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 V1(id){R w;}
-V1(size){ARC z=ga(0,0,0);*z->p=w->r?*w->d:1;R z;}
+V1(size){
+    ARC z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 pi(i){printf("%d ",i);}
 nl(){printf("\n");}
-pr(w)ARC w;{INT r=w->r,*d=w->d,n=tr(r,d);DO(r,pi(d[i]));nl();
- if(w->t)DO(n,printf("< ");pr(w->p[i]))else DO(n,pi(w->p[i]));nl();}
+pr(w)ARC w;{
+    INT r=AR(w),*d=AD(w),n=tr(r,d);DO(r,pi(d[i]));nl();
+    if(AT(w))DO(n,printf("< ");pr(AV(w)[i]))else DO(n,pi(AV(w)[i]));nl();}
 
-struct{ C c; ARC(*vd)(); ARC(*vm)(); }ftab[]={
+struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
     { 0, 0, 0},
     { '+', plus, id },
     { '{', from, size },
@@ -53,8 +67,8 @@ qp(unsigned a){R  a>='a'&&a<='z';}
 qv(unsigned a){R a<'a';}
 ARC ex(e)INT *e;{INT a=*e;
  if(qp(a)){if(e[1]=='=')R (ARC)(st[a-'a']=(INT)ex(e+2));a= st[ a-'a'];}
- R qv(a)?(ftab[a].vm)(ex(e+1)):e[1]?(ftab[e[1]].vd)(a,ex(e+2)):(ARC)a;}
-noun(c){ARC z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R (INT)z;}
+ R qv(a)?(ftab[a].vm)(ex(e+1)):e[1]?(ftab[e[1]].vd)((ARC)a,ex(e+2)):(ARC)a;}
+noun(c){ARC z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*AV(z)=c-'0';R (INT)z;}
 verb(c){INT i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 INT *wd(s)C *s;{INT a,n=strlen(s),*e=ma(n+1);C c;
  DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
