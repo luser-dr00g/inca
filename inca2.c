@@ -9,13 +9,13 @@ enum types { NUL, CHR, INT, DBL, BOX };
 typedef char C;
 typedef intptr_t I;
 typedef double D;
-typedef struct a{I k,t,n,r,d[3],p[1];}*ARC;
+typedef struct a{I k,t,n,r,d[0];}*ARC;
 #define AK(a) (a->k) /*offset of ravel*/
 #define AT(a) (a->t) /*type*/
 #define AN(a) (a->n) /*# of atoms in ravel*/
 #define AR(a) (a->r) /*rank*/
 #define AD(a) (a->d) /*dims*/
-#define AV(a) (a->p) /*values (ravel)*/
+#define AV(a) ((I*)(((C*)a)+AK(a))) /* values (ravel)*/
 
 #define R return
 #define V1(f) ARC f(ARC w)
@@ -26,8 +26,9 @@ I *ma(n){R(I*)malloc(n*sizeof(I));}
 mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
 tr(r,d)I *d;{I z=1;DO(r,z=z*d[i]);R z;}
 ARC ga(t,r,d)I *d;{I n;
-    ARC z=(ARC)ma((sizeof(*z)/sizeof(I))+(n=tr(r,d)));
-    AT(z)=t,AR(z)=r,AN(z)=n,mv(AD(z),d,r);
+    ARC z=(ARC)ma((sizeof(*z)/sizeof(I))+r+(n=tr(r,d)));
+    AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
+    mv(AD(z),d,r);
     R z;}
 V1(iota){
     I n=*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
@@ -76,7 +77,7 @@ struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
     { ',', cat, 0 }
 };
 I st[26];
-qp(unsigned a){R  islower(a&255);}
+qp(unsigned a){R a<255&&islower(a);}
 qv(unsigned a){R a<'a';}
 ARC ex(e)I *e;{I a=*e;
  if(qp(a)){if(e[1]=='=')R (ARC)(st[a-'a']=(I)ex(e+2));a= st[ a-'a'];}
