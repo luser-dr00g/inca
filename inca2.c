@@ -26,44 +26,76 @@ I *ma(n){R(I*)malloc(n*sizeof(I));}
 mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
 tr(r,d)I *d;{I z=1;DO(r,z=z*d[i]);R z;}
 ARC ga(t,r,d)I *d;{I n;
-    ARC z=(ARC)ma((sizeof(*z)/sizeof(I))+r+(n=tr(r,d)));
+    ARC z=(ARC)ma((sizeof(*z)/sizeof(I))+r+(n=tr(r,d))*(t==DBL?2:1));
     AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
     mv(AD(z),d,r);
     R z;}
 V1(iota){
-    I n=*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
+    I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 V2(plus){
-    I r=AR(w),*d=AD(w),n=AN(w);ARC z=ga(INT,r,d);
-    DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+    I r=AR(w),*d=AD(w),n=AN(w);
+    ARC z;
+    switch(AT(a)){
+    case INT: switch(AT(w)){
+        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;
+        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i]+((D*)AV(w))[i]);R z;
+        }
+    case DBL: switch(AT(w)){
+        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=((D*)AV(a))[i]+AV(w)[i]);R z;
+        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i]+((D*)AV(w))[i]);R z;
+        }
+    }
+}
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
-    ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
+    ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*(AT(a)==DBL?2:1));R z;}
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
 V2(cat){
     I an=AN(a),wn=AN(w),n=an+wn;
-    ARC z=ga(AT(w),1,&n);
-    mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
+    ARC z;
+    switch(AT(w)){
+    case INT: switch(AT(a)){
+        case INT: z=ga(AT(w),1,&n); mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;
+        case DBL: z=ga(AT(a),1,&n);
+        mv(AV(z),AV(a),an*2);//mv(AV(z)+an*2,AV(w),wn);R z;
+        DO(wn,((D*)AV(z))[an+i]=(D)AV(w)[i])
+        R z;
+        }
+    case DBL: switch(AT(a)){
+        case INT: z=ga(AT(w),1,&n);
+        //mv(AV(z),AV(a),an*2);
+        DO(an,((D*)AV(z))[i]=(D)AV(a)[i]);
+        mv(AV(z)+an*2,AV(w),wn*2);R z;
+        case DBL:
+        z=ga(AT(w),1,&n);
+        mv(AV(z),AV(a),an*2);mv(AV(z)+an,AV(w),wn*2);R z;
+        }
+    }
+}
 V2(find){}
 V2(rsh){
     I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
     ARC z=ga(AT(w),r,AV(a));
-    mv(AV(z),AV(w),wn=n>wn?wn:n);
-    if(n-=wn)mv(AV(z)+wn,AV(z),n);R z;}
+    mv(AV(z),AV(w),(wn=n>wn?wn:n)*(AT(w)==DBL?2:1));
+    if(n-=wn)mv(AV(z)+wn,AV(z),n*(AT(w)==DBL?2:1));R z;}
 V1(sha){
     ARC z=ga(INT,1,&AR(w));
     mv(AV(z),AD(w),AR(w));R z;}
 V1(id){R w;}
 V1(size){
-    ARC z=ga(INT,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
+    ARC z=ga(INT,0,0);
+    *AV(z)=AR(w)?*AD(w):1;R z;}
 
 pi(i){printf("%d ",i);}
+pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
 pr(w)ARC w;{
     I r=AR(w),*d=AD(w),n=AN(w);
     DO(r,pi(d[i]));
     nl();
     if(AT(w)==BOX)DO(n,printf("< ");pr(AV(w)[i]))
+    else if(AT(w)==DBL)DO(n,pd(((D*)AV(w))[i]))
     else DO(n,pi(AV(w)[i]));
     nl();}
 
@@ -82,9 +114,34 @@ qv(unsigned a){R a<'a';}
 ARC ex(e)I *e;{I a=*e;
  if(qp(a)){if(e[1]=='=')R (ARC)(st[a-'a']=(I)ex(e+2));a= st[ a-'a'];}
  R qv(a)?(ftab[a].vm)(ex(e+1)):e[1]?(ftab[e[1]].vd)((ARC)a,ex(e+2)):(ARC)a;}
+ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
+ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
 noun(c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
 verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
-I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
- DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
+//I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c; DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
+I *wd(C *s){
+    I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long l;
+    for(i=0,j=0;c=s[i];i++,j++){
+        if(isdigit(c)){
+            l=strtol(s+i,&rem,10);
+            //printf("%d:%s\n", l, rem);
+            if(*rem=='.'){D d;
+                d=strtod(s+i,&rem);
+                //printf("%f:%s\n", d, rem);
+                a=(I)scalarD(d);
+                s=rem;i=-1;
+            } else {
+                a=(I)scalarI(l);
+                s=rem;i=-1;
+            }
+        } else {
+            if(!(a=verb(c)))
+                a=c;
+        }
+        e[j]=a;
+    }
+    e[j]=0;
+    R e;
+}
 
 main(){C s[99];while(gets(s))pr(ex(wd(s)));}
