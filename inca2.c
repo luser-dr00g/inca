@@ -99,6 +99,33 @@ pr(w)ARC w;{
     else DO(n,pi(AV(w)[i]));
     nl();}
 
+#define NAME(name,b,c,d) name,
+#define FUNCINFO(a,character,dyadic,monadic) { character,dyadic,monadic },
+#define FTAB(_) \
+    _(ZERO, 0, 0, 0) \
+    _(PLUS, '+', plus, id) \
+    _(LCURL, '{', from, size) \
+    _(TILDE, '~', find, iota) \
+    _(LANG, '<', 0, box) \
+    _(HASH, '#', rsh, sha) \
+    _(COMMA, ',', cat, 0) \
+/* END FTAB */
+
+enum{FTAB(NAME)};
+struct{C c;ARC(*vd)(ARC,ARC);ARC(*vm)(ARC);}ftab[]={
+    FTAB(FUNCINFO)
+};
+
+/*
+enum{
+    ZERO,
+    PLUS,
+    LCURL,
+    TILDE,
+    LANG,
+    HASH,
+    COMMA,
+};
 struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
     { 0, 0, 0},
     { '+', plus, id },
@@ -108,12 +135,11 @@ struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
     { '#', rsh, sha },
     { ',', cat, 0 }
 };
+*/
 I st[26];
 qp(unsigned a){R a<255&&islower(a);}
-qv(unsigned a){
-    //R a<'a';
-    R a < (sizeof ftab/sizeof*ftab);
-}
+qv(unsigned a){ //R a<'a';
+    R a<(sizeof ftab/sizeof*ftab); }
 qo(unsigned a){R 0;}
 /*
 ARC ex(e)I *e;{I a=*e;
@@ -145,9 +171,7 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
 mon_verb: 
     if(qv(a)){ 
         while(b==' '){ABCD} 
-        if(qo(b)){ 
-            a=nmv(a,b); ABCD goto mon_verb; 
-        } 
+        if(qo(b)){ a=nmv(a,b); ABCD goto mon_verb; } 
         R vm(a,(I)ex(e+1)); 
     } 
 dy_verb: 
@@ -156,14 +180,13 @@ dy_verb:
             while(c==' '){ADV CC DD}
             if(qo(c)){ 
                 while(d==' '){ADV DD}
-                b=ndv(b,c,d); AACD goto dy_verb; 
-            } 
+                b=ndv(b,c,d); AACD goto dy_verb; } 
             c=(I)ex(e+2); 
             if(qp(a))a=VAR(a); 
             R vd(b,a,c); 
         } 
         if(qp(a))a=VAR(a);
-        if(b==' '){ 
+        if(b==' '){  // space-delimited vector
             if(qv(c)){ABCD goto dy_verb;} 
             if(AT((ARC)c)==INT||AT((ARC)c)==DBL){ 
                 a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb; 
@@ -171,7 +194,7 @@ dy_verb:
         } 
     } 
     R (ARC)a; 
-} 
+}
 
 
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
