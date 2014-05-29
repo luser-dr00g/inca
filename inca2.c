@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum types { NUL, CHR, INT, DBL, BOX };
+enum types { NUL, CHR, INT, DBL, BOX, FUN };
 typedef char C;
 typedef intptr_t I;
 typedef double D;
@@ -21,6 +21,10 @@ typedef struct a{I k,t,n,r,d[0];}*ARC;
 #define V1(f) ARC f(ARC w)
 #define V2(f) ARC f(ARC a,ARC w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
+ARC vm(I v, ARC w);         /* monadic verb handler */ 
+ARC vd(I v, ARC a, ARC w);  /* dyadic verb handler */ 
+I nmv(I f, I o);        /* new derived monadic verb */ 
+I ndv(I f, I o, I g); /* new derived dyadic verb */ 
 
 I *ma(n){R(I*)malloc(n*sizeof(I));}
 mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
@@ -30,6 +34,7 @@ ARC ga(t,r,d)I *d;{I n;
     AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
     mv(AD(z),d,r);
     R z;}
+
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 V2(plus){
@@ -87,6 +92,10 @@ V1(size){
     ARC z=ga(INT,0,0);
     *AV(z)=AR(w)?*AD(w):1;R z;}
 
+ARC fog(ARC a,I f,I g,ARC w){
+    R vm(f,vd(g,a,w));
+}
+
 pi(i){printf("%d ",i);}
 pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
@@ -99,53 +108,62 @@ pr(w)ARC w;{
     else DO(n,pi(AV(w)[i]));
     nl();}
 
-#define NAME(name,b,c,d) name,
-#define FUNCINFO(a,character,dyadic,monadic) { character,dyadic,monadic },
+#define FUNCNAME(name,character,dyadic,monadic,dyop,monop) name,
+#define FUNCINFO(name,character,dyadic,monadic,dyop,monop) \
+    {     character,dyadic,monadic,dyop,monop},
 #define FTAB(_) \
-    _(ZERO, 0, 0, 0) \
-    _(PLUS, '+', plus, id) \
-    _(LCURL, '{', from, size) \
-    _(TILDE, '~', find, iota) \
-    _(LANG, '<', 0, box) \
-    _(HASH, '#', rsh, sha) \
-    _(COMMA, ',', cat, 0) \
+    _(ZERO,  0,     0,     0,      0,   0) \
+    _(PLUS,  '+',   plus,  id,     0,   0) \
+    _(LCURL, '{',   from,  size,   0,   0) \
+    _(TILDE, '~',   find,  iota,   0,   0) \
+    _(LANG,  '<',   0,     box,    0,   0) \
+    _(HASH,  '#',   rsh,   sha,    0,   0) \
+    _(COMMA, ',',   cat,   0,      0,   0) \
+    _(AND,   '&',   0,     0,      fog, 0) \
 /* END FTAB */
-
-enum{FTAB(NAME)};
-struct{C c;ARC(*vd)(ARC,ARC);ARC(*vm)(ARC);}ftab[]={
+enum{FTAB(FUNCNAME) NFUNC};
+struct{
+    C c;
+    ARC(*vd)(ARC,ARC);
+    ARC(*vm)(ARC);
+    ARC(*od)(ARC,I,I,ARC);
+    ARC(*om)(I,ARC);
+}ftab[]={
     FTAB(FUNCINFO)
 };
 
-/*
-enum{
-    ZERO,
-    PLUS,
-    LCURL,
-    TILDE,
-    LANG,
-    HASH,
-    COMMA,
-};
-struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
-    { 0, 0, 0},
-    { '+', plus, id },
-    { '{', from, size },
-    { '~', find, iota },
-    { '<', 0, box },
-    { '#', rsh, sha },
-    { ',', cat, 0 }
-};
-*/
 I st[26];
-qp(unsigned a){R a<255&&islower(a);}
-qv(unsigned a){ //R a<'a';
-    R a<(sizeof ftab/sizeof*ftab); }
-qo(unsigned a){R 0;}
-/*
-ARC ex(e)I *e;{I a=*e;
- if(qp(a)){if(e[1]=='=')R (ARC)(st[a-'a']=(I)ex(e+2));a= st[ a-'a'];}
- R qv(a)?(ftab[a].vm)(ex(e+1)):e[1]?(ftab[e[1]].vd)((ARC)a,ex(e+2)):(ARC)a;}
- */
+qp(unsigned a){R (a<255) && islower(a);}
+qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;}
+qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));}
+qo(unsigned a){R (a<NFUNC) && (ftab[a].od || ftab[a].om);}
+
+I nmv(I f, I o){        /* new derived monadic verb */ 
+    ARC z=ga(FUN,1,(I[]){3});
+         /*arity*/
+    AV(z)[0] = 1; AV(z)[1] = f; AV(z)[2] = o;
+    R (I)z;
+}
+I ndv(I f, I o, I g){ /* new derived dyadic verb */ 
+    ARC z=ga(FUN,1,(I[]){4});
+         /*arity*/
+    AV(z)[0] = 2; AV(z)[1] = f; AV(z)[2] = o; AV(z)[3] = g;
+    R (I)z;
+}
+
+ARC vm(I v, ARC w){         /* monadic verb handler */ 
+    if (qd(v)){ARC d=(ARC)v;
+        R ftab[ AV(d)[2] ].om(AV(d)[1], w);
+    }
+    R ftab[v].vm(w);
+}
+ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */ 
+    if (qd(v)){ARC d=(ARC)v;
+        R ftab[ AV(d)[2] ].od(a, AV(d)[1], AV(d)[3], w);
+    }
+    R ftab[v].vd(a,w);
+}
+
 #define VAR(a) (st[a-'a']) /* lookup variable */ 
 #define ADV ++e; /* advance expression pointer */ 
 #define BB b=e[1]; /* update b */ 
@@ -154,17 +172,6 @@ ARC ex(e)I *e;{I a=*e;
 #define ABCD ADV BB CC DD 
 #define AACD ADV ADV CC DD 
 
-I nmv(I f, I o){        /* new derived monadic verb */ 
-}
-I ndv(I f, I o, I g){ /* new derived dyadic verb */ 
-}
-ARC vm(I v, I w){         /* monadic verb handler */ 
-    R ftab[v].vm((ARC)w);
-}
-ARC vd(I v, I a, I w){  /* dyadic verb handler */ 
-    R ftab[v].vd((ARC)a,(ARC)w);
-}
-
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
     while(a==' '){a=*ABCD} 
     if(qp(a)&&b=='=')R (ARC)(VAR(a)=(I)ex(e+2)); 
@@ -172,7 +179,7 @@ mon_verb:
     if(qv(a)){ 
         while(b==' '){ABCD} 
         if(qo(b)){ a=nmv(a,b); ABCD goto mon_verb; } 
-        R vm(a,(I)ex(e+1)); 
+        R vm(a,ex(e+1));
     } 
 dy_verb: 
     if(b){ 
@@ -180,20 +187,21 @@ dy_verb:
             while(c==' '){ADV CC DD}
             if(qo(c)){ 
                 while(d==' '){ADV DD}
-                b=ndv(b,c,d); AACD goto dy_verb; } 
+                b=ndv(b,c,d); AACD goto dy_verb;
+            }
             c=(I)ex(e+2); 
             if(qp(a))a=VAR(a); 
-            R vd(b,a,c); 
+            R vd(b,(ARC)a,(ARC)c);
         } 
         if(qp(a))a=VAR(a);
         if(b==' '){  // space-delimited vector
             if(qv(c)){ABCD goto dy_verb;} 
             if(AT((ARC)c)==INT||AT((ARC)c)==DBL){ 
-                a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb; 
-            } 
-        } 
+                a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb;
+            }
+        }
     } 
-    R (ARC)a; 
+    R (ARC)a;
 }
 
 
