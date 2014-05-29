@@ -37,20 +37,27 @@ ARC ga(t,r,d)I *d;{I n;
 
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
-V2(plus){
-    I r=AR(w),*d=AD(w),n=AN(w);
-    ARC z;
-    switch(AT(a)){
-    case INT: switch(AT(w)){
-        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;
-        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i]+((D*)AV(w))[i]);R z;
-        }
-    case DBL: switch(AT(w)){
-        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=((D*)AV(a))[i]+AV(w)[i]);R z;
-        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i]+((D*)AV(w))[i]);R z;
-        }
-    }
-}
+
+
+#define OP(op) \
+    I r=AR(w),*d=AD(w),n=AN(w); ARC z; \
+    switch(AT(a)){ \
+    case INT: switch(AT(w)){ \
+        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] op AV(w)[i]); break; \
+        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); break; \
+        } break;\
+    case DBL: switch(AT(w)){ \
+        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=((D*)AV(a))[i] op AV(w)[i]); break; \
+        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); break; \
+        } break; \
+    } \
+    R z;
+
+V2(plus){ OP(+) }
+V2(minus){ OP(-) }
+V2(times){ OP(*) }
+V2(divide){ OP(/) }
+
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
     ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*(AT(a)==DBL?2:1));R z;}
@@ -110,27 +117,28 @@ pr(w)ARC w;{
 
 #define FUNCNAME(name,character,dyadic,monadic,dyop,monop) name,
 #define FUNCINFO(name,character,dyadic,monadic,dyop,monop) \
-    {     character,dyadic,monadic,dyop,monop},
+    {     character,  dyadic, monadic,dyop,monop},
 #define FTAB(_) \
-    _(ZERO,  0,     0,     0,      0,   0) \
-    _(PLUS,  '+',   plus,  id,     0,   0) \
-    _(LCURL, '{',   from,  size,   0,   0) \
-    _(TILDE, '~',   find,  iota,   0,   0) \
-    _(LANG,  '<',   0,     box,    0,   0) \
-    _(HASH,  '#',   rsh,   sha,    0,   0) \
-    _(COMMA, ',',   cat,   0,      0,   0) \
-    _(AND,   '&',   0,     0,      fog, 0) \
+    _(ZERO,     0,    0,      0,      0,   0) \
+    _(PLUS,    '+',   plus,   id,     0,   0) \
+    _(MINUS,   '-',   minus,  0,      0,   0) \
+    _(TIMES,   '*',   times,  0,      0,   0) \
+    _(PERCENT, '%',   divide, 0,      0,   0) \
+    _(LCURL,   '{',   from,   size,   0,   0) \
+    _(TILDE,   '~',   find,   iota,   0,   0) \
+    _(LANG,    '<',   0,      box,    0,   0) \
+    _(HASH,    '#',   rsh,    sha,    0,   0) \
+    _(COMMA,   ',',   cat,    0,      0,   0) \
+    _(AND,     '&',   0,      0,      fog, 0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME) NFUNC};
 struct{
-    C c;
-    ARC(*vd)(ARC,ARC);
-    ARC(*vm)(ARC);
-    ARC(*od)(ARC,I,I,ARC);
-    ARC(*om)(I,ARC);
-}ftab[]={
-    FTAB(FUNCINFO)
-};
+        C c;
+            ARC(*vd)(ARC,ARC);
+                ARC(*vm)(ARC);
+                    ARC(*od)(ARC,I,I,ARC);
+                        ARC(*om)(I,ARC);
+}ftab[]={ FTAB(FUNCINFO) };
 
 I st[26];
 qp(unsigned a){R (a<255) && islower(a);}
@@ -141,13 +149,13 @@ qo(unsigned a){R (a<NFUNC) && (ftab[a].od || ftab[a].om);}
 I nmv(I f, I o){        /* new derived monadic verb */ 
     ARC z=ga(FUN,1,(I[]){3});
          /*arity*/
-    AV(z)[0] = 1; AV(z)[1] = f; AV(z)[2] = o;
+    AV(z)[0]=1; AV(z)[1]=f; AV(z)[2]=o;
     R (I)z;
 }
 I ndv(I f, I o, I g){ /* new derived dyadic verb */ 
     ARC z=ga(FUN,1,(I[]){4});
          /*arity*/
-    AV(z)[0] = 2; AV(z)[1] = f; AV(z)[2] = o; AV(z)[3] = g;
+    AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o; AV(z)[3]=g;
     R (I)z;
 }
 
