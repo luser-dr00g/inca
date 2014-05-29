@@ -110,7 +110,10 @@ struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
 };
 I st[26];
 qp(unsigned a){R a<255&&islower(a);}
-qv(unsigned a){R a<'a';}
+qv(unsigned a){
+    //R a<'a';
+    R a < (sizeof ftab/sizeof*ftab);
+}
 qo(unsigned a){R 0;}
 /*
 ARC ex(e)I *e;{I a=*e;
@@ -129,8 +132,8 @@ I nmv(I f, I o){        /* new derived monadic verb */
 }
 I ndv(I f, I o, I g){ /* new derived dyadic verb */ 
 }
-ARC vm(I v, ARC w){         /* monadic verb handler */ 
-    R ftab[v].vm(w);
+ARC vm(I v, I w){         /* monadic verb handler */ 
+    R ftab[v].vm((ARC)w);
 }
 ARC vd(I v, I a, I w){  /* dyadic verb handler */ 
     R ftab[v].vd((ARC)a,(ARC)w);
@@ -145,10 +148,10 @@ mon_verb:
         if(qo(b)){ 
             a=nmv(a,b); ABCD goto mon_verb; 
         } 
-        R vm(a,ex(e+1)); 
+        R vm(a,(I)ex(e+1)); 
     } 
-    if(b){ 
 dy_verb: 
+    if(b){ 
         if(qv(b)){ 
             while(c==' '){ADV CC DD}
             if(qo(c)){ 
