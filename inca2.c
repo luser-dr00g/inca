@@ -10,12 +10,12 @@ typedef char C;
 typedef intptr_t I;
 typedef double D;
 typedef struct a{I k,t,n,r,d[0];}*ARC;
-#define AK(a) (a->k) /*offset of ravel*/
-#define AT(a) (a->t) /*type*/
-#define AN(a) (a->n) /*# of atoms in ravel*/
-#define AR(a) (a->r) /*rank*/
-#define AD(a) (a->d) /*dims*/
-#define AV(a) ((I*)(((C*)a)+AK(a))) /* values (ravel)*/
+#define AK(a) ((a)->k) /*offset of ravel*/
+#define AT(a) ((a)->t) /*type*/
+#define AN(a) ((a)->n) /*# of atoms in ravel*/
+#define AR(a) ((a)->r) /*rank*/
+#define AD(a) ((a)->d) /*dims*/
+#define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel)*/
 
 #define R return
 #define V1(f) ARC f(ARC w)
@@ -111,27 +111,82 @@ struct{ C c; ARC(*vd)(ARC,ARC); ARC(*vm)(ARC); }ftab[]={
 I st[26];
 qp(unsigned a){R a<255&&islower(a);}
 qv(unsigned a){R a<'a';}
+qo(unsigned a){R 0;}
+/*
 ARC ex(e)I *e;{I a=*e;
  if(qp(a)){if(e[1]=='=')R (ARC)(st[a-'a']=(I)ex(e+2));a= st[ a-'a'];}
  R qv(a)?(ftab[a].vm)(ex(e+1)):e[1]?(ftab[e[1]].vd)((ARC)a,ex(e+2)):(ARC)a;}
+ */
+#define VAR(a) (st[a-'a']) /* lookup variable */ 
+#define ADV ++e; /* advance expression pointer */ 
+#define BB b=e[1]; /* update b */ 
+#define CC c=e[2]; /* update c */ 
+#define DD d=e[3]; /* update d */ 
+#define ABCD ADV BB CC DD 
+#define AACD ADV ADV CC DD 
+
+I nmv(I f, I o){        /* new derived monadic verb */ 
+}
+I ndv(I f, I o, I g){ /* new derived dyadic verb */ 
+}
+ARC vm(I v, ARC w){         /* monadic verb handler */ 
+    R ftab[v].vm(w);
+}
+ARC vd(I v, I a, I w){  /* dyadic verb handler */ 
+    R ftab[v].vd((ARC)a,(ARC)w);
+}
+
+ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
+    while(a==' '){a=*ABCD} 
+    if(qp(a)&&b=='=')R (ARC)(VAR(a)=(I)ex(e+2)); 
+mon_verb: 
+    if(qv(a)){ 
+        while(b==' '){ABCD} 
+        if(qo(b)){ 
+            a=nmv(a,b); ABCD goto mon_verb; 
+        } 
+        R vm(a,ex(e+1)); 
+    } 
+    if(b){ 
+dy_verb: 
+        if(qv(b)){ 
+            while(c==' '){ADV CC DD}
+            if(qo(c)){ 
+                while(d==' '){ADV DD}
+                b=ndv(b,c,d); AACD goto dy_verb; 
+            } 
+            c=(I)ex(e+2); 
+            if(qp(a))a=VAR(a); 
+            R vd(b,a,c); 
+        } 
+        if(qp(a))a=VAR(a);
+        if(b==' '){ 
+            if(qv(c)){ABCD goto dy_verb;} 
+            if(AT((ARC)c)==INT||AT((ARC)c)==DBL){ 
+                a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb; 
+            } 
+        } 
+    } 
+    R (ARC)a; 
+} 
+
+
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
 ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
 noun(c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
 verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 //I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c; DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
 I *wd(C *s){
-    I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long l;
+    I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
         if(isdigit(c)){
-            l=strtol(s+i,&rem,10);
-            //printf("%d:%s\n", l, rem);
+            ll=strtol(s+i,&rem,10); //printf("%d:%s\n", ll, rem);
             if(*rem=='.'){D d;
-                d=strtod(s+i,&rem);
-                //printf("%f:%s\n", d, rem);
+                d=strtod(s+i,&rem); //printf("%f:%s\n", d, rem);
                 a=(I)scalarD(d);
-                s=rem;i=-1;
+                s=rem;i=-1; //adjust pointer+index
             } else {
-                a=(I)scalarI(l);
+                a=(I)scalarI(ll);
                 s=rem;i=-1;
             }
         } else {
