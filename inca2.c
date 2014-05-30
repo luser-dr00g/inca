@@ -58,10 +58,15 @@ V1(iota){
     } \
     R z;
 
-V2(plus){ MATHOP(+) }
-V2(minus){ MATHOP(-) }
-V2(times){ MATHOP(*) }
-V2(divide){ MATHOP(/) }
+V2(plus){    MATHOP(+) }
+V2(minus){   MATHOP(-) }
+V2(times){   MATHOP(*) }
+V2(divide){  MATHOP(/) }
+V2(equal){   MATHOP(==) }
+V2(and){     MATHOP(&&) }
+V2(or){      MATHOP(||) }
+V2(less){    MATHOP(<) }
+V2(greater){ MATHOP(>) }
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
@@ -124,13 +129,16 @@ pr(w)ARC w;{
                 _(PLUS,    '+',   0.0, plus,   id,     0,   0,      0) \
                 _(MINUS,   '-',   0.0, minus,  0,      0,   0,      0) \
                 _(TIMES,   '*',   1.0, times,  0,      0,   0,      power) \
-                _(PERCENT, '%',   0.0, divide, 0,      0,   0,      0) \
+                _(PERCENT, '%',   1.0, divide, 0,      0,   0,      0) \
                 _(LCURL,   '{',   0.0, from,   size,   0,   0,      0) \
                 _(TILDE,   '~',   0.0, find,   iota,   0,   0,      0) \
-                _(LANG,    '<',   0.0, 0,      box,    0,   0,      0) \
+                _(LANG,    '<',   0.0, less,   box,    0,   0,      0) \
+                _(RANG,    '>',   0.0, greater,0,      0,   0,      0) \
                 _(HASH,    '#',   0.0, rsh,    sha,    0,   0,      0) \
                 _(COMMA,   ',',   0.0, cat,    0,      0,   0,      0) \
-                _(AND,     '&',   0.0, 0,      0,      fog, 0,      0) \
+                _(AND,     '&',   0.0, and,    0,      fog, 0,      0) \
+                _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
+                _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME) NFUNC};
 struct{
@@ -184,6 +192,8 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
     if (qd(v)){ARC d=(ARC)v;
         R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
     }
+    if (!ftab[v].vm)
+        R ftab[v].vd(scalarD(ftab[v].id), w);
     R ftab[v].vm(w);
 }
 ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */ 
@@ -205,7 +215,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
 
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
     while(a==' '){a=*ABCD} 
-    if(qp(a)&&b=='=')R (ARC)(VAR(a)=(I)ex(e+2)); 
+    if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
     if(qv(a)){ 
         while(b==' '){ABCD} 
@@ -234,7 +244,9 @@ dy_verb:
                 a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb;
             }
         }
+        R (ARC)a;
     } 
+    if(qp(a))a=VAR(a);
     R (ARC)a;
 }
 
