@@ -150,16 +150,6 @@ struct{
                             ARC(*omd)(ARC,I,ARC);
 }ftab[]={ FTAB(FUNCINFO) };
 
-ARC power(ARC a,I f,ARC w){
-    I n=*AV(w);
-    ARC z=scalarD(ftab[f].id);
-    DO(n,z=ftab[f].vd(a,z));
-    R z;
-}
-ARC fog(ARC a,I f,I g,ARC w){
-    R vm(f,vd(g,a,w));
-}
-
 I st[26];
 qp(unsigned a){R (a<255) && islower(a);}
 qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;}
@@ -168,6 +158,21 @@ qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);}
 qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);}
 qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);}
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
+
+ARC vid(I f){
+    R scalarD(qd(f)?1:ftab[f].id);
+}
+
+ARC power(ARC a,I f,ARC w){
+    I n=*AV(w);
+    ARC z=vid(f);
+    if(n)z=a;
+    DO(n-1,z=vd(f,a,z))
+    R z;
+}
+ARC fog(ARC a,I f,I g,ARC w){
+    R vm(f,vd(g,a,w));
+}
 
 I nommv(I f, I o){        /* new derived monadic verb */ 
     ARC z=ga(FUN,1,(I[]){3});
