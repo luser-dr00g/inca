@@ -5,7 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum types { NUL, CHR, INT, DBL, BOX, FUN };
+enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
+#define TYPEPAIR(a,b) ((a)*NTYPES+(b))
 typedef char C;
 typedef intptr_t I;
 typedef double D;
@@ -45,18 +46,30 @@ V1(iota){
 
 
 #define MATHOP(op) \
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    switch(TYPEPAIR(AT(a),AT(w))) { \
+    case TYPEPAIR(INT,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] op AV(w)[i]); break; \
+    case TYPEPAIR(INT,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); break; \
+    case TYPEPAIR(DBL,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=((D*)AV(a))[i] op AV(w)[i]); break; \
+    case TYPEPAIR(DBL,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); break; \
+    } R z;
+
+#define MATHOPF(func) \
     I r=AR(w),*d=AD(w),n=AN(w); ARC z; \
-    switch(AT(a)){ \
-    case INT: switch(AT(w)){ \
-        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] op AV(w)[i]); break; \
-        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); break; \
-        } break;\
-    case DBL: switch(AT(w)){ \
-        case INT: z=ga(INT,r,d); DO(n,AV(z)[i]=((D*)AV(a))[i] op AV(w)[i]); break; \
-        case DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); break; \
-        } break; \
-    } \
-    R z;
+    switch(TYPEPAIR(AT(a),AT(w))){ \
+    case TYPEPAIR(INT,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])); break; \
+    case TYPEPAIR(INT,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(AV(a)[i], ((D*)AV(w))[i])); break; \
+    case TYPEPAIR(DBL,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=func(((D*)AV(a))[i], AV(w)[i])); break; \
+    case TYPEPAIR(DBL,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])); break; \
+    } R z;
 
 V2(plus){    MATHOP(+) }
 V2(minus){   MATHOP(-) }
@@ -67,6 +80,8 @@ V2(and){     MATHOP(&&) }
 V2(or){      MATHOP(||) }
 V2(less){    MATHOP(<) }
 V2(greater){ MATHOP(>) }
+
+V2(powerf){ MATHOPF(pow) }
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
@@ -139,15 +154,15 @@ pr(w)ARC w;{
                 _(AND,     '&',   0.0, and,    0,      fog, 0,      0) \
                 _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
                 _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      0) \
+                _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME) NFUNC};
-struct{
-        C c; D id;
-            ARC(*vd)(ARC,ARC);
-                ARC(*vm)(ARC);
-                    ARC(*odd)(ARC,I,I,ARC);
-                        ARC(*omm)(I,ARC);
-                            ARC(*omd)(ARC,I,ARC);
+struct{             C c; D id;
+           ARC(*vd)(ARC,        ARC);
+           ARC(*vm)(            ARC);
+          ARC(*odd)(ARC, I,  I, ARC);
+          ARC(*omm)(     I,     ARC);
+          ARC(*omd)(ARC, I,     ARC);
 }ftab[]={ FTAB(FUNCINFO) };
 
 I st[26];
