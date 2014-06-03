@@ -7,17 +7,18 @@
 
 #define CASE break;case
 enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
+//TPAIR() combines types into a single value that can be switch()ed
 #define TPAIR(a,b) ((a)*NTYPES+(b))
 typedef char C;
 typedef intptr_t I;
 typedef double D;
 typedef struct a{I k,t,n,r,d[0];}*ARC;
-#define AK(a) ((a)->k) /*offset of ravel*/
-#define AT(a) ((a)->t) /*type*/
-#define AN(a) ((a)->n) /*# of atoms in ravel*/
-#define AR(a) ((a)->r) /*rank*/
-#define AD(a) ((a)->d) /*dims*/
-#define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel)*/
+#define AK(a) ((a)->k) /* offset of ravel */
+#define AT(a) ((a)->t) /* type */
+#define AN(a) ((a)->n) /* # of atoms in ravel */
+#define AR(a) ((a)->r) /* rank */
+#define AD(a) ((a)->d) /* dims */
+#define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
 
 #define R return
 #define V1(f) ARC f(ARC w)
@@ -74,7 +75,7 @@ V1(negate){ MATHOP1(-) }
     } R z;
 
 #define MATHOPF2(func) \
-    I r=AR(w),*d=AD(w),n=AN(w); ARC z; \
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
     switch(TPAIR(AT(a),AT(w))){ \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])); \
