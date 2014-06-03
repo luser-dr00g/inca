@@ -5,8 +5,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CASE break;case
 enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
-#define TYPEPAIR(a,b) ((a)*NTYPES+(b))
+#define TPAIR(a,b) ((a)*NTYPES+(b))
 typedef char C;
 typedef intptr_t I;
 typedef double D;
@@ -40,48 +41,62 @@ ARC ga(t,r,d)I *d;{I n;
     R z;}
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
 ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
+ARC toI(ARC a){ if (AT(a)==INT)R a;
+    ARC z=ga(INT,AR(a),AD(a)); DO(AN(a),AV(z)[i]=((D*)AV(a))[i]); R z;}
+ARC toD(ARC a){ if (AT(a)==DBL)R a;
+    ARC z=ga(DBL,AR(a),AD(a)); DO(AN(a),((D*)AV(z))[i]=AV(a)[i]); R z;}
 
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
-
-#define MATHOP(op) \
+#define MATHOP1(op) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
-    switch(TYPEPAIR(AT(a),AT(w))) { \
-    case TYPEPAIR(INT,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] op AV(w)[i]); break; \
-    case TYPEPAIR(INT,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); break; \
-    case TYPEPAIR(DBL,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=((D*)AV(a))[i] op AV(w)[i]); break; \
-    case TYPEPAIR(DBL,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); break; \
+    switch(AT(w)){ \
+    CASE INT: \
+        z=ga(INT,r,d); DO(n,AV(z)[i]= op AV(w)[i]); \
+    CASE DBL: \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]= op ((D*)AV(w))[i]); \
     } R z;
 
-#define MATHOPF(func) \
+V1(negate){ MATHOP1(-) }
+
+#define MATHOP2(op) \
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    switch(TPAIR(AT(a),AT(w))) { \
+    CASE TPAIR(INT,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] op AV(w)[i]); \
+    CASE TPAIR(INT,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); \
+    CASE TPAIR(DBL,INT): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op AV(w)[i]); \
+    CASE TPAIR(DBL,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); \
+    } R z;
+
+#define MATHOPF2(func) \
     I r=AR(w),*d=AD(w),n=AN(w); ARC z; \
-    switch(TYPEPAIR(AT(a),AT(w))){ \
-    case TYPEPAIR(INT,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])); break; \
-    case TYPEPAIR(INT,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(AV(a)[i], ((D*)AV(w))[i])); break; \
-    case TYPEPAIR(DBL,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=func(((D*)AV(a))[i], AV(w)[i])); break; \
-    case TYPEPAIR(DBL,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])); break; \
+    switch(TPAIR(AT(a),AT(w))){ \
+    CASE TPAIR(INT,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])); \
+    CASE TPAIR(INT,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(AV(a)[i], ((D*)AV(w))[i])); \
+    CASE TPAIR(DBL,INT): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], AV(w)[i])); \
+    CASE TPAIR(DBL,DBL): \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])); \
     } R z;
 
-V2(plus){    MATHOP(+) }
-V2(minus){   MATHOP(-) }
-V2(times){   MATHOP(*) }
-V2(divide){  MATHOP(/) }
-V2(equal){   MATHOP(==) }
-V2(and){     MATHOP(&&) }
-V2(or){      MATHOP(||) }
-V2(less){    MATHOP(<) }
-V2(greater){ MATHOP(>) }
+V2(plus){    MATHOP2(+) }
+V2(minus){   MATHOP2(-) }
+V2(times){   MATHOP2(*) }
+V2(divide){  MATHOP2(/) }
+V2(equal){   MATHOP2(==) }
+V2(and){     MATHOP2(&&) }
+V2(or){      MATHOP2(||) }
+V2(less){    MATHOP2(<) }
+V2(greater){ MATHOP2(>) }
 
-V2(powerf){ MATHOPF(pow) }
+V2(powerf){ MATHOPF2(pow) }
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
@@ -89,26 +104,18 @@ V2(from){
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
 V2(cat){
-    I an=AN(a),wn=AN(w),n=an+wn;
-    ARC z;
-    switch(AT(w)){
-    case INT: switch(AT(a)){
-        case INT: z=ga(AT(w),1,&n); mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;
-        case DBL: z=ga(AT(a),1,&n);
-        mv(AV(z),AV(a),an*2);//mv(AV(z)+an*2,AV(w),wn);R z;
-        DO(wn,((D*)AV(z))[an+i]=(D)AV(w)[i])
-        R z;
-        }
-    case DBL: switch(AT(a)){
-        case INT: z=ga(AT(w),1,&n);
-        //mv(AV(z),AV(a),an*2);
-        DO(an,((D*)AV(z))[i]=(D)AV(a)[i]);
-        mv(AV(z)+an*2,AV(w),wn*2);R z;
-        case DBL:
-        z=ga(AT(w),1,&n);
-        mv(AV(z),AV(a),an*2);mv(AV(z)+an,AV(w),wn*2);R z;
-        }
+    I an=AN(a),wn=AN(w),n=an+wn; ARC z;
+    switch(TPAIR(AT(a),AT(w))){
+    CASE TPAIR(INT,INT):
+        z=ga(AT(a),1,&n); mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);
+    CASE TPAIR(INT,DBL):
+        z=ga(AT(w),1,&n); DO(an,((D*)AV(z))[i]=(D)AV(a)[i]); mv(AV(z)+an*2,AV(w),wn*2);
+    CASE TPAIR(DBL,INT):
+        z=ga(AT(a),1,&n); mv(AV(z),AV(a),an*2); DO(wn,((D*)AV(z))[an+i]=(D)AV(w)[i])
+    CASE TPAIR(DBL,DBL):
+        z=ga(AT(a),1,&n); mv(AV(z),AV(a),an*2);mv(AV(z)+an*2,AV(w),wn*2);
     }
+    R z;
 }
 V2(find){}
 V2(rsh){
@@ -142,7 +149,7 @@ pr(w)ARC w;{
 #define FTAB(_) \
                 _(NOP,      0,    0.0, 0,      0,      0,   0,      0) \
                 _(PLUS,    '+',   0.0, plus,   id,     0,   0,      0) \
-                _(MINUS,   '-',   0.0, minus,  0,      0,   0,      0) \
+                _(MINUS,   '-',   0.0, minus,  negate, 0,   0,      0) \
                 _(TIMES,   '*',   1.0, times,  0,      0,   0,      power) \
                 _(PERCENT, '%',   1.0, divide, 0,      0,   0,      0) \
                 _(LCURL,   '{',   0.0, from,   size,   0,   0,      0) \
@@ -165,6 +172,8 @@ struct{             C c; D id;
           ARC(*omd)(ARC, I,     ARC);
 }ftab[]={ FTAB(FUNCINFO) };
 
+ARC vid(I f){ R scalarD(qd(f)?1:ftab[f].id); }
+
 I st[26];
 qp(unsigned a){R (a<255) && islower(a);}
 qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;}
@@ -174,9 +183,6 @@ qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);}
 qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);}
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
 
-ARC vid(I f){
-    R scalarD(qd(f)?1:ftab[f].id);
-}
 
 ARC power(ARC a,I f,ARC w){
     I n=*AV(w);
@@ -189,24 +195,15 @@ ARC fog(ARC a,I f,I g,ARC w){
     R vm(f,vd(g,a,w));
 }
 
-I nommv(I f, I o){        /* new derived monadic verb */ 
-    ARC z=ga(FUN,1,(I[]){3});
-         /*arity*/
-    AV(z)[0]=1; AV(z)[1]=f; AV(z)[2]=o;
-    R (I)z;
-}
+I nommv(I f, I o){        /* new derived monadic verb  arity in [0] */ 
+    ARC z=ga(FUN,1,(I[]){3}); AV(z)[0]=1; AV(z)[1]=f; AV(z)[2]=o;
+    R (I)z; }
 I nomdv(I f, I o){        /* derived dyadic verb of 1 function */
-    ARC z=ga(FUN,1,(I[]){3});
-         /*arity*/
-    AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o;
-    R (I)z;
-}
+    ARC z=ga(FUN,1,(I[]){3}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o;
+    R (I)z; }
 I noddv(I f, I o, I g){ /* new derived dyadic verb */ 
-    ARC z=ga(FUN,1,(I[]){4});
-         /*arity*/
-    AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o; AV(z)[3]=g;
-    R (I)z;
-}
+    ARC z=ga(FUN,1,(I[]){4}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o; AV(z)[3]=g;
+    R (I)z; }
 
 ARC vm(I v, ARC w){         /* monadic verb handler */ 
     if (qd(v)){ARC d=(ARC)v;
@@ -273,7 +270,7 @@ dy_verb:
 
 noun(c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
 verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
-//I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c; DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);e[n]=0;R e;}
+
 I *wd(C *s){
     I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
