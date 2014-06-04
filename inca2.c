@@ -106,8 +106,8 @@ restart: \
 V1(negate){ MATHOP1(-, subwillunder) }
 
 #define RANKCOMPAT \
-    if (AR(a)==0) a=rsh(scalarI(AN(w)),a); \
-    if (AR(w)==0) { w=rsh(scalarI(AN(a)),w); r=AR(w); d=AD(w); n=AN(w); } \
+    if (AR(a)==0) a=rsh(sha(w),a); \
+    if (AR(w)==0) { w=rsh(sha(a),w); r=AR(w); d=AD(w); n=AN(w); } \
     if (r!=AR(a)) longjmp(mainloop, RANK); \
     if (n!=AN(a)) longjmp(mainloop, LENGTH); \
 
@@ -299,7 +299,7 @@ dy_verb:
             R vd(b,(ARC)a,(ARC)c);
         } 
         if(qp(a))a=VAR(a);
-        if(b==' '){  // space-delimited vector
+        if(b==' '){  // space-delimited vector?
             if(qv(c)){ABCD goto dy_verb;} 
             if(AT((ARC)c)==INT||AT((ARC)c)==DBL){ 
                 a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb;
@@ -344,5 +344,5 @@ main(){C s[99];
         printf("%s ERROR\n", errstr[err]);
     }
     while(gets(s))
-    pr(ex(wd(s)));
+        pr(ex(wd(s)));
 }
