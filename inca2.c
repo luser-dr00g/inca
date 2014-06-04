@@ -148,6 +148,21 @@ V2(plus){    MATHOP2(+, addwillover, plus) }
 V2(minus){   MATHOP2(-, subwillunder, minus) }
 V2(times){   MATHOP2(*, mulwillover, times) }
 V2(divide){  MATHOP2(/, divwillover, divide) }
+V2(modulus){ ARC t=a;a=w;w=t;
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    RANKCOMPAT \
+    switch(TPAIR(AT(a),AT(w))) { \
+    CASE TPAIR(INT,INT): \
+        z=ga(INT,r,d); \
+        DO(n, AV(z)[i]=AV(a)[i] % AV(w)[i]); \
+    CASE TPAIR(INT,DBL): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] % (I)((D*)AV(w))[i]); \
+    CASE TPAIR(DBL,INT): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=(I)((D*)AV(a))[i] % AV(w)[i]); \
+    CASE TPAIR(DBL,DBL): \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=(I)((D*)AV(a))[i] % (I)((D*)AV(w))[i]); \
+    } R z;
+}
 V2(equal){   MATHOP2(==, boolover, equal) }
 V2(and){     MATHOP2(&&, boolover, and) }
 V2(or){      MATHOP2(||, boolover, or) }
@@ -155,6 +170,8 @@ V2(less){    MATHOP2(<, boolover, less) }
 V2(greater){ MATHOP2(>, boolover, greater) }
 
 V2(powerf){ MATHOPF2(pow) }
+
+V1(flr){ R toI(w); }
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
@@ -199,6 +216,7 @@ pr(w)ARC w;{
                 _(MINUS,   '-',   0.0, minus,  negate, 0,   0,      0) \
                 _(TIMES,   '*',   1.0, times,  0,      0,   0,      power) \
                 _(PERCENT, '%',   1.0, divide, 0,      0,   0,      0) \
+                _(VBAR,    '|',   0.0, modulus,0,      0,   0,      0) \
                 _(LCURL,   '{',   0.0, from,   size,   0,   0,      0) \
                 _(TILDE,   '~',   0.0, find,   iota,   0,   0,      0) \
                 _(LANG,    '<',   0.0, less,   box,    0,   0,      0) \
@@ -210,6 +228,9 @@ pr(w)ARC w;{
                 _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
                 _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
                 _(EXCL,    '!',   0.0, 0,      not,    0,   0,      0) \
+                _(SLASH,   '/',   0.0, 0,      0,      0,   0,      0) \
+                _(BKSLASH, '\\',  0.0, 0,      0,      0,   0,      0) \
+                _(HBAR,    '_',   0.0, 0,      flr,    0,   0,      0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME) NFUNC};
 struct{             C c; D id;
