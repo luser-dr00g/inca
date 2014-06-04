@@ -1,10 +1,18 @@
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
+#include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define ERRORS(_) _(NO_ERROR) _(RANK) _(LENGTH)
+#define BARE(_) _ ,
+#define STR(x) #x ,
+enum errnames { ERRORS(BARE) };
+char *errstr[] = { ERRORS(STR) };
+jmp_buf mainloop;
 
 #define CASE break;case
 enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
@@ -87,6 +95,8 @@ V1(negate){ MATHOP1(-, subwillunder) }
 
 #define MATHOP2(op, overflow) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    if (r!=AR(a)) longjmp(mainloop, RANK); \
+    if (n!=AN(a)) longjmp(mainloop, LENGTH); \
 restart: \
     switch(TPAIR(AT(a),AT(w))) { \
     CASE TPAIR(INT,INT): \
@@ -321,4 +331,11 @@ I *wd(C *s){
     R e;
 }
 
-main(){C s[99];while(gets(s))pr(ex(wd(s)));}
+main(){C s[99];
+    int err;
+    if (err = setjmp(mainloop)){
+        printf("%s ERROR\n", errstr[err]);
+    }
+    while(gets(s))
+    pr(ex(wd(s)));
+}
