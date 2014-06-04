@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ERRORS(_) _(NO_ERROR) _(RANK) _(LENGTH)
+#define ERRORS(_) _(NO_ERROR) _(RANK) _(LENGTH) _(OPERATOR)
 #define BARE(_) _ ,
 #define STR(x) #x ,
 enum errnames { ERRORS(BARE) };
@@ -16,7 +16,7 @@ jmp_buf mainloop;
 
 #define CASE break;case
 enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
-//TPAIR() combines types into a single value that can be switch()ed
+/* TPAIR() combines types into a single value that can be switch()ed */
 #define TPAIR(a,b) ((a)*NTYPES+(b))
 typedef char C;
 typedef intptr_t I;
@@ -27,17 +27,19 @@ typedef struct a{I k,t,n,r,d[0];}*ARC;
 #define AN(a) ((a)->n) /* # of atoms in ravel */
 #define AR(a) ((a)->r) /* rank */
 #define AD(a) ((a)->d) /* dims */
+/* values float *after* variable-length dims */
 #define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
 
 #define R return
 #define V1(f) ARC f(ARC w)
 #define V2(f) ARC f(ARC a,ARC w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
-ARC vm(I v, ARC w);         /* monadic verb handler */ 
-ARC vd(I v, ARC a, ARC w);  /* dyadic verb handler */ 
-I nommv(I f, I o);        /* new derived monadic verb */ 
+ARC vm(I v, ARC w);                 /* monadic verb handler */ 
+ARC vd(I v, ARC a, ARC w);          /* dyadic verb handler */ 
+I nommv(I f, I o);      /* new derived monadic verb */ 
 I noddv(I f, I o, I g); /* new derived dyadic verb */ 
 
+ARC eqop(ARC a,I f,ARC w);
 ARC power(ARC a,I f,ARC w);
 ARC fog(ARC a,I f,I g,ARC w);
 
@@ -104,6 +106,7 @@ restart: \
     } R z;
 
 V1(negate){ MATHOP1(-, subwillunder) }
+V1(not){ MATHOP1(!, boolover) }
 
 #define RANKCOMPAT \
     if (AR(a)==0) a=rsh(sha(w),a); \
@@ -111,14 +114,14 @@ V1(negate){ MATHOP1(-, subwillunder) }
     if (r!=AR(a)) longjmp(mainloop, RANK); \
     if (n!=AN(a)) longjmp(mainloop, LENGTH); \
 
-#define MATHOP2(op, overflow) \
+#define MATHOP2(op, overflow, ident) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
     RANKCOMPAT \
-restart: \
+restart ## ident: \
     switch(TPAIR(AT(a),AT(w))) { \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); \
-        DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart;} AV(z)[i]=AV(a)[i] op AV(w)[i]); \
+        DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart ## ident;} AV(z)[i]=AV(a)[i] op AV(w)[i]); \
     CASE TPAIR(INT,DBL): \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); \
     CASE TPAIR(DBL,INT): \
@@ -141,15 +144,15 @@ restart: \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])); \
     } R z;
 
-V2(plus){    MATHOP2(+, addwillover) }
-V2(minus){   MATHOP2(-, subwillunder) }
-V2(times){   MATHOP2(*, mulwillover) }
-V2(divide){  MATHOP2(/, divwillover) }
-V2(equal){   MATHOP2(==, boolover) }
-V2(and){     MATHOP2(&&, boolover) }
-V2(or){      MATHOP2(||, boolover) }
-V2(less){    MATHOP2(<, boolover) }
-V2(greater){ MATHOP2(>, boolover) }
+V2(plus){    MATHOP2(+, addwillover, plus) }
+V2(minus){   MATHOP2(-, subwillunder, minus) }
+V2(times){   MATHOP2(*, mulwillover, times) }
+V2(divide){  MATHOP2(/, divwillover, divide) }
+V2(equal){   MATHOP2(==, boolover, equal) }
+V2(and){     MATHOP2(&&, boolover, and) }
+V2(or){      MATHOP2(||, boolover, or) }
+V2(less){    MATHOP2(<, boolover, less) }
+V2(greater){ MATHOP2(>, boolover, greater) }
 
 V2(powerf){ MATHOPF2(pow) }
 
@@ -204,8 +207,9 @@ pr(w)ARC w;{
                 _(COMMA,   ',',   0.0, cat,    0,      0,   0,      0) \
                 _(AND,     '&',   0.0, and,    0,      fog, 0,      0) \
                 _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
-                _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      0) \
+                _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
                 _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
+                _(EXCL,    '!',   0.0, 0,      not,    0,   0,      0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME) NFUNC};
 struct{             C c; D id;
@@ -227,6 +231,15 @@ qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);}
 qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);}
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
 
+ARC eqop(ARC a,I f,ARC w){
+    switch(f){
+        default: longjmp(mainloop, OPERATOR);
+        CASE LANG: { MATHOP2(<=, boolover, lesseq) }
+        CASE RANG: { MATHOP2(>=, boolover, greatereq) }
+        CASE EQUAL: { MATHOP2(==, boolover, eqeq) }
+        CASE EXCL: { MATHOP2(!=, boolover, notequal) }
+    }
+}
 
 ARC power(ARC a,I f,ARC w){
     I n=*AV(w);
