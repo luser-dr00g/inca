@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <limits.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -50,22 +51,47 @@ ARC toD(ARC a){ if (AT(a)==DBL)R a;
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
-#define MATHOP1(op) \
+int subwillunder(long x, long y); 
+
+int addwillover(long x, long y) { 
+    if (y == LONG_MIN) return 1; 
+    if (y < 0) return subwillunder(x, -y); 
+    if (x > LONG_MAX - y) return 1; 
+    return 0; } 
+int subwillunder(long x, long y) { 
+    if (y == LONG_MIN) return 1; 
+    if (y < 0) return addwillover(x, -y); 
+    if (x < LONG_MIN + y) return 1; 
+    return 0; } 
+int mulwillover(long x, long y) { 
+    if (x == 0||y == 0) return 0; 
+    if (x < 0) x = -x; 
+    if (y < 0) y = -y; 
+    if (x > LONG_MAX / y) return 1; 
+    return 0; } 
+int divwillover(long x, long y) { return 1; }
+int boolover(long x, long y){ return 0; }
+
+#define MATHOP1(op, overflow) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+restart: \
     switch(AT(w)){ \
     CASE INT: \
-        z=ga(INT,r,d); DO(n,AV(z)[i]= op AV(w)[i]); \
+        z=ga(INT,r,d); \
+        DO(n, if(overflow(0,AV(w)[i])){w=toD(w);goto restart;} AV(z)[i]= op AV(w)[i]); \
     CASE DBL: \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]= op ((D*)AV(w))[i]); \
     } R z;
 
-V1(negate){ MATHOP1(-) }
+V1(negate){ MATHOP1(-, subwillunder) }
 
-#define MATHOP2(op) \
+#define MATHOP2(op, overflow) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+restart: \
     switch(TPAIR(AT(a),AT(w))) { \
     CASE TPAIR(INT,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=AV(a)[i] op AV(w)[i]); \
+        z=ga(INT,r,d); \
+        DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart;} AV(z)[i]=AV(a)[i] op AV(w)[i]); \
     CASE TPAIR(INT,DBL): \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); \
     CASE TPAIR(DBL,INT): \
@@ -87,15 +113,15 @@ V1(negate){ MATHOP1(-) }
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])); \
     } R z;
 
-V2(plus){    MATHOP2(+) }
-V2(minus){   MATHOP2(-) }
-V2(times){   MATHOP2(*) }
-V2(divide){  MATHOP2(/) }
-V2(equal){   MATHOP2(==) }
-V2(and){     MATHOP2(&&) }
-V2(or){      MATHOP2(||) }
-V2(less){    MATHOP2(<) }
-V2(greater){ MATHOP2(>) }
+V2(plus){    MATHOP2(+, addwillover) }
+V2(minus){   MATHOP2(-, subwillunder) }
+V2(times){   MATHOP2(*, mulwillover) }
+V2(divide){  MATHOP2(/, divwillover) }
+V2(equal){   MATHOP2(==, boolover) }
+V2(and){     MATHOP2(&&, boolover) }
+V2(or){      MATHOP2(||, boolover) }
+V2(less){    MATHOP2(<, boolover) }
+V2(greater){ MATHOP2(>, boolover) }
 
 V2(powerf){ MATHOPF2(pow) }
 
