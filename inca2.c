@@ -59,8 +59,20 @@ ARC toD(ARC a){ if (AT(a)==DBL)R a;
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
-int subwillunder(long x, long y); 
+V2(rsh){
+    I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
+    ARC z=ga(AT(w),r,AV(a));
+    mv(AV(z),AV(w),(wn=n>wn?wn:n)*(AT(w)==DBL?2:1));
+    if(n-=wn)mv(AV(z)+wn,AV(z),n*(AT(w)==DBL?2:1));R z;}
+V1(sha){
+    ARC z=ga(INT,1,&AR(w));
+    mv(AV(z),AD(w),AR(w));R z;}
+V1(id){R w;}
+V1(size){
+    ARC z=ga(INT,0,0);
+    *AV(z)=AR(w)?*AD(w):1;R z;}
 
+int subwillunder(long x, long y); 
 int addwillover(long x, long y) { 
     if (y == LONG_MIN) return 1; 
     if (y < 0) return subwillunder(x, -y); 
@@ -93,10 +105,15 @@ restart: \
 
 V1(negate){ MATHOP1(-, subwillunder) }
 
-#define MATHOP2(op, overflow) \
-    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+#define RANKCOMPAT \
+    if (AR(a)==0) a=rsh(scalarI(AN(w)),a); \
+    if (AR(w)==0) { w=rsh(scalarI(AN(a)),w); r=AR(w); d=AD(w); n=AN(w); } \
     if (r!=AR(a)) longjmp(mainloop, RANK); \
     if (n!=AN(a)) longjmp(mainloop, LENGTH); \
+
+#define MATHOP2(op, overflow) \
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    RANKCOMPAT \
 restart: \
     switch(TPAIR(AT(a),AT(w))) { \
     CASE TPAIR(INT,INT): \
@@ -112,6 +129,7 @@ restart: \
 
 #define MATHOPF2(func) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    RANKCOMPAT \
     switch(TPAIR(AT(a),AT(w))){ \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])); \
@@ -137,6 +155,7 @@ V2(powerf){ MATHOPF2(pow) }
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
+    if (AR(a)>0) { longjmp(mainloop, RANK); }
     ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*(AT(a)==DBL?2:1));R z;}
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
@@ -155,18 +174,6 @@ V2(cat){
     R z;
 }
 V2(find){}
-V2(rsh){
-    I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
-    ARC z=ga(AT(w),r,AV(a));
-    mv(AV(z),AV(w),(wn=n>wn?wn:n)*(AT(w)==DBL?2:1));
-    if(n-=wn)mv(AV(z)+wn,AV(z),n*(AT(w)==DBL?2:1));R z;}
-V1(sha){
-    ARC z=ga(INT,1,&AR(w));
-    mv(AV(z),AD(w),AR(w));R z;}
-V1(id){R w;}
-V1(size){
-    ARC z=ga(INT,0,0);
-    *AV(z)=AR(w)?*AD(w):1;R z;}
 
 pi(i){printf("%d ",i);}
 pd(D d){printf("%f ",d);}
