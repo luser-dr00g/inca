@@ -64,8 +64,15 @@ V1(iota){
 V2(rsh){
     I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
     ARC z=ga(AT(w),r,AV(a));
-    mv(AV(z),AV(w),(wn=n>wn?wn:n)*(AT(w)==DBL?2:1));
-    if(n-=wn)mv(AV(z)+wn,AV(z),n*(AT(w)==DBL?2:1));R z;}
+    switch(AT(w)){
+    CASE INT:
+        mv(AV(z),AV(w),wn=n>wn?wn:n);
+        if((n-=wn)>0)mv(AV(z)+wn,AV(z),n);
+    CASE DBL:
+        mv(AV(z),AV(w),(wn=n>wn?wn:n)*2);
+        if((n-=wn)>0)mv(AV(z)+wn,AV(z),(n)*2);
+    } R z;
+}
 V1(sha){
     ARC z=ga(INT,1,&AR(w));
     mv(AV(z),AD(w),AR(w));R z;}
@@ -179,6 +186,15 @@ V2(from){
     ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*(AT(a)==DBL?2:1));R z;}
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
+V1(ravel){
+    I n=AN(w);ARC z=ga(AT(w),1,&n);
+    switch(AT(w)){
+    CASE INT:
+        DO(n,AV(z)[i] = AV(w)[i]);
+    CASE DBL:
+        DO(n,((D*)AV(z))[i] = ((D*)AV(w))[i]);
+    } R z;
+}
 V2(cat){
     I an=AN(a),wn=AN(w),n=an+wn; ARC z;
     switch(TPAIR(AT(a),AT(w))){
@@ -222,7 +238,7 @@ pr(w)ARC w;{
                 _(LANG,    '<',   0.0, less,   box,    0,   0,      0) \
                 _(RANG,    '>',   0.0, greater,0,      0,   0,      0) \
                 _(HASH,    '#',   0.0, rsh,    sha,    0,   0,      0) \
-                _(COMMA,   ',',   0.0, cat,    0,      0,   0,      0) \
+                _(COMMA,   ',',   0.0, cat,    ravel,  0,   0,      0) \
                 _(AND,     '&',   0.0, and,    0,      fog, 0,      0) \
                 _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
                 _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
@@ -231,8 +247,9 @@ pr(w)ARC w;{
                 _(SLASH,   '/',   0.0, 0,      0,      0,   0,      0) \
                 _(BKSLASH, '\\',  0.0, 0,      0,      0,   0,      0) \
                 _(HBAR,    '_',   0.0, 0,      flr,    0,   0,      0) \
+                _(NFUNC,   0,     0.0, 0,      0,      0,   0,      0) \
 /* END FTAB */
-enum{FTAB(FUNCNAME) NFUNC};
+enum{FTAB(FUNCNAME)};
 struct{             C c; D id;
            ARC(*vd)(ARC,        ARC);
            ARC(*vm)(            ARC);
