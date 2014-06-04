@@ -1,6 +1,10 @@
 inca
 ====
 
+This document describes the interpreter implemented in inca.c,
+or inca "1". Current development is inca2.c, but there is
+no documentation for it yet.
+
 Summary:
 monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
 dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
