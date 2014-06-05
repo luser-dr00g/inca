@@ -42,6 +42,8 @@ I noddv(I f, I o, I g); /* new derived dyadic verb */
 ARC eqop(ARC a,I f,ARC w);
 ARC power(ARC a,I f,ARC w);
 ARC fog(ARC a,I f,I g,ARC w);
+ARC reduce(I f, ARC w);
+ARC scan(I f, ARC w);
 
 I *ma(n){R(I*)malloc(n*sizeof(I));}
 mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
@@ -244,8 +246,8 @@ pr(w)ARC w;{
                 _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
                 _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
                 _(EXCL,    '!',   0.0, 0,      not,    0,   0,      0) \
-                _(SLASH,   '/',   0.0, 0,      0,      0,   0,      0) \
-                _(BKSLASH, '\\',  0.0, 0,      0,      0,   0,      0) \
+                _(SLASH,   '/',   0.0, 0,      0,      0,   reduce, 0) \
+                _(BKSLASH, '\\',  0.0, 0,      0,      0,   scan,   0) \
                 _(HBAR,    '_',   0.0, 0,      flr,    0,   0,      0) \
                 _(NFUNC,   0,     0.0, 0,      0,      0,   0,      0) \
 /* END FTAB */
@@ -288,6 +290,33 @@ ARC power(ARC a,I f,ARC w){
 }
 ARC fog(ARC a,I f,I g,ARC w){
     R vm(f,vd(g,a,w));
+}
+
+ARC reduce(I f, ARC w){
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z=vid(f);
+    if (r){
+        if (d[0]){
+            n=d[0];
+            ARC ind=scalarI(n-1);
+            z=from(ind,w);
+            DO(n-1,*AV(ind)=n-2-i; z=vd(f,from(ind,w),z))
+        }
+    } else
+        z=w;
+    R z;
+}
+ARC scan(I f, ARC w){
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z=vid(f),x=z;
+    if (r){
+        if (d[0]){
+            n=d[0];
+            ARC ind=scalarI(0);
+            z=x=from(ind,w);
+            DO(n-1,*AV(ind)=i+1;z=cat(z,x=vd(f,x,from(ind,w))))
+        }
+    } else
+        z=w;
+    R z;
 }
 
 I nommv(I f, I o){        /* new derived monadic verb  arity in [0] */ 
