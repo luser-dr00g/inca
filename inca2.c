@@ -72,7 +72,7 @@ V2(rsh){
         if((n-=wn)>0)mv(AV(z)+wn,AV(z),n);
     CASE DBL:
         mv(AV(z),AV(w),(wn=n>wn?wn:n)*2);
-        if((n-=wn)>0)mv(AV(z)+wn,AV(z),(n)*2);
+        if((n-=wn)>0)mv(AV(z)+wn*2,AV(z),(n)*2);
     } R z;
 }
 V1(sha){
