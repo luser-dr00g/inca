@@ -39,6 +39,7 @@ ARC vd(I v, ARC a, ARC w);          /* dyadic verb handler */
 I nommv(I f, I o);      /* new derived monadic verb */ 
 I noddv(I f, I o, I g); /* new derived dyadic verb */ 
 
+ARC jotdot(ARC a, I f, ARC w);
 ARC eqop(ARC a,I f,ARC w);
 ARC power(ARC a,I f,ARC w);
 ARC fog(ARC a,I f,I g,ARC w);
@@ -218,12 +219,38 @@ pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
 pr(w)ARC w;{
     I r=AR(w),*d=AD(w),n=AN(w);
+    int j,k,l,(*p)();
+    printf("%d:",AT(w));
     DO(r,pi(d[i]));
     nl();
-    if(AT(w)==BOX)DO(n,printf("< ");pr(AV(w)[i]))
-    else if(AT(w)==DBL)DO(n,pd(((D*)AV(w))[i]))
-    else DO(n,pi(AV(w)[i]));
-    nl();}
+    switch(AT(w)){
+    CASE BOX: p=pr;
+    CASE INT: p=pi;
+    CASE DBL: p=pd;
+    }
+    switch(r){
+    case 0:case 1:
+        DO(n,p(AV(w)[i])) nl();
+    CASE 2:
+        DO(d[0], j=i;
+                DO(d[1],p(AV(w)[j*d[1]+i])) nl() )
+    CASE 3:
+        DO(d[0], k=i;
+                DO(d[1], j=i;
+                    DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i])) nl()
+                    ) nl();nl()
+                )
+    CASE 4:
+        DO(d[0], l=i;
+                DO(d[1], k=i;
+                    DO(d[2], j=i;
+                        DO(d[3],p(AV(w)[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
+                        ) nl();nl()
+                    ) nl();nl()
+          )
+    }
+    nl();
+}
 
 #define FUNCNAME(name,      c,    id,  vd,     vm,     odd, omm,    omd) name,
 #define FUNCINFO(name,      c,    id,  vd,     vm,     odd, omm,    omd) \
@@ -245,6 +272,7 @@ pr(w)ARC w;{
                 _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
                 _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
                 _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
+                _(DOT,     '.',   0.0, 0,      0,      0,   0,      jotdot) \
                 _(EXCL,    '!',   0.0, 0,      not,    0,   0,      0) \
                 _(SLASH,   '/',   0.0, 0,      0,      0,   reduce, 0) \
                 _(BKSLASH, '\\',  0.0, 0,      0,      0,   scan,   0) \
@@ -270,6 +298,42 @@ qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);}
 qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);}
 qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);}
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
+
+I idx(I*vec,I*dims,I n){
+    I z=*vec;
+    DO(n-1,z*=dims[i+1];z+=vec[i+1])
+    R z;
+}
+
+I *vdx(I ind,I*dims,I n){
+    I t=ind,*z=ma(n);
+    DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i])
+    R z;
+}
+
+ARC jotdot(ARC a, I f, ARC w){
+    I *d=ma(AR(a)+AR(w));
+    mv(d,AD(a),AR(a));
+    mv(d+AR(a),AD(w),AR(w));
+    ARC z=ga(AT(w),AR(a)+AR(w),d);
+    ARC sa,sw,sz;
+    switch(AT(z)){
+    CASE INT: sa=scalarI(0); sw=scalarI(0);
+        DO(AN(z),
+            *AV(sa)=AV(a)[idx(vdx(i,d,AR(z)),d,AR(a))];
+            *AV(sw)=AV(w)[idx(vdx(i,d,AR(z))+AR(a),d+AR(a),AR(w))];
+            sz=vd(f,sa,sw);
+            AV(z)[i]=*AV(sz); )
+    CASE DBL: sa=scalarD(0); sw=scalarD(0);
+        DO(AN(z),
+            *(D*)AV(sa)=((D*)AV(a))[idx(vdx(i,d,AR(z)),d,AR(a))];
+            *(D*)AV(sw)=((D*)AV(w))[idx(vdx(i,d,AR(z)),d+AR(a),AR(w))];
+            sz=vd(f,sa,sw);
+            ((D*)AV(z))[i]=*(D*)AV(sz); )
+    }
+
+    R z;
+}
 
 ARC eqop(ARC a,I f,ARC w){
     switch(f){
@@ -426,3 +490,17 @@ main(){C s[99];
     while(gets(s))
         pr(ex(wd(s)));
 }
+
+#if 0
+ARC rdx(ARC a, ARC w){
+    I z=*AV(w);
+    DO(AN(w)-1,z*=AV(a)[1+i];z+=AV(w)[1+i])
+    R scalarI(z);
+}
+ARC ddx(ARC a, ARC w){
+    I t=*AV(w);
+    ARC z=ga(INT,AR(a),AD(a));
+    DO(AN(z),AV(z)[AN(z)-1-i]=t%AV(a)[AN(a)-1-i];t/=AV(a)[AN(a)-1-i])
+    R z;
+}
+#endif
