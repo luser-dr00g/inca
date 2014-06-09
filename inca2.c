@@ -133,9 +133,9 @@ restart ## ident: \
         z=ga(INT,r,d); \
         DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart ## ident;} AV(z)[i]=AV(a)[i] op AV(w)[i]); \
     CASE TPAIR(INT,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=AV(a)[i] op ((D*)AV(w))[i]); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=(D)AV(a)[i] op ((D*)AV(w))[i]); \
     CASE TPAIR(DBL,INT): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op AV(w)[i]); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op (D)AV(w)[i]); \
     CASE TPAIR(DBL,DBL): \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); \
     } R z;
@@ -227,27 +227,34 @@ pr(w)ARC w;{
     CASE BOX: p=pr;
     CASE INT: p=pi;
     CASE DBL: p=pd;
+        switch(r){
+        case 0:case 1:
+            DO(n,p(((D*)AV(w))[i])) nl();
+        CASE 2:
+            DO(d[0], j=i; DO(d[1],p(((D*)AV(w))[j*d[1]+i])) nl() )
+        CASE 3:
+            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((D*)AV(w))[(k*d[1]+j)*d[2]+i])) nl()
+                        ) nl();nl())
+        CASE 4:
+            DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
+                            DO(d[3],p(((D*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
+                            ) nl();nl()) nl();nl())
+        }
+        nl();
+        R 0;
     }
     switch(r){
     case 0:case 1:
         DO(n,p(AV(w)[i])) nl();
     CASE 2:
-        DO(d[0], j=i;
-                DO(d[1],p(AV(w)[j*d[1]+i])) nl() )
+        DO(d[0], j=i; DO(d[1],p(AV(w)[j*d[1]+i])) nl() )
     CASE 3:
-        DO(d[0], k=i;
-                DO(d[1], j=i;
-                    DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i])) nl()
-                    ) nl();nl()
-                )
+        DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i])) nl()
+                    ) nl();nl())
     CASE 4:
-        DO(d[0], l=i;
-                DO(d[1], k=i;
-                    DO(d[2], j=i;
+        DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
                         DO(d[3],p(AV(w)[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
-                        ) nl();nl()
-                    ) nl();nl()
-          )
+                        ) nl();nl()) nl();nl())
     }
     nl();
 }
@@ -305,14 +312,14 @@ I idx(I*vec,I*dims,I n){
     R z;
 }
 
-I *vdx(I ind,I*dims,I n){
-    I t=ind,*z=ma(n);
+I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
+    I t=ind,*z=vec;
     DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i])
     R z;
 }
 
 ARC jotdot(ARC a, I f, ARC w){
-    I *d=ma(AR(a)+AR(w));
+    I *d=malloc((AR(a)+AR(w))*sizeof(I));
     mv(d,AD(a),AR(a));
     mv(d+AR(a),AD(w),AR(w));
     ARC z=ga(AT(w),AR(a)+AR(w),d);
@@ -320,18 +327,19 @@ ARC jotdot(ARC a, I f, ARC w){
     switch(AT(z)){
     CASE INT: sa=scalarI(0); sw=scalarI(0);
         DO(AN(z),
-            *AV(sa)=AV(a)[idx(vdx(i,d,AR(z)),d,AR(a))];
-            *AV(sw)=AV(w)[idx(vdx(i,d,AR(z))+AR(a),d+AR(a),AR(w))];
+            *AV(sa)=AV(a)[idx(vdx(i,AD(z),AR(z),d),AD(a),AR(a))];
+            *AV(sw)=AV(w)[idx(vdx(i,AD(z),AR(z),d)+AR(a),AD(w),AR(w))];
             sz=vd(f,sa,sw);
             AV(z)[i]=*AV(sz); )
     CASE DBL: sa=scalarD(0); sw=scalarD(0);
+        a=toD(a);
         DO(AN(z),
-            *(D*)AV(sa)=((D*)AV(a))[idx(vdx(i,d,AR(z)),d,AR(a))];
-            *(D*)AV(sw)=((D*)AV(w))[idx(vdx(i,d,AR(z)),d+AR(a),AR(w))];
+            *(D*)AV(sa)=((D*)AV(a))[idx(vdx(i,AD(z),AR(z),d),AD(a),AR(a))];
+            *(D*)AV(sw)=((D*)AV(w))[idx(vdx(i,AD(z),AR(z),d)+AR(a),AD(w),AR(w))];
             sz=vd(f,sa,sw);
             ((D*)AV(z))[i]=*(D*)AV(sz); )
     }
-
+    free(d);
     R z;
 }
 
