@@ -326,14 +326,14 @@ ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
     CASE INT: sa=scalarI(0); sw=scalarI(0);
         DO(AN(z),
             *AV(sa)=AV(a)[idx(vdx(i,AD(z),AR(z),d),AD(a),AR(a))];
-            *AV(sw)=AV(w)[idx(vdx(i,AD(z),AR(z),d)+AR(a),AD(w),AR(w))];
+            *AV(sw)=AV(w)[idx(d+AR(a),AD(w),AR(w))];
             sz=vd(f,sa,sw);
             AV(z)[i]=*AV(sz); )
     CASE DBL: sa=scalarD(0); sw=scalarD(0);
         a=toD(a);
         DO(AN(z),
             *(D*)AV(sa)=((D*)AV(a))[idx(vdx(i,AD(z),AR(z),d),AD(a),AR(a))];
-            *(D*)AV(sw)=((D*)AV(w))[idx(vdx(i,AD(z),AR(z),d)+AR(a),AD(w),AR(w))];
+            *(D*)AV(sw)=((D*)AV(w))[idx(d+AR(a),AD(w),AR(w))];
             sz=vd(f,sa,sw);
             ((D*)AV(z))[i]=*(D*)AV(sz); )
     }
