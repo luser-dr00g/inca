@@ -220,9 +220,7 @@ nl(){printf("\n");}
 pr(w)ARC w;{
     I r=AR(w),*d=AD(w),n=AN(w);
     int j,k,l,(*p)();
-    printf("%d:",AT(w));
-    DO(r,pi(d[i]));
-    nl();
+    //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
     switch(AT(w)){
     CASE BOX: p=pr;
     CASE INT: p=pi;
@@ -318,7 +316,7 @@ I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
     R z;
 }
 
-ARC jotdot(ARC a, I f, ARC w){
+ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
     I *d=malloc((AR(a)+AR(w))*sizeof(I));
     mv(d,AD(a),AR(a));
     mv(d+AR(a),AD(w),AR(w));
@@ -430,8 +428,8 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
     while(a==' '){a=*ABCD} 
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
+    while(b==' '){ABCD} 
     if(qv(a)){ 
-        while(b==' '){ABCD} 
         if(qo(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
         R vm(a,ex(e+1));
     } 
