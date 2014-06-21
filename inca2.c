@@ -214,6 +214,8 @@ V2(cat){
 }
 V2(find){}
 
+V2(dotf){}
+
 pi(i){printf("%d ",i);}
 pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
@@ -277,7 +279,7 @@ pr(w)ARC w;{
                 _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
                 _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
                 _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
-                _(DOT,     '.',   0.0, 0,      0,      0,   0,      jotdot) \
+                _(DOT,     '.',   0.0, dotf,   0,      0,   0,      jotdot) \
                 _(EXCL,    '!',   0.0, 0,      not,    0,   0,      0) \
                 _(SLASH,   '/',   0.0, 0,      0,      0,   reduce, 0) \
                 _(BKSLASH, '\\',  0.0, 0,      0,      0,   scan,   0) \
@@ -316,7 +318,12 @@ I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
     R z;
 }
 
+ARC dotdot(ARC a, I f, ARC w){
+    R plus(a,iota(plus(scalarI(1),minus(w,a))));
+}
+
 ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
+    if (f==DOT){ R dotdot(a,f,w); }
     I *d=malloc((AR(a)+AR(w))*sizeof(I));
     mv(d,AD(a),AR(a));
     mv(d+AR(a),AD(w),AR(w));
@@ -360,6 +367,8 @@ ARC power(ARC a,I f,ARC w){
 }
 ARC fog(ARC a,I f,I g,ARC w){
     R vm(f,vd(g,a,w));
+}
+ARC dotop(ARC a, I f, I g, ARC w){ /* matrix multiply */
 }
 
 ARC reduce(I f, ARC w){
