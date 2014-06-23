@@ -43,6 +43,7 @@ ARC jotdot(ARC a, I f, ARC w);
 ARC eqop(ARC a,I f,ARC w);
 ARC power(ARC a,I f,ARC w);
 ARC fog(ARC a,I f,I g,ARC w);
+ARC dotop(ARC a, I f, I g, ARC w); /* matrix multiply */
 ARC reduce(I f, ARC w);
 ARC scan(I f, ARC w);
 
@@ -60,6 +61,7 @@ ARC toI(ARC a){ if (AT(a)==INT)R a;
     ARC z=ga(INT,AR(a),AD(a)); DO(AN(a),AV(z)[i]=((D*)AV(a))[i]); R z;}
 ARC toD(ARC a){ if (AT(a)==DBL)R a;
     ARC z=ga(DBL,AR(a),AD(a)); DO(AN(a),((D*)AV(z))[i]=AV(a)[i]); R z;}
+ARC cp(ARC a){ ARC z=ga(AT(a),AR(a),AD(a)); DO(AN(a),AV(z)[i]=AV(a)[i]) R z;}
 
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
@@ -181,6 +183,15 @@ V2(greater){ MATHOP2(>, boolover, greater) }
 
 V2(powerf){ MATHOPF2(pow) }
 
+V1(signum){
+    ARC z=ga(INT,AR(w),AD(w));
+    DO(AN(z),
+        switch(AT(w)){
+        CASE INT: AV(z)[i] = ((AV(w)[i]>0) - (AV(w)[i]<0));
+        CASE DBL: AV(z)[i] = ((((D*)AV(w))[i]>0.0) - (((D*)AV(w))[i]<0.0)); }
+      )
+    R z;
+}
 V1(flr){ R toI(w); }
 
 V2(from){
@@ -198,6 +209,7 @@ V1(ravel){
         DO(n,((D*)AV(z))[i] = ((D*)AV(w))[i]);
     } R z;
 }
+
 V2(cat){
     I an=AN(a),wn=AN(w),n=an+wn; ARC z;
     switch(TPAIR(AT(a),AT(w))){
@@ -212,9 +224,26 @@ V2(cat){
     }
     R z;
 }
-V2(find){}
 
-V2(dotf){}
+V2(find){
+}
+
+V2(rotate){
+    I t,n=*AV(a);
+    if (n<0) n+=AN(w);
+    w=cp(w);
+    DO(n,t=*AV(w);mv(AV(w),AV(w)+1,AN(w)-1);AV(w)[AN(w)-1]=t;)
+    R w;
+}
+
+V2(transpose){
+    R w;
+}
+
+V1(reverse){
+}
+
+V2(dotf);
 
 pi(i){printf("%d ",i);}
 pd(D d){printf("%f ",d);}
@@ -259,32 +288,33 @@ pr(w)ARC w;{
     nl();
 }
 
-#define FUNCNAME(name,      c,    id,  vd,     vm,     odd, omm,    omd) name,
-#define FUNCINFO(name,      c,    id,  vd,     vm,     odd, omm,    omd) \
-                {           c,    id,  vd,     vm,     odd, omm,    omd},
+#define FUNCNAME(name,      c,    id,  vd,        vm,      odd,   omm,    omd) name,
+#define FUNCINFO(name,      c,    id,  vd,        vm,      odd,   omm,    omd) \
+                {           c,    id,  vd,        vm,      odd,   omm,    omd},
 #define FTAB(_) \
-                _(NOP,      0,    0.0, 0,      0,      0,   0,      0) \
-                _(PLUS,    '+',   0.0, plus,   id,     0,   0,      0) \
-                _(MINUS,   '-',   0.0, minus,  negate, 0,   0,      0) \
-                _(TIMES,   '*',   1.0, times,  0,      0,   0,      power) \
-                _(PERCENT, '%',   1.0, divide, 0,      0,   0,      0) \
-                _(VBAR,    '|',   0.0, modulus,0,      0,   0,      0) \
-                _(LCURL,   '{',   0.0, from,   size,   0,   0,      0) \
-                _(TILDE,   '~',   0.0, find,   iota,   0,   0,      0) \
-                _(LANG,    '<',   0.0, less,   box,    0,   0,      0) \
-                _(RANG,    '>',   0.0, greater,0,      0,   0,      0) \
-                _(HASH,    '#',   0.0, rsh,    sha,    0,   0,      0) \
-                _(COMMA,   ',',   0.0, cat,    ravel,  0,   0,      0) \
-                _(AND,     '&',   0.0, and,    0,      fog, 0,      0) \
-                _(DOLLAR,  '$',   0.0, or,     0,      0,   0,      0) \
-                _(EQUAL,   '=',   0.0, equal,  0,      0,   0,      eqop) \
-                _(CARET,   '^',   M_E, powerf, 0,      0,   0,      0) \
-                _(DOT,     '.',   0.0, dotf,   0,      0,   0,      jotdot) \
-                _(EXCL,    '!',   0.0, 0,      not,    0,   0,      0) \
-                _(SLASH,   '/',   0.0, 0,      0,      0,   reduce, 0) \
-                _(BKSLASH, '\\',  0.0, 0,      0,      0,   scan,   0) \
-                _(HBAR,    '_',   0.0, 0,      flr,    0,   0,      0) \
-                _(NFUNC,   0,     0.0, 0,      0,      0,   0,      0) \
+                _(NOP,      0,    0.0, 0,         0,       0,     0,      0) \
+                _(PLUS,    '+',   0.0, plus,      id,      0,     0,      0) \
+                _(MINUS,   '-',   0.0, minus,     negate,  0,     0,      0) \
+                _(STAR,    '*',   1.0, times,     signum,  0,     0,      power) \
+                _(PERCENT, '%',   1.0, divide,    0,       0,     0,      0) \
+                _(VBAR,    '|',   0.0, modulus,   0,       0,     0,      0) \
+                _(LCURL,   '{',   0.0, from,      size,    0,     0,      0) \
+                _(TILDE,   '~',   0.0, find,      iota,    0,     0,      0) \
+                _(LANG,    '<',   0.0, less,      box,     0,     0,      0) \
+                _(RANG,    '>',   0.0, greater,   0,       0,     0,      0) \
+                _(HASH,    '#',   0.0, rsh,       sha,     0,     0,      0) \
+                _(COMMA,   ',',   0.0, cat,       ravel,   0,     0,      0) \
+                _(AND,     '&',   0.0, and,       0,       fog,   0,      0) \
+                _(DOLLAR,  '$',   0.0, or,        0,       0,     0,      0) \
+                _(EQUAL,   '=',   0.0, equal,     0,       0,     0,      eqop) \
+                _(CARET,   '^',   M_E, powerf,    0,       0,     0,      0) \
+                _(DOT,     '.',   0.0, dotf,      0,       dotop, 0,      jotdot) \
+                _(EXCL,    '!',   0.0, 0,         not,     0,     0,      0) \
+                _(SLASH,   '/',   0.0, 0,         0,       0,     reduce, 0) \
+                _(BKSLASH, '\\',  0.0, 0,         0,       0,     scan,   0) \
+                _(AT,      '@',   0.0, transpose, reverse, 0,     0,      0) \
+                _(HBAR,    '_',   0.0, 0,         flr,     0,     0,      0) \
+                _(NFUNC,   0,     0.0, 0,         0,       0,     0,      0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME)};
 struct{             C c; D id;
@@ -318,7 +348,7 @@ I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
     R z;
 }
 
-ARC dotdot(ARC a, I f, ARC w){
+ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
     R plus(a,iota(plus(scalarI(1),minus(w,a))));
 }
 
@@ -348,6 +378,29 @@ ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
     R z;
 }
 
+ARC dotop(ARC a, I f, I g, ARC w){ /* matrix multiply */
+    I *d=malloc((AR(a)+AR(w)-2+2)*sizeof(I)); 
+    mv(d,AD(a),AR(a)-1);
+    mv(d+AR(a)-1,AD(w)+1,AR(w)-1);
+    ARC z=ga(AT(w),AR(a)+AR(w)-2,d);
+    ARC wdims=sha(w),adims=sha(a);
+    w=transpose(rotate(scalarI(-1),iota(sha(sha(w)))),w);
+    ARC va,vw,vz;
+    va=ga(AT(a),1,AD(a)+AR(a)-1);
+    vw=ga(AT(w),1,AD(w)+AR(w)-1);
+    DO(AN(z),
+            vdx(i,AD(z),AR(z),d); /* generate index vector from z */
+            mv(d+AR(a),d+AR(a)-1,AR(w)); /* scootch over the w part */
+            d[AR(a)-1]=0;                  /* 0 to index the whole row of a */
+            mv(AV(va),AV(a)+idx(d,AD(a),AR(a)),AN(va)); /* copy row of a */
+            (d+AR(a))[AR(w)]=0;          /* 0 to index the whole row of w */
+            mv(AV(vw),AV(w)+idx(d,AD(w),AR(w)),AN(vw)); /* copy row of w */
+            vz=reduce(f,vd(g,va,vw));   /* perform functions */
+            AV(z)[i]=*AV(vz);           /* extract result */
+            )
+    R z;
+}
+
 ARC eqop(ARC a,I f,ARC w){
     switch(f){
         default: longjmp(mainloop, OPERATOR);
@@ -368,8 +421,8 @@ ARC power(ARC a,I f,ARC w){
 ARC fog(ARC a,I f,I g,ARC w){
     R vm(f,vd(g,a,w));
 }
-ARC dotop(ARC a, I f, I g, ARC w){ /* matrix multiply */
-}
+
+V2(dotf){dotop(a,PLUS,STAR,w);}
 
 ARC reduce(I f, ARC w){
     I r=AR(w),*d=AD(w),n=AN(w);ARC z=vid(f);
@@ -404,7 +457,7 @@ I nommv(I f, I o){        /* new derived monadic verb  arity in [0] */
 I nomdv(I f, I o){        /* derived dyadic verb of 1 function */
     ARC z=ga(FUN,1,(I[]){3}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o;
     R (I)z; }
-I noddv(I f, I o, I g){ /* new derived dyadic verb */ 
+I noddv(I f, I o, I g){ /* new derived dyadic verb of 2 functions */ 
     ARC z=ga(FUN,1,(I[]){4}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o; AV(z)[3]=g;
     R (I)z; }
 
@@ -418,9 +471,11 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
 }
 ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */ 
     if (qd(v)){ARC d=(ARC)v;
-        if (ftab[ AV(d)[2] ].omd)
+        if (ftab[ AV(d)[2] ].odd && AN(d)==4)
+            R ftab[ AV(d)[2] ].odd(a, AV(d)[1], AV(d)[3], w);
+        if (ftab[ AV(d)[2] ].omd && AN(d)==3)
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
-        R ftab[ AV(d)[2] ].odd(a, AV(d)[1], AV(d)[3], w);
+        longjmp(mainloop, OPERATOR);
     }
     R ftab[v].vd(a,w);
 }
@@ -448,10 +503,9 @@ dy_verb:
             while(c==' '){ADV CC DD}
             if(qo(c)){ 
                 while(d==' '){ADV DD}
-                if (qomd(c)){
-                    b=nomdv(b,c); ADV CC DD goto dy_verb;
-                }
-                b=noddv(b,c,d); AACD goto dy_verb;
+                if (qodd(c) && qv(d)){ b=noddv(b,c,d); AACD goto dy_verb; }
+                if (qomd(c)){ b=nomdv(b,c); ADV CC DD goto dy_verb; }
+                longjmp(mainloop, OPERATOR);
             }
             c=(I)ex(e+2); 
             if(qp(a))a=VAR(a); 
