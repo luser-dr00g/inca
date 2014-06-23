@@ -208,7 +208,7 @@ V2(from){
     ARC z;
     switch(AR(a)){
     default: longjmp(mainloop, RANK);
-    CASE 0: z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*AZ(w));
+    CASE 0: z=ga(AT(w),r,d);mv(AV(z),AV(w)+*AV(a)*n*AZ(w),n*AZ(w));
     CASE 1:
         d=malloc(AR(w)*sizeof(I));
         d[0]=AN(a);
@@ -256,8 +256,7 @@ V2(rotate){
 }
 
 V2(transposed){ /* dyadic transpose */
-    printf("transposed\n");
-    printf("AR(a)=%d\n",AR(a));
+    //printf("transposed\n"); printf("AR(a)=%d\n",AR(a));
     if (AR(a)==0) a=rotate(a,iota(scalarI(AR(w))));
     if (AR(a)>1) longjmp(mainloop, RANK);
     ARC d,dims=from(a,d=sha(w));
@@ -426,17 +425,24 @@ ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
     ARC z=ga(AT(w),AR(a)+AR(w)-2,d);
     ARC wdims=sha(w),adims=sha(a);
     w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w);
+    //pr(w);
     ARC va,vw,vz;
     va=ga(AT(a),1,AD(a)+AR(a)-1);
     vw=ga(AT(w),1,AD(w)+AR(w)-1);
     DO(AN(z),
             vdx(i,AD(z),AR(z),d); /* generate index vector from z */
             mv(d+AR(a),d+AR(a)-1,AR(w)); /* scootch over the w part */
+
             d[AR(a)-1]=0;                  /* 0 to index the whole "row" of a */
             mv(AV(va),AV(a)+idx(d,AD(a),AR(a)),AN(va)); /* copy "row" of a */
-            (d+AR(a))[AR(w)]=0;          /* 0 to index the whole "row" of w */
-            mv(AV(vw),AV(w)+idx(d,AD(w),AR(w)),AN(vw)); /* copy "row" of w */
+
+            (d+AR(a))[AR(w)-1]=0;          /* 0 to index the whole "row" of w */
+            mv(AV(vw),AV(w)+idx(d+AR(a),AD(w),AR(w)),AN(vw)); /* copy "row" of w */
+
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
+
+            //DO(AR(a)+AR(w),printf("%d",d[i])) printf("\n");
+            //pr(va); pr(vw); pr(vz);
             AV(z)[i]=*AV(vz);           /* extract (scalar) result */
             )
     R z;
