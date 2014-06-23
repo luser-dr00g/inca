@@ -67,6 +67,7 @@ V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
 V2(rsh){
+    //printf("rsh\n"); printf("AR(a) = %d\n", AR(a));
     I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
     ARC z=ga(AT(w),r,AV(a));
     switch(AT(w)){
@@ -192,7 +193,14 @@ V1(signum){
       )
     R z;
 }
-V1(flr){ R toI(w); }
+V1(flr){
+    ARC z;
+    switch(AT(w)){
+    CASE INT: z=w;
+    CASE DBL: z=ga(INT,AR(w),AD(w)); DO(AN(z),AV(z)[i] = (I)floor(((D*)AV(w))[i]))
+    }
+    R z;
+}
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
@@ -241,6 +249,7 @@ V2(transpose){
 }
 
 V1(reverse){
+    R w;
 }
 
 V2(dotf);
@@ -489,15 +498,17 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
 #define AACD ADV ADV CC DD 
 
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
+    I bspace=0;
     while(a==' '){a=*ABCD} 
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
-    while(b==' '){ABCD} 
+    while(b==' '){bspace=1; ABCD} 
     if(qv(a)){ 
         if(qo(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
         R vm(a,ex(e+1));
     } 
 dy_verb: 
+    while(b==' '){bspace=1; ABCD} 
     if(b){ 
         if(qv(b)){ 
             while(c==' '){ADV CC DD}
@@ -512,10 +523,11 @@ dy_verb:
             R vd(b,(ARC)a,(ARC)c);
         } 
         if(qp(a))a=VAR(a);
-        if(b==' '){  // space-delimited vector?
-            if(qv(c)){ABCD goto dy_verb;} 
-            if(AT((ARC)c)==INT||AT((ARC)c)==DBL){ 
-                a=(I)cat((ARC)a,(ARC)c); ADV ABCD goto dy_verb;
+        if(bspace){  // space-delimited vector?
+            bspace=0;
+            if(qv(b)){ABCD goto dy_verb;} 
+            if(AT((ARC)b)==INT || AT((ARC)b)==DBL){ 
+                a=(I)cat((ARC)a,(ARC)b); ABCD goto dy_verb;
             }
         }
         R (ARC)a;
