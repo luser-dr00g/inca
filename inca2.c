@@ -29,6 +29,7 @@ typedef struct a{I k,t,n,r,d[0];}*ARC;
 #define AD(a) ((a)->d) /* dims */
 /* values float *after* variable-length dims */
 #define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
+#define AZ(a) (AT(a)==DBL?2:1)
 
 #define R return
 #define V1(f) ARC f(ARC w)
@@ -64,21 +65,19 @@ ARC toD(ARC a){ if (AT(a)==DBL)R a;
     ARC z=ga(DBL,AR(a),AD(a)); DO(AN(a),((D*)AV(z))[i]=AV(a)[i]); R z;}
 ARC cp(ARC a){ ARC z=ga(AT(a),AR(a),AD(a)); DO(AN(a),AV(z)[i]=AV(a)[i]) R z;}
 
+I idx(I*vec,I*dims,I n){ I z=*vec; DO(n-1,z*=dims[i+1];z+=vec[i+1]) R z; }
+I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
+    I t=ind,*z=vec; DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i]) R z; }
+
 V1(iota){
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
 V2(rsh){
-    //printf("rsh\n"); printf("AR(a) = %d\n", AR(a));
     I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
     ARC z=ga(AT(w),r,AV(a));
-    switch(AT(w)){
-    CASE INT:
-        mv(AV(z),AV(w),wn=n>wn?wn:n);
-        if((n-=wn)>0)mv(AV(z)+wn,AV(z),n);
-    CASE DBL:
-        mv(AV(z),AV(w),(wn=n>wn?wn:n)*2);
-        if((n-=wn)>0)mv(AV(z)+wn*2,AV(z),(n)*2);
-    } R z;
+    mv(AV(z),AV(w),(wn=n>wn?wn:n)*AZ(w));
+    if((n-=wn)>0)mv(AV(z)+wn*AZ(w),AV(z),n*AZ(w));
+    R z;
 }
 V1(sha){
     ARC z=ga(INT,1,&AR(w));
@@ -135,13 +134,14 @@ restart ## ident: \
     switch(TPAIR(AT(a),AT(w))) { \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); \
-        DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart ## ident;} AV(z)[i]=AV(a)[i] op AV(w)[i]); \
+        DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart ## ident;} \
+                AV(z)[i]=AV(a)[i] op AV(w)[i]) \
     CASE TPAIR(INT,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=(D)AV(a)[i] op ((D*)AV(w))[i]); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=(D)AV(a)[i] op ((D*)AV(w))[i]) \
     CASE TPAIR(DBL,INT): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op (D)AV(w)[i]); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op (D)AV(w)[i]) \
     CASE TPAIR(DBL,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]) \
     } R z;
 
 #define MATHOPF2(func) \
@@ -149,13 +149,13 @@ restart ## ident: \
     RANKCOMPAT \
     switch(TPAIR(AT(a),AT(w))){ \
     CASE TPAIR(INT,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])); \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])) \
     CASE TPAIR(INT,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(AV(a)[i], ((D*)AV(w))[i])); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(AV(a)[i], ((D*)AV(w))[i])) \
     CASE TPAIR(DBL,INT): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], AV(w)[i])); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], AV(w)[i])) \
     CASE TPAIR(DBL,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])); \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])) \
     } R z;
 
 V2(plus){    MATHOP2(+, addwillover, plus) }
@@ -205,8 +205,18 @@ V1(flr){
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
-    if (AR(a)>0) { longjmp(mainloop, RANK); }
-    ARC z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*(AT(a)==DBL?2:1));R z;}
+    ARC z;
+    switch(AR(a)){
+    default: longjmp(mainloop, RANK);
+    CASE 0: z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n*AZ(w));
+    CASE 1:
+        d=malloc(AR(w)*sizeof(I));
+        d[0]=AN(a);
+        DO(AR(w)-1,d[i+1]=AD(w)[i+1])
+        z=ga(AT(w),AR(w),d);
+        DO(d[0], mv(AV(z)+i*n*AZ(w), AV(w)+AV(a)[i]*n*AZ(w),n*AZ(w)))
+    } R z;
+}
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
 V1(ravel){
@@ -246,9 +256,21 @@ V2(rotate){
 }
 
 V2(transposed){ /* dyadic transpose */
+    printf("transposed\n");
+    printf("AR(a)=%d\n",AR(a));
     if (AR(a)==0) a=rotate(a,iota(scalarI(AR(w))));
     if (AR(a)>1) longjmp(mainloop, RANK);
-    R w;
+    ARC d,dims=from(a,d=sha(w));
+    ARC z=ga(AT(w),AN(dims),AV(dims));
+    I j;
+    DO(AN(w),
+            vdx(i,AD(w),AR(w),AV(d));
+            d=from(a,d);
+            j=idx(AV(d),AD(z),AR(z));
+            AV(z)[j]=AV(w)[i];
+            )
+
+    R z;
 }
 
 V1(transposem){ /* rotate first axis to last position (row/col in 2D) */
@@ -318,34 +340,34 @@ pr(w)ARC w;{
     nl();
 }
 
-#define FUNCNAME(name,      c,    id,  vd,         vm,      odd,   omm,         omd) name,
-#define FUNCINFO(name,      c,    id,  vd,         vm,      odd,   omm,         omd) \
-                {           c,    id,  vd,         vm,      odd,   omm,         omd},
+#define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
+#define FUNCINFO(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
+                {           c,    id,  vd,         vm,         odd,   omm,         omd},
 #define FTAB(_) \
-                _(NOP,      0,    0.0, 0,          0,       0,     0,           0) \
-                _(PLUS,    '+',   0.0, plus,       id,      0,     0,           0) \
-                _(MINUS,   '-',   0.0, minus,      negate,  0,     0,           0) \
-                _(STAR,    '*',   1.0, times,      signum,  0,     0,           power) \
-                _(PERCENT, '%',   1.0, divide,     0,       0,     0,           0) \
-                _(VBAR,    '|',   0.0, modulus,    0,       0,     0,           0) \
-                _(LCURL,   '{',   0.0, from,       size,    0,     0,           0) \
-                _(TILDE,   '~',   0.0, find,       iota,    0,     0,           0) \
-                _(LANG,    '<',   0.0, less,       box,     0,     0,           0) \
-                _(RANG,    '>',   0.0, greater,    0,       0,     0,           0) \
-                _(HASH,    '#',   0.0, rsh,        sha,     0,     0,           0) \
-                _(COMMA,   ',',   0.0, cat,        ravel,   0,     0,           0) \
-                _(AND,     '&',   0.0, and,        0,       fog,   0,           0) \
-                _(DOLLAR,  '$',   0.0, or,         0,       0,     0,           0) \
-                _(EQUAL,   '=',   0.0, equal,      0,       0,     0,           eqop) \
-                _(CARET,   '^',   M_E, powerf,     0,       0,     0,           0) \
-                _(DOT,     '.',   0.0, dotf,       0,       dotop, 0,           jotdot) \
-                _(EXCL,    '!',   0.0, 0,          not,     0,     0,           0) \
-                _(SLASH,   '/',   0.0, 0,          0,       0,     reduce,      0) \
-                _(BKSLASH, '\\',  0.0, 0,          0,       0,     scan,        0) \
-                _(AT,      '@',   0.0, rotate,     reverse, 0,     transposeop, 0) \
-                _(HBAR,    '_',   0.0, 0,          flr,     0,     0,           0) \
-                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,  0,           0) \
-                _(NFUNC,   0,     0.0, 0,          0,       0,     0,           0) \
+                _(NOP,      0,    0.0, 0,          0,          0,     0,           0) \
+                _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0) \
+                _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
+                _(STAR,    '*',   1.0, times,      signum,     0,     0,           power) \
+                _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0) \
+                _(VBAR,    '|',   0.0, modulus,    0,          0,     0,           0) \
+                _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
+                _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
+                _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
+                _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
+                _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
+                _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
+                _(AND,     '&',   0.0, and,        0,          fog,   0,           0) \
+                _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
+                _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
+                _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
+                _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
+                _(EXCL,    '!',   0.0, 0,          not,        0,     0,           0) \
+                _(SLASH,   '/',   0.0, 0,          0,          0,     reduce,      0) \
+                _(BKSLASH, '\\',  0.0, 0,          0,          0,     scan,        0) \
+                _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
+                _(HBAR,    '_',   0.0, 0,          flr,        0,     0,           0) \
+                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
+                _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME)};
 struct{             C c; D id;
@@ -366,18 +388,6 @@ qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);}
 qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);}
 qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);}
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
-
-I idx(I*vec,I*dims,I n){
-    I z=*vec;
-    DO(n-1,z*=dims[i+1];z+=vec[i+1])
-    R z;
-}
-
-I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
-    I t=ind,*z=vec;
-    DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i])
-    R z;
-}
 
 ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
     R plus(a,iota(plus(scalarI(1),minus(w,a))));
@@ -487,7 +497,7 @@ ARC transposeop(I f, ARC w){
     if (AR(w)==0)R w;
     if (AR(w)==1){
         z=ga(AT(w),2,(I[]){1,AD(w)[0]});
-        mv(AV(z),AV(w),AN(w)*(AT(w)==DBL?2:1));
+        mv(AV(z),AV(w),AN(w)*AZ(w));
         w=z;
     }
     switch(f){
