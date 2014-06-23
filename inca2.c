@@ -46,10 +46,11 @@ ARC fog(ARC a,I f,I g,ARC w);
 ARC dotop(ARC a, I f, I g, ARC w); /* matrix multiply */
 ARC reduce(I f, ARC w);
 ARC scan(I f, ARC w);
+ARC transposeop(I f, ARC w);
 
 I *ma(n){R(I*)malloc(n*sizeof(I));}
-mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
-tr(r,d)I *d;{I z=1;DO(r,z=z*d[i]);R z;}
+void mv(I *d,I *s,I n){DO(n,d[i]=s[i]);}
+I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}
 ARC ga(t,r,d)I *d;{I n;
     ARC z=(ARC)ma((sizeof(*z)/sizeof(I))+r+(n=tr(r,d))*(t==DBL?2:1));
     AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
@@ -244,15 +245,35 @@ V2(rotate){
     R w;
 }
 
-V2(transpose){
+V2(transposed){ /* dyadic transpose */
+    if (AR(a)==0) a=rotate(a,iota(scalarI(AR(w))));
+    if (AR(a)>1) longjmp(mainloop, RANK);
     R w;
 }
 
-V1(reverse){
-    R w;
+V1(transposem){ /* rotate first axis to last position (row/col in 2D) */
+    R transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w);
 }
 
-V2(dotf);
+V1(reverse){ /* reverse along primary axis (rows in 2D) */
+    if(AR(w)==0)R w;
+    I n = tr(AR(w)-1,AD(w)+1), m = (AT(w)==DBL?2:1);
+    printf("n=%d\n", n);
+    ARC z=ga(AT(w),AR(w),AD(w));
+    DO(AD(z)[0], mv(AV(z)+i*n*m, AV(w)+(AD(z)[0]-1-i)*n*m, n*m))
+    R z;
+}
+
+V1(reverselast){ /* reverse along last axis (cols in 2D) */
+    ARC z=w;
+    if(AR(w)==0)R w;
+    z=transposed(rotate(scalarI(-1),iota(scalarI(AR(z)))),z);
+    z=reverse(z);
+    z=transposed(rotate(scalarI(1),iota(scalarI(AR(z)))),z);
+    R z;
+}
+
+V2(dotf); /* shortcut for  "plus dot times" */
 
 pi(i){printf("%d ",i);}
 pd(D d){printf("%f ",d);}
@@ -297,33 +318,34 @@ pr(w)ARC w;{
     nl();
 }
 
-#define FUNCNAME(name,      c,    id,  vd,        vm,      odd,   omm,    omd) name,
-#define FUNCINFO(name,      c,    id,  vd,        vm,      odd,   omm,    omd) \
-                {           c,    id,  vd,        vm,      odd,   omm,    omd},
+#define FUNCNAME(name,      c,    id,  vd,         vm,      odd,   omm,         omd) name,
+#define FUNCINFO(name,      c,    id,  vd,         vm,      odd,   omm,         omd) \
+                {           c,    id,  vd,         vm,      odd,   omm,         omd},
 #define FTAB(_) \
-                _(NOP,      0,    0.0, 0,         0,       0,     0,      0) \
-                _(PLUS,    '+',   0.0, plus,      id,      0,     0,      0) \
-                _(MINUS,   '-',   0.0, minus,     negate,  0,     0,      0) \
-                _(STAR,    '*',   1.0, times,     signum,  0,     0,      power) \
-                _(PERCENT, '%',   1.0, divide,    0,       0,     0,      0) \
-                _(VBAR,    '|',   0.0, modulus,   0,       0,     0,      0) \
-                _(LCURL,   '{',   0.0, from,      size,    0,     0,      0) \
-                _(TILDE,   '~',   0.0, find,      iota,    0,     0,      0) \
-                _(LANG,    '<',   0.0, less,      box,     0,     0,      0) \
-                _(RANG,    '>',   0.0, greater,   0,       0,     0,      0) \
-                _(HASH,    '#',   0.0, rsh,       sha,     0,     0,      0) \
-                _(COMMA,   ',',   0.0, cat,       ravel,   0,     0,      0) \
-                _(AND,     '&',   0.0, and,       0,       fog,   0,      0) \
-                _(DOLLAR,  '$',   0.0, or,        0,       0,     0,      0) \
-                _(EQUAL,   '=',   0.0, equal,     0,       0,     0,      eqop) \
-                _(CARET,   '^',   M_E, powerf,    0,       0,     0,      0) \
-                _(DOT,     '.',   0.0, dotf,      0,       dotop, 0,      jotdot) \
-                _(EXCL,    '!',   0.0, 0,         not,     0,     0,      0) \
-                _(SLASH,   '/',   0.0, 0,         0,       0,     reduce, 0) \
-                _(BKSLASH, '\\',  0.0, 0,         0,       0,     scan,   0) \
-                _(AT,      '@',   0.0, transpose, reverse, 0,     0,      0) \
-                _(HBAR,    '_',   0.0, 0,         flr,     0,     0,      0) \
-                _(NFUNC,   0,     0.0, 0,         0,       0,     0,      0) \
+                _(NOP,      0,    0.0, 0,          0,       0,     0,           0) \
+                _(PLUS,    '+',   0.0, plus,       id,      0,     0,           0) \
+                _(MINUS,   '-',   0.0, minus,      negate,  0,     0,           0) \
+                _(STAR,    '*',   1.0, times,      signum,  0,     0,           power) \
+                _(PERCENT, '%',   1.0, divide,     0,       0,     0,           0) \
+                _(VBAR,    '|',   0.0, modulus,    0,       0,     0,           0) \
+                _(LCURL,   '{',   0.0, from,       size,    0,     0,           0) \
+                _(TILDE,   '~',   0.0, find,       iota,    0,     0,           0) \
+                _(LANG,    '<',   0.0, less,       box,     0,     0,           0) \
+                _(RANG,    '>',   0.0, greater,    0,       0,     0,           0) \
+                _(HASH,    '#',   0.0, rsh,        sha,     0,     0,           0) \
+                _(COMMA,   ',',   0.0, cat,        ravel,   0,     0,           0) \
+                _(AND,     '&',   0.0, and,        0,       fog,   0,           0) \
+                _(DOLLAR,  '$',   0.0, or,         0,       0,     0,           0) \
+                _(EQUAL,   '=',   0.0, equal,      0,       0,     0,           eqop) \
+                _(CARET,   '^',   M_E, powerf,     0,       0,     0,           0) \
+                _(DOT,     '.',   0.0, dotf,       0,       dotop, 0,           jotdot) \
+                _(EXCL,    '!',   0.0, 0,          not,     0,     0,           0) \
+                _(SLASH,   '/',   0.0, 0,          0,       0,     reduce,      0) \
+                _(BKSLASH, '\\',  0.0, 0,          0,       0,     scan,        0) \
+                _(AT,      '@',   0.0, rotate,     reverse, 0,     transposeop, 0) \
+                _(HBAR,    '_',   0.0, 0,          flr,     0,     0,           0) \
+                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,  0,           0) \
+                _(NFUNC,   0,     0.0, 0,          0,       0,     0,           0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME)};
 struct{             C c; D id;
@@ -334,7 +356,7 @@ struct{             C c; D id;
           ARC(*omd)(ARC, I,     ARC);
 }ftab[]={ FTAB(FUNCINFO) };
 
-ARC vid(I f){ R scalarD(qd(f)?1:ftab[f].id); }
+ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 
 I st[26];
 qp(unsigned a){R (a<255) && islower(a);}
@@ -387,25 +409,25 @@ ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
     R z;
 }
 
-ARC dotop(ARC a, I f, I g, ARC w){ /* matrix multiply */
+ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
     I *d=malloc((AR(a)+AR(w)-2+2)*sizeof(I)); 
     mv(d,AD(a),AR(a)-1);
     mv(d+AR(a)-1,AD(w)+1,AR(w)-1);
     ARC z=ga(AT(w),AR(a)+AR(w)-2,d);
     ARC wdims=sha(w),adims=sha(a);
-    w=transpose(rotate(scalarI(-1),iota(sha(sha(w)))),w);
+    w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w);
     ARC va,vw,vz;
     va=ga(AT(a),1,AD(a)+AR(a)-1);
     vw=ga(AT(w),1,AD(w)+AR(w)-1);
     DO(AN(z),
             vdx(i,AD(z),AR(z),d); /* generate index vector from z */
             mv(d+AR(a),d+AR(a)-1,AR(w)); /* scootch over the w part */
-            d[AR(a)-1]=0;                  /* 0 to index the whole row of a */
-            mv(AV(va),AV(a)+idx(d,AD(a),AR(a)),AN(va)); /* copy row of a */
-            (d+AR(a))[AR(w)]=0;          /* 0 to index the whole row of w */
-            mv(AV(vw),AV(w)+idx(d,AD(w),AR(w)),AN(vw)); /* copy row of w */
+            d[AR(a)-1]=0;                  /* 0 to index the whole "row" of a */
+            mv(AV(va),AV(a)+idx(d,AD(a),AR(a)),AN(va)); /* copy "row" of a */
+            (d+AR(a))[AR(w)]=0;          /* 0 to index the whole "row" of w */
+            mv(AV(vw),AV(w)+idx(d,AD(w),AR(w)),AN(vw)); /* copy "row" of w */
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
-            AV(z)[i]=*AV(vz);           /* extract result */
+            AV(z)[i]=*AV(vz);           /* extract (scalar) result */
             )
     R z;
 }
@@ -457,6 +479,28 @@ ARC scan(I f, ARC w){
         }
     } else
         z=w;
+    R z;
+}
+
+ARC transposeop(I f, ARC w){
+    ARC z;
+    if (AR(w)==0)R w;
+    if (AR(w)==1){
+        z=ga(AT(w),2,(I[]){1,AD(w)[0]});
+        mv(AV(z),AV(w),AN(w)*(AT(w)==DBL?2:1));
+        w=z;
+    }
+    switch(f){
+    default: longjmp(mainloop, OPERATOR);
+    CASE DOT: z=cp(w);
+    CASE MINUS: z=reverse(w);
+    CASE VBAR: z=reverselast(w);
+    CASE SLASH: z=reverse(transposem(w));
+    CASE BKSLASH: z=transposem(w);
+    CASE PLUS: z=reverselast(reverse(w));
+    CASE LANG: z=reverse(transposem(reverse(w)));
+    CASE RANG: z=transposem(reverse(w));
+    }
     R z;
 }
 
