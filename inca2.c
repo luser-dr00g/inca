@@ -576,12 +576,10 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
 
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
     //printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
-    printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
     if(!*e)R (ARC)0;
     I bspace=0;
     while(a==' '){a=*ABCD} 
     PAREN(a,0) BB CC DD
-    printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
     if(qv(a)){ 
