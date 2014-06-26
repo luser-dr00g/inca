@@ -255,7 +255,7 @@ V2(rotate){
     R w;
 }
 
-V2(transposed){ /* dyadic transpose */
+V2(transposed){ /* dyadic transpose. vector a selects axes of w */
     //printf("transposed\n"); printf("AR(a)=%d\n",AR(a));
     if (AR(a)==0) a=rotate(a,iota(scalarI(AR(w))));
     if (AR(a)>1) longjmp(mainloop, RANK);
@@ -295,6 +295,12 @@ V1(reverselast){ /* reverse along last axis (cols in 2D) */
 }
 
 V2(dotf); /* shortcut for  "plus dot times" */
+
+V2(compress){
+}
+
+V2(expand){
+}
 
 pi(i){printf("%d ",i);}
 pd(D d){printf("%f ",d);}
@@ -361,8 +367,8 @@ pr(w)ARC w;{
                 _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
                 _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
                 _(EXCL,    '!',   0.0, 0,          not,        0,     0,           0) \
-                _(SLASH,   '/',   0.0, 0,          0,          0,     reduce,      0) \
-                _(BKSLASH, '\\',  0.0, 0,          0,          0,     scan,        0) \
+                _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
+                _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
                 _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
                 _(HBAR,    '_',   0.0, 0,          flr,        0,     0,           0) \
                 _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
@@ -511,11 +517,11 @@ ARC transposeop(I f, ARC w){
     CASE DOT: z=cp(w);
     CASE MINUS: z=reverse(w);
     CASE VBAR: z=reverselast(w);
-    CASE SLASH: z=reverse(transposem(w));
+    CASE SLASH: z=transposem(reverse(reverselast(w)));
     CASE BKSLASH: z=transposem(w);
-    CASE PLUS: z=reverselast(reverse(w));
-    CASE LANG: z=reverse(transposem(reverse(w)));
-    CASE RANG: z=transposem(reverse(w));
+    CASE PLUS: z=reverselast(                    reverse(w));
+    CASE LANG: z=transposem(reverse(reverselast( reverse(w))));
+    CASE RANG: z=transposem(                     reverse(w));
     }
     R z;
 }
@@ -556,29 +562,48 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
 #define DD d=e[3]; /* update d */ 
 #define ABCD ADV BB CC DD 
 #define AACD ADV ADV CC DD 
+#define PAREN(x,off) \
+    if ((x)=='('){ \
+        int i; for(i=1;e[i+off]&&e[i+off]!=')';i++) ; \
+        int *p=malloc((i+off)*sizeof(I)); \
+        mv(p,e+1+off,i-1); \
+        p[i-1]=0; \
+        (x)=(I)ex(p); \
+        free(p); \
+        e+=i; \
+    }
 
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
+    //printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
+    if(!*e)R (ARC)0;
     I bspace=0;
     while(a==' '){a=*ABCD} 
+    PAREN(a,0) BB CC DD
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
-    while(b==' '){bspace=1; ABCD} 
     if(qv(a)){ 
+        while(b==' '){bspace=1; ABCD} 
         if(qo(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
-        R vm(a,ex(e+1));
+        if (e[1]) R vm(a,ex(e+1));
+        else R (ARC)a;
     } 
 dy_verb: 
     while(b==' '){bspace=1; ABCD} 
+    PAREN(b,1) CC DD
     if(b){ 
         if(qv(b)){ 
             while(c==' '){ADV CC DD}
             if(qo(c)){ 
                 while(d==' '){ADV DD}
+                PAREN(d,3)
                 if (qodd(c) && qv(d)){ b=noddv(b,c,d); AACD goto dy_verb; }
                 if (qomd(c)){ b=nomdv(b,c); ADV CC DD goto dy_verb; }
                 longjmp(mainloop, OPERATOR);
             }
-            c=(I)ex(e+2); 
+            if (c=='('){
+                PAREN(c,2) DD
+            } else
+                c=(I)ex(e+2); 
             if(qp(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
         } 
@@ -606,10 +631,15 @@ I *wd(C *s){
         if(isdigit(c)){
             ll=strtol(s+i,&rem,10); //printf("%d:%s\n", ll, rem);
             if(*rem=='.'){D d;
-                d=strtod(s+i,&rem); //printf("%f:%s\n", d, rem);
+                d=strtod(s+i,&rem); //printf("%f:%s\n", d, rem-1);
+                if (rem[-1]=='.') { //no decimal
+                    --rem;
+                    goto integer;
+                }
                 a=(I)scalarD(d);
                 s=rem;i=-1; //adjust pointer+index
             } else {
+integer:
                 a=(I)scalarI(ll);
                 s=rem;i=-1;
             }
