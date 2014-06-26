@@ -279,7 +279,7 @@ V1(transposem){ /* rotate first axis to last position (row/col in 2D) */
 V1(reverse){ /* reverse along primary axis (rows in 2D) */
     if(AR(w)==0)R w;
     I n = tr(AR(w)-1,AD(w)+1), m = (AT(w)==DBL?2:1);
-    printf("n=%d\n", n);
+    //printf("n=%d\n", n);
     ARC z=ga(AT(w),AR(w),AD(w));
     DO(AD(z)[0], mv(AV(z)+i*n*m, AV(w)+(AD(z)[0]-1-i)*n*m, n*m))
     R z;
@@ -563,22 +563,25 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
 #define ABCD ADV BB CC DD 
 #define AACD ADV ADV CC DD 
 #define PAREN(x,off) \
-    if ((x)=='('){ \
-        int i; for(i=1;e[i+off]&&e[i+off]!=')';i++) ; \
-        int *p=malloc((i+off)*sizeof(I)); \
-        mv(p,e+1+off,i-1); \
-        p[i-1]=0; \
+    if ((x)=='('){ int i,n,*p; \
+        for(i=1,n=1;e[i+off] && n;i++) \
+            n+=e[i+off]=='('?1:e[i+off]==')'?-1:0; \
+        p=malloc((i+off)*sizeof(I)); \
+        mv(p,e+1+off,i-2); \
+        p[i-2]=0; \
         (x)=(I)ex(p); \
         free(p); \
-        e+=i; \
+        e+=i-1; \
     }
 
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
     //printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
+    printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
     if(!*e)R (ARC)0;
     I bspace=0;
     while(a==' '){a=*ABCD} 
     PAREN(a,0) BB CC DD
+    printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
     if(qv(a)){ 
