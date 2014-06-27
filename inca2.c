@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ERRORS(_) _(NO_ERROR) _(RANK) _(LENGTH) _(OPERATOR)
+#define ERRORS(_) _(NO_ERROR) _(RANK) _(LENGTH) _(OPERATOR) _(TYPE)
 #define BARE(_) _ ,
 #define STR(x) #x ,
 enum errnames { ERRORS(BARE) };
@@ -302,49 +302,6 @@ V2(compress){
 V2(expand){
 }
 
-pi(i){printf("%d ",i);}
-pd(D d){printf("%f ",d);}
-nl(){printf("\n");}
-pr(w)ARC w;{
-    I r=AR(w),*d=AD(w),n=AN(w);
-    int j,k,l,(*p)();
-    //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
-    switch(AT(w)){
-    CASE BOX: p=pr;
-    CASE INT: p=pi;
-    CASE DBL: p=pd;
-        switch(r){
-        case 0:case 1:
-            DO(n,p(((D*)AV(w))[i])) nl();
-        CASE 2:
-            DO(d[0], j=i; DO(d[1],p(((D*)AV(w))[j*d[1]+i])) nl() )
-        CASE 3:
-            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((D*)AV(w))[(k*d[1]+j)*d[2]+i])) nl()
-                        ) nl();nl())
-        CASE 4:
-            DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
-                            DO(d[3],p(((D*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
-                            ) nl();nl()) nl();nl())
-        }
-        nl();
-        R 0;
-    }
-    switch(r){
-    case 0:case 1:
-        DO(n,p(AV(w)[i])) nl();
-    CASE 2:
-        DO(d[0], j=i; DO(d[1],p(AV(w)[j*d[1]+i])) nl() )
-    CASE 3:
-        DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i])) nl()
-                    ) nl();nl())
-    CASE 4:
-        DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
-                        DO(d[3],p(AV(w)[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
-                        ) nl();nl()) nl();nl())
-    }
-    nl();
-}
-
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
 #define FUNCINFO(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
@@ -384,6 +341,60 @@ struct{             C c; D id;
 }ftab[]={ FTAB(FUNCINFO) };
 
 ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
+
+pi(i){printf("%d ",i);}
+pd(D d){printf("%f ",d);}
+nl(){printf("\n");}
+pr(w)ARC w;{
+    if(((unsigned)(I)w)<255){ uintptr_t x=(intptr_t)w;
+        if (qp(x))
+            printf("%c", (int)x);
+        else if (qv(x))
+            printf("%c", ftab[x].c);
+        else if (qd(x)) {
+            DO(AN(w)-1,)
+        }
+        nl();
+        R 0;
+    }
+    I r=AR(w),*d=AD(w),n=AN(w);
+    int j,k,l,(*p)();
+    //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
+    switch(AT(w)){
+    CASE BOX: p=pr;
+    CASE INT: p=pi;
+    CASE DBL: p=pd;
+        switch(r){
+        case 0:case 1:
+            DO(n,p(((D*)AV(w))[i])) nl();
+        CASE 2:
+            DO(d[0], j=i; DO(d[1],p(((D*)AV(w))[j*d[1]+i])) nl() )
+        CASE 3:
+            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((D*)AV(w))[(k*d[1]+j)*d[2]+i])) nl()
+                        ) nl();nl())
+        CASE 4:
+            DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
+                            DO(d[3],p(((D*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
+                            ) nl();nl()) nl();nl())
+        }
+        nl();
+        R 0;
+    }
+    switch(r){
+    case 0:case 1:
+        DO(n,p(AV(w)[i])) nl();
+    CASE 2:
+        DO(d[0], j=i; DO(d[1],p(AV(w)[j*d[1]+i])) nl() )
+    CASE 3:
+        DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i])) nl()
+                    ) nl();nl())
+    CASE 4:
+        DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
+                        DO(d[3],p(AV(w)[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
+                        ) nl();nl()) nl();nl())
+    }
+    nl();
+}
 
 I st[26];
 qp(unsigned a){R (a<255) && islower(a);}
@@ -591,11 +602,14 @@ mon_verb:
 dy_verb: 
     while(b==' '){bspace=1; ABCD} 
     PAREN(b,1) CC DD
+    if(qp(b))b=VAR(b);
     if(b){ 
         if(qv(b)){ 
             while(c==' '){ADV CC DD}
+            if(qp(c))c=VAR(c);
             if(qo(c)){ 
                 while(d==' '){ADV DD}
+                if(qp(d))d=VAR(d);
                 PAREN(d,3)
                 if (qodd(c) && qv(d)){ b=noddv(b,c,d); AACD goto dy_verb; }
                 if (qomd(c)){ b=nomdv(b,c); ADV CC DD goto dy_verb; }
