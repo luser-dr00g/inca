@@ -192,6 +192,10 @@ V2(greater){ MATHOP2(>, boolover, greater) }
 
 V2(powerf){ MATHOPF2(pow,pow) }
 
+I imin(I a,I w) { R a<w?a:w;}
+D dmin(D a,D w) { R a<w?a:w;}
+V2(minimum){ MATHOPF2(imin,dmin) }
+
 V1(signum){
     ARC z=ga(INT,AR(w),AD(w));
     DO(AN(z),
@@ -340,7 +344,7 @@ V2(expand){
                 _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
                 _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
                 _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
-                _(HBAR,    '_',   0.0, 0,          flr,        0,     0,           0) \
+                _(HBAR,    '_',   0.0, minimum,    flr,        0,     0,           0) \
                 _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
                 _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
 /* END FTAB */
