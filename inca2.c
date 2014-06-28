@@ -87,24 +87,24 @@ V1(size){
     ARC z=ga(INT,0,0);
     *AV(z)=AR(w)?*AD(w):1;R z;}
 
-int subwillunder(long x, long y); 
-int addwillover(long x, long y) { 
+int subunder(long x, long y); 
+int addover(long x, long y) { 
     if (y == LONG_MIN) return 1; 
-    if (y < 0) return subwillunder(x, -y); 
+    if (y < 0) return subunder(x, -y); 
     if (x > LONG_MAX - y) return 1; 
     return 0; } 
-int subwillunder(long x, long y) { 
+int subunder(long x, long y) { 
     if (y == LONG_MIN) return 1; 
-    if (y < 0) return addwillover(x, -y); 
+    if (y < 0) return addover(x, -y); 
     if (x < LONG_MIN + y) return 1; 
     return 0; } 
-int mulwillover(long x, long y) { 
+int mulover(long x, long y) { 
     if (x == 0||y == 0) return 0; 
     if (x < 0) x = -x; 
     if (y < 0) y = -y; 
     if (x > LONG_MAX / y) return 1; 
     return 0; } 
-int divwillover(long x, long y) { return 1; }
+int divover(long x, long y) { return 1; }
 int boolover(long x, long y){ return 0; }
 
 #define MATHOP1(op, overflow) \
@@ -118,7 +118,7 @@ restart: \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]= op ((D*)AV(w))[i]); \
     } R z;
 
-V1(negate){ MATHOP1(-, subwillunder) }
+V1(negate){ MATHOP1(-, subunder) }
 V1(not){ MATHOP1(!, boolover) }
 
 #define RANKCOMPAT \
@@ -144,24 +144,31 @@ restart ## ident: \
         z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=((D*)AV(a))[i] op ((D*)AV(w))[i]) \
     } R z;
 
-#define MATHOPF2(func) \
+#define MATHOPF1(ifunc,dfunc) \
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
+    switch(AT(w)){ \
+        CASE INT: z=ga(INT,r,d); DO(n,AV(z)[i]=ifunc(AV(w)[i])) \
+        CASE DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=dfunc(((D*)AV(w))[i])) \
+    } R z;
+
+#define MATHOPF2(ifunc,dfunc) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
     RANKCOMPAT \
     switch(TPAIR(AT(a),AT(w))){ \
     CASE TPAIR(INT,INT): \
-        z=ga(INT,r,d); DO(n,AV(z)[i]=func(AV(a)[i], AV(w)[i])) \
+        z=ga(INT,r,d); DO(n,AV(z)[i]=(I)ifunc(AV(a)[i], AV(w)[i])) \
     CASE TPAIR(INT,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(AV(a)[i], ((D*)AV(w))[i])) \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=dfunc(AV(a)[i], ((D*)AV(w))[i])) \
     CASE TPAIR(DBL,INT): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], AV(w)[i])) \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=dfunc(((D*)AV(a))[i], AV(w)[i])) \
     CASE TPAIR(DBL,DBL): \
-        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=func(((D*)AV(a))[i], ((D*)AV(w))[i])) \
+        z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=dfunc(((D*)AV(a))[i], ((D*)AV(w))[i])) \
     } R z;
 
-V2(plus){    MATHOP2(+, addwillover, plus) }
-V2(minus){   MATHOP2(-, subwillunder, minus) }
-V2(times){   MATHOP2(*, mulwillover, times) }
-V2(divide){  MATHOP2(/, divwillover, divide) }
+V2(plus){    MATHOP2(+, addover, plus) }
+V2(minus){   MATHOP2(-, subunder, minus) }
+V2(times){   MATHOP2(*, mulover, times) }
+V2(divide){  MATHOP2(/, divover, divide) }
 V2(modulus){ ARC t=a;a=w;w=t;
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
     RANKCOMPAT \
@@ -183,7 +190,7 @@ V2(or){      MATHOP2(||, boolover, or) }
 V2(less){    MATHOP2(<, boolover, less) }
 V2(greater){ MATHOP2(>, boolover, greater) }
 
-V2(powerf){ MATHOPF2(pow) }
+V2(powerf){ MATHOPF2(pow,pow) }
 
 V1(signum){
     ARC z=ga(INT,AR(w),AD(w));
@@ -202,6 +209,7 @@ V1(flr){
     }
     R z;
 }
+V1(absolute){ MATHOPF1(labs,fabs) }
 
 V2(from){
     I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
@@ -244,7 +252,12 @@ V2(cat){
     R z;
 }
 
-V2(find){
+V2(find){ /* dyadic iota: find index of w in a */
+    if(AR(a)!=1)longjmp(mainloop,RANK);
+    ARC z=ga(INT,AR(w),AD(w));
+    int j;
+    DO(AN(z),j=i;DO(AN(a),if(AV(w)[j]==AV(a)[i]){AV(z)[j]=i;break;}AV(z)[j]=i+1;))
+    R z;
 }
 
 V2(rotate){
@@ -272,10 +285,6 @@ V2(transposed){ /* dyadic transpose. vector a selects axes of w */
     R z;
 }
 
-V1(transposem){ /* rotate first axis to last position (row/col in 2D) */
-    R transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w);
-}
-
 V1(reverse){ /* reverse along primary axis (rows in 2D) */
     if(AR(w)==0)R w;
     I n = tr(AR(w)-1,AD(w)+1), m = (AT(w)==DBL?2:1);
@@ -283,6 +292,10 @@ V1(reverse){ /* reverse along primary axis (rows in 2D) */
     ARC z=ga(AT(w),AR(w),AD(w));
     DO(AD(z)[0], mv(AV(z)+i*n*m, AV(w)+(AD(z)[0]-1-i)*n*m, n*m))
     R z;
+}
+
+V1(transposem){ /* reverse axes (row/col in 2D) */
+    R transposed(reverse(iota(scalarI(AR(w)))),w);
 }
 
 V1(reverselast){ /* reverse along last axis (cols in 2D) */
@@ -311,7 +324,7 @@ V2(expand){
                 _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
                 _(STAR,    '*',   1.0, times,      signum,     0,     0,           power) \
                 _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0) \
-                _(VBAR,    '|',   0.0, modulus,    0,          0,     0,           0) \
+                _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
                 _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
                 _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
                 _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
