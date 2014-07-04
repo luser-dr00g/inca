@@ -71,6 +71,7 @@ I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
     I t=ind,*z=vec; DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i]) R z; }
 
 V1(iota){
+    if (AT(w)==CHR) longjmp(mainloop, TYPE);
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
 V2(rsh){
