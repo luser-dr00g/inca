@@ -59,6 +59,7 @@ ARC ga(t,r,d)I *d;{I n;
     R z;}
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
 ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
+ARC scalarC(C c){ARC z=ga(CHR,0,0);*(C*)AV(z)=c;R z;}
 ARC toI(ARC a){ if (AT(a)==INT)R a;
     ARC z=ga(INT,AR(a),AD(a)); DO(AN(a),AV(z)[i]=((D*)AV(a))[i]); R z;}
 ARC toD(ARC a){ if (AT(a)==DBL)R a;
@@ -132,6 +133,7 @@ V1(not){ MATHOP1(!, boolover) }
     RANKCOMPAT \
 restart ## ident: \
     switch(TPAIR(AT(a),AT(w))) { \
+    default: longjmp(mainloop, TYPE); \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); \
         DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart ## ident;} \
@@ -147,6 +149,7 @@ restart ## ident: \
 #define MATHOPF1(ifunc,dfunc) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
     switch(AT(w)){ \
+    default: longjmp(mainloop, TYPE); \
         CASE INT: z=ga(INT,r,d); DO(n,AV(z)[i]=ifunc(AV(w)[i])) \
         CASE DBL: z=ga(DBL,r,d); DO(n,((D*)AV(z))[i]=dfunc(((D*)AV(w))[i])) \
     } R z;
@@ -155,6 +158,7 @@ restart ## ident: \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
     RANKCOMPAT \
     switch(TPAIR(AT(a),AT(w))){ \
+    default: longjmp(mainloop, TYPE); \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); DO(n,AV(z)[i]=(I)ifunc(AV(a)[i], AV(w)[i])) \
     CASE TPAIR(INT,DBL): \
@@ -332,35 +336,36 @@ V2(expand){
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
 #define FTAB(_) \
                 _(NOP,      0,    0.0, 0,          0,          0,     0,           0) \
-                _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0) \
-                _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
-                _(STAR,    '*',   1.0, times,      signum,     0,     0,           power) \
-                _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0) \
-                _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
-                _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
-                _(RCURL,   '}',   0.0, 0,          0,          0,     0,           0) \
-                _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
-                _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
-                _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
-                _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
-                _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
-                _(AND,     '&',   1.0, and,        0,          fog,   0,           0) \
-                _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
-                _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
-                _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
-                _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
                 _(EXCL,    '!',   0.0, 0,          not,        0,     0,           0) \
-                _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
-                _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
-                _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
-                _(HBAR,    '_',   0.0, minimum,    flr,        0,     0,           0) \
-                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
-                _(QUOTE,   '\'',  0.0, 0,          0,          0,     0,           0) \
                 _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0) \
+                _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
+                _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
+                _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0) \
+                _(AND,     '&',   1.0, and,        0,          fog,   0,           0) \
+                _(QUOTE,   '\'',  0.0, 0,          0,          0,     0,           0) \
+                _(STAR,    '*',   1.0, times,      signum,     0,     0,           power) \
+                _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0) \
+                _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
+                _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
+                _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
+                _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
                 _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
                 _(SEMI,    ';',   0.0, 0,          0,          0,     0,           0) \
+                _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
+                _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
+                _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
                 _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0) \
+                _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
                 _(LBRAC,   '[',   0.0, 0,          0,          0,     0,           0) \
+                _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
+                _(RBRAC,   ']',   0.0, 0,          0,          0,     0,           0) \
+                _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
+                _(HBAR,    '_',   0.0, minimum,    flr,        0,     0,           0) \
+                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
+                _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
+                _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
+                _(RCURL,   '}',   0.0, 0,          0,          0,     0,           0) \
+                _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
                 _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME)};
@@ -375,6 +380,7 @@ struct{             C c; D id;
 ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 
 pi(i){printf("%d ",i);}
+pc(I c){printf("%c",c);}
 pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
 pr(w)ARC w;{
@@ -395,6 +401,22 @@ pr(w)ARC w;{
     switch(AT(w)){
     CASE BOX: p=pr;
     CASE INT: p=pi;
+    CASE CHR: p=pc;
+        switch(r){
+        case 0:case 1:
+            DO(n,p(((C*)AV(w))[i])) nl();
+        CASE 2:
+            DO(d[0], j=i; DO(d[1],p(((C*)AV(w))[j*d[1]+i])) nl() )
+        CASE 3:
+            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((C*)AV(w))[(k*d[1]+j)*d[2]+i])) nl()
+                        ) nl();nl())
+        CASE 4:
+            DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
+                            DO(d[3],p(((C*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
+                            ) nl();nl()) nl();nl())
+        }
+        nl();
+        R 0;
     CASE DBL: p=pd;
         switch(r){
         case 0:case 1:
@@ -675,7 +697,9 @@ verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 I *wd(C *s){
     I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
-        if(isdigit(c)){
+        if(s[i]=='\''){
+            a=(I)scalarC(s[++i]);
+        } else if(isdigit(c)){
             ll=strtol(s+i,&rem,10); //printf("%d:%s\n", ll, rem);
             if(*rem=='.'){D d;
                 d=strtod(s+i,&rem); //printf("%f:%s\n", d, rem-1);
