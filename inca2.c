@@ -314,6 +314,14 @@ V1(reverselast){ /* reverse along last axis (cols in 2D) */
 V2(dotf); /* shortcut for  "plus dot times" */
 
 V2(compress){
+    I n=0,j=0;
+    if(AT(a)!=INT){longjmp(mainloop, TYPE);}
+    DO(AN(a),n+=AV(a)[i]!=0)
+    ARC z=ga(AT(w),1,&n);
+    switch(AT(w)){
+    CASE INT: DO(AN(a),if(AV(a)[i])AV(z)[j++]=AV(w)[i])
+    CASE DBL: DO(AN(a),if(AV(a)[i])((D*)AV(z))[j++]=((D*)AV(w))[i])
+    } R z;
 }
 
 V2(expand){
@@ -330,12 +338,13 @@ V2(expand){
                 _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0) \
                 _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
                 _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
+                _(RCURL,   '}',   0.0, 0,          0,          0,     0,           0) \
                 _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
                 _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
                 _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
                 _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
                 _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
-                _(AND,     '&',   0.0, and,        0,          fog,   0,           0) \
+                _(AND,     '&',   1.0, and,        0,          fog,   0,           0) \
                 _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
                 _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
                 _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
@@ -346,6 +355,12 @@ V2(expand){
                 _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
                 _(HBAR,    '_',   0.0, minimum,    flr,        0,     0,           0) \
                 _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
+                _(QUOTE,   '\'',  0.0, 0,          0,          0,     0,           0) \
+                _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0) \
+                _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
+                _(SEMI,    ';',   0.0, 0,          0,          0,     0,           0) \
+                _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0) \
+                _(LBRAC,   '[',   0.0, 0,          0,          0,     0,           0) \
                 _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
 /* END FTAB */
 enum{FTAB(FUNCNAME)};
