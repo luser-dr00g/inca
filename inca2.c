@@ -248,6 +248,10 @@ V1(ravel){
 V2(cat){
     I an=AN(a),wn=AN(w),n=an+wn; ARC z;
     switch(TPAIR(AT(a),AT(w))){
+    default: longjmp(mainloop, TYPE);
+    CASE TPAIR(CHR,CHR):
+        z=ga(AT(a),1,&n); DO(an,((C*)AV(z))[i]=((C*)AV(a))[i])
+            DO(wn,((C*)AV(z))[i+an]=((C*)AV(w))[i])
     CASE TPAIR(INT,INT):
         z=ga(AT(a),1,&n); mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);
     CASE TPAIR(INT,DBL):
@@ -493,13 +497,14 @@ ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
     I *d=malloc((AR(a)+AR(w)-2+2)*sizeof(I)); 
     mv(d,AD(a),AR(a)-1);
     mv(d+AR(a)-1,AD(w)+1,AR(w)-1);
-    ARC z=ga(AT(w),AR(a)+AR(w)-2,d);
     ARC wdims=sha(w),adims=sha(a);
     w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w);
-    //pr(w);
     ARC va,vw,vz;
+    ARC z;
     va=ga(AT(a),1,AD(a)+AR(a)-1);
     vw=ga(AT(w),1,AD(w)+AR(w)-1);
+alloc_z:
+    z=ga(AT(w),AR(a)+AR(w)-2,d);
     DO(AN(z),
             vdx(i,AD(z),AR(z),d); /* generate index vector from z */
             mv(d+AR(a),d+AR(a)-1,AR(w)); /* scootch over the w part */
@@ -507,14 +512,19 @@ ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
             d[AR(a)-1]=0;                  /* 0 to index the whole "row" of a */
             mv(AV(va),AV(a)+idx(d,AD(a),AR(a)),AN(va)); /* copy "row" of a */
 
-            (d+AR(a))[AR(w)-1]=0;          /* 0 to index the whole "row" of w */
-            mv(AV(vw),AV(w)+idx(d+AR(a),AD(w),AR(w)),AN(vw)); /* copy "row" of w */
+            (d+AR(a))[AR(w)-1]=0;          /* 0 to index the whole "row" of `w */
+            mv(AV(vw),AV(w)+idx(d+AR(a),AD(w),AR(w)),AN(vw)); /* copy "row" of `w */
 
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
 
             //DO(AR(a)+AR(w),printf("%d",d[i])) printf("\n");
             //pr(va); pr(vw); pr(vz);
-            AV(z)[i]=*AV(vz);           /* extract (scalar) result */
+            switch(TPAIR(AT(z),AT(vz))){
+            CASE TPAIR(INT,INT): AV(z)[i]=*AV(vz); /* extract (scalar) result */
+            CASE TPAIR(INT,DBL): w=toD(w); goto alloc_z;
+            CASE TPAIR(DBL,INT): ((D*)AV(z))[i]=(D)*AV(vz);
+            CASE TPAIR(DBL,DBL): ((D*)AV(z))[i]=*((D*)AV(vz));
+            }
             )
     R z;
 }
