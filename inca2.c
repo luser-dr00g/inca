@@ -14,6 +14,7 @@ enum errnames { ERRORS(BARE) };
 char *errstr[] = { ERRORS(STR) };
 jmp_buf mainloop;
 
+#define SWITCH(x,y) switch(x){ default: y }
 #define CASE break;case
 enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
 /* TPAIR() combines types into a single value that can be switch()ed */
@@ -328,6 +329,8 @@ V2(compress){
     DO(AN(a),n+=AV(a)[i]!=0)
     ARC z=ga(AT(w),1,&n);
     switch(AT(w)){
+    default: longjmp(mainloop, TYPE);
+    CASE CHR: DO(AN(a),if(AV(a)[i])((C*)AV(z))[j++]=((C*)AV(w))[i])
     CASE INT: DO(AN(a),if(AV(a)[i])AV(z)[j++]=AV(w)[i])
     CASE DBL: DO(AN(a),if(AV(a)[i])((D*)AV(z))[j++]=((D*)AV(w))[i])
     } R z;
