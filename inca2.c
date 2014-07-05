@@ -337,6 +337,14 @@ V2(compress){
 }
 
 V2(expand){
+    if(AT(a)!=INT){longjmp(mainloop, TYPE);}
+    ARC z=ga(AT(w),1,&AN(a));
+    switch(AT(w)){
+    default: longjmp(mainloop, TYPE);
+    CASE CHR: DO(AN(a), ((C*)AV(z))[i]=AV(a)[i]?((C*)AV(w))[i]:' ')
+    CASE INT: DO(AN(a), AV(z)[i]=AV(a)[i]?AV(w)[i]:0)
+    CASE DBL: DO(AN(a), ((D*)AV(z))[i]=AV(a)[i]?((D*)AV(w))[i]:0.0)
+    } R z;
 }
 
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
