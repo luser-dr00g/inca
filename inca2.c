@@ -30,7 +30,7 @@ typedef struct a{I k,t,n,r,d[0];}*ARC;
 #define AD(a) ((a)->d) /* dims */
 /* values float *after* variable-length dims */
 #define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
-#define AZ(a) (AT(a)==DBL?2:1)
+#define AZ(a) (AT(a)==DBL?8:AT(a)==CHR?1:4)
 
 #define R return
 #define V1(f) ARC f(ARC w)
@@ -50,13 +50,18 @@ ARC reduce(I f, ARC w);
 ARC scan(I f, ARC w);
 ARC transposeop(I f, ARC w);
 
-I *ma(n){R(I*)malloc(n*sizeof(I));}
-void mv(I *d,I *s,I n){DO(n,d[i]=s[i]);}
+I *ma(I n){R(I*)malloc(n*sizeof(I));}
+void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}
-ARC ga(t,r,d)I *d;{I n;
-    ARC z=(ARC)ma((sizeof(*z)/sizeof(I))+r+(n=tr(r,d))*(t==DBL?2:1));
+ARC ga(I t,I r,I *d){I n =tr(r,d);
+    struct a a = {t};
+    ARC z;
+    if (r<0)r=0;
+    I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?2:1);
+    if (t==CHR) sz=(sz+1)/4;
+    z=(ARC)ma(sz);
     AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
-    mv(AD(z),d,r);
+    mv((C*)AD(z),(C*)d,r*sizeof(I));
     R z;}
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
 ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
@@ -78,13 +83,13 @@ V1(iota){
 V2(rsh){
     I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
     ARC z=ga(AT(w),r,AV(a));
-    mv(AV(z),AV(w),(wn=n>wn?wn:n)*AZ(w));
-    if((n-=wn)>0)mv(AV(z)+wn*AZ(w),AV(z),n*AZ(w));
+    mv((C*)AV(z),(C*)AV(w),(wn=n>wn?wn:n)*AZ(w));
+    if((n-=wn)>0)mv(((C*)AV(z))+wn*AZ(w),(C*)AV(z),n*AZ(w));
     R z;
 }
 V1(sha){
     ARC z=ga(INT,1,&AR(w));
-    mv(AV(z),AD(w),AR(w));R z;}
+    mv((C*)AV(z),(C*)AD(w),AR(w)*sizeof(I));R z;}
 V1(id){R w;}
 V1(size){
     ARC z=ga(INT,0,0);
@@ -226,13 +231,13 @@ V2(from){
     ARC z;
     switch(AR(a)){
     default: longjmp(mainloop, RANK);
-    CASE 0: z=ga(AT(w),r,d);mv(AV(z),AV(w)+*AV(a)*n*AZ(w),n*AZ(w));
+    CASE 0: z=ga(AT(w),r,d);mv((C*)AV(z),((C*)AV(w))+*AV(a)*n*AZ(w),n*AZ(w));
     CASE 1:
         d=malloc(AR(w)*sizeof(I));
         d[0]=AN(a);
         DO(AR(w)-1,d[i+1]=AD(w)[i+1])
         z=ga(AT(w),AR(w),d);
-        DO(d[0], mv(AV(z)+i*n*AZ(w), AV(w)+AV(a)[i]*n*AZ(w),n*AZ(w)))
+        DO(d[0], mv(((C*)AV(z))+i*n*AZ(w), ((C*)AV(w))+AV(a)[i]*n*AZ(w),n*AZ(w)))
     } R z;
 }
 V1(box){
@@ -240,10 +245,12 @@ V1(box){
 V1(ravel){
     I n=AN(w);ARC z=ga(AT(w),1,&n);
     switch(AT(w)){
+    CASE CHR:
+        DO(n,((C*)AV(z))[i] = ((C*)AV(w))[i])
     CASE INT:
-        DO(n,AV(z)[i] = AV(w)[i]);
+        DO(n,AV(z)[i] = AV(w)[i])
     CASE DBL:
-        DO(n,((D*)AV(z))[i] = ((D*)AV(w))[i]);
+        DO(n,((D*)AV(z))[i] = ((D*)AV(w))[i])
     } R z;
 }
 
@@ -252,16 +259,19 @@ V2(cat){
     switch(TPAIR(AT(a),AT(w))){
     default: longjmp(mainloop, TYPE);
     CASE TPAIR(CHR,CHR):
-        z=ga(AT(a),1,&n); DO(an,((C*)AV(z))[i]=((C*)AV(a))[i])
+        z=ga(CHR,1,&n);
+            DO(an,((C*)AV(z))[i]=((C*)AV(a))[i])
             DO(wn,((C*)AV(z))[i+an]=((C*)AV(w))[i])
     CASE TPAIR(INT,INT):
-        z=ga(AT(a),1,&n); mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);
+        z=ga(INT,1,&n); mv((C*)AV(z),(C*)AV(a),an*sizeof(I));mv((C*)(AV(z)+an),(C*)AV(w),wn*AZ(w));
     CASE TPAIR(INT,DBL):
-        z=ga(AT(w),1,&n); DO(an,((D*)AV(z))[i]=(D)AV(a)[i]); mv(AV(z)+an*2,AV(w),wn*2);
+        z=ga(DBL,1,&n); DO(an,((D*)AV(z))[i]=(D)AV(a)[i]); mv(((C*)AV(z))+an*AZ(w),(C*)AV(w),wn*AZ(w));
     CASE TPAIR(DBL,INT):
-        z=ga(AT(a),1,&n); mv(AV(z),AV(a),an*2); DO(wn,((D*)AV(z))[an+i]=(D)AV(w)[i])
+        z=ga(DBL,1,&n);
+        mv((C*)AV(z),(C*)AV(a),an*AZ(w));
+        DO(wn,((D*)AV(z))[an+i]=(D)AV(w)[i])
     CASE TPAIR(DBL,DBL):
-        z=ga(AT(a),1,&n); mv(AV(z),AV(a),an*2);mv(AV(z)+an*2,AV(w),wn*2);
+        z=ga(DBL,1,&n); mv((C*)AV(z),(C*)AV(a),an*AZ(w));mv(((C*)AV(z))+an*AZ(w),(C*)AV(w),wn*AZ(w));
     }
     R z;
 }
@@ -278,7 +288,7 @@ V2(rotate){
     I t,n=*AV(a);
     if (n<0) n+=AN(w);
     w=cp(w);
-    DO(n,t=*AV(w);mv(AV(w),AV(w)+1,AN(w)-1);AV(w)[AN(w)-1]=t;)
+    DO(n,t=*AV(w);mv((C*)AV(w),(C*)(AV(w)+1),(AN(w)-1)*AZ(w));AV(w)[AN(w)-1]=t;)
     R w;
 }
 
@@ -304,7 +314,7 @@ V1(reverse){ /* reverse along primary axis (rows in 2D) */
     I n = tr(AR(w)-1,AD(w)+1), m = (AT(w)==DBL?2:1);
     //printf("n=%d\n", n);
     ARC z=ga(AT(w),AR(w),AD(w));
-    DO(AD(z)[0], mv(AV(z)+i*n*m, AV(w)+(AD(z)[0]-1-i)*n*m, n*m))
+    DO(AD(z)[0], mv((C*)(AV(z)+i*n*m), (C*)(AV(w)+(AD(z)[0]-1-i)*n*m), n*m*AZ(z)))
     R z;
 }
 
@@ -482,8 +492,8 @@ ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
 ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
     if (f==DOT){ R dotdot(a,f,w); }
     I *d=malloc((AR(a)+AR(w))*sizeof(I));
-    mv(d,AD(a),AR(a));
-    mv(d+AR(a),AD(w),AR(w));
+    mv((C*)d,(C*)AD(a),AR(a)*sizeof(I));
+    mv((C*)(d+AR(a)),(C*)AD(w),AR(w)*sizeof(I));
     ARC z=ga(AT(w),AR(a)+AR(w),d);
     ARC sa,sw,sz;
     switch(AT(z)){
@@ -508,25 +518,25 @@ ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
 ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
     if(AT(a)==CHR||AT(w)==CHR) longjmp(mainloop, TYPE);
     I *d=malloc((AR(a)+AR(w)-2+2)*sizeof(I)); 
-    mv(d,AD(a),AR(a)-1);
-    mv(d+AR(a)-1,AD(w)+1,AR(w)-1);
-    ARC wdims=sha(w),adims=sha(a);
-    w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w);
+    mv((C*)d,(C*)AD(a),(AR(a)-1)*sizeof(I));
+    mv((C*)(d+AR(a)-1),(C*)(AD(w)+1),(AR(w)-1)*sizeof(I));
+    //ARC wdims=sha(w),adims=sha(a);
+    w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w); /* take rows of transpose(w) */
     ARC va,vw,vz;
     ARC z;
     va=ga(AT(a),1,AD(a)+AR(a)-1);
+retry:
     vw=ga(AT(w),1,AD(w)+AR(w)-1);
-alloc_z:
     z=ga(AT(w),AR(a)+AR(w)-2,d);
     DO(AN(z),
             vdx(i,AD(z),AR(z),d); /* generate index vector from z */
-            mv(d+AR(a),d+AR(a)-1,AR(w)); /* scootch over the w part */
+            mv((C*)(d+AR(a)),(C*)(d+AR(a)-1),AR(w)*sizeof(I)); /* scootch over the w part */
 
             d[AR(a)-1]=0;                  /* 0 to index the whole "row" of a */
-            mv(AV(va),AV(a)+idx(d,AD(a),AR(a)),AN(va)); /* copy "row" of a */
+            mv((C*)AV(va),(C*)(AV(a))+idx(d,AD(a),AR(a))*AZ(a),AN(va)*AZ(va)); /* copy "row" of a */
 
             (d+AR(a))[AR(w)-1]=0;          /* 0 to index the whole "row" of `w */
-            mv(AV(vw),AV(w)+idx(d+AR(a),AD(w),AR(w)),AN(vw)); /* copy "row" of `w */
+            mv((C*)AV(vw),(C*)(AV(w))+idx(d+AR(a),AD(w),AR(w))*AZ(w),AN(vw)*AZ(va)); /* copy "row" of `w */
 
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
 
@@ -534,7 +544,7 @@ alloc_z:
             //pr(va); pr(vw); pr(vz);
             switch(TPAIR(AT(z),AT(vz))){
             CASE TPAIR(INT,INT): AV(z)[i]=*AV(vz); /* extract (scalar) result */
-            CASE TPAIR(INT,DBL): w=toD(w); goto alloc_z;
+            CASE TPAIR(INT,DBL): w=toD(w); goto retry;
             CASE TPAIR(DBL,INT): ((D*)AV(z))[i]=(D)*AV(vz);
             CASE TPAIR(DBL,DBL): ((D*)AV(z))[i]=*((D*)AV(vz));
             }
@@ -597,7 +607,7 @@ ARC transposeop(I f, ARC w){
     if (AR(w)==0)R w;
     if (AR(w)==1){
         z=ga(AT(w),2,(I[]){1,AD(w)[0]});
-        mv(AV(z),AV(w),AN(w)*AZ(w));
+        mv((C*)AV(z),(C*)AV(w),AN(w)*AZ(w));
         w=z;
     }
     switch(f){
@@ -655,7 +665,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
         for(i=1,n=1;e[i+off] && n;i++) \
             n+=e[i+off]=='('?1:e[i+off]==')'?-1:0; \
         p=malloc((i+off)*sizeof(I)); \
-        mv(p,e+1+off,i-2); \
+        mv((C*)p,(C*)(e+1+off),(i-2)*sizeof(I)); \
         p[i-2]=0; \
         (x)=(I)ex(p); \
         free(p); \
