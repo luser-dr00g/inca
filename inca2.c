@@ -762,7 +762,7 @@ main(){C s[99];
     if (err = setjmp(mainloop)){
         printf("%s ERROR\n", errstr[err]);
     }
-    while(gets(s))
+    while(printf("\t"),gets(s))
         pr(ex(wd(s)));
 }
 

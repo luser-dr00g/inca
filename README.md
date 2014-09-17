@@ -2,8 +2,8 @@ inca
 ====
 
 This document describes the interpreter implemented in inca.c,
-or inca "1". Current development is inca2.c, but there is
-no documentation for it yet.
+or inca "1". Current development is inca2.c, some documentation for it
+has begun in README2.md.
 
 Summary:
 monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
