@@ -67,7 +67,7 @@ The command characters are defined by this table:
     /* END FTAB */
 
 where vd is dyadic verb, vm is monadic verb, odd is dyadic operator yielding dyadic (derived) function,
-omm is monadic operator yielding a monadic function, omd is monadic operator yielding monadic function.
+omm is monadic operator yielding a monadic function, omd is monadic operator yielding dyadic function.
 
 Having a separate monadic-operator/dyadic-function enables things like the "jot-less" jot-dot,
 which follows its function. And the '=' operator which combines sensibly with '!' '=' '<' '>'.
