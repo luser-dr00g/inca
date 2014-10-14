@@ -76,3 +76,93 @@ I was side-tracked from this project by (unsuccessfully) attempting to make use 
 graphical character set with xterm.
 
 
+Some examples illustrating composition of operators.
+
+    ./inca2
+            a=.a<~3
+    1 0 0 
+    0 1 0 
+    0 0 1 
+
+            a<.a<~4
+    LENGTH ERROR
+
+Remember, due to our "syntax", a variable immediately followed by left angle bracket, is
+an assignment expression. This attempts to perform the dot ('.') function with an implicit
+left argument (scalar 0) which is not conformable with iota-4 ('~4'). Hence, we add a
+space. This "seals-off" the left-hand-side of the function call we're setting up.
+
+            a <.a<~3
+    0 1 1 
+    0 0 1 
+    0 0 0 
+
+            a <=.a<~3
+    1 1 1 
+    0 1 1 
+    0 0 1 
+
+Only the left angle-bracket used as a comparison function requires this space when 
+following a variable name.
+
+            a>=.a<~3
+    1 0 0 
+    1 1 0 
+    1 1 1 
+
+            a+.a
+    0 1 2 
+    1 2 3 
+    2 3 4 
+
+            a*.a
+    0 0 0 
+    0 1 2 
+    0 2 4 
+
+Change the variable mid-stream, and the left-most one will get the new value.
+
+            a*.a<1+a
+    1 2 3 
+    2 4 6 
+    3 6 9 
+
+            a
+    1 2 3 
+
+'!' is a comparison function. '!=' is an operator yielding the same comparison function.
+'!=.' is an operator performing a jot-dot using the '!=' derived function.
+
+            a!=.a
+    0 1 1 
+    1 0 1 
+    1 1 0 
+
+Operator compositions are somewhat kludged in the implementation, because they
+rely upon some degree of "type-punning" between their syntax in the defining 
+expression and in the executing expression. This part is very confusing, but
+in some cases, adding extra parens will help the interpreter to understand
+what you're trying to do. It looks for upto 4 parenthesized expressions 
+
+    (a)(b)(c)(d)
+
+If it finds 
+
+    (function)(operator)
+
+it builds a monadic operator (considering the function to be 'dyadic' even though
+it was considered monadic a moment earlier. So you cannot build a "F Op F" dyadic
+operator in the left-most position. This "instance" of the exec() must have 
+parsed an "a" value that it considers *data* before it will construct a dyadic
+operator. So you cannot do "(a)(F Op F)(b)" either, because this is the same problem
+again, the "inner" exec that evaluates the parenthesized sub-expression has no
+notion of "a" (a left-hand-side operand) and so it will attempt to build a monadic
+operator and then get all confused.
+
+If it finds
+
+    (data)(function)(operator)
+
+then it has to consider "d", too, to see if it's a function and determine how
+the operator tree should be constructed.
+

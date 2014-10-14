@@ -757,13 +757,15 @@ integer:
     R e;
 }
 
-main(){C s[99];
+int main(){C s[999];
     int err;
     if (err = setjmp(mainloop)){
         printf("%s ERROR\n", errstr[err]);
     }
-    while(printf("\t"),gets(s))
+    while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') )
         pr(ex(wd(s)));
+
+    R 0;
 }
 
 #if 0
