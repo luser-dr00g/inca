@@ -164,5 +164,70 @@ If it finds
     (data)(function)(operator)
 
 then it has to consider "d", too, to see if it's a function and determine how
-the operator tree should be constructed.
+the operator tree should be constructed. If parenthesized, it too will be 
+evaluated by a recursive call to exec(), and then its type considered. If it finds
+
+    (data)(function)(operator)(function)
+
+it will build a dyadic operator and reduce to
+
+    (data)(dy-op function)
+
+where function is now our composed operator function or "derived" function, and then
+keep scanning for a new "c". Otherwise if "d" is not a function, it will compose a
+monadic-operator which yields a dyadic derived function.
+
+    (data)(mon-op function)(data)
+
+Certain monadic operators can "chain". By not having a dyadic form defined.
+An example is the 'power' operator.
+A single star is the 'times' function.
+A star as a monadic operator is the 'power' operator. Thus,
+
+
+            2*3
+    6 
+
+times.
+
+
+            2**3
+    8 
+
+'times' power.
+
+
+            2***3
+    16 
+
+'power' power.
+
+
+            2****3
+    65536 
+
+'"power" power' power.
+
+            2+*3
+    6 
+
+'plus' power, ie.  'times'.
+
+            2+**3
+    8 
+
+"'plus' power" power, ie. 'times' power.
+
+            2+***3
+    16 
+
+'"'plus' power" power' power, ie. 'power' power.
+
+            2+****3
+    65536 
+
+and another one.
+
+
+
 
