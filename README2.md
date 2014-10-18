@@ -21,6 +21,11 @@ is a number, but
     .5
 
 attempts to call DOT as a monadic function (which does not exist) upon the integer 5.
+Whitespace may be introduced to disambiguate numbers from functions and operators,
+in particular the 'dot' function or operator following an integer should include a space
+to prevent a bad parse. A variable immediately followed by < left angle bracket is 
+considered an assignment to the variable; but with an intervening space, the angle
+bracket will be considered the less-than function.
 
 
 Various reorganizations in the basic structure of the program enable inca2 to offer
@@ -229,5 +234,14 @@ times.
 and another one.
 
 
+The full complement of 'figurative' transposes from inca "1" are available.
+Where `-@` is a transpose about the horizontal axis and `|@` is a transpose
+about the vertical axis, and `\/+><` indicate other axes and axis-compositions,
+and `.@` represents the identity transform. `@` is also a monadic function (reverse)
+and a dyadic function (rotate).
 
+Inca2 also implements monadic and dyadic transpose functions using backtick.
+Dyadic transpose takes a list of axes as left argument and yields a corresponding
+rearrangment of the axes of the right argument.
 
+The character data type is not well supported yet.
