@@ -120,6 +120,7 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
 ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
 ARC scalarC(C c){ARC z=ga(CHR,0,0);*(C*)AV(z)=c;R z;}
+ARC arrayC(C *s,I n){ARC z=ga(CHR,1,(I[]){n});mv((C*)AV(z),s,n);R z;}
 ARC toI(ARC a){ if (AT(a)==INT)R a;
     ARC z=ga(INT,AR(a),AD(a)); DO(AN(a),AV(z)[i]=((D*)AV(a))[i]); R z;}
 ARC toD(ARC a){ if (AT(a)==DBL)R a;
@@ -149,6 +150,7 @@ V1(size){
     ARC z=ga(INT,0,0);
     *AV(z)=AR(w)?*AD(w):1;R z;}
 
+/* check computation for integer overflow */
 int subunder(long x, long y); 
 int addover(long x, long y) { 
     if (y == LONG_MIN) return 1; 
@@ -166,8 +168,8 @@ int mulover(long x, long y) {
     if (y < 0) y = -y; 
     if (x > LONG_MAX / y) return 1; 
     return 0; } 
-int divover(long x, long y) { return 1; }
-int boolover(long x, long y){ return 0; }
+int divover(long x, long y) { return 1; } /* integer division always overflows */
+int boolover(long x, long y){ return 0; } /* boolean operations never do */
 
 #define MATHOP1(op, overflow) \
     I r=AR(w),*d=AD(w),n=AN(w);ARC z; \
@@ -785,7 +787,16 @@ I *wd(C *s){
     I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
         if(s[i]=='\''){
-            a=(I)scalarC(s[++i]);
+            //a=(I)scalarC(s[++i]);
+            ++i;
+            int k,l;
+            for (k=0; k < 1; k++)
+                for (l=0; ;l++)
+                    if (s[i+l]=='\'')
+                        break;
+            a=(I)arrayC(s+i, l);
+            i+=l;
+            ++i;
         } else if(isdigit(c)){
             ll=strtol(s+i,&rem,10); //printf("%d:%s\n", ll, rem);
             if(*rem=='.'){D d;
