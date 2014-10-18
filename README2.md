@@ -244,4 +244,16 @@ Inca2 also implements monadic and dyadic transpose functions using backtick.
 Dyadic transpose takes a list of axes as left argument and yields a corresponding
 rearrangment of the axes of the right argument.
 
-The character data type is not well supported yet.
+The character data type is not well supported yet. *Update:* add char array syntax,
+delimited by single-quotes.
+
+Testing the old motivation, the tips distribution calculation. Divide 550 among
+10 parties with integer-valued "shares" ranging from 10 to 19.
+
+    $ ./inca2
+            a*550%+/a<10+~9
+    43.650794 48.015873 52.380952 56.746032 61.111111 65.476190 69.841270 74.206349 78.571429 
+
+Integer division always "overflows" and triggers promotion to floating-point.
+But the floor function (underscore) will yield integers (after truncating).
+
