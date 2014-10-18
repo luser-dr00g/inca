@@ -33,13 +33,13 @@ typedef struct a{I k,t,n,r,d[0];}*ARC;
 #define AZ(a) (AT(a)==DBL?8:AT(a)==CHR?1:4)
 
 #define R return
-#define V1(f) ARC f(ARC w)
-#define V2(f) ARC f(ARC a,ARC w)
+#define V1(f) ARC f(ARC w)          /* monadic verb signature */
+#define V2(f) ARC f(ARC a,ARC w)    /* dyadic verb signature */
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 ARC vm(I v, ARC w);                 /* monadic verb handler */ 
 ARC vd(I v, ARC a, ARC w);          /* dyadic verb handler */ 
-I nommv(I f, I o);      /* new derived monadic verb */ 
-I noddv(I f, I o, I g); /* new derived dyadic verb */ 
+I nommv(I f, I o);                  /*new operator monadic (, yielding) monadic verb */
+I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic verb */
 
 ARC jotdot(ARC a, I f, ARC w);
 ARC eqop(ARC a,I f,ARC w);
@@ -331,7 +331,7 @@ V1(reverselast){ /* reverse along last axis (cols in 2D) */
     R z;
 }
 
-V2(dotf); /* shortcut for  "plus dot times" */
+V2(dotf); /* dot function: shortcut for  "plus dot times" */
 
 V2(compress){
     I n=0,j=0;
@@ -409,6 +409,7 @@ pi(i){printf("%d ",i);}
 pc(I c){printf("%c",c);}
 pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
+/* FIXME generalize this shit, bro */
 pr(w)ARC w;{
     if(((unsigned)(I)w)<255){ uintptr_t x=(intptr_t)w;
         if (qp(x))
@@ -769,11 +770,33 @@ int main(){C s[999];
 }
 
 #if 0
+// i thought these would be useful for matrix multiply, but needed something different
+// see idx() and vdx() which operate on int[]s.
+// these functions would have required packing the dims into new arrays and for
+// what?? extra effort simply because these pretty functions operator on the 
+// wrong data types.
+//
+// at the same time. this code is unapollogitically terse and dense.
+// so read these first. I know, I know, I said they're not even used.
+// but, it would be good practice for trying to read any of the above.
+
+// ARC is our "archetype" data structure for arrays of all sorts and sizes.
+// this function performs "Horner's Rule" using a as an array of dimensions
+// and w as an array of indices. All arguments assumed to be integers.
+// It computes the result as an integer (I z),
+// uses scalarI() to construct an array result.
+// AV() macro yields the "array values", a `*` to the (ravel of) the data.
+// AN() is the total number of elements in the ravel.
+// DO() macro implements a counted-loop control structure with i = 0 .. n-1
 ARC rdx(ARC a, ARC w){
     I z=*AV(w);
     DO(AN(w)-1,z*=AV(a)[1+i];z+=AV(w)[1+i])
     R scalarI(z);
 }
+
+// ddx performs the inverse operation, a div/mod loop to peel-off
+// indices corresponding to the scalar (integer) w's ravel-position
+// in the space with dimensions a.
 ARC ddx(ARC a, ARC w){
     I t=*AV(w);
     ARC z=ga(INT,AR(a),AD(a));
