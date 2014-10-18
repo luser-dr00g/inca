@@ -248,7 +248,7 @@ The character data type is not well supported yet. *Update:* add char array synt
 delimited by single-quotes.
 
 Testing the old motivation, the tips distribution calculation. Divide 550 among
-10 parties with integer-valued "shares" ranging from 10 to 19.
+9 parties with integer-valued "shares" ranging from 10 to 18.
 
     $ ./inca2
             a*550%+/a<10+~9
