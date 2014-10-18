@@ -22,7 +22,8 @@ enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
 typedef char C;
 typedef intptr_t I;
 typedef double D;
-typedef struct a{I k,t,n,r,d[0];}*ARC;
+typedef struct a{I x,k,t,n,r,d[0];}*ARC;
+#define AX(a) ((a)->x) /* allocation metadata (gc) */
 #define AK(a) ((a)->k) /* offset of ravel */
 #define AT(a) ((a)->t) /* type */
 #define AN(a) ((a)->n) /* # of atoms in ravel */
@@ -50,7 +51,60 @@ ARC reduce(I f, ARC w);
 ARC scan(I f, ARC w);
 ARC transposeop(I f, ARC w);
 
-I *ma(I n){R(I*)malloc(n*sizeof(I));}
+I st[26]; /* symbol table */
+
+struct alist { I x; int mark; struct alist *next; } *ahead = NULL;
+
+I apush(struct alist **node, I a) { /* *node is head by reference in root call */
+    if(*node) return apush(&(*node)->next, a); /* seek to the end */
+    *node = malloc(sizeof(struct alist));
+    if (!*node) perror("malloc"),exit(1);
+    (*node)->x = a;
+    (*node)->mark = 0;
+    (*node)->next = NULL;
+    ((ARC)a)->x = (I)*node;
+    return a;
+}
+#define asize(a) (sizeof a/sizeof*a)
+void mark(I x){
+    if (x){
+        ARC a = (ARC)x;
+        I y;
+        int j,n;
+        struct alist *node = (struct alist *)(a->x);
+        node->mark = 1;
+        if (AT(a) == FUN){ // recurse through derived functions
+        }
+    }
+}
+static int discard(struct alist **node){
+    struct alist *next;
+    ARC x;
+    if (abs((I)*node) < 255) return 0;
+    next = (*node)->next;
+    x = (ARC)((*node)->x);
+    free(x);
+    free(*node);
+    *node = next;
+    return 1;
+}
+I collect(struct alist **node){
+    int i,j,n;
+    if (*node == NULL) return 0;
+    if (*node == ahead) /* mark live allocations */
+        for (i=0; i < asize(st); i++)
+            if (st[i])
+                mark(st[i]);
+    i = 0;
+    i += collect(&(*node)->next);
+    if ((*node)->mark == 0)
+        i += discard(node);
+    else
+        (*node)->mark = 0;
+    return i;
+}
+
+I *ma(I n){R(I*) apush(&ahead, (I)malloc(n*sizeof(I)));}
 void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}
 ARC ga(I t,I r,I *d){I n =tr(r,d);
@@ -477,7 +531,6 @@ pr(w)ARC w;{
     nl();
 }
 
-I st[26];
 qp(unsigned a){R (a<255) && islower(a);}
 qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;}
 qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));}
@@ -763,8 +816,10 @@ int main(){C s[999];
     if (err = setjmp(mainloop)){
         printf("%s ERROR\n", errstr[err]);
     }
-    while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') )
+    while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         pr(ex(wd(s)));
+        collect(&ahead);
+    }
 
     R 0;
 }
