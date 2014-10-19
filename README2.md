@@ -3,6 +3,17 @@ inca
 
 This document describes the interpreter implemented in inca2.c.
 
+Additional relevant material has been posted to nntp:comp.lang.apl in various threads:
+
+inca at a turning point
+https://groups.google.com/d/topic/comp.lang.apl/7yN-7yGUFiY/discussion
+
+automatic conversion to floating-point on integer overflow
+https://groups.google.com/d/topic/comp.lang.apl/Lu2tgqanK5Q/discussion
+
+jot-dot again
+https://groups.google.com/d/topic/comp.lang.apl/zCPJ8KaZyWg/discussion
+
 Inca2 implements homogenous arrays of arbitrary dimension in several datatypes
 
     CHR
@@ -12,6 +23,27 @@ Inca2 implements homogenous arrays of arbitrary dimension in several datatypes
     FUN (operators)
 
 and automatically promotes integer arrays to double in response to arithmetic overflow.
+But it does not (yet) implement any form of "user function call" which got me into
+so much trouble with the first version. But you can assign functions to variables,
+and interpolate them in a command. eg.
+
+    $./inca2
+            a<3
+    3 
+            b<+
+    +
+            c<4
+    4 
+            abc
+    7 
+
+This works by "type-punning" the function as described further below regarding
+operator compositions. It is parsed as a monadic function, and upon find no
+right-argument, is simply returned.  In the 'abc' command, however, it is
+interpolated, discovered to be -- in fact -- a dyadic function in correct
+position, and called.
+
+
 All numbers must begin with a digit in order to be recognized by the scanner. ie.
 
     0.5
