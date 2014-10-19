@@ -68,6 +68,7 @@ I apush(struct alist **node, I a) { /* *node is head by reference in root call *
 #define asize(a) (sizeof a/sizeof*a)
 void mark(I x){
     if (x){
+        if (labs(x) < 256) return;
         ARC a = (ARC)x;
         I y;
         int j,n;
@@ -831,7 +832,7 @@ int main(){C s[999];
     }
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         pr(ex(wd(s)));
-        printf("collected %d allocations\n", collect(&ahead));
+        printf("<@%d>\n", collect(&ahead));
     }
 
     R 0;
