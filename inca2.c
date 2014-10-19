@@ -831,7 +831,7 @@ int main(){C s[999];
     }
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         pr(ex(wd(s)));
-        collect(&ahead);
+        printf("collected %d allocations\n", collect(&ahead));
     }
 
     R 0;
