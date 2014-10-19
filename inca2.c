@@ -80,7 +80,7 @@ void mark(I x){
 static int discard(struct alist **node){
     struct alist *next;
     ARC x;
-    if (abs((I)*node) < 255) return 0;
+    if (labs((I)*node) < 256) return 0;
     next = (*node)->next;
     x = (ARC)((*node)->x);
     free(x);
@@ -112,7 +112,7 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);
     ARC z;
     if (r<0)r=0;
     I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?2:1);
-    if (t==CHR) sz=(sz+1)/4;
+    //if (t==CHR) sz=(sz+1)/4;
     z=(ARC)ma(sz);
     AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
     mv((C*)AD(z),(C*)d,r*sizeof(I));
@@ -294,6 +294,7 @@ V2(from){
         DO(AR(w)-1,d[i+1]=AD(w)[i+1])
         z=ga(AT(w),AR(w),d);
         DO(d[0], mv(((C*)AV(z))+i*n*AZ(w), ((C*)AV(w))+AV(a)[i]*n*AZ(w),n*AZ(w)))
+        free(d);
     } R z;
 }
 V1(box){
@@ -605,6 +606,7 @@ retry:
             CASE TPAIR(DBL,DBL): ((D*)AV(z))[i]=*((D*)AV(vz));
             }
             )
+    free(d);
     R z;
 }
 
