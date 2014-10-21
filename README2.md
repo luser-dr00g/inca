@@ -289,3 +289,21 @@ Testing the old motivation, the tips distribution calculation. Divide 550 among
 Integer division always "overflows" and triggers promotion to floating-point.
 But the floor function (underscore) will yield integers (after truncating).
 
+*Update:* I've just discovered a comment feature that's already implemented. The exec() function
+will only build space-delimiter vectors of number-typed objects. So you can write comments as
+strings immediately following the expression. It's simply discarded.
+
+
+$ ./inca2
+        12'a number'
+12 
+
+<@3>
+        12 'a number'
+12 
+
+<@3>
+
+The `<@...>` output is the garbage collector report of how many temporary arrays
+have been discarded. It runs every time through the main loop.
+
