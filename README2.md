@@ -38,7 +38,7 @@ and interpolate them in a command. eg.
     7 
 
 This works by "type-punning" the function as described further below regarding
-operator compositions. It is parsed as a monadic function, and upon find no
+operator compositions. It is parsed as a monadic function, and upon finding no
 right-argument, is simply returned.  In the 'abc' command, however, it is
 interpolated, discovered to be -- in fact -- a dyadic function in correct
 position, and called.
@@ -102,6 +102,14 @@ The command characters are defined by this table:
                     _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
                     _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
     /* END FTAB */
+    enum{FTAB(FUNCNAME)};
+    struct{             C c; D id;
+               ARC(*vd)(ARC,        ARC);
+               ARC(*vm)(            ARC);
+              ARC(*odd)(ARC, I,  I, ARC);
+              ARC(*omm)(     I,     ARC);
+              ARC(*omd)(ARC, I,     ARC);
+    }ftab[]={ FTAB(FUNCINFO) };
 
 where vd is dyadic verb, vm is monadic verb, odd is dyadic operator yielding dyadic (derived) function,
 omm is monadic operator yielding a monadic function, omd is monadic operator yielding dyadic function.
