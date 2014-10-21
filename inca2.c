@@ -7,41 +7,42 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ERRORS(_) _(NO_ERROR) _(RANK) _(LENGTH) _(OPERATOR) _(TYPE)
+#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(LENGTH) _(OPERATOR) _(TYPE)
 #define BARE(_) _ ,
 #define STR(x) #x ,
 enum errnames { ERRORS(BARE) };
 char *errstr[] = { ERRORS(STR) };
 jmp_buf mainloop;
 
-#define SWITCH(x,y) switch(x){ default: y }
-#define CASE break;case
 enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
 /* TPAIR() combines types into a single value that can be switch()ed */
 #define TPAIR(a,b) ((a)*NTYPES+(b))
-typedef char C;
+typedef char     C;
 typedef intptr_t I;
-typedef double D;
-typedef struct a{I x,k,t,n,r,d[0];}*ARC;
+typedef double   D;
+typedef struct a{I x,k,t,n,r,d[0];} *ARC; /* array header */
 #define AX(a) ((a)->x) /* allocation metadata (gc) */
-#define AK(a) ((a)->k) /* offset of ravel */
+#define AK(a) ((a)->k) /* offset of ravel. sizeof(struct a)+sizeof(I)*AR(a) */
 #define AT(a) ((a)->t) /* type */
 #define AN(a) ((a)->n) /* # of atoms in ravel */
 #define AR(a) ((a)->r) /* rank */
 #define AD(a) ((a)->d) /* dims */
 /* values float *after* variable-length dims */
 #define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
-#define AZ(a) (AT(a)==DBL?8:AT(a)==CHR?1:4)
+#define AZ(a) (AT(a)==DBL?sizeof(D):AT(a)==CHR?sizeof(C):sizeof(I)) /* element size */
 
+#define SWITCH(x,y) switch(x){ default: y }
+#define CASE break;case
+#define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 #define R return
 #define V1(f) ARC f(ARC w)          /* monadic verb signature */
 #define V2(f) ARC f(ARC a,ARC w)    /* dyadic verb signature */
-#define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 ARC vm(I v, ARC w);                 /* monadic verb handler */ 
 ARC vd(I v, ARC a, ARC w);          /* dyadic verb handler */ 
 I nommv(I f, I o);                  /*new operator monadic (, yielding) monadic verb */
 I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic verb */
 
+V2(transposed);
 ARC jotdot(ARC a, I f, ARC w);
 ARC eqop(ARC a,I f,ARC w);
 ARC power(ARC a,I f,ARC w);
@@ -53,6 +54,7 @@ ARC transposeop(I f, ARC w);
 
 I st[26]; /* symbol table */
 
+/* allocation list. for garbage collection */
 struct alist { I x; int mark; struct alist *next; } *ahead = NULL;
 
 I apush(struct alist **node, I a) { /* *node is head by reference in root call */
@@ -128,11 +130,7 @@ ARC toD(ARC a){ if (AT(a)==DBL)R a;
     ARC z=ga(DBL,AR(a),AD(a)); DO(AN(a),((D*)AV(z))[i]=AV(a)[i]); R z;}
 ARC cp(ARC a){ ARC z=ga(AT(a),AR(a),AD(a)); DO(AN(a),AV(z)[i]=AV(a)[i]) R z;}
 
-I idx(I*vec,I*dims,I n){ I z=*vec; DO(n-1,z*=dims[i+1];z+=vec[i+1]) R z; }  // index
-I *vdx(I ind,I*dims,I n, I*vec){ // vector-dex. vec is a passed-in tmp array, size of dims
-    I t=ind,*z=vec; DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i]) R z; }
-
-V1(iota){
+V1(iota){ // generate an index vector 0..w-1
     if (AT(w)==CHR) longjmp(mainloop, TYPE);
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
@@ -317,19 +315,26 @@ V2(cat){
     switch(TPAIR(AT(a),AT(w))){
     default: longjmp(mainloop, TYPE);
     CASE TPAIR(CHR,CHR):
+        printf("cat\n");
         z=ga(CHR,1,&n);
-            DO(an,((C*)AV(z))[i]=((C*)AV(a))[i])
-            DO(wn,((C*)AV(z))[i+an]=((C*)AV(w))[i])
+        DO(an,((C*)AV(z))[i]=((C*)AV(a))[i])
+        DO(wn,((C*)AV(z))[i+an]=((C*)AV(w))[i])
     CASE TPAIR(INT,INT):
-        z=ga(INT,1,&n); mv((C*)AV(z),(C*)AV(a),an*sizeof(I));mv((C*)(AV(z)+an),(C*)AV(w),wn*AZ(w));
+        z=ga(INT,1,&n);
+        mv((C*)AV(z),(C*)AV(a),an*AZ(a));
+        mv((C*)(AV(z)+an),(C*)AV(w),wn*AZ(w));
     CASE TPAIR(INT,DBL):
-        z=ga(DBL,1,&n); DO(an,((D*)AV(z))[i]=(D)AV(a)[i]); mv(((C*)AV(z))+an*AZ(w),(C*)AV(w),wn*AZ(w));
+        z=ga(DBL,1,&n);
+        DO(an,((D*)AV(z))[i]=(D)AV(a)[i]);
+        mv(((C*)AV(z))+an*AZ(w),(C*)AV(w),wn*AZ(w));
     CASE TPAIR(DBL,INT):
         z=ga(DBL,1,&n);
         mv((C*)AV(z),(C*)AV(a),an*AZ(w));
         DO(wn,((D*)AV(z))[an+i]=(D)AV(w)[i])
     CASE TPAIR(DBL,DBL):
-        z=ga(DBL,1,&n); mv((C*)AV(z),(C*)AV(a),an*AZ(w));mv(((C*)AV(z))+an*AZ(w),(C*)AV(w),wn*AZ(w));
+        z=ga(DBL,1,&n);
+        mv((C*)AV(z),(C*)AV(a),an*AZ(w));
+        mv(((C*)AV(z))+an*AZ(w),(C*)AV(w),wn*AZ(w));
     }
     R z;
 }
@@ -348,23 +353,6 @@ V2(rotate){
     w=cp(w);
     DO(n,t=*AV(w);mv((C*)AV(w),(C*)(AV(w)+1),(AN(w)-1)*AZ(w));AV(w)[AN(w)-1]=t;)
     R w;
-}
-
-V2(transposed){ /* dyadic transpose. vector a selects axes of w */
-    //printf("transposed\n"); printf("AR(a)=%d\n",AR(a));
-    if (AR(a)==0) a=rotate(a,iota(scalarI(AR(w))));
-    if (AR(a)>1) longjmp(mainloop, RANK);
-    ARC d,dims=from(a,d=sha(w));
-    ARC z=ga(AT(w),AN(dims),AV(dims));
-    I j;
-    DO(AN(w),
-            vdx(i,AD(w),AR(w),AV(d));
-            d=from(a,d);
-            j=idx(AV(d),AD(z),AR(z));
-            AV(z)[j]=AV(w)[i];
-            )
-
-    R z;
 }
 
 V1(reverse){ /* reverse along primary axis (rows in 2D) */
@@ -415,6 +403,16 @@ V2(expand){
     } R z;
 }
 
+V1(commentm){
+    //printf("commentm\n");
+    longjmp(mainloop, ABORT);
+}
+V2(commentd){
+    //printf("commentd\n");
+    //pr(a);
+    R a;
+}
+
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
 #define FUNCINFO(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
@@ -448,7 +446,7 @@ V2(expand){
                 _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
                 _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
                 _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
-                _(RCURL,   '}',   0.0, 0,          0,          0,     0,           0) \
+                _(RCURL,   '}',   0.0, commentd,   commentm,   0,     0,           0) \
                 _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
                 _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
 /* END FTAB */
@@ -469,7 +467,7 @@ pd(D d){printf("%f ",d);}
 nl(){printf("\n");}
 /* FIXME generalize this shit, bro */
 pr(w)ARC w;{
-    if(((unsigned)(I)w)<255){ uintptr_t x=(intptr_t)w;
+    if(labs((I)w)<255){ uintptr_t x=(intptr_t)w;
         if (qp(x))
             printf("%c", (int)x);
         else if (qv(x))
@@ -545,6 +543,26 @@ qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
 
 ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
     R plus(a,iota(plus(scalarI(1),minus(w,a))));
+}
+
+I idx(I*vec,I*dims,I n){ I z=*vec; DO(n-1,z*=dims[i+1];z+=vec[i+1]) R z; }  // index
+I *vdx(I ind,I*dims,I n, I*vec){ // vector-dex. vec is a passed-in tmp array, size of dims
+    I t=ind,*z=vec; DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i]) R z; }
+
+V2(transposed){ /* dyadic transpose. vector a selects axes of w */
+    //printf("transposed\n"); printf("AR(a)=%d\n",AR(a));
+    if (AR(a)==0) a=rotate(a,iota(scalarI(AR(w))));
+    if (AR(a)>1) longjmp(mainloop, RANK);
+    ARC d,dims=from(a,d=sha(w));
+    ARC z=ga(AT(w),AN(dims),AV(dims));
+    I j;
+    DO(AN(w),
+            vdx(i,AD(w),AR(w),AV(d));
+            d=from(a,d);
+            j=idx(AV(d),AD(z),AR(z));
+            AV(z)[j]=AV(w)[i];
+            )
+    R z;
 }
 
 ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
@@ -751,6 +769,7 @@ dy_verb:
     if(qp(b))b=VAR(b);
     if(b){ 
         if(qv(b)){ 
+            if (ftab[b].vd == commentd) R (ARC)a;
             while(c==' '){ADV CC DD}
             if(qp(c))c=VAR(c);
             if(qo(c)){ 
@@ -765,6 +784,7 @@ dy_verb:
                 PAREN(c,2) DD
             } else
                 c=(I)ex(e+2); 
+
             if(qp(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
         } 
@@ -772,7 +792,8 @@ dy_verb:
         if(bspace){  // space-delimited vector?
             bspace=0;
             if(qv(b)){ABCD goto dy_verb;} 
-            if(AT((ARC)b)==INT || AT((ARC)b)==DBL){ 
+            if((AT((ARC)b)==INT || AT((ARC)b)==DBL)
+            && (AT((ARC)a)==INT || AT((ARC)a)==DBL)){ 
                 a=(I)cat((ARC)a,(ARC)b); ABCD goto dy_verb;
             }
         }
@@ -790,7 +811,7 @@ I *wd(C *s){
     I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
         if(s[i]=='\''){
-            //a=(I)scalarC(s[++i]);
+            //a=(I)scalarC(s[++i]); //previous, single-char version
             ++i;
             int k,l;
             for (k=0; k < 1; k++)
@@ -799,7 +820,7 @@ I *wd(C *s){
                         break;
             a=(I)arrayC(s+i, l);
             i+=l;
-            ++i;
+            //printf("%c", s[i]);
         } else if(isdigit(c)){
             ll=strtol(s+i,&rem,10); //printf("%d:%s\n", ll, rem);
             if(*rem=='.'){D d;
@@ -828,7 +849,7 @@ integer:
 int main(){C s[999];
     int err;
     if (err = setjmp(mainloop)){
-        printf("%s ERROR\n", errstr[err]);
+        printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
     }
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         pr(ex(wd(s)));

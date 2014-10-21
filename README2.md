@@ -98,7 +98,7 @@ The command characters are defined by this table:
                     _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
                     _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
                     _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
-                    _(RCURL,   '}',   0.0, 0,          0,          0,     0,           0) \
+                    _(RCURL,   '}',   0.0, commentd,   commentm,   0,     0,           0) \
                     _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
                     _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
     /* END FTAB */
@@ -314,4 +314,8 @@ strings immediately following the expression. It's simply discarded.
 
 The `<@...>` output is the garbage collector report of how many temporary arrays
 have been discarded. It runs every time through the main loop.
+
+*Update:* Right curly bracket `}` is now the comment character. Called dyadically
+it yields the left arg and does not evaluate the right arg. Called monadically,
+it ABORTs back to the main loop.
 
