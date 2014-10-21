@@ -51,6 +51,7 @@ ARC dotop(ARC a, I f, I g, ARC w); /* matrix multiply */
 ARC reduce(I f, ARC w);
 ARC scan(I f, ARC w);
 ARC transposeop(I f, ARC w);
+ARC firstaxis(I f, ARC w);
 
 I st[26]; /* symbol table */
 
@@ -262,6 +263,10 @@ I imin(I a,I w) { R a<w?a:w;}
 D dmin(D a,D w) { R a<w?a:w;}
 V2(minimum){ MATHOPF2(imin,dmin) }
 
+I imax(I a,I w) { R a>w?a:w;}
+D dmax(D a,D w) { R a>w?a:w;}
+V2(maximum){ MATHOPF2(imax,dmax) }
+
 V1(signum){
     ARC z=ga(INT,AR(w),AD(w));
     DO(AN(z),
@@ -276,6 +281,14 @@ V1(flr){
     switch(AT(w)){
     CASE INT: z=w;
     CASE DBL: z=ga(INT,AR(w),AD(w)); DO(AN(z),AV(z)[i] = (I)floor(((D*)AV(w))[i]))
+    }
+    R z;
+}
+V1(ceiling){
+    ARC z;
+    switch(AT(w)){
+    CASE INT: z=w;
+    CASE DBL: z=ga(INT,AR(w),AD(w)); DO(AN(z),AV(z)[i] = (I)ceil(((D*)AV(w))[i]))
     }
     R z;
 }
@@ -438,11 +451,11 @@ V2(commentd){
                 _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
                 _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0) \
                 _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
-                _(LBRAC,   '[',   0.0, 0,          0,          0,     0,           0) \
+                _(LBRAC,   '[',   0.0, minimum,    flr,        0,     0,           0) \
                 _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
-                _(RBRAC,   ']',   0.0, 0,          0,          0,     0,           0) \
+                _(RBRAC,   ']',   0.0, maximum,    ceiling,    0,     0,           0) \
                 _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
-                _(HBAR,    '_',   0.0, minimum,    flr,        0,     0,           0) \
+                _(HBAR,    '_',   0.0, 0,          0,          0,     firstaxis,   0) \
                 _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
                 _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
                 _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
@@ -626,6 +639,14 @@ retry:
             }
             )
     free(d);
+    R z;
+}
+
+ARC firstaxis(I f, ARC w){
+    ARC z;
+    w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w); 
+    z = vm(f, w);
+    z=transposed(rotate(scalarI(-1),iota(scalarI(AR(z)))),z); 
     R z;
 }
 
