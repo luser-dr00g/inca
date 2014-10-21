@@ -294,15 +294,15 @@ will only build space-delimiter vectors of number-typed objects. So you can writ
 strings immediately following the expression. It's simply discarded.
 
 
-$ ./inca2
-        12'a number'
-12 
+    $ ./inca2
+            12'a number'
+    12 
 
-<@3>
-        12 'a number'
-12 
+    <@3>
+            12 'a number'
+    12 
 
-<@3>
+    <@3>
 
 The `<@...>` output is the garbage collector report of how many temporary arrays
 have been discarded. It runs every time through the main loop.

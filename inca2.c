@@ -105,10 +105,10 @@ I collect(struct alist **node){
     return i;
 }
 
-I *ma(I n){R(I*) apush(&ahead, (I)malloc(n*sizeof(I)));}
-void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}
-I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}
-ARC ga(I t,I r,I *d){I n =tr(r,d);
+I *ma(I n){R(I*) apush(&ahead, (I)malloc(n*sizeof(I)));} //make allocation
+void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}                 //move bytes
+I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}                //table rank
+ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
     struct a a = {t};
     ARC z;
     if (r<0)r=0;
@@ -128,25 +128,25 @@ ARC toD(ARC a){ if (AT(a)==DBL)R a;
     ARC z=ga(DBL,AR(a),AD(a)); DO(AN(a),((D*)AV(z))[i]=AV(a)[i]); R z;}
 ARC cp(ARC a){ ARC z=ga(AT(a),AR(a),AD(a)); DO(AN(a),AV(z)[i]=AV(a)[i]) R z;}
 
-I idx(I*vec,I*dims,I n){ I z=*vec; DO(n-1,z*=dims[i+1];z+=vec[i+1]) R z; }
-I *vdx(I ind,I*dims,I n, I*vec){ // vec is a passed-in tmp array, size of dims
+I idx(I*vec,I*dims,I n){ I z=*vec; DO(n-1,z*=dims[i+1];z+=vec[i+1]) R z; }  // index
+I *vdx(I ind,I*dims,I n, I*vec){ // vector-dex. vec is a passed-in tmp array, size of dims
     I t=ind,*z=vec; DO(n,z[n-1-i]=t%dims[n-1-i];t/=dims[n-1-i]) R z; }
 
 V1(iota){
     if (AT(w)==CHR) longjmp(mainloop, TYPE);
     I n=AT(w)==DBL?(I)*(D*)AV(w):*AV(w);ARC z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 
-V2(rsh){
+V2(rsh){ // reshape
     I r=AR(a)?*AD(a):1,n=tr(r,AV(a)),wn=AN(w);
     ARC z=ga(AT(w),r,AV(a));
     mv((C*)AV(z),(C*)AV(w),(wn=n>wn?wn:n)*AZ(w));
     if((n-=wn)>0)mv(((C*)AV(z))+wn*AZ(w),(C*)AV(z),n*AZ(w));
     R z;
 }
-V1(sha){
+V1(sha){ // shape
     ARC z=ga(INT,1,&AR(w));
     mv((C*)AV(z),(C*)AD(w),AR(w)*sizeof(I));R z;}
-V1(id){R w;}
+V1(id){R w;} // monadic +
 V1(size){
     ARC z=ga(INT,0,0);
     *AV(z)=AR(w)?*AD(w):1;R z;}
