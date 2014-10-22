@@ -52,6 +52,8 @@ ARC reduce(I f, ARC w);
 ARC scan(I f, ARC w);
 ARC transposeop(I f, ARC w);
 ARC firstaxis(I f, ARC w);
+ARC notopm(I f, ARC w);
+ARC notopmd(ARC a, I f, ARC w);
 
 I st[26]; /* symbol table */
 
@@ -431,7 +433,7 @@ V2(commentd){
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
 #define FTAB(_) \
                 _(NOP,      0,    0.0, 0,          0,          0,     0,           0) \
-                _(EXCL,    '!',   0.0, 0,          not,        0,     0,           0) \
+                _(EXCL,    '!',   0.0, 0,          not,        0,     notopm,      notopmd) \
                 _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0) \
                 _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
                 _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
@@ -660,6 +662,14 @@ ARC eqop(ARC a,I f,ARC w){
     }
 }
 
+ARC notopm(I f, ARC w){
+    R not(vm(f,w));
+}
+
+ARC notopmd(ARC a, I f, ARC w){
+    R not(vd(f,a,w));
+}
+
 ARC power(ARC a,I f,ARC w){
     I n=*AV(w);
     ARC z=vid(f);
@@ -790,7 +800,7 @@ dy_verb:
     if(qp(b))b=VAR(b);
     if(b){ 
         if(qv(b)){ 
-            if (ftab[b].vd == commentd) R (ARC)a;
+            if (labs(b) < NFUNC && ftab[b].vd == commentd) R (ARC)a;
             while(c==' '){ADV CC DD}
             if(qp(c))c=VAR(c);
             if(qo(c)){ 
