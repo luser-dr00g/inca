@@ -298,7 +298,7 @@ Integer division always "overflows" and triggers promotion to floating-point.
 But the floor function (underscore) will yield integers (after truncating).
 
 *Update:* I've just discovered a comment feature that's already implemented. The exec() function
-will only build space-delimiter vectors of number-typed objects. So you can write comments as
+will only build space-delimited vectors of number-typed objects. So you can write comments as
 strings immediately following the expression. It's simply discarded.
 
 
@@ -318,4 +318,8 @@ have been discarded. It runs every time through the main loop.
 *Update:* Right curly bracket `}` is now the comment character. Called dyadically
 it yields the left arg and does not evaluate the right arg. Called monadically,
 it ABORTs back to the main loop.
+
+*Update:* Changed minimum/floor function from underscore to left square bracket,
+so maximum/ceiling can have the corresponding right square bracket. Underscore 
+is now the 'last-axis' operator, equivalent to an overtyped hyphen in APL.
 
