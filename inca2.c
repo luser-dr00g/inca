@@ -313,6 +313,8 @@ V2(from){
 }
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
+V1(unbox){
+    ARC z=(ARC)*AV(w);R z;}
 V1(ravel){
     I n=AN(w);ARC z=ga(AT(w),1,&n);
     switch(AT(w)){
@@ -450,7 +452,7 @@ V2(commentd){
                 _(SEMI,    ';',   0.0, 0,          0,          0,     0,           0) \
                 _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
                 _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
-                _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
+                _(RANG,    '>',   0.0, greater,    unbox,      0,     0,           0) \
                 _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0) \
                 _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
                 _(LBRAC,   '[',   0.0, minimum,    flr,        0,     0,           0) \
@@ -476,10 +478,11 @@ struct{             C c; D id;
 
 ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 
-pi(i){printf("%d ",i);}
-pc(I c){printf("%c",c);}
-pd(D d){printf("%f ",d);}
-nl(){printf("\n");}
+pi(i){R printf("%d ",i);}
+pc(I c){R printf("%c",c);}
+pd(D d){R printf("%f ",d);}
+pf(I c){R printf("%c", ftab[c].c);}
+nl(){R printf("\n");}
 /* FIXME generalize this shit, bro */
 pr(w)ARC w;{
     if(labs((I)w)<255){ uintptr_t x=(intptr_t)w;
@@ -497,6 +500,7 @@ pr(w)ARC w;{
     int j,k,l,(*p)();
     //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
     switch(AT(w)){
+    CASE FUN: p=pf;
     CASE BOX: p=pr;
     CASE INT: p=pi;
     CASE CHR: p=pc;
@@ -789,10 +793,12 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
 mon_verb: 
     if(qv(a)){ 
-        while(b==' '){bspace=1; ABCD} 
-        if(qo(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
-        if (e[1]) R vm(a,ex(e+1));
-        else R (ARC)a;
+        if (b){
+            while(b==' '){bspace=1; ABCD} 
+            if(qo(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
+            if (e[1]) R vm(a,ex(e+1));
+        }
+        R (ARC)a;
     } 
 dy_verb: 
     while(b==' '){bspace=1; ABCD} 
