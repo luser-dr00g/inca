@@ -78,8 +78,14 @@ void mark(I x){
         I y;
         int j,n;
         struct alist *node = (struct alist *)(a->x);
-        node->mark = 1;
-        if (AT(a) == FUN){ // recurse through derived functions
+        if (node->mark == 0){
+            node->mark = 1;
+            switch(AT(a)){
+            CASE BOX:
+                DO(AN(a),mark(AV(a)[i]))
+            CASE FUN: // recurse through derived functions
+                ;
+            }
         }
     }
 }
@@ -254,6 +260,7 @@ V2(modulus){ ARC t=a;a=w;w=t;
     } R z;
 }
 V2(equal){   MATHOP2(==, boolover, equal) }
+V2(notequal){MATHOP2(!=, boolover, notequal)}
 V2(and){     MATHOP2(&&, boolover, and) }
 V2(or){      MATHOP2(||, boolover, or) }
 V2(less){    MATHOP2(<, boolover, less) }
@@ -332,10 +339,13 @@ V2(cat){
     switch(TPAIR(AT(a),AT(w))){
     default: longjmp(mainloop, TYPE);
     CASE TPAIR(CHR,CHR):
-        printf("cat\n");
         z=ga(CHR,1,&n);
         DO(an,((C*)AV(z))[i]=((C*)AV(a))[i])
         DO(wn,((C*)AV(z))[i+an]=((C*)AV(w))[i])
+    CASE TPAIR(BOX,BOX):
+        z=ga(BOX,1,&n);
+        mv((C*)AV(z),(C*)AV(a),an*AZ(a));
+        mv((C*)(AV(z)+an),(C*)AV(w),wn*AZ(w));
     CASE TPAIR(INT,INT):
         z=ga(INT,1,&n);
         mv((C*)AV(z),(C*)AV(a),an*AZ(a));
@@ -435,7 +445,7 @@ V2(commentd){
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
 #define FTAB(_) \
                 _(NOP,      0,    0.0, 0,          0,          0,     0,           0) \
-                _(EXCL,    '!',   0.0, 0,          not,        0,     notopm,      notopmd) \
+                _(EXCL,    '!',   0.0, notequal,   not,        0,     notopm,      notopmd) \
                 _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0) \
                 _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
                 _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
