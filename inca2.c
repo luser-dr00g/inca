@@ -622,6 +622,7 @@ ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
 
 ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
     if(AT(a)==CHR||AT(w)==CHR) longjmp(mainloop, TYPE);
+    if(AR(a)==0&&AR(w)==0)R vd(g,a,w);
     I *d=malloc((AR(a)+AR(w)-2+2)*sizeof(I)); 
     mv((C*)d,(C*)AD(a),(AR(a)-1)*sizeof(I));
     mv((C*)(d+AR(a)-1),(C*)(AD(w)+1),(AR(w)-1)*sizeof(I));
