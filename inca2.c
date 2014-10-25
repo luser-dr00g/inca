@@ -805,7 +805,9 @@ mon_verb:
     if(qv(a)){ 
         if (b){
             while(b==' '){bspace=1; ABCD} 
-            if(qo(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
+            if(qomm(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
+            if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD goto mon_verb; }
+            if (qomd(b)){ a=nomdv(a,b); ABCD goto mon_verb; }
             if (e[1]) R vm(a,ex(e+1));
         }
         R (ARC)a;
