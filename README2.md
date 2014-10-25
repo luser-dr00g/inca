@@ -52,16 +52,16 @@ is a number, but
 
     .5
 
-attempts to call DOT as a monadic function (which does not exist) upon the integer 5.
+attempts to call the DOT function monadically (which does not exist, and so uses
+the dyadic function with its "identity element", currently 0.0) upon the integer 5.
 Whitespace may be introduced to disambiguate numbers from functions and operators,
 in particular the 'dot' function or operator following an integer should include a space
-to prevent a bad parse. A variable immediately followed by < left angle bracket is 
+to prevent a bad parse (as just illustrated).
+
+A variable immediately followed by < left angle bracket is 
 considered an assignment to the variable; but with an intervening space, the angle
 bracket will be considered the less-than function.
 
-
-Various reorganizations in the basic structure of the program enable inca2 to offer
-many more features than the first version, using much less code.
 
 The command characters are defined by this table:
 
@@ -71,7 +71,7 @@ The command characters are defined by this table:
                     {           c,    id,  vd,         vm,         odd,   omm,         omd},
     #define FTAB(_) \
                     _(NOP,      0,    0.0, 0,          0,          0,     0,           0) \
-                    _(EXCL,    '!',   0.0, 0,          not,        0,     notopm,      notopmd) \
+                    _(EXCL,    '!',   0.0, notequal,   not,        0,     notopm,      notopmd) \
                     _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0) \
                     _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
                     _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
@@ -88,7 +88,7 @@ The command characters are defined by this table:
                     _(SEMI,    ';',   0.0, 0,          0,          0,     0,           0) \
                     _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
                     _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
-                    _(RANG,    '>',   0.0, greater,    0,          0,     0,           0) \
+                    _(RANG,    '>',   0.0, greater,    unbox,      0,     0,           0) \
                     _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0) \
                     _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
                     _(LBRAC,   '[',   0.0, minimum,    flr,        0,     0,           0) \
@@ -195,16 +195,22 @@ what you're trying to do. It looks for upto 4 parenthesized expressions
 
 If it finds 
 
-    (function)(operator)
+    (function)(operator)(data)
 
 it builds a monadic operator (considering the function to be 'dyadic' even though
-it was considered monadic a moment earlier. So you cannot build a "F Op F" dyadic
-operator in the left-most position. This "instance" of the exec() must have 
-parsed an "a" value that it considers *data* before it will construct a dyadic
-operator. So you cannot do "(a)(F Op F)(b)" either, because this is the same problem
-again, the "inner" exec that evaluates the parenthesized sub-expression has no
-notion of "a" (a left-hand-side operand) and so it will attempt to build a monadic
-operator and then get all confused.
+it was considered monadic a moment earlier.
+
+If it finds
+
+    (function)(operator)(function)
+
+where operator has a defined dyadic form, it will build the dyadic operator and
+reduce to a single function. If there is no defined dyadic operator, but there is
+a defined monadic operator, it will build the monadic operator and reduce.
+
+If the leftmost object is not a function, it begins building a dyadic function call.
+It scans ahead to see if "c" is an operator (so it can reduce) or a monadic function
+or data (so it can recurse).
 
 If it finds
 
@@ -324,4 +330,24 @@ it ABORTs back to the main loop.
 *Update:* Changed minimum/floor function from underscore to left square bracket,
 so maximum/ceiling can have the corresponding right square bracket. Underscore 
 is now the 'last-axis' operator, equivalent to an overtyped hyphen in APL.
+
+*Update:* Can now build dyadic operators in the leftmost position!
+
+    $ ./inca2
+            a<+.*
+    "+.*
+
+    <@1>
+            (~3)a~3
+    5 
+
+    <@34>
+            ~3
+    0 1 2 
+
+    <@3>
+            (1*1)+(2*2)
+    5 
+
+    <@20>
 
