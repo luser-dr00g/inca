@@ -562,13 +562,13 @@ pr(w)ARC w;{
     nl();
 }
 
-qp(unsigned a){R (a<255) && islower(a);}
-qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;}
-qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));}
-qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);}
-qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);}
-qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);}
-qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);}
+qp(unsigned a){R (a<255) && islower(a);} /* question: is a variable? */
+qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;} /* derived function */
+qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));} /* verb */
+qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);} /* operator */
+qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);} /* operator-monadic : dyadic */
+qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);} /* operator-dyadic : dyadic */
+qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);} /* operator-monadic : dyadic */
 
 ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
     R plus(a,iota(plus(scalarI(1),minus(w,a))));
@@ -834,6 +834,10 @@ dy_verb:
                 PAREN(c,2) DD
             } else
                 c=(I)ex(e+2); 
+            if (qv(c)) {
+                e[2]=c;
+                c=(I)ex(e+2); 
+            }
 
             if(qp(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
@@ -842,8 +846,9 @@ dy_verb:
         if(bspace){  // space-delimited vector?
             bspace=0;
             if(qv(b)){ABCD goto dy_verb;} 
-            if((AT((ARC)b)==INT || AT((ARC)b)==DBL)
-            && (AT((ARC)a)==INT || AT((ARC)a)==DBL)){ 
+            if( (  (AT((ARC)b)==INT || AT((ARC)b)==DBL)
+                && (AT((ARC)a)==INT || AT((ARC)a)==DBL) )
+            || (AT((ARC)a)==CHR && AT((ARC)b)==CHR)){ 
                 a=(I)cat((ARC)a,(ARC)b); ABCD goto dy_verb;
             }
         }
