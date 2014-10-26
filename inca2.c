@@ -7,14 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(LENGTH) _(OPERATOR) _(TYPE)
+#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(LENGTH) _(FUNCTION) _(OPERATOR) _(TYPE)
 #define BARE(_) _ ,
 #define STR(x) #x ,
 enum errnames { ERRORS(BARE) };
 char *errstr[] = { ERRORS(STR) };
 jmp_buf mainloop;
 
-enum types { NUL, CHR, INT, DBL, BOX, FUN, NTYPES };
+enum types { NUL, CHR, INT, DBL, BOX, FUN, OPR, NTYPES };
 /* TPAIR() combines types into a single value that can be switch()ed */
 #define TPAIR(a,b) ((a)*NTYPES+(b))
 typedef char     C;
@@ -83,7 +83,9 @@ void mark(I x){
             switch(AT(a)){
             CASE BOX:
                 DO(AN(a),mark(AV(a)[i]))
-            CASE FUN: // recurse through derived functions
+            CASE FUN: // recurse through user functions
+                ;
+            CASE OPR: // recurse through derived functions
                 ;
             }
         }
@@ -511,6 +513,7 @@ pr(w)ARC w;{
     //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
     switch(AT(w)){
     CASE FUN: p=pf;
+    CASE OPR: p=pf;
     CASE BOX: p=pr;
     CASE INT: p=pi;
     CASE CHR: p=pc;
@@ -563,7 +566,7 @@ pr(w)ARC w;{
 }
 
 qp(unsigned a){R (a<255) && islower(a);} /* question: is a variable? */
-qd(unsigned a){R (a>255) && AT((ARC)a)==FUN;} /* derived function */
+qd(unsigned a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN);} /* derived function */
 qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));} /* verb */
 qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);} /* operator */
 qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);} /* operator-monadic : dyadic */
@@ -748,19 +751,21 @@ ARC transposeop(I f, ARC w){
 }
 
 I nommv(I f, I o){        /* new derived monadic verb  arity in [0] */ 
-    ARC z=ga(FUN,1,(I[]){3}); AV(z)[0]=1; AV(z)[1]=f; AV(z)[2]=o;
+    ARC z=ga(OPR,1,(I[]){3}); AV(z)[0]=1; AV(z)[1]=f; AV(z)[2]=o;
     R (I)z; }
 I nomdv(I f, I o){        /* derived dyadic verb of 1 function */
-    ARC z=ga(FUN,1,(I[]){3}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o;
+    ARC z=ga(OPR,1,(I[]){3}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o;
     R (I)z; }
 I noddv(I f, I o, I g){ /* new derived dyadic verb of 2 functions */ 
-    ARC z=ga(FUN,1,(I[]){4}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o; AV(z)[3]=g;
+    ARC z=ga(OPR,1,(I[]){4}); AV(z)[0]=2; AV(z)[1]=f; AV(z)[2]=o; AV(z)[3]=g;
     R (I)z; }
 
 ARC vm(I v, ARC w){         /* monadic verb handler */ 
     if (qd(v)){ARC d=(ARC)v;
-        R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
+        if (AT(d)==OPR && AV(d)[0]==1)
+            R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
     }
+    if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     if (!ftab[v].vm)
         R ftab[v].vd(scalarD(ftab[v].id), w);
     R ftab[v].vm(w);
@@ -773,6 +778,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
         longjmp(mainloop, OPERATOR);
     }
+    if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     R ftab[v].vd(a,w);
 }
 
@@ -809,7 +815,7 @@ mon_verb:
             if(qomm(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
             if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD goto mon_verb; }
             if (qomd(b)){ a=nomdv(a,b); ABCD goto mon_verb; }
-            if (e[1]) R vm(a,ex(e+1));
+            R vm(a,ex(e+1));
         }
         R (ARC)a;
     } 
@@ -843,6 +849,7 @@ dy_verb:
             R vd(b,(ARC)a,(ARC)c);
         } 
         if(qp(a))a=VAR(a);
+        if(qv(a)) e[1]=b; goto mon_verb;
         if(bspace){  // space-delimited vector?
             bspace=0;
             if(qv(b)){ABCD goto dy_verb;} 
