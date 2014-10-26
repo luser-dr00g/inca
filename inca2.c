@@ -822,15 +822,15 @@ mon_verb:
 dy_verb: 
     while(b==' '){bspace=1; ABCD} 
     PAREN(b,1) CC DD
-    if(qp(b))b=VAR(b);
+    if(qp(b) && VAR(b))b=VAR(b);
     if(b){ 
         if(qv(b)){ 
             if (labs(b) < NFUNC && ftab[b].vd == commentd) R (ARC)a;
             while(c==' '){ADV CC DD}
-            if(qp(c))c=VAR(c);
+            if(qp(c) && VAR(c))c=VAR(c);
             if(qo(c)){ 
                 while(d==' '){ADV DD}
-                if(qp(d))d=VAR(d);
+                if(qp(d) && VAR(d))d=VAR(d);
                 PAREN(d,3)
                 if (qodd(c) && qv(d)){ b=noddv(b,c,d); AACD goto dy_verb; }
                 if (qomd(c)){ b=nomdv(b,c); ADV CC DD goto dy_verb; }
@@ -845,11 +845,11 @@ dy_verb:
                 c=(I)ex(e+2); 
             }
 
-            if(qp(a))a=VAR(a); 
+            if(qp(a) && VAR(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
         } 
-        if(qp(a))a=VAR(a);
-        if(qv(a)) e[1]=b; goto mon_verb;
+        if(qp(a) && VAR(a))a=VAR(a);
+        if(qv(a)) { BB CC DD goto mon_verb; } //discard any lookup on b
         if(bspace){  // space-delimited vector?
             bspace=0;
             if(qv(b)){ABCD goto dy_verb;} 
