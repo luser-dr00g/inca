@@ -764,7 +764,7 @@ ARC transposeop(I f, ARC w){
 I nfun(I *e){ /* new user function */
     I n;
     for(n=0;e[n];n++);
-    ARC z=ga(FUN,1,(I[]){n});
+    ARC z=ga(FUN,1,(I[]){++n});
     DO(n,AV(z)[i]=e[i])
     R (I)z;
 }
@@ -782,11 +782,11 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
     if (qd(v)){ARC d=(ARC)v;
         if (AT(d)==FUN){
             d = cp(d);
-            ARC z, x;
-            x = (ARC)VAR('y');
+            ARC z, y;
+            y = (ARC)VAR('y');
             VAR('y') = (I)w;
             z = ex(AV(d)); 
-            VAR('y') = (I)x;
+            VAR('y') = (I)y;
             R z;
         }
         if (AT(d)==OPR && AV(d)[0]==1){
@@ -800,9 +800,21 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
 }
 ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */ 
     if (qd(v)){ARC d=(ARC)v;
-        if (ftab[ AV(d)[2] ].odd && AN(d)==4)
+        if (AT(d)==FUN){
+            d = cp(d);
+            ARC z, x, y;
+            y = (ARC)VAR('y');
+            x = (ARC)VAR('x');
+            VAR('y') = (I)w;
+            VAR('x') = (I)a;
+            z = ex(AV(d)); 
+            VAR('y') = (I)y;
+            VAR('x') = (I)x;
+            R z;
+        }
+        if (AT(d)==OPR && ftab[ AV(d)[2] ].odd && AN(d)==4)
             R ftab[ AV(d)[2] ].odd(a, AV(d)[1], AV(d)[3], w);
-        if (ftab[ AV(d)[2] ].omd && AN(d)==3)
+        if (AT(d)==OPR && ftab[ AV(d)[2] ].omd && AN(d)==3)
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
         longjmp(mainloop, OPERATOR);
     }
