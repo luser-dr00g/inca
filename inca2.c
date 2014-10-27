@@ -41,6 +41,7 @@ ARC vm(I v, ARC w);                 /* monadic verb handler */
 ARC vd(I v, ARC a, ARC w);          /* dyadic verb handler */ 
 I nommv(I f, I o);                  /*new operator monadic (, yielding) monadic verb */
 I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic verb */
+ARC ex(I *e);
 
 V2(transposed);
 ARC jotdot(ARC a, I f, ARC w);
@@ -56,6 +57,7 @@ ARC notopm(I f, ARC w);
 ARC notopmd(ARC a, I f, ARC w);
 
 I st[26]; /* symbol table */
+#define VAR(a) st[a-'a'] /* lookup variable */ 
 
 /* allocation list. for garbage collection */
 struct alist { I x; int mark; struct alist *next; } *ahead = NULL;
@@ -84,7 +86,7 @@ void mark(I x){
             CASE BOX:
                 DO(AN(a),mark(AV(a)[i]))
             CASE FUN: // recurse through user functions
-                ;
+                DO(AN(a),mark(AV(a)[i]))
             CASE OPR: // recurse through derived functions
                 ;
             }
@@ -493,8 +495,17 @@ ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 pi(i){R printf("%d ",i);}
 pc(I c){R printf("%c",c);}
 pd(D d){R printf("%f ",d);}
-pf(I c){R printf("%c", ftab[c].c);}
+po(I c){R printf("%c", ftab[c].c);}
+pf(I i){
+    if (labs(i) < 256){
+        if (qp(i)){R printf("%c",i);}
+        if (qv(i)){R po(i);}
+        R pc(i);
+    }
+    R pr(i);
+}
 nl(){R printf("\n");}
+
 /* FIXME generalize this shit, bro */
 pr(w)ARC w;{
     if(labs((I)w)<255){ uintptr_t x=(intptr_t)w;
@@ -513,7 +524,7 @@ pr(w)ARC w;{
     //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
     switch(AT(w)){
     CASE FUN: p=pf;
-    CASE OPR: p=pf;
+    CASE OPR: p=po;
     CASE BOX: p=pr;
     CASE INT: p=pi;
     CASE CHR: p=pc;
@@ -750,6 +761,13 @@ ARC transposeop(I f, ARC w){
     R z;
 }
 
+I nfun(I *e){ /* new user function */
+    I n;
+    for(n=0;e[n];n++);
+    ARC z=ga(FUN,1,(I[]){n});
+    DO(n,AV(z)[i]=e[i])
+    R (I)z;
+}
 I nommv(I f, I o){        /* new derived monadic verb  arity in [0] */ 
     ARC z=ga(OPR,1,(I[]){3}); AV(z)[0]=1; AV(z)[1]=f; AV(z)[2]=o;
     R (I)z; }
@@ -762,8 +780,18 @@ I noddv(I f, I o, I g){ /* new derived dyadic verb of 2 functions */
 
 ARC vm(I v, ARC w){         /* monadic verb handler */ 
     if (qd(v)){ARC d=(ARC)v;
-        if (AT(d)==OPR && AV(d)[0]==1)
+        if (AT(d)==FUN){
+            d = cp(d);
+            ARC z, x;
+            x = (ARC)VAR('y');
+            VAR('y') = (I)w;
+            z = ex(AV(d)); 
+            VAR('y') = (I)x;
+            R z;
+        }
+        if (AT(d)==OPR && AV(d)[0]==1){
             R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
+        }
     }
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     if (!ftab[v].vm)
@@ -782,7 +810,6 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
     R ftab[v].vd(a,w);
 }
 
-#define VAR(a) (st[a-'a']) /* lookup variable */ 
 #define ADV ++e; /* advance expression pointer */ 
 #define BB b=e[1]; /* update b */ 
 #define CC c=e[2]; /* update c */ 
@@ -808,13 +835,16 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
     while(a==' '){a=*ABCD} 
     PAREN(a,0) BB CC DD
     if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
+    if(a==COLON) R (ARC)nfun(e+1);
 mon_verb: 
     if(qv(a)){ 
         if (b){
+            if (qo(b)){
+                if(qomm(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
+                if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD goto mon_verb; }
+                if (qomd(b)){ a=nomdv(a,b); ABCD goto mon_verb; }
+            }
             while(b==' '){bspace=1; ABCD} 
-            if(qomm(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
-            if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD goto mon_verb; }
-            if (qomd(b)){ a=nomdv(a,b); ABCD goto mon_verb; }
             R vm(a,ex(e+1));
         }
         R (ARC)a;
@@ -826,8 +856,6 @@ dy_verb:
     if(b){ 
         if(qv(b)){ 
             if (labs(b) < NFUNC && ftab[b].vd == commentd) R (ARC)a;
-            while(c==' '){ADV CC DD}
-            if(qp(c) && VAR(c))c=VAR(c);
             if(qo(c)){ 
                 while(d==' '){ADV DD}
                 if(qp(d) && VAR(d))d=VAR(d);
@@ -836,6 +864,8 @@ dy_verb:
                 if (qomd(c)){ b=nomdv(b,c); ADV CC DD goto dy_verb; }
                 longjmp(mainloop, OPERATOR);
             }
+            while(c==' '){ADV CC DD}
+            if(qp(c) && VAR(c))c=VAR(c);
             if (c=='('){
                 PAREN(c,2) DD
             } else
