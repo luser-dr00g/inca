@@ -351,3 +351,45 @@ is now the 'last-axis' operator, equivalent to an overtyped hyphen in APL.
 
     <@20>
 
+*Update:* At long last, user functions. The new `;` (execute) monadic function
+takes a char array argument.
+
+Factorial function:
+
+    josh@Z1 ~/inca
+    $ ./inca2
+            f<:;>(y!0){(<'1'),<'y*fy-1'
+    ;>(y!0 
+
+    ){(<1
+
+    ),<y*fy-1
+
+
+
+    <@1>
+            f0
+    1 
+
+    <@15>
+            f1
+    1 
+
+    <@38>
+            f2
+    2 
+
+    <@61>
+            f3
+    6 
+
+    <@84>
+            f4
+    24 
+
+    <@107>
+            f5
+    120 
+
+    <@130>
+
