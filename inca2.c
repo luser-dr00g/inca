@@ -42,6 +42,7 @@ ARC vd(I v, ARC a, ARC w);          /* dyadic verb handler */
 I nommv(I f, I o);                  /*new operator monadic (, yielding) monadic verb */
 I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic verb */
 ARC ex(I *e);
+I *wd(C *s);
 
 V2(transposed);
 ARC jotdot(ARC a, I f, ARC w);
@@ -325,7 +326,9 @@ V2(from){
 V1(box){
     ARC z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
 V1(unbox){
-    ARC z=(ARC)*AV(w);R z;}
+    if (AT(w)==BOX){ ARC z=(ARC)*AV(w);R z; }
+    R w;
+}
 V1(ravel){
     I n=AN(w);ARC z=ga(AT(w),1,&n);
     switch(AT(w)){
@@ -444,6 +447,16 @@ V2(commentd){
     R a;
 }
 
+V1(execute){
+    if (AT(w)==CHR){
+        C *d = (C*)ma(AN(w)+1);
+        mv(d,(C*)AV(w),AN(w));
+        ((C*)d)[AN(w)] = 0;
+        R ex(wd(d));
+    }
+    R w;
+}
+
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
 #define FUNCINFO(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
@@ -463,7 +476,7 @@ V2(commentd){
                 _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
                 _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
                 _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
-                _(SEMI,    ';',   0.0, 0,          0,          0,     0,           0) \
+                _(SEMI,    ';',   0.0, 0,          execute,    0,     0,           0) \
                 _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
                 _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
                 _(RANG,    '>',   0.0, greater,    unbox,      0,     0,           0) \
@@ -878,14 +891,8 @@ dy_verb:
             }
             while(c==' '){ADV CC DD}
             if(qp(c) && VAR(c))c=VAR(c);
-            if (c=='('){
-                PAREN(c,2) DD
-            } else
-                c=(I)ex(e+2); 
-            if (qv(c)) {
-                e[2]=c;
-                c=(I)ex(e+2); 
-            }
+            e[2]=c;
+            c=(I)ex(e+2);
 
             if(qp(a) && VAR(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
