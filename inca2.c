@@ -864,12 +864,12 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
     if(qp(a)&&b==LANG){ ARC z;
 assign:
         z = (ARC)(VAR(a)=(I)ex(e+2));
-        AF(z) |= FL_ASSN;
+        if (labs((I)z) > 255) AF(z) |= FL_ASSN;
         R z;
     }
     if(a==COLON) R (ARC)nfun(e+1);
     if(qp(a)&&b==COLON){
-        --e;
+        --e; /* pretend there was a '<' */
         goto assign;
     }
 mon_verb: 
