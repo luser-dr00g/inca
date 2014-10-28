@@ -20,8 +20,9 @@ enum types { NUL, CHR, INT, DBL, BOX, FUN, OPR, NTYPES };
 typedef char     C;
 typedef intptr_t I;
 typedef double   D;
-typedef struct a{I x,k,t,n,r,d[0];} *ARC; /* array header */
+typedef struct a{I x,f,k,t,n,r,d[0];} *ARC; /* array header */
 #define AX(a) ((a)->x) /* allocation metadata (gc) */
+#define AF(a) ((a)->f) /* flags */
 #define AK(a) ((a)->k) /* offset of ravel. sizeof(struct a)+sizeof(I)*AR(a) */
 #define AT(a) ((a)->t) /* type */
 #define AN(a) ((a)->n) /* # of atoms in ravel */
@@ -30,6 +31,7 @@ typedef struct a{I x,k,t,n,r,d[0];} *ARC; /* array header */
 /* values float *after* variable-length dims */
 #define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
 #define AZ(a) (AT(a)==DBL?sizeof(D):AT(a)==CHR?sizeof(C):sizeof(I)) /* element size */
+#define FL_ASSN 1 /* ARC was just assigned */
 
 #define SWITCH(x,y) switch(x){ default: y }
 #define CASE break;case
@@ -859,7 +861,11 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
     I bspace=0;
     while(a==' '){a=*ABCD} 
     PAREN(a,0) BB CC DD
-    if(qp(a)&&b==LANG)R (ARC)(VAR(a)=(I)ex(e+2)); 
+    if(qp(a)&&b==LANG){
+        ARC z = (ARC)(VAR(a)=(I)ex(e+2));
+        AF(z) |= FL_ASSN;
+        R z;
+    }
     if(a==COLON) R (ARC)nfun(e+1);
 mon_verb: 
     if(qv(a)){ 
@@ -963,7 +969,9 @@ int main(){C s[999];
         printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
     }
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
-        pr(ex(wd(s)));
+        ARC z = ex(wd(s));
+        if (!(AF(z)&FL_ASSN))
+            pr(z);
         printf("<@%d>\n", collect(&ahead));
     }
 
