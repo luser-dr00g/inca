@@ -861,12 +861,17 @@ ARC ex(I *e){ I a=*e,b,c,d; BB CC DD
     I bspace=0;
     while(a==' '){a=*ABCD} 
     PAREN(a,0) BB CC DD
-    if(qp(a)&&b==LANG){
-        ARC z = (ARC)(VAR(a)=(I)ex(e+2));
+    if(qp(a)&&b==LANG){ ARC z;
+assign:
+        z = (ARC)(VAR(a)=(I)ex(e+2));
         AF(z) |= FL_ASSN;
         R z;
     }
     if(a==COLON) R (ARC)nfun(e+1);
+    if(qp(a)&&b==COLON){
+        --e;
+        goto assign;
+    }
 mon_verb: 
     if(qv(a)){ 
         if (b){
