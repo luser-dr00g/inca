@@ -160,7 +160,7 @@ V2(rsh){ // reshape
 V1(sha){ // shape
     ARC z=ga(INT,1,&AR(w));
     mv((C*)AV(z),(C*)AD(w),AR(w)*sizeof(I));R z;}
-V1(id){R w;} // monadic +
+V1(id){R cp(w);} // monadic +
 V1(size){
     ARC z=ga(INT,0,0);
     *AV(z)=AR(w)?*AD(w):1;R z;}
