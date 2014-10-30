@@ -7,14 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(LENGTH) _(FUNCTION) _(OPERATOR) _(TYPE)
+#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(RANGE) _(LENGTH) _(FUNCTION) _(OPERATOR) _(TYPE)
 #define BARE(_) _ ,
 #define STR(x) #x ,
 enum errnames { ERRORS(BARE) };
 char *errstr[] = { ERRORS(STR) };
 jmp_buf mainloop;
 
-enum types { NUL, CHR, INT, DBL, BOX, FUN, OPR, NTYPES };
+enum types { NUL, CHR, INT, DBL, BOX, FUN, OPR, FIL, NTYPES };
 /* TPAIR() combines types into a single value that can be switch()ed */
 #define TPAIR(a,b) ((a)*NTYPES+(b))
 typedef char     C;
@@ -45,6 +45,8 @@ I nommv(I f, I o);                  /*new operator monadic (, yielding) monadic 
 I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic verb */
 ARC ex(I *e);
 I *wd(C *s);
+
+ARC cfile; // current file
 
 V2(transposed);
 ARC jotdot(ARC a, I f, ARC w);
@@ -118,6 +120,8 @@ I collect(struct alist **node){
             }
         }
     }
+    if (cfile)
+        mark((I)cfile);
     i = 0;
     i += collect(&(*node)->next);
     if ((*node)->mark == 0)
@@ -461,6 +465,39 @@ V1(execute){
     R w;
 }
 
+V2(filed){
+}
+V1(filem){
+    switch(AT(w)){
+    default: longjmp(mainloop, TYPE);
+    CASE CHR: {
+        ARC z=ga(FIL,0,0);
+        //C fn[AN(w)+1]; mv(fn,(C*)AV(w),AN(w)); fn[AN(w)] = '\0'; /* make a copy + '\0' */
+        C *fn = (C*)ma(AN(w)+1); mv(fn,(C*)AV(w),AN(w)); ((C*)fn)[AN(w)] = 0; /* make a copy + '\0' */
+        *AV(z) = (I)fopen(fn,"r");
+        R cfile = z;
+    }
+    CASE INT:
+        if (cfile==0) longjmp(mainloop, TYPE);
+        switch(*AV(w)){
+        default:
+            longjmp(mainloop, RANGE);
+        CASE 0: {
+            C c;
+            fread(&c, sizeof c, 1, (FILE*)*AV(cfile));
+            R scalarC(c);
+        }
+        CASE 1: {
+            C *buf=NULL,*tmp;
+            buf = (C*)ma(256);
+            if (!fgets(buf,255,(FILE*)*AV(cfile)))
+                longjmp(mainloop, RANGE);
+            R arrayC(buf, strlen(buf));
+        }
+        }
+    }
+}
+
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
 #define FUNCINFO(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
@@ -490,7 +527,7 @@ V1(execute){
                 _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
                 _(RBRAC,   ']',   0.0, maximum,    ceiling,    0,     0,           0) \
                 _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
-                _(HBAR,    '_',   0.0, 0,          0,          0,     firstaxis,   0) \
+                _(HBAR,    '_',   0.0, filed,      filem,      0,     firstaxis,   0) \
                 _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
                 _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
                 _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
@@ -540,6 +577,7 @@ pr(w)ARC w;{
     int j,k,l,(*p)();
     //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
     switch(AT(w)){
+    default: R printf("unprintable type\n");
     CASE FUN: p=pf;
     CASE OPR: p=po;
     CASE BOX: p=pr;
