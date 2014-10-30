@@ -59,10 +59,10 @@ ARC firstaxis(I f, ARC w);
 ARC notopm(I f, ARC w);
 ARC notopmd(ARC a, I f, ARC w);
 
-I st[26]; /* symbol table */
-#define VAR(a) st[a-'a'] /* lookup variable */ 
+I st[52]; /* symbol table */
+#define VAR(a) st[isupper(a)?26+a-'A':a-'a'] /* lookup variable */ 
 
-/* allocation list. for garbage collection */
+/* allocation list. for garbage collection*/
 struct alist { I x; int mark; struct alist *next; } *ahead = NULL;
 
 I apush(struct alist **node, I a) { /* *node is head by reference in root call */
@@ -110,10 +110,14 @@ static int discard(struct alist **node){
 I collect(struct alist **node){
     int i,j,n;
     if (*node == NULL) return 0;
-    if (*node == ahead) /* mark live allocations */
-        for (i=0; i < asize(st); i++)
-            if (st[i])
+    if (*node == ahead) { /* mark live allocations */
+        for (i=0; i < asize(st); i++){
+            if (st[i]){ 
                 mark(st[i]);
+                if (labs(st[i]) > 255) AF((ARC)st[i]) &= ~FL_ASSN;
+            }
+        }
+    }
     i = 0;
     i += collect(&(*node)->next);
     if ((*node)->mark == 0)
@@ -133,7 +137,7 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
     I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?2:1);
     //if (t==CHR) sz=(sz+1)/4;
     z=(ARC)ma(sz);
-    AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
+    AF(z)=0,AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
     mv((C*)AD(z),(C*)d,r*sizeof(I));
     R z;}
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
@@ -451,9 +455,7 @@ V2(commentd){
 
 V1(execute){
     if (AT(w)==CHR){
-        C *d = (C*)ma(AN(w)+1);
-        mv(d,(C*)AV(w),AN(w));
-        ((C*)d)[AN(w)] = 0;
+        C *d = (C*)ma(AN(w)+1); mv(d,(C*)AV(w),AN(w)); ((C*)d)[AN(w)] = 0; /* make a copy + '\0' */
         R ex(wd(d));
     }
     R w;
@@ -591,7 +593,7 @@ pr(w)ARC w;{
     nl();
 }
 
-qp(unsigned a){R (a<255) && islower(a);} /* question: is a variable? */
+qp(unsigned a){R (a<255) && isalpha(a);} /* question: is a variable? */
 qd(unsigned a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN);} /* derived function */
 qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));} /* verb */
 qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);} /* operator */
@@ -808,6 +810,7 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
             R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
         }
     }
+    printf("vm\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     if (!ftab[v].vm)
         R ftab[v].vd(scalarD(ftab[v].id), w);
@@ -833,6 +836,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
         longjmp(mainloop, OPERATOR);
     }
+    printf("vd\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     R ftab[v].vd(a,w);
 }
@@ -874,13 +878,16 @@ assign:
     }
 mon_verb: 
     if(qv(a)){ 
+        while(b==' '){bspace=1; ABCD} 
         if (b){
             if (qo(b)){
                 if(qomm(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
-                if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD goto mon_verb; }
+                if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD
+                    printf("%d %c\n", *e, (*e)& 127);
+                    printf("%d %c\n", b, (b)& 127);
+                    goto mon_verb; }
                 if (qomd(b)){ a=nomdv(a,b); ABCD goto mon_verb; }
             }
-            while(b==' '){bspace=1; ABCD} 
             R vm(a,ex(e+1));
         }
         R (ARC)a;
@@ -932,6 +939,7 @@ verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 I *wd(C *s){
     I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
+        if(c=='}') { e[j]=0; break; }
         if(s[i]=='\''){
             //a=(I)scalarC(s[++i]); //previous, single-char version
             ++i;
@@ -975,7 +983,7 @@ int main(){C s[999];
     }
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         ARC z = ex(wd(s));
-        if (!(AF(z)&FL_ASSN))
+        if (labs((I)z)>255 && !(AF(z)&FL_ASSN))
             pr(z);
         printf("<@%d>\n", collect(&ahead));
     }
