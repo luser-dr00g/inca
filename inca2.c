@@ -810,7 +810,7 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
             R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
         }
     }
-    printf("vm\n");
+    //printf("vm\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     if (!ftab[v].vm)
         R ftab[v].vd(scalarD(ftab[v].id), w);
@@ -836,7 +836,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
         longjmp(mainloop, OPERATOR);
     }
-    printf("vd\n");
+    //printf("vd\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     R ftab[v].vd(a,w);
 }
@@ -976,11 +976,22 @@ integer:
     R e;
 }
 
+C *lib[] = {
+    "F<:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
+    "P<:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
+    "T<:y*x%+/y",                   //tips distribution. distribute x among y "shares"
+};
+
 int main(){C s[999];
     int err;
+    int i;
     if (err = setjmp(mainloop)){
         printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
     }
+    for (i=0;i < asize(lib); i++){
+        ex(wd(lib[i]));
+    }
+    printf("<@%d>\n", collect(&ahead));
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         ARC z = ex(wd(s));
         if (labs((I)z)>255 && !(AF(z)&FL_ASSN))
