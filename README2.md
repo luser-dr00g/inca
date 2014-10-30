@@ -422,3 +422,52 @@ The tips formula can now be expressed as a tips-function.
 
     <@106>
 
+*Update:* Added file function. Monadic underscore with char argument opens a file. 
+With numeric argument, reads from the file. 0: read single char. 1: read line.
+
+    ./inca2
+    <@3>
+            _'lib.inca'
+    unprintable type
+    <@3>
+            _1
+    i<:0!1+~y
+
+
+    <@4>
+            _1
+    o<:0=1+~y
+
+
+    <@4>
+            _1
+    u<:('ox),'iy
+
+
+    <@4>
+            _1
+    r<:(40.'iy);(1+~<y);((0{:").'iy);((0{:u).'iy);(@~<y);(41.'iy);((0{:;).'iy-1),0
+
+
+    <@4>
+            _1
+    s<:;$,\@'ry
+
+
+    <@4>
+            _1
+    t<:(y.(x.1000)%+/y)%1000
+
+
+    <@4>
+            _1
+    :lib_loaded
+
+
+    <@4>
+            _1
+    RANGE ERROR
+    <@12>
+
+
+
