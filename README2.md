@@ -470,4 +470,21 @@ With numeric argument, reads from the file. 0: read single char. 1: read line.
     <@12>
 
 
+*Update:* Added dyadic file function where left arg selects the file mode,
+1=read, 2=write, 3=read|write. And assignment to files to write to it.
+Extra newlines in output have been removed, and GCREPORT is a compile-time option.
+
+    josh@Z1 ~/inca
+    $ ./inca2
+            f<2_'newfile'
+            (f)<'this text'
+    this text
+            (f)<'that text'
+    that text
+
+    josh@Z1 ~/inca
+    $ cat newfile
+    this text
+    that text
+
 
