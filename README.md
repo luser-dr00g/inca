@@ -5,6 +5,11 @@ This document describes the interpreter implemented in inca.c,
 or inca "1". Current development is inca2.c, some documentation for it
 has begun in README2.md.
 
+The final two commits of inca.c illustrate the problem inherent in
+the design. Add the new feature (user-function call without the ' or '' 
+function-call functions) broke the existing code in tea.sh
+(the "use-case"). And so, the project was begun anew with a better design.
+
 Summary:
 monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
 dyadic function: + add  { from  ~ find  < assign  # reshape  , cat  ; rowcat  - minus  . time  
