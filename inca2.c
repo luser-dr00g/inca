@@ -492,7 +492,7 @@ V1(filem){
             buf = (C*)ma(256);
             if (!fgets(buf,255,(FILE*)*AV(cfile)))
                 longjmp(mainloop, RANGE);
-            R arrayC(buf, strlen(buf));
+            R arrayC(buf, strlen(buf)-1);
         }
         }
     }
@@ -632,9 +632,11 @@ pr(w)ARC w;{
 }
 
 qp(unsigned a){R (a<255) && isalpha(a);} /* question: is a variable? */
-qd(unsigned a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN);} /* derived function */
-qv(unsigned a){R qd(a) || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));} /* verb */
+qd(unsigned a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN || AT((ARC)a)==FIL);} /* derived function */
+qv(unsigned a){R qd(a) /* verb */
+              || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));}
 qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);} /* operator */
+qf(unsigned a){R a>255 && AT((ARC)a)==FIL;} /* is a file */
 qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);} /* operator-monadic : dyadic */
 qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);} /* operator-dyadic : dyadic */
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);} /* operator-monadic : dyadic */
@@ -834,8 +836,8 @@ I noddv(I f, I o, I g){ /* new derived dyadic verb of 2 functions */
     R (I)z; }
 
 ARC vm(I v, ARC w){         /* monadic verb handler */ 
-    if (qd(v)){ARC d=(ARC)v;
-        if (AT(d)==FUN){
+    if (qd(v)){ARC d=(ARC)v; /* derived verb */
+        if (AT(d)==FUN){   /* user-defined function */
             d = cp(d);
             ARC z, y;
             y = (ARC)VAR('y');
@@ -844,19 +846,24 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
             VAR('y') = (I)y;
             R z;
         }
-        if (AT(d)==OPR && AV(d)[0]==1){
+        if (AT(d)==OPR && AV(d)[0]==1){  /* operator */
             R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
         }
+        if (AT(d)==FIL){ /* file token used as function */
+            cfile = d;
+            R filem(w);
+        }
+        longjmp(mainloop, OPERATOR);
     }
     //printf("vm\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
-    if (!ftab[v].vm)
+    if (!ftab[v].vm)  /* no monadic function defined: call dyadic function with a=id(f) */
         R ftab[v].vd(scalarD(ftab[v].id), w);
-    R ftab[v].vm(w);
+    R ftab[v].vm(w);  /* basic monadic function */
 }
 ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */ 
-    if (qd(v)){ARC d=(ARC)v;
-        if (AT(d)==FUN){
+    if (qd(v)){ARC d=(ARC)v; /* derived verb */
+        if (AT(d)==FUN){    /* user-defined function */
             d = cp(d);
             ARC z, x, y;
             y = (ARC)VAR('y');
@@ -868,15 +875,15 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
             VAR('x') = (I)x;
             R z;
         }
-        if (AT(d)==OPR && ftab[ AV(d)[2] ].odd && AN(d)==4)
+        if (AT(d)==OPR && ftab[ AV(d)[2] ].odd && AN(d)==4)  /* dyadic operator */
             R ftab[ AV(d)[2] ].odd(a, AV(d)[1], AV(d)[3], w);
-        if (AT(d)==OPR && ftab[ AV(d)[2] ].omd && AN(d)==3)
+        if (AT(d)==OPR && ftab[ AV(d)[2] ].omd && AN(d)==3) /* monadic operator/dyadic function */
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
         longjmp(mainloop, OPERATOR);
     }
     //printf("vd\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
-    R ftab[v].vd(a,w);
+    R ftab[v].vd(a,w);  /* basic function */
 }
 
 #define ADV ++e; /* advance expression pointer */ 
@@ -898,7 +905,9 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
     }
 
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
-    //printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
+#ifdef TRACE
+    printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
+#endif
     if(!*e)R (ARC)0;
     I bspace=0;
     while(a==' '){a=*ABCD} 
@@ -941,14 +950,17 @@ dy_verb:
                 while(d==' '){ADV DD}
                 if(qp(d) && VAR(d))d=VAR(d);
                 PAREN(d,3)
+                e[3]=d;
                 if (qodd(c) && qv(d)){ b=noddv(b,c,d); AACD goto dy_verb; }
                 if (qomd(c)){ b=nomdv(b,c); ADV CC DD goto dy_verb; }
                 longjmp(mainloop, OPERATOR);
             }
             while(c==' '){ADV CC DD}
-            if(qp(c) && VAR(c))c=VAR(c);
-            e[2]=c;
-            c=(I)ex(e+2);
+            PAREN(c,2) else {
+                if(qp(c) && VAR(c)) c=VAR(c);
+                e[2]=c;
+                c=(I)ex(e+2);
+            }
 
             if(qp(a) && VAR(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
@@ -1018,6 +1030,7 @@ C *lib[] = {
     "F<:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
     "P<:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
     "T<:y*x%+/y",                   //tips distribution. distribute x among y "shares"
+    "B:((~#y)<.(~#y))", //base encode
 };
 
 int main(){C s[999];
@@ -1031,10 +1044,14 @@ int main(){C s[999];
     }
     printf("<@%d>\n", collect(&ahead));
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
+        int gc_count;
         ARC z = ex(wd(s));
         if (labs((I)z)>255 && !(AF(z)&FL_ASSN))
             pr(z);
-        printf("<@%d>\n", collect(&ahead));
+        gc_count = collect(&ahead);
+#ifdef GCREPORT
+        printf("<@%d>\n", gc_count);
+#endif
     }
 
     R 0;
