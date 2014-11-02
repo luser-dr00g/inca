@@ -104,6 +104,9 @@ static int discard(struct alist **node){
     if (labs((I)*node) < 256) return 0;
     next = (*node)->next;
     x = (ARC)((*node)->x);
+    switch(AT(x)){
+    CASE FIL: fclose((FILE*)*AV(x));
+    }
     free(x);
     free(*node);
     *node = next;
@@ -513,12 +516,8 @@ V1(filem){
 }
 
 V1(wfile){
-    switch(AT(w)){
-    default: longjmp(mainloop, TYPE);
-    CASE CHR:
-        pr(w,(FILE*)*AV(cfile));
-        R w;
-    }
+    pr(w,(FILE*)*AV(cfile));
+    R w;
 }
 
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
