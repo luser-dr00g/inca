@@ -453,7 +453,7 @@ V1(commentm){
 }
 V2(commentd){
     //printf("commentd\n");
-    //pr(a);
+    //pr(a,stdout);
     R a;
 }
 
@@ -466,6 +466,20 @@ V1(execute){
 }
 
 V2(filed){
+    if (AT(a)!=INT) longjmp(mainloop, TYPE);
+    switch(AT(w)){
+    default: longjmp(mainloop, TYPE);
+    CASE CHR: {
+        ARC z=ga(FIL,0,0);
+        C *fn = (C*)ma(AN(w)+1); mv(fn,(C*)AV(w),AN(w)); ((C*)fn)[AN(w)] = 0; /* make a copy + '\0' */
+        C *mode;
+        mode = *AV(a)==1?"r":
+               *AV(a)==2?"w":
+               *AV(a)==3?"rw":0;
+        *AV(z) = (I)fopen(fn,mode);
+        R cfile = z;
+    }
+    }
 }
 V1(filem){
     switch(AT(w)){
@@ -495,6 +509,15 @@ V1(filem){
             R arrayC(buf, strlen(buf)-1);
         }
         }
+    }
+}
+
+V1(wfile){
+    switch(AT(w)){
+    default: longjmp(mainloop, TYPE);
+    CASE CHR:
+        pr(w,(FILE*)*AV(cfile));
+        R w;
     }
 }
 
@@ -546,38 +569,37 @@ struct{             C c; D id;
 
 ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 
-pi(i){R printf("%d ",i);}
-pc(I c){R printf("%c",c);}
-pd(D d){R printf("%f ",d);}
-po(I c){R printf("%c", ftab[c].c);}
-pf(I i){
+I pi(I i, FILE *f){R fprintf(f,"%d ",i);}
+I pc(I c, FILE *f){R fprintf(f,"%c",c);}
+I pd(D d, FILE *f){R fprintf(f,"%f ",d);}
+I po(I c, FILE *f){R fprintf(f,"%c", ftab[c].c);}
+I pf(I i, FILE *f){
     if (labs(i) < 256){
-        if (qp(i)){R printf("%c",i);}
-        if (qv(i)){R po(i);}
-        R pc(i);
+        if (qp(i)){R fprintf(f,"%c",i);}
+        if (qv(i)){R po(i,f);}
+        R pc(i,f);
     }
-    R pr(i);
+    R pr(i,f);
 }
-nl(){R printf("\n");}
+I nl(FILE *f){R fprintf(f,"\n");}
 
 /* FIXME generalize this shit, bro */
-pr(w)ARC w;{
+I pr(ARC w, FILE *f){
     if(labs((I)w)<255){ uintptr_t x=(intptr_t)w;
         if (qp(x))
-            printf("%c", (int)x);
+            fprintf(f,"%c", (int)x);
         else if (qv(x))
-            printf("%c", ftab[x].c);
+            fprintf(f,"%c", ftab[x].c);
         else if (qd(x)) {
             DO(AN(w)-1,)
         }
-        nl();
-        R 0;
+        R nl(f);
     }
     I r=AR(w),*d=AD(w),n=AN(w);
     int j,k,l,(*p)();
-    //printf("%d:",AT(w)); DO(r,pi(d[i])); nl();
+    //printf("%d:",AT(w)); DO(r,pi(d[i])); nl(f);
     switch(AT(w)){
-    default: R printf("unprintable type\n");
+    default: R fprintf(f,"unprintable type\n");
     CASE FUN: p=pf;
     CASE OPR: p=po;
     CASE BOX: p=pr;
@@ -585,50 +607,48 @@ pr(w)ARC w;{
     CASE CHR: p=pc;
         switch(r){
         case 0:case 1:
-            DO(n,p(((C*)AV(w))[i])) nl();
+            DO(n,p(((C*)AV(w))[i],f)) nl(f);
         CASE 2:
-            DO(d[0], j=i; DO(d[1],p(((C*)AV(w))[j*d[1]+i])) nl() )
+            DO(d[0], j=i; DO(d[1],p(((C*)AV(w))[j*d[1]+i],f)) nl(f) )
         CASE 3:
-            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((C*)AV(w))[(k*d[1]+j)*d[2]+i])) nl()
-                        ) nl();nl())
+            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((C*)AV(w))[(k*d[1]+j)*d[2]+i],f)) nl(f)
+                        ) nl(f);nl(f))
         CASE 4:
             DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
-                            DO(d[3],p(((C*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
-                            ) nl();nl()) nl();nl())
+                            DO(d[3],p(((C*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i],f)) nl(f)
+                            ) nl(f);nl(f)) nl(f);nl(f))
         }
-        nl();
         R 0;
     CASE DBL: p=pd;
         switch(r){
         case 0:case 1:
-            DO(n,p(((D*)AV(w))[i])) nl();
+            DO(n,p(((D*)AV(w))[i],f)) nl(f);
         CASE 2:
-            DO(d[0], j=i; DO(d[1],p(((D*)AV(w))[j*d[1]+i])) nl() )
+            DO(d[0], j=i; DO(d[1],p(((D*)AV(w))[j*d[1]+i],f)) nl(f) )
         CASE 3:
-            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((D*)AV(w))[(k*d[1]+j)*d[2]+i])) nl()
-                        ) nl();nl())
+            DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(((D*)AV(w))[(k*d[1]+j)*d[2]+i],f)) nl(f)
+                        ) nl(f);nl(f))
         CASE 4:
             DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
-                            DO(d[3],p(((D*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
-                            ) nl();nl()) nl();nl())
+                            DO(d[3],p(((D*)AV(w))[((l*d[1]+k)*d[2]+j)*d[3]+i],f)) nl(f)
+                            ) nl(f);nl(f)) nl(f);nl(f))
         }
-        nl();
         R 0;
     }
     switch(r){
     case 0:case 1:
-        DO(n,p(AV(w)[i])) nl();
+        DO(n,p(AV(w)[i],f)) nl(f);
     CASE 2:
-        DO(d[0], j=i; DO(d[1],p(AV(w)[j*d[1]+i])) nl() )
+        DO(d[0], j=i; DO(d[1],p(AV(w)[j*d[1]+i],f)) nl(f) )
     CASE 3:
-        DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i])) nl()
-                    ) nl();nl())
+        DO(d[0], k=i; DO(d[1], j=i; DO(d[2],p(AV(w)[(k*d[1]+j)*d[2]+i],f)) nl(f)
+                    ) nl(f);nl(f))
     CASE 4:
         DO(d[0], l=i; DO(d[1], k=i; DO(d[2], j=i;
-                        DO(d[3],p(AV(w)[((l*d[1]+k)*d[2]+j)*d[3]+i])) nl()
-                        ) nl();nl()) nl();nl())
+                        DO(d[3],p(AV(w)[((l*d[1]+k)*d[2]+j)*d[3]+i],f)) nl(f)
+                        ) nl(f);nl(f)) nl(f);nl(f))
     }
-    nl();
+    R 0;
 }
 
 qp(unsigned a){R (a<255) && isalpha(a);} /* question: is a variable? */
@@ -718,7 +738,7 @@ retry:
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
 
             //DO(AR(a)+AR(w),printf("%d",d[i])) printf("\n");
-            //pr(va); pr(vw); pr(vz);
+            //pr(va,stdout); pr(vw,stdout); pr(vz,stdout);
             switch(TPAIR(AT(z),AT(vz))){
             CASE TPAIR(INT,INT): AV(z)[i]=*AV(vz); /* extract (scalar) result */
             CASE TPAIR(INT,DBL): w=toD(w); goto retry;
@@ -924,6 +944,9 @@ assign:
         goto assign;
     }
 mon_verb: 
+    if(qf(a)&&b==LANG){
+        R wfile(ex(e+2));
+    }
     if(qv(a)){ 
         while(b==' '){bspace=1; ABCD} 
         if (b){
@@ -1047,7 +1070,7 @@ int main(){C s[999];
         int gc_count;
         ARC z = ex(wd(s));
         if (labs((I)z)>255 && !(AF(z)&FL_ASSN))
-            pr(z);
+            pr(z,stdout);
         gc_count = collect(&ahead);
 #ifdef GCREPORT
         printf("<@%d>\n", gc_count);
