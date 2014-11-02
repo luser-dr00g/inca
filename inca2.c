@@ -943,8 +943,10 @@ assign:
         goto assign;
     }
 mon_verb: 
-    if(qf(a)&&b==LANG){
-        R wfile(ex(e+2));
+    if(qf(a)&&b==LANG){ ARC z;
+        z = wfile(ex(e+2));
+        if (labs((I)z) > 255) AF(z) |= FL_ASSN;
+        R z;
     }
     if(qv(a)){ 
         while(b==' '){bspace=1; ABCD} 
