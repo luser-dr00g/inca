@@ -1059,15 +1059,18 @@ C *lib[] = {
 int main(){C s[999];
     int err;
     int i;
+    int gc_count;
     if (err = setjmp(mainloop)){
         printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
     }
     for (i=0;i < asize(lib); i++){
         ex(wd(lib[i]));
     }
-    printf("<@%d>\n", collect(&ahead));
+        gc_count = collect(&ahead);
+#ifdef GCREPORT
+        printf("<@%d>\n", gc_count);
+#endif
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
-        int gc_count;
         ARC z = ex(wd(s));
         if (labs((I)z)>255 && !(AF(z)&FL_ASSN))
             pr(z,stdout);
