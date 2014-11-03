@@ -865,9 +865,18 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
             VAR('y') = (I)y;
             R z;
         }
-        if (AT(d)==OPR && AV(d)[0]==1){  /* operator */
+        if (AT(d)==OPR && ftab[AV(d)[2]].omm && AV(d)[0]==1)  /* monadic operator */
             R ftab[ AV(d)[2] ].omm(AV(d)[1], w);
-        }
+        if (AT(d)==OPR && ftab[AV(d)[2]].odd && AN(d)==4)  /* dyadic operator, implicit "a" */
+            if (AT(w)==DBL)
+                R ftab[ AV(d)[2] ].odd(scalarD(ftab[AV(d)[2]].id), AV(d)[1], AV(d)[3], w);
+            else
+                R ftab[ AV(d)[2] ].odd(scalarI(ftab[AV(d)[2]].id), AV(d)[1], AV(d)[3], w);
+        if (AT(d)==OPR && ftab[AV(d)[2]].omd && AN(d)==3)  /* mon-op/dy-func, implicit "a" */
+            if (AT(w)==DBL)
+                R ftab[ AV(d)[2] ].omd(scalarD(ftab[AV(d)[2]].id), AV(d)[1], w);
+            else
+                R ftab[ AV(d)[2] ].omd(scalarI(ftab[AV(d)[2]].id), AV(d)[1], w);
         if (AT(d)==FIL){ /* file token used as function */
             cfile = d;
             R filem(w);
@@ -877,7 +886,10 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
     //printf("vm\n");
     if (labs(v) >= NFUNC) longjmp(mainloop, FUNCTION);
     if (!ftab[v].vm)  /* no monadic function defined: call dyadic function with a=id(f) */
-        R ftab[v].vd(scalarD(ftab[v].id), w);
+        if (AT(w)==DBL)
+            R ftab[v].vd(scalarD(ftab[v].id), w);
+        else
+            R ftab[v].vd(scalarI(ftab[v].id), w);
     R ftab[v].vm(w);  /* basic monadic function */
 }
 ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */ 
