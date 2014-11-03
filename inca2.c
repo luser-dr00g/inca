@@ -1076,7 +1076,9 @@ int main(){C s[999];
     if (err = setjmp(mainloop)){
         printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
     }
+    printf("built-in functions\n");
     for (i=0;i < asize(lib); i++){
+        printf("%s\n", lib[i]);
         ex(wd(lib[i]));
     }
         gc_count = collect(&ahead);
