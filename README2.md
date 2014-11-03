@@ -487,4 +487,38 @@ Extra newlines in output have been removed, and GCREPORT is a compile-time optio
     this text
     that text
 
+*Update:* Fixed implicit left arg with dyadic derived functions. Type of implicit left arg
+matches type of right arg.
+
+    josh@Z1 ~/inca
+    $ !.
+    ./inca2
+            =0
+    1 
+            =1
+    0 
+            =4 
+    0 
+            =3
+    0 
+            =0
+    1 
+            !=0
+    0 
+            !=1
+    1 
+            ^2
+    4 
+            ^3
+    8 
+            ^4
+    16 
+            ^5
+    32 
+            ^6
+    64 
+            ^1.0
+    2.718282 
+
+So we get base-2 powers and base-e powers serendipitously!
 
