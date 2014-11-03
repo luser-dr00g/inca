@@ -1025,7 +1025,7 @@ verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 I *wd(C *s){
     I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
-        if(c=='}') { e[j]=0; break; }
+        if(c=='\t') { e[j]=0; break; }
         if(s[i]=='\''){
             //a=(I)scalarC(s[++i]); //previous, single-char version
             ++i;
@@ -1076,7 +1076,7 @@ int main(){C s[999];
     if (err = setjmp(mainloop)){
         printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
     }
-    printf("built-in functions\n");
+    //printf("built-in functions\n");
     for (i=0;i < asize(lib); i++){
         printf("%s\n", lib[i]);
         ex(wd(lib[i]));
