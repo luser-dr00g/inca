@@ -948,6 +948,10 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
             R ftab[ AV(d)[2] ].odd(a, AV(d)[1], AV(d)[3], w);
         if (AT(d)==OPR && ftab[ AV(d)[2] ].omd && AN(d)==3) /* monadic operator/dyadic function */
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
+        if (AT(d)==FIL){ /* file token used as function */
+            cfile = d;
+            R filed(a,w);
+        }
         longjmp(mainloop, OPERATOR);
     }
     //printf("vd\n");
