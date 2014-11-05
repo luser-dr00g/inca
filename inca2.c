@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(RANGE) _(LENGTH) _(FUNCTION) _(OPERATOR) _(TYPE)
+#define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(RANGE) _(LENGTH) _(FUNCTION) _(OPERATOR) _(NOFILE) _(TYPE)
 #define BARE(_) _ ,
 #define STR(x) #x ,
 enum errnames { ERRORS(BARE) };
@@ -46,8 +46,6 @@ I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic v
 ARC ex(I *e);
 I *wd(C *s);
 
-ARC cfile; // current file
-
 V2(transposed);
 ARC jotdot(ARC a, I f, ARC w);
 ARC eqop(ARC a,I f,ARC w);
@@ -60,6 +58,8 @@ ARC transposeop(I f, ARC w);
 ARC firstaxis(I f, ARC w);
 ARC notopm(I f, ARC w);
 ARC notopmd(ARC a, I f, ARC w);
+
+ARC cfile; // current file
 
 I st[52]; /* symbol table */
 #define VAR(a) st[isupper(a)?26+a-'A':a-'a'] /* lookup variable */ 
@@ -134,7 +134,7 @@ I collect(struct alist **node){
     return i;
 }
 
-I *ma(I n){R(I*) apush(&ahead, (I)malloc(n*sizeof(I)));} //make allocation
+I *ma(I n){R(I*) apush(&ahead, (I)malloc(n));} //make allocation
 void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}                 //move bytes
 I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}                //table rank
 ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
@@ -143,7 +143,7 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
     if (r<0)r=0;
     I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?2:1);
     //if (t==CHR) sz=(sz+1)/4;
-    z=(ARC)ma(sz);
+    z=(ARC)ma(sz*sizeof(I));
     AF(z)=0,AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
     mv((C*)AD(z),(C*)d,r*sizeof(I));
     R z;}
@@ -482,6 +482,45 @@ V2(filed){
         *AV(z) = (I)fopen(fn,mode);
         R cfile = z;
     }
+    CASE INT: {
+        if (cfile==0) longjmp(mainloop, NOFILE);
+        switch(*AV(w)){
+        default: longjmp(mainloop, RANGE);
+        CASE 0: {
+            C c[*AV(a) + 1];
+            int n = fread(c, sizeof*c, *AV(a), (FILE*)*AV(cfile));
+            while(n<*AV(a)) c[n++] = ' ';
+            R arrayC(c, n);
+        }
+        CASE 1: {
+            C **buf=NULL,*tmp;
+            buf = (C**)ma(*AV(a)*sizeof*buf);
+            int i,max=0,n;
+            for (i=0;i<*AV(a);i++){
+                buf[i] = (C*)ma(512);
+                fgets(buf[i],511,(FILE*)*AV(cfile));
+                n = strlen(buf[i]);
+                --n;
+                buf[i][n]=0;
+                if (n>max) max=n;
+            }
+            for (i=0;i<*AV(a);i++){
+                int j;
+                n = strlen(buf[i]);
+                for (j=0;j<max-n;j++){
+                    strcat(buf[i]," ");
+                }
+            }
+            ARC z=ga(CHR,2,(I[]){*AV(a),max});
+            C *ptr = (C*)AV(z);
+            for (i=0;i<*AV(a);i++){
+                memcpy(ptr,buf[i],max);
+                ptr+=max;
+            }
+            R z;
+        }
+        }
+    }
     }
 }
 V1(filem){
@@ -495,10 +534,9 @@ V1(filem){
         R cfile = z;
     }
     CASE INT:
-        if (cfile==0) longjmp(mainloop, TYPE);
+        if (cfile==0) longjmp(mainloop, NOFILE);
         switch(*AV(w)){
-        default:
-            longjmp(mainloop, RANGE);
+        default: longjmp(mainloop, RANGE);
         CASE 0: {
             C c;
             fread(&c, sizeof c, 1, (FILE*)*AV(cfile));
@@ -1023,7 +1061,7 @@ noun(c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
 verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 
 I *wd(C *s){
-    I a,n=strlen(s),*e=ma(n+1),i,j;C c,*rem;long ll;
+    I a,n=strlen(s),*e=ma((n+1)*sizeof(I)),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
         if(c=='\t') { e[j]=0; break; }
         if(s[i]=='\''){
@@ -1063,9 +1101,9 @@ integer:
 }
 
 C *lib[] = {
-    "F<:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
-    "P<:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
-    "T<:y*x%+/y",                   //tips distribution. distribute x among y "shares"
+    "F:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
+    "P:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
+    "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
     "B:((~#y)<.(~#y))", //base encode
 };
 
@@ -1073,18 +1111,17 @@ int main(){C s[999];
     int err;
     int i;
     int gc_count;
-    if (err = setjmp(mainloop)){
-        printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR");
-    }
+    if (err = setjmp(mainloop)){ printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR"); }
     //printf("built-in functions\n");
     for (i=0;i < asize(lib); i++){
         printf("%s\n", lib[i]);
         ex(wd(lib[i]));
     }
-        gc_count = collect(&ahead);
+    gc_count = collect(&ahead);
 #ifdef GCREPORT
-        printf("<@%d>\n", gc_count);
+    printf("<@%d>\n", gc_count);
 #endif
+    if (err = setjmp(mainloop)){ printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR"); }
     while(printf("\t"),fgets(s, -1 + sizeof s, stdin) && ! (s[strlen(s)-1]='\0') ) {
         ARC z = ex(wd(s));
         if (labs((I)z)>255 && !(AF(z)&FL_ASSN))
