@@ -522,3 +522,39 @@ matches type of right arg.
 
 So we get base-2 powers and base-e powers serendipitously!
 
+*Update:* Implemented dyadic file reading, where left arg is a count, and right arg is a type.
+Also, inca currently launches with a listing of predefined functions.
+
+    $ ./inca2
+    F:;>(y!0){(<'1'),<'y*Fy-1'
+    P:+/x*y^~(:+/y=y)x
+    T:y*x%+/y
+    B:((~#y)<.(~#y))
+            f<_'teapot'
+            p<(;f1)f1
+            v<(;f1)f1
+            ;0{p
+    1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 
+            ;15{p
+    136 143 144 133 148 156 157 145 152 158 159 149 155 160 161 69 
+            ;134{v
+    -3.000000 0.300000 1.800000 
+            ;136{v
+    -1.500000 -0.300000 -2.250000 
+            (-1)+;0{p
+    0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 
+            134{v
+    -3.0,-0.3,1.8         
+            136{v
+    -1.5,0.3,2.25         
+            #0{p
+    63 
+            0{p
+    1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16                         
+            55{0{p
+     
+
+As the example shows simply executing a comma-separated list of numbers has trouble with
+the minus signs.  So some post-processing is necessary. The lines are all padded with
+space up to the width of the widest line.
+
