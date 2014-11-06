@@ -796,8 +796,8 @@ retry:
 
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
 
-            DO(AR(a)+AR(w),printf("%d",d[i])) printf("\n");
-            pr(va,stdout); pr(vw,stdout); pr(vz,stdout);
+            //DO(AR(a)+AR(w),printf("%d ",d[i])) printf("\n");
+            //pr(va,stdout); pr(vw,stdout); pr(vz,stdout);
             switch(TPAIR(AT(z),AT(vz))){
             CASE TPAIR(INT,INT): AV(z)[i]=*AV(vz); /* extract (scalar) result */
             CASE TPAIR(INT,DBL): w=toD(w); goto retry;
