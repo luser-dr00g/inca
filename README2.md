@@ -558,3 +558,21 @@ As the example shows simply executing a comma-separated list of numbers has trou
 the minus signs.  So some post-processing is necessary. The lines are all padded with
 space up to the width of the widest line.
 
+*Update:* Fixed matrix-multiply with vector w. Now it can do "times dot compress" and
+therefore, base-decoding with a weighting vector, as described in the 1962 APL book.
+
+    $ ./inca2
+            2B1 1 1 1
+    15 
+            2B1 0 0 0
+    8 
+            2B1 0 1 0
+    10 
+            7 24 60 60 B 0 2 1 18
+    7278 
+            B
+    (Wx<(#y)#x).y
+            W
+    ((~+/y=y)<.(~+/y=y))*./y
+
+
