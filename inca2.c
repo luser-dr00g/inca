@@ -171,6 +171,10 @@ V2(rsh){ // reshape
 V1(sha){ // shape
     ARC z=ga(INT,1,&AR(w));
     mv((C*)AV(z),(C*)AD(w),AR(w)*sizeof(I));R z;}
+    //ARC z=ga(INT,1,(I[]){AR(w)?AR(w):1});
+    //if(AR(w)) mv((C*)AV(z),(C*)AD(w),AR(w)*sizeof(I));
+    //else *AV(z)=0;
+    //R z;}
 V1(id){R cp(w);} // monadic +
 V1(size){
     ARC z=ga(INT,0,0);
@@ -213,6 +217,7 @@ V1(not){ MATHOP1(!, boolover) }
 
 #define RANKCOMPAT \
     if (AR(a)==0) a=rsh(sha(w),a); \
+    /*if (AR(a)==0 || AR(a)==1) a=rsh(sha(w),a); */\
     if (AR(w)==0) { w=rsh(sha(a),w); r=AR(w); d=AD(w); n=AN(w); } \
     if (r!=AR(a)) longjmp(mainloop, RANK); \
     if (n!=AN(a)) longjmp(mainloop, LENGTH); \
@@ -223,6 +228,8 @@ V1(not){ MATHOP1(!, boolover) }
 restart ## ident: \
     switch(TPAIR(AT(a),AT(w))) { \
     default: longjmp(mainloop, TYPE); \
+    CASE TPAIR(CHR,CHR): \
+        z=ga(INT,r,d); DO(n, ((I*)AV(z))[i]=((C*)AV(a))[i] op ((C*)AV(w))[i]) \
     CASE TPAIR(INT,INT): \
         z=ga(INT,r,d); \
         DO(n, if(overflow(AV(a)[i],AV(w)[i])){w=toD(w);goto restart ## ident;} \
@@ -388,9 +395,20 @@ V2(cat){
 
 V2(find){ /* dyadic iota: find index of w in a */
     if(AR(a)!=1)longjmp(mainloop,RANK);
+    if(AT(a)!=AT(w))longjmp(mainloop,TYPE);
     ARC z=ga(INT,AR(w),AD(w));
     int j;
-    DO(AN(z),j=i;DO(AN(a),if(AV(w)[j]==AV(a)[i]){AV(z)[j]=i;break;}AV(z)[j]=i+1;))
+    switch(AT(w)){
+    default: longjmp(mainloop,TYPE);
+    CASE CHR:
+        DO(AN(z),j=i;DO(AN(a),
+                    if(((C*)AV(w))[j]==((C*)AV(a))[i]){AV(z)[j]=i;break;}AV(z)[j]=i+1;))
+    CASE INT:
+        DO(AN(z),j=i;DO(AN(a),if(AV(w)[j]==AV(a)[i]){AV(z)[j]=i;break;}AV(z)[j]=i+1;))
+    CASE DBL:
+        DO(AN(z),j=i;DO(AN(a),
+                    if(((D*)AV(w))[j]==((C*)AV(a))[i]){AV(z)[j]=i;break;}AV(z)[j]=i+1;))
+    }
     R z;
 }
 
@@ -751,11 +769,15 @@ ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
 ARC dotop(ARC a, I f, I g, ARC w){ /* Inner Product wrt f and g */
     if(AT(a)==CHR||AT(w)==CHR) longjmp(mainloop, TYPE);
     if(AR(a)==0&&AR(w)==0)R vd(g,a,w);
+    /*
+    if(AR(a)==1){ ARC s=ga(INT,1,(I[]){2}); AV(s)[0]=1; AV(s)[1]=AN(a); a=rsh(s,a); }
+    if(AR(w)==1){ ARC s=ga(INT,1,(I[]){2}); AV(s)[0]=1; AV(s)[1]=AN(w); w=rsh(s,w); }
+    */
     I *d=malloc((AR(a)+AR(w)-2+2)*sizeof(I)); 
     mv((C*)d,(C*)AD(a),(AR(a)-1)*sizeof(I));
     mv((C*)(d+AR(a)-1),(C*)(AD(w)+1),(AR(w)-1)*sizeof(I));
-    //ARC wdims=sha(w),adims=sha(a);
-    w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w); /* take rows of transpose(w) */
+    if (AR(w)>1)
+        w=transposed(rotate(scalarI(1),iota(scalarI(AR(w)))),w); /* take rows of transpose(w) */
     ARC va,vw,vz;
     ARC z;
     va=ga(AT(a),1,AD(a)+AR(a)-1);
@@ -774,8 +796,8 @@ retry:
 
             vz=reduce(f,vd(g,va,vw));   /* perform functions */
 
-            //DO(AR(a)+AR(w),printf("%d",d[i])) printf("\n");
-            //pr(va,stdout); pr(vw,stdout); pr(vz,stdout);
+            DO(AR(a)+AR(w),printf("%d",d[i])) printf("\n");
+            pr(va,stdout); pr(vw,stdout); pr(vz,stdout);
             switch(TPAIR(AT(z),AT(vz))){
             CASE TPAIR(INT,INT): AV(z)[i]=*AV(vz); /* extract (scalar) result */
             CASE TPAIR(INT,DBL): w=toD(w); goto retry;
@@ -827,7 +849,9 @@ ARC fog(ARC a,I f,I g,ARC w){
 V2(dotf){dotop(a,PLUS,STAR,w);}
 
 ARC reduce(I f, ARC w){
-    I r=AR(w),*d=AD(w),n=AN(w);ARC z=vid(f);
+    I r=AR(w),*d=AD(w),n=AN(w);ARC z;
+    z=vid(f);
+    if (AT(w)==INT) z=toI(z);
     if (r){
         if (d[0]){
             n=d[0];
@@ -1108,7 +1132,8 @@ C *lib[] = {
     "F:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
     "P:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
     "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
-    "B:((~#y)<.(~#y))", //base encode
+    "W:((~+/y=y)<.(~+/y=y))*./y",  //weighting vector
+    "B:(Wx<(#y)#x).y"              //base decode
 };
 
 int main(){C s[999];
@@ -1118,8 +1143,13 @@ int main(){C s[999];
     if (err = setjmp(mainloop)){ printf("%s %s\n", errstr[err], err==ABORT?"":"ERROR"); }
     //printf("built-in functions\n");
     for (i=0;i < asize(lib); i++){
-        printf("%s\n", lib[i]);
+        //printf("%s\n", lib[i]);
         ex(wd(lib[i]));
+    }
+    {
+        char alpha[256];
+        for (i=0;i<256;i++) alpha[i] = i;
+        VAR('Z')=(I)arrayC(alpha,256);
     }
     gc_count = collect(&ahead);
 #ifdef GCREPORT
