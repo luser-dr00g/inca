@@ -624,6 +624,7 @@ struct{             C c; D id;
 
 ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 
+/* typed element print functions */
 I pi(I i, FILE *f){R fprintf(f,"%d ",i);}
 I pc(I c, FILE *f){R fprintf(f,"%c",c);}
 I pd(D d, FILE *f){R fprintf(f,"%f ",d);}
@@ -636,6 +637,7 @@ I pf(I i, FILE *f){
     }
     R pr(i,f);
 }
+I pfile(I i,FILE *f){ R fprintf(f, "FILE"); }
 I nl(FILE *f){R fprintf(f,"\n");}
 
 /* FIXME generalize this shit, bro */
@@ -655,6 +657,7 @@ I pr(ARC w, FILE *f){
     //printf("%d:",AT(w)); DO(r,pi(d[i])); nl(f);
     switch(AT(w)){
     default: R fprintf(f,"unprintable type\n");
+    CASE FIL: p=pfile;
     CASE FUN: p=pf;
     CASE OPR: p=po;
     CASE BOX: p=pr;
@@ -706,6 +709,7 @@ I pr(ARC w, FILE *f){
     R 0;
 }
 
+/* predicates q?*() */
 qp(unsigned a){R (a<255) && isalpha(a);} /* question: is a variable? */
 qd(unsigned a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN || AT((ARC)a)==FIL);} /* derived function */
 qv(unsigned a){R qd(a) /* verb */
@@ -741,18 +745,22 @@ V2(transposed){ /* dyadic transpose. vector a selects axes of w */
 }
 
 ARC jotdot(ARC a, I f, ARC w){ /* Outer Product wrt f */
+    I *d;
+    ARC z;
+    ARC sa,sw,sz;
     if (f==DOT){ R dotdot(a,f,w); }
-    I *d=malloc((AR(a)+AR(w))*sizeof(I));
+    d=malloc((AR(a)+AR(w))*sizeof(I));
+retry:
     mv((C*)d,(C*)AD(a),AR(a)*sizeof(I));
     mv((C*)(d+AR(a)),(C*)AD(w),AR(w)*sizeof(I));
-    ARC z=ga(AT(w),AR(a)+AR(w),d);
-    ARC sa,sw,sz;
+    z=ga(AT(w),AR(a)+AR(w),d);
     switch(AT(z)){
     CASE INT: sa=scalarI(0); sw=scalarI(0);
         DO(AN(z),
             *AV(sa)=AV(a)[idx(vdx(i,AD(z),AR(z),d),AD(a),AR(a))];
             *AV(sw)=AV(w)[idx(d+AR(a),AD(w),AR(w))];
             sz=vd(f,sa,sw);
+            if(AT(sz)==DBL){w=toD(w);goto retry;}
             AV(z)[i]=*AV(sz); )
     CASE DBL: sa=scalarD(0); sw=scalarD(0);
         a=toD(a);
@@ -987,9 +995,9 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
 #define BB b=e[1]; /* update b */ 
 #define CC c=e[2]; /* update c */ 
 #define DD d=e[3]; /* update d */ 
-#define ABCD ADV BB CC DD 
-#define AACD ADV ADV CC DD 
-#define PAREN(x,off) \
+#define ABCD ADV BB CC DD  /* advance and update b c d */
+#define AACD ADV ADV CC DD  /* reduce b, update c d */
+#define PAREN(x,off) /* process parenthesized subexpression in x :{a,b,c,d} at *(e+off) */\
     if ((x)=='('){ int i,n,*p; \
         for(i=1,n=1;e[i+off] && n;i++) \
             n+=e[i+off]=='('?1:e[i+off]==')'?-1:0; \
@@ -1001,6 +1009,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
         e+=i-1; \
     }
 
+//the central "exec" function
 ARC ex(I *e){ I a=*e,b,c,d; BB CC DD 
 #ifdef TRACE
     printf("%d %d %d %d: %d %d\n", (int)a, (int)b, (int)c, (int)d, (int)e[0], (int)e[1]);
@@ -1084,10 +1093,12 @@ dy_verb:
     R (ARC)a;
 }
 
-
+//scanning predicates/converters
 noun(c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
 verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 
+//scan string and construct a functional representation,
+//converting literals to arrays and basic functions to opcodes.
 I *wd(C *s){
     I a,n=strlen(s),*e=ma((n+1)*sizeof(I)),i,j;C c,*rem;long ll;
     for(i=0,j=0;c=s[i];i++,j++){
@@ -1128,12 +1139,14 @@ integer:
     R e;
 }
 
+//A library of built-in functions
 C *lib[] = {
     "F:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
     "P:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
     "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
     "W:((~+/y=y)<.(~+/y=y))*./y",  //weighting vector
-    "B:(Wx<(#y)#x).y"              //base decode
+    "B:(Wx<(#y)#x).y",             //base decode
+    "U:4 16#((,`2|((~16)%.(2^~4))){'01')" //produce the "universal-binary-function lookup table"
 };
 
 int main(){C s[999];
@@ -1170,18 +1183,18 @@ int main(){C s[999];
 }
 
 #if 0
-// i thought these would be useful for matrix multiply, but needed something different
-// see idx() and vdx() which operate on int[]s.
-// these functions would have required packing the dims into new arrays and for
-// what?? extra effort simply because these pretty functions operator on the 
+// I thought these would be useful for matrix multiply, but needed something different.
+// See idx() and vdx() which operate on int[]s.
+// These functions would have required packing the dims into new arrays and for
+// what?? Extra effort simply because these pretty functions operate on the 
 // wrong data types.
 //
-// at the same time. this code is unapollogitically terse and dense.
+// At the same time, I know the code above is unapollogetically terse and dense.
 // so read these first. I know, I know, I said they're not even used.
 // but, it would be good practice for trying to read any of the above.
 
 // ARC is our "archetype" data structure for arrays of all sorts and sizes.
-// this function performs "Horner's Rule" using a as an array of dimensions
+// This function performs "Horner's Rule" using a as an array of dimensions
 // and w as an array of indices. All arguments assumed to be integers.
 // It computes the result as an integer (I z),
 // uses scalarI() to construct an array result.
