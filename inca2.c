@@ -143,7 +143,7 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
     struct a a = {t};
     ARC z;
     if (r<0)r=0;
-    I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?2:1);
+    I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?4:1);
     //if (t==CHR) sz=(sz+1)/4;
     z=(ARC)ma(sz*sizeof(I));
     AF(z)=0,AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
@@ -157,7 +157,10 @@ ARC toI(ARC a){ if (AT(a)==INT)R a;
     ARC z=ga(INT,AR(a),AD(a)); DO(AN(a),AV(z)[i]=((D*)AV(a))[i]); R z;}
 ARC toD(ARC a){ if (AT(a)==DBL)R a;
     ARC z=ga(DBL,AR(a),AD(a)); DO(AN(a),((D*)AV(z))[i]=AV(a)[i]); R z;}
-ARC cp(ARC a){ ARC z=ga(AT(a),AR(a),AD(a)); DO(AN(a),AV(z)[i]=AV(a)[i]) R z;}
+ARC cp(ARC a){ ARC z=ga(AT(a),AR(a),AD(a));
+    //DO(AN(a),AV(z)[i]=AV(a)[i])
+    mv((C*)AV(z),(C*)AV(a),AN(a)*AZ(a));
+        R z;}
 
 V1(iota){ // generate an index vector 0..w-1
     if (AT(w)==CHR) longjmp(mainloop, TYPE);
@@ -1037,7 +1040,7 @@ assign:
     }
 mon_verb: 
     if((qf(a)||(qv(a)&&a==HBAR))&&b==LANG){ ARC z;
-        if (qf(a)) cofile = (I)a;
+        if (qf(a)) cofile = (ARC)a;
         z = wfile(ex(e+2));
         if (labs((I)z) > 255) AF(z) |= FL_ASSN;
         R z;
@@ -1074,11 +1077,10 @@ dy_verb:
                 longjmp(mainloop, OPERATOR);
             }
             while(c==' '){ADV CC DD}
-            PAREN(c,2) else {
-                if(qp(c) && VAR(c)) c=VAR(c);
-                e[2]=c;
-                c=(I)ex(e+2);
-            }
+            PAREN(c,2) 
+            if(qp(c) && VAR(c)) c=VAR(c);
+            e[2]=c;
+            c=(I)ex(e+2);
 
             if(qp(a) && VAR(a))a=VAR(a); 
             R vd(b,(ARC)a,(ARC)c);
