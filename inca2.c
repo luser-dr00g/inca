@@ -59,7 +59,8 @@ ARC firstaxis(I f, ARC w);
 ARC notopm(I f, ARC w);
 ARC notopmd(ARC a, I f, ARC w);
 
-ARC cfile; // current file
+ARC cifile; // current input file
+ARC cofile; // current output file
 
 I st[52]; /* symbol table */
 #define VAR(a) st[isupper(a)?26+a-'A':a-'a'] /* lookup variable */ 
@@ -123,8 +124,9 @@ I collect(struct alist **node){
             }
         }
     }
-    if (cfile)
-        mark((I)cfile);
+    if (cifile) mark((I)cifile);
+    if (cofile) mark((I)cofile);
+    i = 0;
     i = 0;
     i += collect(&(*node)->next);
     if ((*node)->mark == 0)
@@ -493,20 +495,23 @@ V2(filed){
     CASE CHR: {
         ARC z=ga(FIL,0,0);
         C *fn = (C*)ma(AN(w)+1); mv(fn,(C*)AV(w),AN(w)); ((C*)fn)[AN(w)] = 0; /* make a copy + '\0' */
-        C *mode;
-        mode = *AV(a)==1?"r":
-               *AV(a)==2?"w":
-               *AV(a)==3?"rw":0;
-        *AV(z) = (I)fopen(fn,mode);
-        R cfile = z;
+        switch(*AV(a)){
+        default: longjmp(mainloop, RANGE);
+        CASE 1: *AV(z) = (I)fopen(fn,"r");
+                R cifile = z;
+        CASE 2: *AV(z) = (I)fopen(fn,"w");
+                R cofile = z;
+        CASE 3: *AV(z) = (I)fopen(fn,"rw");
+                R cofile = cifile = z;
+        }
     }
     CASE INT: {
-        if (cfile==0) longjmp(mainloop, NOFILE);
+        if (cifile==0) longjmp(mainloop, NOFILE);
         switch(*AV(w)){
         default: longjmp(mainloop, RANGE);
         CASE 0: {
             C c[*AV(a) + 1];
-            int n = fread(c, sizeof*c, *AV(a), (FILE*)*AV(cfile));
+            int n = fread(c, sizeof*c, *AV(a), (FILE*)*AV(cifile));
             while(n<*AV(a)) c[n++] = ' ';
             R arrayC(c, n);
         }
@@ -516,7 +521,7 @@ V2(filed){
             int i,max=0,n;
             for (i=0;i<*AV(a);i++){
                 buf[i] = (C*)ma(512);
-                fgets(buf[i],511,(FILE*)*AV(cfile));
+                fgets(buf[i],511,(FILE*)*AV(cifile));
                 n = strlen(buf[i]);
                 --n;
                 buf[i][n]=0;
@@ -549,21 +554,21 @@ V1(filem){
         //C fn[AN(w)+1]; mv(fn,(C*)AV(w),AN(w)); fn[AN(w)] = '\0'; /* make a copy + '\0' */
         C *fn = (C*)ma(AN(w)+1); mv(fn,(C*)AV(w),AN(w)); ((C*)fn)[AN(w)] = 0; /* make a copy + '\0' */
         *AV(z) = (I)fopen(fn,"r");
-        R cfile = z;
+        R cifile = z;
     }
     CASE INT:
-        if (cfile==0) longjmp(mainloop, NOFILE);
+        if (cifile==0) longjmp(mainloop, NOFILE);
         switch(*AV(w)){
         default: longjmp(mainloop, RANGE);
         CASE 0: {
             C c;
-            fread(&c, sizeof c, 1, (FILE*)*AV(cfile));
+            fread(&c, sizeof c, 1, (FILE*)*AV(cifile));
             R scalarC(c);
         }
         CASE 1: {
             C *buf=NULL,*tmp;
             buf = (C*)ma(256);
-            if (!fgets(buf,255,(FILE*)*AV(cfile)))
+            if (!fgets(buf,255,(FILE*)*AV(cifile)))
                 longjmp(mainloop, RANGE);
             R arrayC(buf, strlen(buf)-1);
         }
@@ -572,7 +577,8 @@ V1(filem){
 }
 
 V1(wfile){
-    pr(w,(FILE*)*AV(cfile));
+    if (cofile==0) longjmp(mainloop, NOFILE);
+    pr(w,(FILE*)*AV(cofile));
     R w;
 }
 
@@ -948,7 +954,7 @@ ARC vm(I v, ARC w){         /* monadic verb handler */
             else
                 R ftab[ AV(d)[2] ].omd(scalarI(ftab[AV(d)[2]].id), AV(d)[1], w);
         if (AT(d)==FIL){ /* file token used as function */
-            cfile = d;
+            cifile = d;
             R filem(w);
         }
         longjmp(mainloop, OPERATOR);
@@ -981,7 +987,7 @@ ARC vd(I v, ARC a, ARC w){  /* dyadic verb handler */
         if (AT(d)==OPR && ftab[ AV(d)[2] ].omd && AN(d)==3) /* monadic operator/dyadic function */
             R ftab[ AV(d)[2] ].omd(a, AV(d)[1], w);
         if (AT(d)==FIL){ /* file token used as function */
-            cfile = d;
+            cifile = d;
             R filed(a,w);
         }
         longjmp(mainloop, OPERATOR);
@@ -1030,7 +1036,8 @@ assign:
         goto assign;
     }
 mon_verb: 
-    if(qf(a)&&b==LANG){ ARC z;
+    if((qf(a)||(qv(a)&&a==HBAR))&&b==LANG){ ARC z;
+        if (qf(a)) cofile = (I)a;
         z = wfile(ex(e+2));
         if (labs((I)z) > 255) AF(z) |= FL_ASSN;
         R z;
@@ -1163,6 +1170,14 @@ int main(){C s[999];
         char alpha[256];
         for (i=0;i<256;i++) alpha[i] = i;
         VAR('Z')=(I)arrayC(alpha,256);
+    }
+    {
+        ARC z=ga(FIL,0,0);
+        *AV(z) = (I)stdin;
+        cifile = z;
+        z=ga(FIL,0,0);
+        *AV(z) = (I)stdout;
+        cofile = z;
     }
     gc_count = collect(&ahead);
 #ifdef GCREPORT
