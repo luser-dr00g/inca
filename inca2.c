@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(RANGE) _(LENGTH) _(FUNCTION) _(OPERATOR) _(NOFILE) _(TYPE)
 #define BARE(_) _ ,
@@ -106,7 +107,9 @@ static int discard(struct alist **node){
     next = (*node)->next;
     x = (ARC)((*node)->x);
     switch(AT(x)){
-    CASE FIL: fclose((FILE*)*AV(x));
+    CASE FIL:
+        if ((FILE*)*AV(x) != stdin && (FILE*)*AV(x) != stdout)
+            fclose((FILE*)*AV(x));
     }
     free(x);
     free(*node);
@@ -144,6 +147,7 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
     ARC z;
     if (r<0)r=0;
     I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?4:1);
+    if (n==0) ++sz;
     //if (t==CHR) sz=(sz+1)/4;
     z=(ARC)ma(sz*sizeof(I));
     AF(z)=0,AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
@@ -512,13 +516,21 @@ V2(filed){
         if (cifile==0) longjmp(mainloop, NOFILE);
         switch(*AV(w)){
         default: longjmp(mainloop, RANGE);
-        CASE 0: {
+        CASE 0: if (*AV(a)){
             C c[*AV(a) + 1];
             int n = fread(c, sizeof*c, *AV(a), (FILE*)*AV(cifile));
             while(n<*AV(a)) c[n++] = ' ';
             R arrayC(c, n);
+        } else { // *AV(a) == 0
+            struct stat buf;
+            fstat(fileno((FILE*)*AV(cifile)),&buf);
+            int n = buf.st_size + 1;
+            ARC z=ga(CHR,1,(I[]){n});
+            fread(AV(z), 1, n, (FILE*)*AV(cifile));
+            --AD(z)[0];
+            R z;
         }
-        CASE 1: {
+        CASE 1: if (*AV(a)){
             C **buf=NULL,*tmp;
             buf = (C**)ma(*AV(a)*sizeof*buf);
             int i,max=0,n;
@@ -544,6 +556,7 @@ V2(filed){
                 ptr+=max;
             }
             R z;
+        } else { // *AV(a) == 0
         }
         }
     }
@@ -646,7 +659,7 @@ I pf(I i, FILE *f){
     }
     R pr(i,f);
 }
-I pfile(I i,FILE *f){ R fprintf(f, "FILE"); }
+I pfile(I i,FILE *f){R fprintf(f, "FILE");}
 I nl(FILE *f){R fprintf(f,"\n");}
 
 /* FIXME generalize this shit, bro */
@@ -1155,7 +1168,7 @@ C *lib[] = {
     "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
     "W:((~+/y=y)<.(~+/y=y))*./y",  //weighting vector
     "B:(Wx<(#y)#x).y",             //base decode
-    "U:4 16#((,`2|((~16)%.(2^~4))){'01')" //produce the "universal-binary-function lookup table"
+    "U:4 16#(,`2|(~16)%.2^~4){'01'" //produce the "universal-binary-function lookup table"
 };
 
 int main(){C s[999];
