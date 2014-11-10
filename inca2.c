@@ -524,10 +524,9 @@ V2(filed){
         } else { // *AV(a) == 0
             struct stat buf;
             fstat(fileno((FILE*)*AV(cifile)),&buf);
-            int n = buf.st_size + 1;
+            int n = buf.st_size;
             ARC z=ga(CHR,1,(I[]){n});
             fread(AV(z), 1, n, (FILE*)*AV(cifile));
-            --AD(z)[0];
             R z;
         }
         CASE 1: if (*AV(a)){
@@ -557,6 +556,31 @@ V2(filed){
             }
             R z;
         } else { // *AV(a) == 0
+            struct stat buf;
+            fstat(fileno((FILE*)*AV(cifile)),&buf);
+            int n = buf.st_size;
+            C *c = (C*)ma(n);
+            fread(c, 1, n, (FILE*)*AV(cifile));
+            int j,l,max=0,nl=1;
+            for (j=0,l=0;j<n;j++,l++){
+                if (c[j]=='\n'){
+                    ++nl;
+                    if (l>max) max=l;
+                    l=0;
+                }
+            }
+            //printf("%d %d\n", nl, max);
+            ARC z=ga(CHR,2,(I[]){nl,max});
+            for (j=0,l=0,nl=0;j<n;j++){
+                if (c[j]!='\n'){
+                    ((C*)AV(z))[nl*max + l++] = c[j];
+                } else { //c[j]=='\n'
+                    memset(AV(z)+nl*max+l,' ',max-l); //pad with space
+                    ++nl;
+                    l=0;
+                }
+            }
+            R z;
         }
         }
     }
