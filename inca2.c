@@ -785,7 +785,11 @@ V2(transposed){ /* dyadic transpose. vector a selects axes of w */
             vdx(i,AD(w),AR(w),AV(d));
             d=from(a,d);
             j=idx(AV(d),AD(z),AR(z));
-            AV(z)[j]=AV(w)[i];
+            switch(AT(z)){
+            default: AV(z)[j]=AV(w)[i];
+            CASE CHR: ((C*)AV(z))[j]=((C*)AV(w))[i];
+            CASE DBL: ((D*)AV(z))[j]=((D*)AV(w))[i];
+            }
             )
     R z;
 }
