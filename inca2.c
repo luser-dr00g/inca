@@ -561,7 +561,7 @@ V2(filed){
             int n = buf.st_size;
             C *c = (C*)ma(n);
             fread(c, 1, n, (FILE*)*AV(cifile));
-            int j,l,max=0,nl=1;
+            int j,l,max=0,nl=0;
             for (j=0,l=0;j<n;j++,l++){
                 if (c[j]=='\n'){
                     ++nl;
@@ -575,7 +575,7 @@ V2(filed){
                 if (c[j]!='\n'){
                     ((C*)AV(z))[nl*max + l++] = c[j];
                 } else { //c[j]=='\n'
-                    memset(AV(z)+nl*max+l,' ',max-l); //pad with space
+                    memset((C*)AV(z)+nl*max+l,' ',max-l); //pad with space
                     ++nl;
                     l=0;
                 }
@@ -1195,8 +1195,8 @@ C *lib[] = {
     "P:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
     "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
     "W:((~+/y=y)<.(~+/y=y))*./y",  //weighting vector
-    "B:(Wx<(#y)#x).y",             //base decode
-    "B:( (:((~+/y=y)<.(~+/y=y))*./y) x<(#y)#x).y",   //base decode
+    "B:(W(#y)#x).y",             //base decode
+    "B:( (:((~+/y=y)<.(~+/y=y))*./y) (#y)#x).y",   //base decode
     "U:4 16#(,`2|(~16)%.2^~4){'01'",  //produce the "universal-binary-function lookup table"
     "D<'0123456789'",              //digit vector
 };
