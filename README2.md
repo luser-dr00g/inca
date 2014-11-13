@@ -14,6 +14,12 @@ https://groups.google.com/d/topic/comp.lang.apl/Lu2tgqanK5Q/discussion
 jot-dot again
 https://groups.google.com/d/topic/comp.lang.apl/zCPJ8KaZyWg/discussion
 
+What TODO with inca2?
+https://groups.google.com/d/topic/comp.lang.apl/YQjHCcMVRh4/discussion
+
+What's an apl-ish way to access files?
+https://groups.google.com/d/topic/comp.lang.apl/hYbydoPy-ls/discussion
+
 Inca2 implements homogenous arrays of arbitrary dimension in several datatypes
 
     CHR
@@ -85,7 +91,7 @@ The command characters are defined by this table:
                     _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
                     _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
                     _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
-                    _(SEMI,    ';',   0.0, 0,          0,          0,     0,           0) \
+                    _(SEMI,    ';',   0.0, 0,          execute,    0,     0,           0) \
                     _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
                     _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
                     _(RANG,    '>',   0.0, greater,    unbox,      0,     0,           0) \
@@ -95,7 +101,7 @@ The command characters are defined by this table:
                     _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
                     _(RBRAC,   ']',   0.0, maximum,    ceiling,    0,     0,           0) \
                     _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
-                    _(HBAR,    '_',   0.0, 0,          0,          0,     firstaxis,   0) \
+                    _(HBAR,    '_',   0.0, filed,      filem,      0,     firstaxis,   0) \
                     _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
                     _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
                     _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
