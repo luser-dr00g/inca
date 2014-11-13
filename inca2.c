@@ -84,8 +84,6 @@ void mark(I x){
     if (x){
         if (labs(x) < 256) return;
         ARC a = (ARC)x;
-        I y;
-        int j,n;
         struct alist *node = (struct alist *)(a->x);
         if (node->mark == 0){
             node->mark = 1;
@@ -301,13 +299,16 @@ V2(less){    MATHOP2(<, boolover, less) }
 V2(greater){ MATHOP2(>, boolover, greater) }
 
 V2(powerf){ MATHOPF2(pow,pow) }
+I ilog(I a,I w){ R (I)(log((D)w)/log((D)a));}
+D dlog(D a,D w){ R log(w)/log(a);}
+V2(logarithm){ MATHOPF2(ilog,dlog) }
 
-I imin(I a,I w) { R a<w?a:w;}
-D dmin(D a,D w) { R a<w?a:w;}
+I imin(I a,I w){ R a<w?a:w; }
+D dmin(D a,D w){ R a<w?a:w; }
 V2(minimum){ MATHOPF2(imin,dmin) }
 
-I imax(I a,I w) { R a>w?a:w;}
-D dmax(D a,D w) { R a>w?a:w;}
+I imax(I a,I w){ R a>w?a:w; }
+D dmax(D a,D w){ R a>w?a:w; }
 V2(maximum){ MATHOPF2(imax,dmax) }
 
 V1(signum){
@@ -451,7 +452,7 @@ V1(reverselast){ /* reverse along last axis (cols in 2D) */
     R z;
 }
 
-V2(dotf); /* dot function: shortcut for  "plus dot times" */
+//V2(dotf); /* dot function: shortcut for  "plus dot times" */
 
 V2(compress){
     I n=0,j=0;
@@ -648,7 +649,7 @@ V1(wfile){
                 _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0) \
                 _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
                 _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
-                _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
+                _(DOT,     '.',   M_E, logarithm,  0,          dotop, 0,           jotdot) \
                 _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
                 _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
                 _(SEMI,    ';',   0.0, 0,          execute,    0,     0,           0) \
@@ -914,7 +915,7 @@ ARC fog(ARC a,I f,I g,ARC w){
     R vm(f,vd(g,a,w));
 }
 
-V2(dotf){dotop(a,PLUS,STAR,w);}
+//V2(dotf){dotop(a,PLUS,STAR,w);}
 
 ARC reduce(I f, ARC w){
     I r=AR(w),*d=AD(w),n=AN(w);ARC z;
@@ -1205,8 +1206,8 @@ C *lib[] = {
     "P:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
     "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
     "W:((~+/y=y)<.(~+/y=y))*./y",  //weighting vector
-    "B:(W(#y)#x).y",             //base decode
-    "B:( (:((~+/y=y)<.(~+/y=y))*./y) (#y)#x).y",   //base decode
+    "B:(W(#y)#x)+.*y",             //base decode
+    "B:( (:((~+/y=y)<.(~+/y=y))*./y) (#y)#x)+.*y",   //base decode
     "U:4 16#(,`2|(~16)%.2^~4){'01'",  //produce the "universal-binary-function lookup table"
     "D<'0123456789'",              //digit vector
 };
@@ -1249,7 +1250,7 @@ int main(){C s[999];
 #if 0
 // I thought these would be useful for matrix multiply, but needed something different.
 // See idx() and vdx() which operate on int[]s.
-// These functions would have required packing the dims into new arrays and for
+// These functions would have required packing the dims into new array objects and for
 // what?? Extra effort simply because these pretty functions operate on the 
 // wrong data types.
 //
