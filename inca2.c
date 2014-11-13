@@ -590,6 +590,16 @@ V1(filem){
     switch(AT(w)){
     default: longjmp(mainloop, TYPE);
     CASE CHR: {
+        if (AN(w)==0){
+            ARC z;
+            z=ga(FIL,0,0);
+            *AV(z) = (I)stdout;
+            cofile = z;
+            z=ga(FIL,0,0);
+            *AV(z) = (I)stdin;
+            cifile = z;
+            R z;
+        }
         ARC z=ga(FIL,0,0);
         //C fn[AN(w)+1]; mv(fn,(C*)AV(w),AN(w)); fn[AN(w)] = '\0'; /* make a copy + '\0' */
         C *fn = (C*)ma(AN(w)+1); mv(fn,(C*)AV(w),AN(w)); ((C*)fn)[AN(w)] = 0; /* make a copy + '\0' */
@@ -1214,16 +1224,10 @@ int main(){C s[999];
     {
         char alpha[256];
         for (i=0;i<256;i++) alpha[i] = i;
-        VAR('Z')=(I)arrayC(alpha,256);
+        VAR('Z')=(I)arrayC(alpha,256);  //Z=ascii vector
     }
-    {
-        ARC z=ga(FIL,0,0);
-        *AV(z) = (I)stdin;
-        cifile = z;
-        z=ga(FIL,0,0);
-        *AV(z) = (I)stdout;
-        cofile = z;
-    }
+    filem(arrayC("",0)); /* set cifile,cofile to stdin,stdout */
+
     gc_count = collect(&ahead);
 #ifdef GCREPORT
     printf("<@%d>\n", gc_count);
