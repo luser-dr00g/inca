@@ -58,8 +58,8 @@ is a number, but
 
     .5
 
-attempts to call the DOT function monadically (which does not exist, and so uses
-the dyadic function with its "identity element", currently 0.0) upon the integer 5.
+is the base-2 logarithm of the integer 5.
+
 Whitespace may be introduced to disambiguate numbers from functions and operators,
 in particular the 'dot' function or operator following an integer should include a space
 to prevent a bad parse (as just illustrated).
@@ -88,7 +88,7 @@ The command characters are defined by this table:
                     _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0) \
                     _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
                     _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
-                    _(DOT,     '.',   0.0, dotf,       0,          dotop, 0,           jotdot) \
+                    _(DOT,     '.',   M_E, logarithm,  0,          dotop, 0,           jotdot) \
                     _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
                     _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
                     _(SEMI,    ';',   0.0, 0,          execute,    0,     0,           0) \
@@ -142,7 +142,7 @@ Some examples illustrating composition of operators.
 
 Remember, due to our "syntax", a variable immediately followed by left angle bracket, is
 an assignment expression. This attempts to perform the dot ('.') function with an implicit
-left argument (scalar 0) which is not conformable with iota-4 ('~4'). Hence, we add a
+left argument (scalar 0). Hence, we add a
 space. This "seals-off" the left-hand-side of the function call we're setting up.
 
             a <.a<~3
