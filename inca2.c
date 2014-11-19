@@ -1209,7 +1209,7 @@ C *lib[] = {
     "B:(W(#y)#x)+.*y",             //base decode
     "B:( (:((~+/y=y)<.(~+/y=y))*./y) (#y)#x)+.*y",   //base decode (with W inlined)
     "N:x|y%.x^~1+[]/x.y",          //base encode (for scalar x)
-    "U:4 16#(,`2|(~16)%.2^~4){'01'",  //produce the "universal-binary-function lookup table"
+    "U:4 16#(,`2N~16){'01'", //produce the "universal-binary-function lookup table"
     "D<'0123456789'",              //digit vector
 };
 
