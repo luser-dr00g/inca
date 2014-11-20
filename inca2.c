@@ -778,7 +778,11 @@ qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);} /* operator-dyadic : dyadic */
 qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);} /* operator-monadic : dyadic */
 
 ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
-    R plus(a,iota(plus(scalarI(1),minus(w,a))));
+    if (AT(a)!=INT || AT(w)!=INT) longjmp(mainloop, TYPE);
+    if (*AV(w) - *AV(a) > 0)
+        R plus(a,iota(plus(scalarI(1),minus(w,a))));
+    else
+        R minus(a,iota(plus(scalarI(1),minus(a,w))));
 }
 
 I idx(I*vec,I*dims,I n){ I z=*vec; DO(n-1,z*=dims[i+1];z+=vec[i+1]) R z; }  // index
