@@ -581,4 +581,12 @@ therefore, base-decoding with a weighting vector, as described in the 1962 APL b
             W
     ((~+/y=y)<.(~+/y=y))*./y
 
+*Update:* dotdot() function now handles descending vectors.
+
+            0..5
+    0 1 2 3 4 5 
+            5..0
+    5 4 3 2 1 0 
+            (-2)..(-12)
+    -2 -3 -4 -5 -6 -7 -8 -9 -10 -11 -12 
 
