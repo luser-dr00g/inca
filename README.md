@@ -3,7 +3,8 @@ inca
 
 This document describes the interpreter implemented in inca.c,
 or inca "1". Current development is inca2.c, some documentation for it
-has begun in README2.md.
+has begun in README2.md. The wiki page https://github.com/luser-dr00g/inca/wiki
+also describes the features of inca2.
 
 The final two commits of inca.c illustrate the problem inherent in
 the design. Add the new feature (user-function call without the ' or '' 
