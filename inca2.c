@@ -21,7 +21,7 @@ enum types { NUL, CHR, INT, DBL, BOX, FUN, OPR, FIL, NTYPES };
 typedef char     C;
 typedef intptr_t I;
 typedef double   D;
-typedef struct a{I x,f,k,t,n,r,d[0];} *ARC; /* array header */
+typedef struct a{I t,x,f,k,n,r,d[0];} *ARC; /* array header */
 #define AX(a) ((a)->x) /* allocation metadata (gc) */
 #define AF(a) ((a)->f) /* flags */
 #define AK(a) ((a)->k) /* offset of ravel. sizeof(struct a)+sizeof(I)*AR(a) */
@@ -144,10 +144,13 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
     struct a a = {t};
     ARC z;
     if (r<0)r=0;
-    I sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?4:1);
-    if (n==0) ++sz;
+    I sz;
+    //sz=(sizeof(*z)/sizeof(I))+r+n*(t==DBL?4:1);
+    sz=(sizeof*z) + (r*sizeof(I)) + ((n+1)*AZ(&a));
+    //if (n==0) ++sz;
+    if (n==0) sz += AZ(&a);
     //if (t==CHR) sz=(sz+1)/4;
-    z=(ARC)ma(sz*sizeof(I));
+    z=(ARC)ma(sz/**sizeof(I)*/);
     AF(z)=0,AT(z)=t,AR(z)=r,AN(z)=n,AK(z)=sizeof(*z)+r*sizeof(I);
     mv((C*)AD(z),(C*)d,r*sizeof(I));
     R z;}
@@ -223,8 +226,8 @@ V1(negate){ MATHOP1(-, subunder) }
 V1(not){ MATHOP1(!, boolover) }
 
 #define RANKCOMPAT \
-    if (AR(a)==0) a=rsh(sha(w),a); \
-    /*if (AR(a)==0 || AR(a)==1) a=rsh(sha(w),a); */\
+    /*if (AR(a)==0) a=rsh(sha(w),a); */\
+    if (AR(a)==0 || (AR(a)==1 && AD(a)[0]==1)) a=rsh(sha(w),a); \
     if (AR(w)==0) { w=rsh(sha(a),w); r=AR(w); d=AD(w); n=AN(w); } \
     if (r!=AR(a)) longjmp(mainloop, RANK); \
     if (n!=AN(a)) longjmp(mainloop, LENGTH); \
@@ -633,42 +636,43 @@ V1(wfile){
     R w;
 }
 
-#define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) name,
+#define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
+                 name,
 #define FUNCINFO(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
                 {           c,    id,  vd,         vm,         odd,   omm,         omd},
 #define FTAB(_) \
-                _(NOP,      0,    0.0, 0,          0,          0,     0,           0) \
+                _(NOP,      0,    0.0, 0,          0,          0,     0,           0)       \
                 _(EXCL,    '!',   0.0, notequal,   not,        0,     notopm,      notopmd) \
-                _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0) \
-                _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0) \
-                _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0) \
-                _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0) \
-                _(AND,     '&',   1.0, and,        0,          fog,   0,           0) \
-                _(QUOTE,   '\'',  0.0, 0,          0,          0,     0,           0) \
-                _(STAR,    '*',   1.0, times,      signum,     0,     0,           power) \
-                _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0) \
-                _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0) \
-                _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0) \
-                _(DOT,     '.',   M_E, logarithm,  0,          dotop, 0,           jotdot) \
-                _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0) \
-                _(COLON,   ':',   0.0, 0,          0,          0,     0,           0) \
-                _(SEMI,    ';',   0.0, 0,          execute,    0,     0,           0) \
-                _(LANG,    '<',   0.0, less,       box,        0,     0,           0) \
-                _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop) \
-                _(RANG,    '>',   0.0, greater,    unbox,      0,     0,           0) \
-                _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0) \
-                _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0) \
-                _(LBRAC,   '[',   0.0, minimum,    flr,        0,     0,           0) \
-                _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0) \
-                _(RBRAC,   ']',   0.0, maximum,    ceiling,    0,     0,           0) \
-                _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0) \
-                _(HBAR,    '_',   0.0, filed,      filem,      0,     firstaxis,   0) \
-                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0) \
-                _(LCURL,   '{',   0.0, from,       size,       0,     0,           0) \
-                _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0) \
-                _(RCURL,   '}',   0.0, commentd,   commentm,   0,     0,           0) \
-                _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0) \
-                _(NFUNC,   0,     0.0, 0,          0,          0,     0,           0) \
+                _(DBLQUOTE,'"',   0.0, 0,          0,          0,     0,           0)       \
+                _(HASH,    '#',   0.0, rsh,        sha,        0,     0,           0)       \
+                _(DOLLAR,  '$',   0.0, or,         0,          0,     0,           0)       \
+                _(PERCENT, '%',   1.0, divide,     0,          0,     0,           0)       \
+                _(AND,     '&',   1.0, and,        0,          fog,   0,           0)       \
+                _(QUOTE,   '\'',  0.0, 0,          0,          0,     0,           0)       \
+                _(STAR,    '*',   1.0, times,      signum,     0,     0,           power)   \
+                _(PLUS,    '+',   0.0, plus,       id,         0,     0,           0)       \
+                _(COMMA,   ',',   0.0, cat,        ravel,      0,     0,           0)       \
+                _(MINUS,   '-',   0.0, minus,      negate,     0,     0,           0)       \
+                _(DOT,     '.',   M_E, logarithm,  0,          dotop, 0,           jotdot)  \
+                _(SLASH,   '/',   0.0, compress,   0,          0,     reduce,      0)       \
+                _(COLON,   ':',   0.0, 0,          0,          0,     0,           0)       \
+                _(SEMI,    ';',   0.0, 0,          execute,    0,     0,           0)       \
+                _(LANG,    '<',   0.0, less,       box,        0,     0,           0)       \
+                _(EQUAL,   '=',   0.0, equal,      0,          0,     0,           eqop)    \
+                _(RANG,    '>',   0.0, greater,    unbox,      0,     0,           0)       \
+                _(QUEST,   '?',   0.0, 0,          0,          0,     0,           0)       \
+                _(AT,      '@',   0.0, rotate,     reverse,    0,     transposeop, 0)       \
+                _(LBRAC,   '[',   0.0, minimum,    flr,        0,     0,           0)       \
+                _(BKSLASH, '\\',  0.0, expand,     0,          0,     scan,        0)       \
+                _(RBRAC,   ']',   0.0, maximum,    ceiling,    0,     0,           0)       \
+                _(CARET,   '^',   M_E, powerf,     0,          0,     0,           0)       \
+                _(HBAR,    '_',   0.0, filed,      filem,      0,     firstaxis,   0)       \
+                _(BKQUOTE, '`',   0.0, transposed, transposem, 0,     0,           0)       \
+                _(LCURL,   '{',   0.0, from,       size,       0,     0,           0)       \
+                _(VBAR,    '|',   0.0, modulus,    absolute,   0,     0,           0)       \
+                _(RCURL,   '}',   0.0, commentd,   commentm,   0,     0,           0)       \
+                _(TILDE,   '~',   0.0, find,       iota,       0,     0,           0)       \
+                _(NFUNC,    0,    0.0, 0,          0,          0,     0,           0)       \
 /* END FTAB */
 enum{FTAB(FUNCNAME)};
 struct{             C c; D id;
