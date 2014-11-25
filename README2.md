@@ -29,9 +29,8 @@ Inca2 implements homogenous arrays of arbitrary dimension in several datatypes
     FUN (operators)
 
 and automatically promotes integer arrays to double in response to arithmetic overflow.
-But it does not (yet) implement any form of "user function call" which got me into
-so much trouble with the first version. But you can assign functions to variables,
-and interpolate them in a command. eg.
+You can assign functions to variables, and interpolate them in a command. eg. Variables
+are all single alphabetic characters.
 
     $./inca2
             a<3
