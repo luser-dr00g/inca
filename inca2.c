@@ -1211,6 +1211,7 @@ integer:
 //A library of built-in functions
 C *lib[] = {
     "F:;>(y!0){(<'1'),<'y*Fy-1'",  //factorial, cf. http://www.jsoftware.com/papers/DirectDef.htm
+    "C:(Fx)%(Fy)*(Fx-y)",          //vCn combinatorial function
     "P:+/x*y^~(:+/y=y)x",          //polynomial function, ibid.
     "T:y*x%+/y",                   //tips distribution. distribute x among y "shares"
     "W:((~+/y=y)<.(~+/y=y))*./y",  //weighting vector
