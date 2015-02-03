@@ -8,6 +8,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
+/* Errors are signalled by calling longjmp(mainloop, ERRORNAME) which returns to the main loop.
+ */
 #define ERRORS(_) _(SETJMP_INIT) _(ABORT) _(RANK) _(RANGE) _(LENGTH) _(FUNCTION) _(OPERATOR) _(NOFILE) _(TYPE)
 #define BARE(_) _ ,
 #define STR(x) #x ,
@@ -15,29 +17,42 @@ enum errnames { ERRORS(BARE) };
 char *errstr[] = { ERRORS(STR) };
 jmp_buf mainloop;
 
+/* The various types of array 
+ */
 enum types { NUL, CHR, INT, DBL, BOX, FUN, OPR, FIL, NTYPES };
 /* TPAIR() combines types into a single value that can be switch()ed */
 #define TPAIR(a,b) ((a)*NTYPES+(b))
+
+/* Base types, for short
+ */
 typedef char     C;
 typedef intptr_t I;
 typedef double   D;
-typedef struct a{I t,x,f,k,n,r,d[0];} *ARC; /* array header */
-#define AX(a) ((a)->x) /* allocation metadata (gc) */
-#define AF(a) ((a)->f) /* flags */
-#define AK(a) ((a)->k) /* offset of ravel. sizeof(struct a)+sizeof(I)*AR(a) */
-#define AT(a) ((a)->t) /* type */
-#define AN(a) ((a)->n) /* # of atoms in ravel */
-#define AR(a) ((a)->r) /* rank */
-#define AD(a) ((a)->d) /* dims */
-/* values float *after* variable-length dims */
-#define AV(a) ((I*)(((C*)(a))+AK(a))) /* values (ravel) */
-#define AZ(a) (AT(a)==DBL?sizeof(D):AT(a)==CHR?sizeof(C):sizeof(I)) /* element size */
-#define FL_ASSN 1 /* ARC was just assigned */
 
+/* The universal array structure, or archetype
+ */
+typedef struct a{I t,x,f,k,n,r,d[0];} *ARC; /* array header */
+#define AT(a) ((a)->t)  /* type <-- nb. must be first in struct, see ga() */
+#define AX(a) ((a)->x)  /* allocation metadata (gc) */
+#define AF(a) ((a)->f)  /* flags */
+#define AR(a) ((a)->r)  /* rank */
+#define AD(a) ((a)->d)  /* dims, s.b AR(a) # of ints */
+/* values float *after* variable-length dims */
+#define AK(a) ((a)->k)  /* offset of ravel. sizeof(struct a)+sizeof(I)*AR(a) */
+#define AN(a) ((a)->n)  /* # of atoms in ravel (product of dims) */
+#define AV(a) ((I*)(((C*)(a))+AK(a)))  /* values (ravel) */
+#define AZ(a) (AT(a)==DBL?sizeof(D):AT(a)==CHR?sizeof(C):sizeof(I))  /* element size */
+#define FL_ASSN 1  /* ARC was just assigned */
+
+/* Control structures, for short
+ */
 #define SWITCH(x,y) switch(x){ default: y }
 #define CASE break;case
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 #define R return
+
+/* Function types and forward declarations
+ */
 #define V1(f) ARC f(ARC w)          /* monadic verb signature */
 #define V2(f) ARC f(ARC a,ARC w)    /* dyadic verb signature */
 ARC vm(I v, ARC w);                 /* monadic verb handler */ 
@@ -60,12 +75,17 @@ ARC firstaxis(I f, ARC w);
 ARC notopm(I f, ARC w);
 ARC notopmd(ARC a, I f, ARC w);
 
+/* Interpreter data
+ */
 ARC cifile; // current input file
 ARC cofile; // current output file
 
 I st[52]; /* symbol table */
 #define VAR(a) st[isupper(a)?26+a-'A':a-'a'] /* lookup variable */ 
 
+/* Garbage Collection
+   uses a linked-list as a stack to hold marks and pointers to allocations.
+ */
 /* allocation list. for garbage collection*/
 struct alist { I x; int mark; struct alist *next; } *ahead = NULL;
 
@@ -76,7 +96,7 @@ I apush(struct alist **node, I a) { /* *node is head by reference in root call *
     (*node)->x = a;
     (*node)->mark = 0;
     (*node)->next = NULL;
-    ((ARC)a)->x = (I)*node;
+    ((ARC)a)->x = (I)*node; /* fill-in the link-back pointer in the array */
     return a;
 }
 #define asize(a) (sizeof a/sizeof*a)
@@ -137,11 +157,11 @@ I collect(struct alist **node){
     return i;
 }
 
-I *ma(I n){R(I*) apush(&ahead, (I)malloc(n));} //make allocation
+I *ma(I n){R(I*) apush(&ahead, (I)malloc(n));}       //make allocation
 void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}                 //move bytes
 I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}                //table rank
 ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
-    struct a a = {t};
+    struct a a = {t}; //initialize template with type, hence type must be first
     ARC z;
     if (r<0)r=0;
     I sz;
@@ -1176,10 +1196,12 @@ I *wd(C *s){
             //a=(I)scalarC(s[++i]); //previous, single-char version
             ++i;
             int k,l;
-            for (k=0; k < 1; k++)
-                for (l=0; ;l++)
+            for (k=0; k < 1; k++){
+                for (l=0; ;l++){
                     if (s[i+l]=='\'')
                         break;
+                }
+            }
             a=(I)arrayC(s+i, l);
             i+=l;
             //printf("%c", s[i]);
