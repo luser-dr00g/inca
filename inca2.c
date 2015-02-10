@@ -177,7 +177,13 @@ ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
 ARC scalarI(I i){ARC z=ga(INT,0,0);*AV(z)=i;R z;}
 ARC scalarD(D d){ARC z=ga(DBL,0,0);*(D*)AV(z)=d;R z;}
 ARC scalarC(C c){ARC z=ga(CHR,0,0);*(C*)AV(z)=c;R z;}
-ARC arrayC(C *s,I n){ARC z=ga(CHR,1,(I[]){n});mv((C*)AV(z),s,n);R z;}
+ARC arrayC(C *s,I n){C*sp=s;I j=0,e=0;ARC z=ga(CHR,1,(I[]){n});
+    //printf("%d\n",n);
+    //mv((C*)AV(z),s,n);
+    DO(n,if(sp[i]=='\''){((C*)AV(z))[j++]=(sp)[i++];++e;}else((C*)AV(z))[j++]=sp[i])
+    AD(z)[0]-=e;
+    //printf("%d\n",n-e);
+    R z;}
 ARC toI(ARC a){ if (AT(a)==INT)R a;
     ARC z=ga(INT,AR(a),AD(a)); DO(AN(a),AV(z)[i]=((D*)AV(a))[i]); R z;}
 ARC toD(ARC a){ if (AT(a)==DBL)R a;
@@ -1198,8 +1204,13 @@ I *wd(C *s){
             int k,l;
             for (k=0; k < 1; k++){
                 for (l=0; ;l++){
-                    if (s[i+l]=='\'')
-                        break;
+                    if (s[i+l]=='\''){
+                        if (s[i+l+1]=='\''){
+                            l++;
+                        } else {
+                            break;
+                        }
+                    }
                 }
             }
             a=(I)arrayC(s+i, l);
