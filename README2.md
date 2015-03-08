@@ -603,3 +603,30 @@ done via a user-function.
     0.000000 0.333333 0.528321 0.666667 0.773976 0.861654 0.935785 1.000000 1.056642 
     0.000000 0.315465 0.500000 0.630930 0.732487 0.815465 0.885622 0.946395 1.000000 
 
+
+I've just devised a technique for executing separate "statements" within an expression by using lambdas. 
+
+    (left)(:right)y
+
+If `right` doesn't use x, then the result of `left` is effectively discarded. `y` here is a dummy right-argument to the `right` function.
+
+I've made use of this in the icecream program.
+
+    h:y%2
+    q:y-hn-1
+    i:[((n%2)^2)>+/(qx y)^2
+    j:(~[y%2)i.(~y)
+    k:2*[x>[|qy
+    l:(@1+~]y%2)k.(~y)
+    c:y y#((jn<y),ly){' (V'
+
+    x:(_<(2,#y)#((#y)#' '),y)(:_<;y)y
+    x 'c1'
+    x'c2'
+    x'c3'
+    x'c4'
+    x'c5'
+    x'c17'
+
+The `x` function takes a string, prints a blank line, then the string, then executes the string and prints the result. It combines the blank-line and string into one object but sequences the printing and execution using the dummy-lambda described here.
+
