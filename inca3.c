@@ -19,7 +19,7 @@ typedef struct a{I t,
 
 struct termios tm;
 void specialtty(){ tcgetattr(0,&tm);
-    //https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
+//https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
     //fputs("\x1B""*0\n",stdout);
     fputs(ESC(*0\n),stdout);
     fputs(ESC(n)
@@ -34,8 +34,9 @@ void specialtty(){ tcgetattr(0,&tm);
     fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    fputs(ESC(*0\n),stdout);
 
-    { struct termios tt=tm;
+    { struct termios tt=tm; //man termios
         //cfmakeraw(&tt);
         tt.c_iflag &= ~(IGNBRK | /*BRKINT |*/
                 PARMRK | ISTRIP | /*INLCR | IGNCR | ICRNL |*/ IXON);
@@ -47,10 +48,11 @@ void specialtty(){ tcgetattr(0,&tm);
 }
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
+#define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
 char * getln(char **s){
-    int n;
+    int mode = 0;
     char *p;
     if (!*s) *s = malloc(256);
     p = *s;
@@ -61,14 +63,30 @@ char * getln(char **s){
         case EOF: goto err;
         case EOT: goto err;
         case '\n': goto breakwhile;
+        case CTL('N'): mode = 1;
+                       //fputc('N',stdout);
+                       break;
+        case CTL('O'): mode = 0;
+                       //fputc('O',stdout);
+                       break;
+        case CTL('U'): 
+                       while(p>=*s){
+                           fputs("\b \b",stdout);
+                           --p;
+                       }
+                       break;
         case '\b':
         case DEL:
                    fputs("\b \b",stdout);
-                   //fputs(ESC([D)" "ESC([D),stdout);
-                   //fputs(ESC([1P),stdout);
                    if (p!=*s) --p;
                    break;
-        default: fputc(c,stdout);
+        default:
+                 if (mode)
+                     fputs(ESC(n),stdout),
+                         fputc(c,stdout),
+                         fputs(ESC(o),stdout);
+                 else
+                     fputc(c,stdout);
                  *p++ = c;
                  break;
         }
