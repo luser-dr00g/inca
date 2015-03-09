@@ -83,3 +83,8 @@ maximum flexibility of usage. User functions can still be single characters whic
 behave more-or-less syntactically like basic functions. But idioms of these functions
 can also be overrided.
 
+
+
+As a new side-angle/distraction, I've discovered how to access the graphics characters in xterm.
+So the new version will also include an extended alphabet and a more powerful line-editor.
+
