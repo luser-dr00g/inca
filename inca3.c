@@ -4,24 +4,43 @@
 #include<termios.h>
 #include<unistd.h>
 
+typedef char C;
+typedef long I;
+typedef struct a{I t,
+    r,d[3],
+    p[2];}*A;
+
+#define P printf
+#define R return
+#define V1(f) A f(A w)
+#define V2(f) A f(A a, A w)
+#define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
+#define ESC(x) "\x1B" #x
+
 struct termios tm;
 void specialtty(){ tcgetattr(0,&tm);
+    //https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
     //fputs("\x1B""*0\n",stdout);
-    fputs("\x1B""*0\n", stdout);
-    fputs("\x1Bn"
+    fputs(ESC(*0\n),stdout);
+    fputs(ESC(n)
             "lqqqqqk\n"
             "x"
-      "\x1Bo""a box""\x1Bn"
+      ESC(o)"a box"ESC(n)
                   "x\n"
             "mqqqqqj\n"
-            "\x1Bo\n", stdout);
+            ESC(o)"\n", stdout);
+    fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
 
     { struct termios tt=tm;
         //cfmakeraw(&tt);
-        tt.c_iflag &= ~(/*IGNBRK | BRKINT |*/
+        tt.c_iflag &= ~(IGNBRK | /*BRKINT |*/
                 PARMRK | ISTRIP | /*INLCR | IGNCR | ICRNL |*/ IXON);
         /*tt.c_oflag &= ~OPOST;*/
-        tt.c_lflag &= ~(/*ECHO | ECHONL |*/ ICANON /*| ISIG | IEXTEN*/);
+        tt.c_lflag &= ~(ECHO | /*ECHONL |*/ ICANON /*| ISIG | IEXTEN*/);
         tt.c_cflag &= ~(CSIZE | PARENB);
         tt.c_cflag |= CS8;
         tcsetattr(0,TCSANOW,&tt); }
@@ -29,6 +48,7 @@ void specialtty(){ tcgetattr(0,&tm);
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
 #define EOT 004
+#define DEL 127
 char * getln(char **s){
     int n;
     char *p;
@@ -41,11 +61,17 @@ char * getln(char **s){
         case EOF: goto err;
         case EOT: goto err;
         case '\n': goto breakwhile;
-        case '\b': fputs("\b \b",stdout);
-                   --p;
+        case '\b':
+        case DEL:
+                   fputs("\b \b",stdout);
+                   //fputs(ESC([D)" "ESC([D),stdout);
+                   //fputs(ESC([1P),stdout);
+                   if (p!=*s) --p;
                    break;
+        default: fputc(c,stdout);
+                 *p++ = c;
+                 break;
         }
-        *p++ = c;
     }
 breakwhile:
     *p++ = 0;
@@ -54,18 +80,6 @@ err:
     return p==*s?NULL:*s;
     //return gets(*s);
 }
-
-typedef char C;
-typedef long I;
-typedef struct a{I t,
-    r,d[3],
-    p[2];}*A;
-
-#define P printf
-#define R return
-#define V1(f) A f(A w)
-#define V2(f) A f(A a, A w)
-#define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 
 I *ma(n){R(I*)malloc(n*4);}
 mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
@@ -136,7 +150,8 @@ verb(c){I i=0;
             R i;
     R 0;}
 I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
- DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
+ DO(n,/*P("%c",s[i]);*/e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
+ /*P("\n");*/
  e[n]=0;
  R e;}
 
