@@ -1,9 +1,65 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<termios.h>
+#include<unistd.h>
+
+struct termios tm;
+void specialtty(){ tcgetattr(0,&tm);
+    //fputs("\x1B""*0\n",stdout);
+    fputs("\x1B""*0\n", stdout);
+    fputs("\x1Bn"
+            "lqqqqqk\n"
+            "x"
+      "\x1Bo""a box""\x1Bn"
+                  "x\n"
+            "mqqqqqj\n"
+            "\x1Bo\n", stdout);
+
+    { struct termios tt=tm;
+        //cfmakeraw(&tt);
+        tt.c_iflag &= ~(/*IGNBRK | BRKINT |*/
+                PARMRK | ISTRIP | /*INLCR | IGNCR | ICRNL |*/ IXON);
+        /*tt.c_oflag &= ~OPOST;*/
+        tt.c_lflag &= ~(/*ECHO | ECHONL |*/ ICANON /*| ISIG | IEXTEN*/);
+        tt.c_cflag &= ~(CSIZE | PARENB);
+        tt.c_cflag |= CS8;
+        tcsetattr(0,TCSANOW,&tt); }
+}
+void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
+
+#define EOT 004
+char * getln(char **s){
+    int n;
+    char *p;
+    if (!*s) *s = malloc(256);
+    p = *s;
+    while(1){
+        int c;
+        c = fgetc(stdin);
+        switch(c){
+        case EOF: goto err;
+        case EOT: goto err;
+        case '\n': goto breakwhile;
+        case '\b': fputs("\b \b",stdout);
+                   --p;
+                   break;
+        }
+        *p++ = c;
+    }
+breakwhile:
+    *p++ = 0;
+err:
+    //if (*p==004) return NULL;
+    return p==*s?NULL:*s;
+    //return gets(*s);
+}
+
 typedef char C;
 typedef long I;
-typedef struct a{I t,r,d[3],p[2];}*A;
+typedef struct a{I t,
+    r,d[3],
+    p[2];}*A;
 
 #define P printf
 #define R return
@@ -60,20 +116,33 @@ I st[26];
 qp(a){R  abs(a)>='a' && abs(a)<='z';}
 qv(a){R 0<=abs(a) && abs(a)<'a';}
 
+struct a nullob = {.r=1};
+A null = &nullob;
 A ex(e)I *e;{I a=*e;
+    if(!a)R null;
  if(qp(a)){
      if(e[1]=='=')
          R (A)(st[a-'a']=(I)ex(e+2));
      a= st[ a-'a'];}
  R qv(a)?(op[a].vm)(ex(e+1)):e[1]?(op[e[1]].vd)(a,ex(e+2)):(A)a;}
-noun(c){A z;if(c<'0'||c>'9')R 0;z=ga(0,0,0);*z->p=c-'0';R (I)z;}
+noun(c){A z;
+    if(c<'0'||c>'9')R 0;
+    z=ga(0,0,0);
+    *z->p=c-'0';
+    R (I)z;}
 verb(c){I i=0;
-    for(;op[++i].c;)if(op[i].c==c)R i;
+    for(;op[++i].c;)
+        if(op[i].c==c)
+            R i;
     R 0;}
 I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
  DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
- e[n]=0;R e;}
+ e[n]=0;
+ R e;}
 
-main(){C s[99];
-    while(gets(s))
-        pr(ex(wd(s)));}
+main(){C *s = NULL;
+    specialtty();
+    while(getln(&s))
+        pr(ex(wd(s)));
+    restoretty();
+}
