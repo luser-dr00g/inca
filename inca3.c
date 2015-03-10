@@ -170,23 +170,23 @@ A null = &nullob;
 #define ALPHATAB_ENT(a,...) {__VA_ARGS__},
 struct alpha {
     int base; int ext; char *input; char *output;
-} alphatable[] = { ALPHATAB(ALPHATAB_ENT) };
+} alphatab[] = { ALPHATAB(ALPHATAB_ENT) };
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
 enum alphaname { ALPHATAB(ALPHATAB_NAME) };
 
 int inputtobase (int c, int mode){
     int i;
-    for (i=0;i<(sizeof alphatable/sizeof*alphatable);i++)
-        if (c==*alphatable[i].input && mode==alphatable[i].ext)
-            return alphatable[i].base;
+    for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
+        if (c==*alphatab[i].input && mode==alphatab[i].ext)
+            return alphatab[i].base;
     return mode? MODE1(c): c;
     //return c | mode << 7;
 }
 char *basetooutput (int c){
     int i;
-    for (i=0;i<(sizeof alphatable/sizeof*alphatable);i++)
-        if (c==alphatable[i].base)
-            return alphatable[i].output;
+    for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
+        if (c==alphatab[i].base)
+            return alphatab[i].output;
     return "";
 }
 
@@ -358,7 +358,7 @@ noun(c){A z;
     R (I)z;}
 verb(c){I i=0;
     for(;op[++i].c;)
-        if(alphatable[op[i].c].base==c)
+        if(alphatab[op[i].c].base==c)
             R i;
     R 0;}
 I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;

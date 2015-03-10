@@ -88,3 +88,7 @@ can also be overrided.
 As a new side-angle/distraction, I've discovered how to access the graphics characters in xterm.
 So the new version will also include an extended alphabet and a more powerful line-editor.
 
+The basics of the extended character set is implemented. Switch to the alternate characters with ctrl-N `^N` and back to normal with ctrl-O `^O`. There is one function available fromthe extended set: plusminus. Monadic plusminus performs a negation of the argument. Dyadic plus minus creates an array and returns both the sum and difference of the left and right arguments.
+
+There is a third set of characters available that I may incorporate into inca's alternate set. But I intend inca to maintain only 2 input modes. So the third set will only be a bank to draw from, not the basis of its own defined set.
+
