@@ -486,31 +486,24 @@ mode 1: search and allocate. update input string
  */
 struct st *findsymb(struct st *st, char **s, int mode) {
     int code;
-    switch(mode){
-    case 0: //prefix search
-        while(isalpha(**s)){
-            code = strchr(alph,**s)-alph;
-            if (st->tab[code]){
-                st=st->tab[code];
-                (*s)++;
-            } else
-                break;
-        }
-        return st;
-    case 1: //defining search
-        while(isalpha(**s)){
-            code = strchr(alph,**s)-alph;
-            if (st->tab[code]){
-                st=st->tab[code];
-                (*s)++;
-            } else {
-                st->tab[code] = malloc(sizeof(struct st));
-                st=st->tab[code];
-                (*s)++;
+    while(isalpha(**s)){
+        code = strchr(alph,**s)-alph;
+        if (st->tab[code]){
+            st=st->tab[code];
+            (*s)++;
+        } else
+            switch(mode){
+            case 0: goto breakwhile; //prefix search
+            case 1: //defining search
+                    st->tab[code] = malloc(sizeof(struct st));
+                    st=st->tab[code];
+                    (*s)++;
+                    break;
             }
-        }
-        return st;
+
     }
+breakwhile:
+    return st;
 }
 
 //I st[26];
