@@ -7,6 +7,13 @@ Degree >= 1 are functions accepting so many parameters.
 Iverson also describes unifying the behavior of functions with
 regard to the ranks of their actual parameters.
 (http://www.softwarepreservation.org/projects/apl/Books/ADICTIONARYOFAPL)
+Other ridiculously useful books and papers: 
+[An Implementation of J](http://sblom.github.io/openj-core/ioj.htm), 
+[IOJ presentation notes](http://archive.vector.org.uk/trad/v094/hui094_85.pdf)
+[Rationalized APL](http://www.jsoftware.com/papers/RationalizedAPL.htm), 
+[A Dictionary of APL](http://www.softwarepreservation.org/projects/apl/Books/ADICTIONARYOFAPL) 
+[Practical Uses of a Model of APL](http://www.jsoftware.com/papers/APLModel.htm) 
+[Kona wiki](https://github.com/kevinlawler/kona/wiki)
 
 I also want to better coordinate the behavior of the data types.
 So I think I need a {quad} symbol for system variables. 
@@ -90,5 +97,9 @@ So the new version will also include an extended alphabet and a more powerful li
 
 The basics of the extended character set is implemented. Switch to the alternate characters with ctrl-N `^N` and back to normal with ctrl-O `^O`. There is one function available fromthe extended set: plusminus. Monadic plusminus performs a negation of the argument. Dyadic plus minus creates an array and returns both the sum and difference of the left and right arguments.
 
-There is a third set of characters available that I may incorporate into inca's alternate set. But I intend inca to maintain only 2 input modes. So the third set will only be a bank to draw from, not the basis of its own defined set.
+There is a third set of characters available that I may incorporate into inca's alternate set. But I intend inca to maintain only 2 input modes. So the third set will only be a bank to draw from, not the basis of its own defined set. This process has begun and the alternate keyboard no longer has the silly `LF` `CR` `VT` etc chars, but these may be useful in displaying strings.
+
+The extensible symbol table is implemented. Very much as described above, it has 52-way branching at each node. The searching function has a defining mode where it allocates new nodes for each char in the symbol, and a separate prefix search mode where it returns the longest match.
+
+I'm currently studying the J documents concerning the parsing. Hopefully I can replace the procedural parsing with a table-driven setup.
 
