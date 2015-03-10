@@ -22,7 +22,8 @@ A null = &nullob;
 #define V1(f) A f(A w)
 #define V2(f) A f(A a, A w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
-#define ESC(x) "\x1B" #x
+#define ESC(x) "\x1b" #x
+#define ESCCHR '\x1b'
 #define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
@@ -314,6 +315,7 @@ void specialtty(){ tcgetattr(0,&tm);
 //https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
     //fputs("\x1B""*0\n",stdout);
 #if 0
+    //experiment with line-drawing chars
     fputs(ESC(*0),stdout);
     fputs(ESC(n)
             "lqqqqqk\n"
@@ -325,6 +327,7 @@ void specialtty(){ tcgetattr(0,&tm);
 #endif
 
 #if 0
+    //show the various alternate charsets available in xterm vt220 mode
     fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     //fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //these 2 are not interesting
     //fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //
@@ -333,6 +336,7 @@ void specialtty(){ tcgetattr(0,&tm);
 #endif
 
 #if 0
+    //show special char and line-drawing set as keyboard layout
     fputs(ESC(*0)ESC(n),stdout);
     fputs( "~!@#$%^&*()_+" "\n" "`1234567890-="  "\n"
            "QWERTYUIOP{}|" "\n" "qwertyuiop[]\\" "\n"
@@ -346,6 +350,7 @@ void specialtty(){ tcgetattr(0,&tm);
     fputs(ESC(+A),stdout); //set G3 charset to A : "uk" accented and special chars ESC(o)
     fputc(CTL('N'),stdout); //select G1 charset  ESC(n):select G2  ESC(o):select G3
 
+#if 1
     {
         int i,j;
         char *keys[] = {
@@ -365,6 +370,7 @@ void specialtty(){ tcgetattr(0,&tm);
             fputc('\n',stdout);
         }
     }
+#endif
 
     { struct termios tt=tm; //man termios
         //cfmakeraw(&tt);
@@ -390,6 +396,21 @@ C * getln(C *prompt, C **s, int *len){
         switch(c){
         case EOF:
         case EOT: if (p==*s) goto err;
+                  break;
+        case ESCCHR:
+                  c = fgetc(stdin);
+                  switch(c){
+                  case '[':
+                      c = fgetc(stdin);
+                      switch(c){
+                      case 'Z':
+                          c = '\v';
+                          *p++ = c;                   // save base in string
+                          fputs(basetooutput(c),stdout);  // echo output form
+                          break;
+                      }
+                      break;
+                  }
                   break;
         case '\n':
                   fputc('\n',stdout);
@@ -507,8 +528,7 @@ breakwhile:
     return st;
 }
 
-//I st[26];
-qp(a){R  isalpha(abs(a)&127); }
+qp(a){R !(a&(1<<7)) && isalpha(abs(a)&127); }
 qv(a){R 0<=abs(a) && abs(a)<'a' && abs(a)<(sizeof op/sizeof*op);}
 A ex(e)I *e;{I a=*e;
     if(!a)R null;
@@ -516,10 +536,8 @@ A ex(e)I *e;{I a=*e;
      char *s = (char[]){a, 0};
      if(e[1]=='='){
          R (findsymb(&st, &s, 1)->a)=ex(e+2);
-         //R (A)(st[a-'a']=(I)ex(e+2));
      }
      a=(I)(findsymb(&st, &s, 0)->a);
-     //a= st[ a-'a'];
  }
  R qv(a)?(op[a].vm)(ex(e+1)):
      e[1]?(op[e[1]].vd)(a,ex(e+2)):
@@ -536,8 +554,7 @@ verb(c){I i=0;
             R i;
     R 0;}
 I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
- DO(n,/*P("%c",s[i]);*/e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
- /*P("\n");*/
+ DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
  e[n]=0;
  R e;}
 
