@@ -378,9 +378,10 @@ void specialtty(){ tcgetattr(0,&tm);
 }
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
-C * getln(C **s, int *len){
+C * getln(C *prompt, C **s, int *len){
     int mode = 0;
     C *p;
+    if (prompt) fputs(prompt,stdout);
     if (!*s) *s = malloc(*len=256);
     p = *s;
     while(1){
@@ -540,9 +541,9 @@ I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
  e[n]=0;
  R e;}
 
-main(){C *s = NULL;int n=0;
+main(){C *s=NULL;int n=0;C *prompt="\t";
     specialtty();
-    while(getln(&s,&n))
+    while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
     restoretty();
 }
