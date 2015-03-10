@@ -1,3 +1,4 @@
+#include<stdint.h>
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
@@ -5,10 +6,16 @@
 #include<unistd.h>
 
 typedef char C;
-typedef long I;
+typedef intptr_t I;
 typedef struct a{I t,
     r,d[3],
     p[2];}*A;
+#define AT(a) (a->t)
+#define AR(a) (a->r)
+#define AD(a) (a->d)
+#define AV(a) (a->p)
+struct a nullob = {.r=1};
+A null = &nullob;
 
 #define P printf
 #define R return
@@ -17,10 +24,35 @@ typedef struct a{I t,
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 #define ESC(x) "\x1B" #x
 
+#define MODE1(x) (x|1<<7)
+#define ALPHATAB(_) \
+    _( PLUS,            '+',  0, "+", "+" ) \
+    _( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g"ESC(o) ) \
+    _( NULLCHAR, 0, 0, 0, 0 )
+#define ALPHATAB_ENT(a,...) {__VA_ARGS__},
+struct alpha {
+    int base; int ext; char *input; char *output;
+} alphatable[] = { ALPHATAB(ALPHATAB_ENT) };
+#define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
+enum alphaname { ALPHATAB(ALPHATAB_NAME) };
+
+int inputtobase (int c, int mode){
+    return mode? MODE1(c): c;
+    //return c | mode << 7;
+}
+char *basetooutput (int c, int mode){
+    int i;
+    for (i=0;i<(sizeof alphatable/sizeof*alphatable);i++)
+        if (c==alphatable[i].base && mode==alphatable[i].ext)
+            return alphatable[i].output;
+    return "";
+}
+
 struct termios tm;
 void specialtty(){ tcgetattr(0,&tm);
 //https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
     //fputs("\x1B""*0\n",stdout);
+#if 0
     fputs(ESC(*0\n),stdout);
     fputs(ESC(n)
             "lqqqqqk\n"
@@ -29,12 +61,19 @@ void specialtty(){ tcgetattr(0,&tm);
                   "x\n"
             "mqqqqqj\n"
             ESC(o)"\n", stdout);
-    fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
-    fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
-    fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
-    fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
-    fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
-    fputs(ESC(*0\n),stdout);
+#endif
+    //fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    //fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //these 2 are not interesting
+    //fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //
+    //fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    //fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    fputs(ESC(*0)ESC(n),stdout);
+    fputs( "~!@#$%^&*()_+" "\n" "`1234567890-="  "\n"
+           "QWERTYUIOP{}|" "\n" "qwertyuiop[]\\" "\n"
+           "ASDFGHJKL:\""  "\n" "asdfghjkl;'"    "\n"
+           "ZXCVBNM<>?"    "\n" "zxcvbnm,./"     "\n" , stdout);
+        fputs(ESC(o),stdout);
+    fputs(ESC(*0),stdout);
 
     { struct termios tt=tm; //man termios
         //cfmakeraw(&tt);
@@ -51,26 +90,24 @@ void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 #define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
-char * getln(char **s){
+char * getln(char **s, int *len){
     int mode = 0;
     char *p;
-    if (!*s) *s = malloc(256);
+    if (!*s) *s = malloc(*len=256);
     p = *s;
     while(1){
         int c;
         c = fgetc(stdin);
         switch(c){
-        case EOF: goto err;
-        case EOT: goto err;
-        case '\n': goto breakwhile;
-        case CTL('N'): mode = 1;
-                       //fputc('N',stdout);
-                       break;
-        case CTL('O'): mode = 0;
-                       //fputc('O',stdout);
-                       break;
+        case EOF:
+        case EOT: *p = 0; goto err;
+        case '\n':
+                  fputc('\n',stdout);
+                  goto breakwhile;
+        case CTL('N'): mode = 1; break;
+        case CTL('O'): mode = 0; break;
         case CTL('U'): 
-                       while(p>=*s){
+                       while(p>*s){
                            fputs("\b \b",stdout);
                            --p;
                        }
@@ -87,80 +124,93 @@ char * getln(char **s){
                          fputs(ESC(o),stdout);
                  else
                      fputc(c,stdout);
-                 *p++ = c;
+                 *p++ = inputtobase(c,mode);
                  break;
         }
     }
 breakwhile:
     *p++ = 0;
 err:
-    //if (*p==004) return NULL;
     return p==*s?NULL:*s;
-    //return gets(*s);
 }
 
 I *ma(n){R(I*)malloc(n*4);}
 mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
 tr(r,d)I *d;{I z=1;DO(r,z=z*d[i]);R z;}
-A ga(t,r,d)I *d;{A z=(A)ma(5+tr(r,d));z->t=t,z->r=r,mv(z->d,d,r);
+A ga(t,r,d)I *d;{A z=(A)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);
  R z;}
 
-V1(iota){I n=*w->p;A z=ga(0,1,&n);DO(n,z->p[i]=i);R z;}
-V2(plus){I r=w->r,*d=w->d,n=tr(r,d);A z=ga(0,r,d);
- DO(n,z->p[i]=a->p[i]+w->p[i]);R z;}
-V2(from){I r=w->r-1,*d=w->d+1,n=tr(r,d);
- A z=ga(w->t,r,d);mv(z->p,w->p+(n**a->p),n);R z;}
-V1(box){A z=ga(1,0,0);*z->p=(I)w;R z;}
-V2(cat){I an=tr(a->r,a->d),wn=tr(w->r,w->d),n=an+wn;
- A z=ga(w->t,1,&n);mv(z->p,a->p,an);mv(z->p+an,w->p,wn);R z;}
+V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
+V2(plus){I r=AR(w),*d=AD(w),n=tr(r,d);A z=ga(0,r,d);
+ DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
+ A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
+V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
+V2(cat){I an=tr(AR(a),AD(a)),wn=tr(AR(w),AD(w)),n=an+wn;
+ A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
 V2(find){}
-V2(rsh){I r=a->r?*a->d:1,n=tr(r,a->p),wn=tr(w->r,w->d);
- A z=ga(w->t,r,a->p);mv(z->p,w->p,wn=n>wn?wn:n);
- if(n-=wn)mv(z->p+wn,z->p,n);R z;}
-V1(sha){A z=ga(0,1,&w->r);mv(z->p,w->d,w->r);R z;}
+V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=tr(AR(w),AD(w));
+ A z=ga(AT(w),r,AV(a));mv(AV(z),AV(w),wn=n>wn?wn:n);
+ if(n-=wn)mv(AV(z)+wn,AV(z),n);R z;}
+V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 V1(id){R w;}
-V1(size){A z=ga(0,0,0);*z->p=w->r?*w->d:1;R z;}
+V1(neg){
+    I n=tr(AR(w),AD(w));
+    A z=ga(AT(w),AR(w),AD(w));
+    mv(AV(z),AV(w),n);
+    DO(n,AV(z)[i]=-AV(z)[i])
+    R z;}
+V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
+V2(plusminus){
+    w=cat(w,neg(w));
+    a=cat(a,a);
+    R plus(a,w);
+}
 
 pi(i){P("%d ",i);}
 nl(){P("\n");}
-pr(w)A w;{I r=w->r,*d=w->d,n=tr(r,d);
+pr(w)A w;{I r=AR(w),*d=AD(w),n=tr(r,d);
+    if(w==null)R 0;
     DO(r,pi(d[i]));
     nl();
-    if(w->t)
-        DO(n,P("< ");pr(w->p[i]))
+    if(AT(w))
+        DO(n,P("< ");pr(AV(w)[i]))
     else
-        DO(n,pi(w->p[i]));
+        DO(n,pi(AV(w)[i]));
     nl();}
 
+#define VERBTABLE(_) \
+        _( ZEROFUNC,         0,  0,    0 ) \
+        _( PLUS,            '+', id,   plus ) \
+        _( PLUSMINUS, MODE1('g'), neg, plusminus ) \
+        _( RBRACE,          '{', size, from ) \
+        _( TILDE,           '~', iota, find ) \
+        _( RANG,            '<', box,  0 ) \
+        _( HASH,            '#', sha,  rsh ) \
+        _( COMMA,           ',', 0,    cat ) \
+        _( NULLFUNC,         0,  0,    0 ) 
+#define VERBTABLE_ENT(a, ...) { __VA_ARGS__ },
 struct {
     C c; A (*vm)(); A (*vd)();
-} op[] = {
-    { 0, 0, 0 },
-    { '+', id,   plus },
-    { '{', size, from },
-    { '~', iota, find },
-    { '<', box,  0 },
-    { '#', sha,  rsh },
-    { ',', 0,    cat },
-    { 0, 0, 0 }
-};
+} op[] = { VERBTABLE(VERBTABLE_ENT) };
+
 I st[26];
 qp(a){R  abs(a)>='a' && abs(a)<='z';}
-qv(a){R 0<=abs(a) && abs(a)<'a';}
+qv(a){R 0<=abs(a) && abs(a)<'a' && abs(a)<(sizeof op/sizeof*op);}
 
-struct a nullob = {.r=1};
-A null = &nullob;
 A ex(e)I *e;{I a=*e;
     if(!a)R null;
  if(qp(a)){
      if(e[1]=='=')
          R (A)(st[a-'a']=(I)ex(e+2));
      a= st[ a-'a'];}
- R qv(a)?(op[a].vm)(ex(e+1)):e[1]?(op[e[1]].vd)(a,ex(e+2)):(A)a;}
+ R qv(a)?(op[a].vm)(ex(e+1)):
+     e[1]?(op[e[1]].vd)(a,ex(e+2)):
+     (A)a;}
 noun(c){A z;
     if(c<'0'||c>'9')R 0;
     z=ga(0,0,0);
-    *z->p=c-'0';
+    *AV(z)=c-'0';
     R (I)z;}
 verb(c){I i=0;
     for(;op[++i].c;)
@@ -173,9 +223,9 @@ I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
  e[n]=0;
  R e;}
 
-main(){C *s = NULL;
+main(){C *s = NULL;int n=0;
     specialtty();
-    while(getln(&s))
+    while(getln(&s,&n))
         pr(ex(wd(s)));
     restoretty();
 }
