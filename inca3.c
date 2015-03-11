@@ -14,6 +14,9 @@ typedef struct a{I t,
 #define AR(a) (a->r)
 #define AD(a) (a->d)
 #define AV(a) (a->p)
+enum type {
+    INT, BOX, SYMB, CHAR, DBL,
+};
 struct a nullob = {.r=1};
 A null = &nullob;
 
@@ -414,6 +417,7 @@ C * getln(C *prompt, C **s, int *len){
                   break;
         case '\n':
                   fputc('\n',stdout);
+                  *p++ = c;
                   goto breakwhile;
         case CTL('N'): mode = 1; break;
         case CTL('O'): mode = 0; break;
@@ -447,17 +451,27 @@ tr(r,d)I *d;{I z=1;DO(r,z=z*d[i]);R z;}
 A ga(t,r,d)I *d;{A z=(A)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);
  R z;}
 
+ps(A i){P("%s",(char*)AV(i));}
+pc(i){P("%s",basetooutput(i));}
 pi(i){P("%d ",i);}
 nl(){P("\n");}
-pr(w)A w;{I r=AR(w),*d=AD(w),n=tr(r,d);
-    if(w==null)R 0;
-    DO(r,pi(d[i]));
-    nl();
-    if(AT(w))
-        DO(n,P("< ");pr(AV(w)[i]))
-    else
-        DO(n,pi(AV(w)[i]));
-    nl();}
+pr(A w){
+    if (abs((I)w)<256)
+        pc(w);
+    else {
+        I r=AR(w),*d=AD(w),n=tr(r,d);
+        if(w==null)R 0;
+        DO(r,pi(d[i]));
+        nl();
+        if(AT(w)==1)
+            DO(n,P("< ");pr((A)(AV(w)[i])))
+        else if(AT(w)==SYMB)
+            ps(w);
+        else
+            DO(n,pi(AV(w)[i]));
+        nl();
+    }
+}
 
 V1(copy){I n=tr(AR(w),AD(w)); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
@@ -528,12 +542,17 @@ breakwhile:
     return st;
 }
 
-qp(a){R !(a&(1<<7)) && isalpha(abs(a)&127); }
+//qp(a){R !(a&(1<<7)) && isalpha(abs(a)&127); }
+qp(A a){R AT(a)==SYMB;}
 qv(a){R 0<=abs(a) && abs(a)<'a' && abs(a)<(sizeof op/sizeof*op);}
 A ex(e)I *e;{I a=*e;
+    int i;for(i=0;e[i];i++)pr((A)e[i]);
     if(!a)R null;
- if(qp(a)){
-     char *s = (char[]){a, 0};
+ if(qp((A)a)){
+     //char *s = (char[]){a, 0};
+     A sa = (A)a;
+     char *s = (char*)AV(sa);
+     //pr(sa);
      if(e[1]=='='){
          R (findsymb(&st, &s, 1)->a)=ex(e+2);
      }
@@ -543,20 +562,90 @@ A ex(e)I *e;{I a=*e;
      e[1]?(op[e[1]].vd)(a,ex(e+2)):
      (A)a;}
 
-noun(c){A z;
-    if(c<'0'||c>'9')R 0;
-    z=ga(0,0,0);
-    *AV(z)=c-'0';
-    R (I)z;}
+#define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
+#define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DIGIT "0123456789"
+#define SPACE " \n"
+#define ZEROCL ""
+char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
+
 verb(c){I i=0;
     for(;op[++i].c;)
         if(alphatab[op[i].c].base==c)
             R i;
     R 0;}
+
+A newsymb(C *s,I n){
+    I t;
+    //P("%d\n",n);DO(n,P("%c",s[i]))P("\n");
+    if(strchr(DIGIT,*s)) {
+        A z=ga(INT,0,0);
+        *AV(z)=strtol(s,NULL,10);
+        R z;
+    } else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
+        A z=ga(SYMB,1,(I[]){n+1});
+        mv(AV(z),s,n+3/4);
+        ((C*)AV(z))[n] = 0;
+        R z;
+    } else {
+        I c=verb(*s);
+        R (A)(c?c:(I)*s);
+    }
+}
+
+int wdtab[][4] = {
+    /*0     a     d     s*/
+    { 30+2, 20+2, 10+2, 0+0 }, /* init */
+    { 30+1, 20+1, 10+0, 0+1 }, /* number */
+    { 30+1, 20+0, 10+1, 0+1 }, /* name */
+    { 30+1, 20+1, 10+1, 0+1 }, /* other */
+};
+
+#define emit(a,b) (*z++=(I)newsymb(s+a,(b)-a)); 
+I *wd(C *s){
+    I a,b,n=strlen(s),*e=ma(n+1),*z=e;
+    int i,j,i_,state;
+    C c, *cp;
+    state=0;
+    for(i=0;i<n;i++){
+        c=s[i];
+        //P("'%c'\n",c);
+        a=0;
+        for(i_=1;i_<(sizeof cclass/sizeof*cclass);i_++) {
+            if (cp=strchr(cclass[i_],c)) {
+                a=i_;
+                break;
+            }
+        }
+        b=wdtab[state][a];
+        //P("%d\n",b);
+        state=b/10;
+        switch(b%10){ //encoded actions
+        case 0: break;
+        case 1: emit(j,i);
+        case 2: j=i; break;
+        }
+    }
+    *z++=0;
+    R e;}
+
+#if 0
+noun(c){A z;
+    if(c<'0'||c>'9')R 0;
+    z=ga(0,0,0);
+    *AV(z)=c-'0';
+    R (I)z;}
+
 I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
- DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);
- e[n]=0;
- R e;}
+    DO(n,e[i]=
+         (a=noun(c=s[i]))?
+         a:
+         (a=verb(c))?
+             a:
+             c)
+    e[n]=0;
+    R e;}
+#endif
 
 main(){C *s=NULL;int n=0;C *prompt="\t";
     specialtty();
