@@ -510,16 +510,17 @@ struct {
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };
 
-struct st {
-    A a;
-    struct st *tab[52];
-} st;
+#define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
+#define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define DIGIT "0123456789"
+#define SPACE " \t\n"
+#define ZEROCL ""
 
-char *alph="ABCDEFGHIJKLMNOPQRSTUVWXYZ""abcdefghijklmnopqrstuvwxyz";
-/*
-mode 0: search trie for longest-prefix match. ret root on fail. update input string
-mode 1: search and allocate. update input string
- */
+struct st { A a; struct st *tab[52]; } st; /* symbol-table */
+
+char *alph=ALPHAUPPER ALPHALOWER; /* symbol-table collation-ordered set */
+/*  mode 0: search trie for longest-prefix match. ret root on fail. update input string
+    mode 1: search and allocate. update input string */
 struct st *findsymb(struct st *st, char **s, int mode) {
     int code;
     while(isalpha(**s)){
@@ -562,13 +563,6 @@ A ex(e)I *e;{I a=*e;
      e[1]?(op[e[1]].vd)(a,ex(e+2)):
      (A)a;}
 
-#define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
-#define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define DIGIT "0123456789"
-#define SPACE " \n"
-#define ZEROCL ""
-char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
-
 verb(c){I i=0;
     for(;op[++i].c;)
         if(alphatab[op[i].c].base==c)
@@ -593,12 +587,14 @@ A newsymb(C *s,I n){
     }
 }
 
+char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
 int wdtab[][4] = {
-    /*0     a     d     s*/
-    { 30+2, 20+2, 10+2, 0+0 }, /* init */
+    /*char-class*/
+    /*0     a     d     s*/    /* state  */
+    { 30+2, 20+2, 10+2, 0+0 }, /* init   */
     { 30+1, 20+1, 10+0, 0+1 }, /* number */
-    { 30+1, 20+0, 10+1, 0+1 }, /* name */
-    { 30+1, 20+1, 10+1, 0+1 }, /* other */
+    { 30+1, 20+0, 10+1, 0+1 }, /* name   */
+    { 30+1, 20+1, 10+1, 0+1 }, /* other  */
 };
 
 #define emit(a,b) (*z++=(I)newsymb(s+a,(b)-a)); 
@@ -647,9 +643,11 @@ I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
     R e;}
 #endif
 
-main(){C *s=NULL;int n=0;C *prompt="\t";
-    specialtty();
+int main(){C *s=NULL;int n=0;C *prompt="\t";
+    if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
-    restoretty();
+    if (isatty(fileno(stdin))) restoretty();
+    R 0;
 }
+
