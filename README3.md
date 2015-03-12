@@ -103,3 +103,46 @@ The extensible symbol table is implemented. Very much as described above, it has
 
 I'm currently studying the J documents concerning the parsing. Hopefully I can replace the procedural parsing with a table-driven setup.
 
+-- 
+
+3/11/2015
+
+To sum up so far, beginning (yet again) with the incunabulum
+I've added a custom
+line-editor using vt220 commands compatible with xterm, setting the
+mode using the terminal-indepedent (and POSIX-portable) termios library.
+Since it works on with Cygwin's xorg server on Windows 8, I feel safe
+in assuming that this will be fairly-easily portable among modern
+unix/linux systems.
+
+Again with vt220 codes, I've added an *alternate keyboard* full of
+crazy shapes and doodles collected from the vt220 line-drawing set
+and "uk" set. These have yet to be sensibly organized, but I have
+added one non-ascii doodle command from the alternate keyboard as
+a *tracer-bullet* implementation strategy. This is the plus/minus
+function which performs negation monadically, and dyadically it
+returns an array of the sum and difference of the left and right
+arguments (a sensible interpretation of plus/minus, I think).
+
+Next, I've added a trie structure for an extensible symbol table.
+For lookups, it uses a prefix search: returning the longest defined
+prefix of the requested key. This should permit the simultaneous
+use of of long names and space-free short names in a tight expression.
+Thus, this is no longer just a golfing language.
+
+Next, I've reimplemented the `wd()` function which scans the 
+expression to form words. It now uses a table-driven approach
+similar to the description in *An Implementation of J* (I do not
+understand the diagram of the table there). To cooperate with 
+the symbol-lookup mechanism, it consumes any run of alphabetic
+characters and collects it as a single symbol-typed object
+which contains a zero-terminated "C" string. This is distinct
+from the char-typed objects which are "pascal-style" with a
+separate count and no terminator. Or rather "will be", as the 
+char-typed objects aren't really implemented yet.
+
+Next up, I'm going to take a hard look at the `ex()` function
+and the stack-based algorithms described in *An Implementation of J* 
+and *A Dictionary of APL*. So that one will be reimplemented to be
+table-based as well and probably to use true right-to-left semantics now.
+
