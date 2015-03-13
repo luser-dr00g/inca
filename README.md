@@ -6,7 +6,7 @@ or inca "1". A revised and expanded version is implemented in inca2.c,
 and documented in README2.md and in 
 [the wiki page](https://github.com/luser-dr00g/inca/wiki).
 
-A third rewrite has begun in inca3.c. It's documentation is (predictably)
+A third rewrite has begun in inca3.c. Its documentation is (predictably)
 named README3.md. 
 
 The final two commits of inca.c illustrate the problem inherent in
