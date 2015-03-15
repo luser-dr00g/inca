@@ -7,18 +7,16 @@
 
 typedef unsigned char C;
 typedef intptr_t I;
-typedef struct a{I t,
-    r,d[3],
-    p[2];}*A;
-#define AT(a) (a->t)
-#define AR(a) (a->r)
-#define AD(a) (a->d)
-#define AV(a) (a->p)
-enum type {
-    INT, BOX, SYMB, CHAR, DBL,
-};
-struct a nullob = {.r=1};
+typedef struct a{I t, r,d[3], p[2];}*A;
+#define AT(a) ((a)->t)
+#define AR(a) ((a)->r)
+#define AD(a) ((a)->d)
+#define AV(a) ((a)->p)
+enum type { INT, BOX, SYMB, CHAR, DBL, };
+struct a nullob;
 A null = &nullob;
+
+A newsymb(C *s,I n);
 
 #define P printf
 #define R return
@@ -147,16 +145,16 @@ A null = &nullob;
     _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
     _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
     _( POUND,     MODE1('}'), 1, "}", ESC(n)"}""\xE" ) \
-    _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
+    _( CENT,      MODE1('e'), 1, "e", ESC(o)"\"""\xE" ) \
+    _( YEN,       MODE1('d'), 1, "d", ESC(o)"%""\xE" ) \
     _( HBAR0,     MODE1('o'), 1, "o", ESC(n)"o""\xE" ) \
     _( HBAR1,     MODE1('p'), 1, "p", ESC(n)"p""\xE" ) \
     _( HBAR3,     MODE1('q'), 1, "q", ESC(n)"q""\xE" ) \
     _( HBAR4,     MODE1('r'), 1, "r", ESC(n)"r""\xE" ) \
     _( HBAR5,     MODE1('s'), 1, "s", ESC(n)"s""\xE" ) \
-    _( JUNCM,     MODE1('w'), 1, "w", ESC(n)"w""\xE" ) \
-    _( JUNCF,     MODE1('t'), 1, "t", ESC(n)"t""\xE" ) \
+    _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
     _( LESSEQUAL, MODE1('y'), 1, "y", ESC(n)"y""\xE" ) \
-    _( THREEJUNC, MODE1('u'), 1, "u", ESC(n)"u""\xE" ) \
+    _( MOREEQUAL, MODE1('z'), 1, "z", ESC(n)"z""\xE" ) \
     _( GRAYBOX,   MODE1('a'), 1, "a", ESC(n)"a""\xE" ) \
     _( DEGREE,    MODE1('f'), 1, "f", ESC(n)"f""\xE" ) \
     _( HT,        '\x9', 0, "\t", ESC(n)"b""\xE" ) \
@@ -165,28 +163,28 @@ A null = &nullob;
     _( VT,        '\xb', 0, "\v", ESC(n)"i""\xE" ) \
     _( FF,        '\xc', 0, "\f", ESC(n)"c""\xE" ) \
     _( CR,        '\xd', 0, "\r", ESC(n)"d""\xE" ) \
+    _( JUNCL,     MODE1('m'), 1, "m", ESC(n)"m""\xE" ) \
     _( JUNCJ,     MODE1('j'), 1, "j", ESC(n)"j""\xE" ) \
     _( JUNCK,     MODE1('k'), 1, "k", ESC(n)"k""\xE" ) \
     _( JUNCR,     MODE1('l'), 1, "l", ESC(n)"l""\xE" ) \
-    _( MOREEQUAL, MODE1('z'), 1, "z", ESC(n)"z""\xE" ) \
     _( VBAR,      MODE1('x'), 1, "x", ESC(n)"x""\xE" ) \
-    _( JUNCW,     MODE1('v'), 1, "v", ESC(n)"v""\xE" ) \
+    _( JUNCF,     MODE1('t'), 1, "t", ESC(n)"t""\xE" ) \
+    _( JUNC3,     MODE1('u'), 1, "u", ESC(n)"u""\xE" ) \
     _( JUNCT,     MODE1('n'), 1, "n", ESC(n)"n""\xE" ) \
-    _( JUNCL,     MODE1('m'), 1, "m", ESC(n)"m""\xE" ) \
+    _( JUNCM,     MODE1('w'), 1, "w", ESC(n)"w""\xE" ) \
+    _( JUNCW,     MODE1('v'), 1, "v", ESC(n)"v""\xE" ) \
     /* ALPHA_NAME base       ext input output */ \
     _( INVEXCL,   MODE1('!'), 1, "!", ESC(o)"!""\xE" ) /* "uk" chars patch */ \
+    _( INVQUEST,  MODE1('?'), 1, "?", ESC(o)"?""\xE" ) \
     _( GUILLEFT,  MODE1('<'), 1, "<", ESC(o)"+""\xE" ) \
     _( GUILRIGHT, MODE1('>'), 1, ">", ESC(o)";""\xE" ) \
     _( COMPL,     MODE1('^'), 1, "^", ESC(o)",""\xE" ) \
     _( HIMINUS,   MODE1('_'), 1, "_", ESC(o)"/""\xE" ) \
     _( TIMES,     MODE1('*'), 1, "*", ESC(o)"W""\xE" ) \
     _( DIVIDE,    MODE1('/'), 1, "/", ESC(o)"w""\xE" ) \
-    _( INVQUEST,  MODE1('?'), 1, "?", ESC(o)"?""\xE" ) \
     _( CDOT,      MODE1('.'), 1, ".", ESC(o)"7""\xE" ) \
     _( HYPHEN,    MODE1('-'), 1, "-", ESC(o)"-""\xE" ) \
-    _( CENT,      MODE1('e'), 1, "e", ESC(o)"\"""\xE" ) \
     _( BUTTON,    MODE1('i'), 1, "i", ESC(o)"$""\xE" ) \
-    _( YEN,       MODE1('d'), 1, "d", ESC(o)"%""\xE" ) \
     _( SECTION,   MODE1('h'), 1, "h", ESC(o)"'""\xE" ) \
     _( PRIME,     MODE1('\''), 1, "'", ESC(o)"4""\xE" ) \
     _( TWODOTS,   MODE1('"'), 1, "\"", ESC(o)"(""\xE" ) \
@@ -291,22 +289,18 @@ A null = &nullob;
     /* ALPHA_NAME base      ext input output */ \
     _( NULLCHAR, 0, 0, 0, 0 )
 #define ALPHATAB_ENT(a,...) {__VA_ARGS__},
-struct alpha {
-    int base; int ext; char *input; char *output;
-} alphatab[] = { ALPHATAB(ALPHATAB_ENT) };
+struct alpha{int base;int ext;char*input;char*output;}alphatab[]={ALPHATAB(ALPHATAB_ENT)};
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
 enum alphaname { ALPHATAB(ALPHATAB_NAME) };
 
-int inputtobase (int c, int mode){
-    int i;
+int inputtobase (int c, int mode){ int i;
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
         if (c==*alphatab[i].input && mode==alphatab[i].ext)
             return alphatab[i].base;
     return mode? MODE1(c): c;
     //return c | mode << 7;
 }
-char *basetooutput (int c){
-    int i;
+char *basetooutput (int c){ int i;
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
         if (c==alphatab[i].base)
             return alphatab[i].output;
@@ -387,9 +381,7 @@ void specialtty(){ tcgetattr(0,&tm);
 }
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
-C * getln(C *prompt, C **s, int *len){
-    int mode = 0;
-    C *p;
+C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
     if (prompt) fputs(prompt,stdout);
     if (!*s) *s = malloc(*len=256);
     p = *s;
@@ -445,11 +437,10 @@ err:
     return p==*s?NULL:*s;
 }
 
-I *ma(n){R(I*)malloc(n*4);}
-mv(d,s,n)I *d,*s;{DO(n,d[i]=s[i]);}
-tr(r,d)I *d;{I z=1;DO(r,z=z*d[i]);R z;}
-A ga(t,r,d)I *d;{A z=(A)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);
- R z;}
+I *ma(I n){R(I*)malloc(n*4);}
+void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
+I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
+A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);R z;}
 
 ps(A i){P("%s",(char*)AV(i));}
 pc(i){P("%s",basetooutput(i));}
@@ -504,9 +495,7 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
         _( COMMA,     ALPHA_COMMA,     0,    cat       ) \
         _( NULLFUNC,         0,        0,    0 ) 
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
-struct {
-    I c; A (*vm)(); A (*vd)();
-} op[] = { VERBTAB(VERBTAB_ENT) };
+struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };
 
@@ -519,49 +508,133 @@ enum { VERBTAB(VERBTAB_NAME) };
 struct st { A a; struct st *tab[52]; } st; /* symbol-table */
 
 char *alph=ALPHAUPPER ALPHALOWER; /* symbol-table collation-ordered set */
-/*  mode 0: search trie for longest-prefix match. ret root on fail. update input string
-    mode 1: search and allocate. update input string */
+/*  mode 0: search trie for longest-prefix match.
+        ret root on fail (val=null).
+        update input string point to remainder (no change on fail).
+    mode 1: search and allocate.
+        ret new leaf node (val=null).
+        update input string.  */
 struct st *findsymb(struct st *st, char **s, int mode) {
     int code;
+    struct st *last = st;
+    char *lasp = *s;
     while(isalpha(**s)){
         code = strchr(alph,**s)-alph;
         if (st->tab[code]){
             st=st->tab[code];
             (*s)++;
+            if (st->a!=null){
+                last = st;
+                lasp = *s;
+            }
         } else
             switch(mode){
-            case 0: goto breakwhile; //prefix search
-            case 1: //defining search
-                    st->tab[code] = malloc(sizeof(struct st));
+            case 0:             //prefix search
+                    *s = lasp;
+                    return last;
+            case 1:             //defining search
+                    st->tab[code] = calloc(1,sizeof(struct st));
+                    st->a=null;
                     st=st->tab[code];
                     (*s)++;
                     break;
             }
 
     }
-breakwhile:
-    return st;
+    return st; 
 }
 
-//qp(a){R !(a&(1<<7)) && isalpha(abs(a)&127); }
-qp(A a){R AT(a)==SYMB;}
-qv(a){R 0<=abs(a) && abs(a)<'a' && abs(a)<(sizeof op/sizeof*op);}
-A ex(e)I *e;{I a=*e;
-    int i;for(i=0;e[i];i++)pr((A)e[i]);
+qa(a){R 1;}
+qp(a){R abs(a)>256 && AT(((A)a))==SYMB;}
+qn(a){R abs(a)>256 && AT(((A)a))!=SYMB;}
+qv(a){R 0<=abs(a)
+     && abs(a)<'a'
+     && abs(a)<(sizeof op/sizeof*op)
+     && (op[a].vm || op[a].vd);}
+
+#if 0
+
+I(*q[])() = { qa, qp, qn, qv };
+int classify(A a){ int i,v,r;
+    for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)
+        if(q[i](a)) r |= v;
+    R r;}
+
+#define PARSETAB(_) \
+    _(SUBST, 0, 0, 0) \
+    _(NOACT, 0, 0, 0)
+#define PARSETAB_ENT(name, ...) { __VA_ARGS__ },
+struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_ENT) };
+#define PARSETAB_ACTION(name, ...) name,
+enum { PARSETAB(PARSETAB_ACTION) };
+
+typedef struct stack { int top; A a[1]; } stack;
+#define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
+#define stackpop(stkp) ((stkp)->a[--(stkp)->top])
+
+#endif
+
+A ex(I *e){I a=*e;
+
+#if 0
+    int i,j,n; stack *lstk,*rstk;
+    //for(i=0;e[i];i++)pr((A)e[i]);
+    for(i=0,j=0;e[i];i++)if(qp(e[i]))j+=AD(((A)e[i]))[0];
+    n=i;
+    lstk=malloc(sizeof*lstk + (i+j)*sizeof(A));
+    lstk->top = 0;
+    for(i=0;i<n;i++) stackpush(lstk,((A)e[i])); //push to lstk
+    rstk=malloc(sizeof*rstk + (i+j)*sizeof(A));
+    rstk->top = 0;
+    while(lstk->top){ //push to rstk
+        a=(I)stackpop(lstk);
+        if(qp(a)){ //parse defined names now
+            if (rstk->top && ((I)rstk->a[rstk->top-1])=='='){
+                stackpush(rstk,((A)a));
+            } else { char *s,*p; struct st *tab; A sa=(A)a;
+                s = p = (char*)AV(sa);
+                tab=findsymb(&st,&p,0);
+                while(*p){
+                    if (tab->a!=null){ // found a defined prefix
+                        stackpush(lstk,newsymb(s,p-s)); //pushback prefix
+                        s=p;
+                    }
+                    tab=findsymb(&st,&p,0);
+                }
+                stackpush(rstk,tab->a);
+            }
+        }else{stackpush(rstk,((A)a));}
+
+        if(rstk->top>=3){ I c[3];
+            for(j=0;j<3;j++)
+                c[j] = classify(rstk->a[rstk->top-j]);                
+            for(i=0;i<(sizeof parsetab/sizeof*parsetab);i++)
+                if( (c[0]&parsetab[i].c[0])
+                  &&(c[1]&parsetab[i].c[1])
+                  &&(c[2]&parsetab[i].c[2]) )
+                    switch(i){
+                    case SUBST: break;
+                    case NOACT: break;
+                    }
+        }
+    }
+#else
+
     if(!a)R null;
- if(qp((A)a)){
-     //char *s = (char[]){a, 0};
-     A sa = (A)a;
-     char *s = (char*)AV(sa);
-     //pr(sa);
-     if(e[1]=='='){
-         R (findsymb(&st, &s, 1)->a)=ex(e+2);
-     }
-     a=(I)(findsymb(&st, &s, 0)->a);
- }
- R qv(a)?(op[a].vm)(ex(e+1)):
-     e[1]?(op[e[1]].vd)(a,ex(e+2)):
-     (A)a;}
+    if(qp((A)a)){ A sa = (A)a; char *s = (char*)AV(sa); //char *s = (char[]){a, 0};
+        //pr(sa);
+        //P("%d %d\n",e[1],ALPHA_EQUAL);
+        if(e[1]=='='){
+            R (findsymb(&st, &s, 1)->a)=ex(e+2);
+        }
+        a=(I)(findsymb(&st, &s, 0)->a);
+    }
+    R qv(a)?(op[a].vm)(ex(e+1)):
+        e[1]?(op[e[1]].vd)(a,ex(e+2)):
+        (A)a;
+#endif
+
+}
 
 verb(c){I i=0;
     for(;op[++i].c;)
@@ -578,7 +651,7 @@ A newsymb(C *s,I n){
         R z;
     } else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
         A z=ga(SYMB,1,(I[]){n+1});
-        mv(AV(z),s,n+3/4);
+        mv(AV(z),(I*)s,n+3/4);
         ((C*)AV(z))[n] = 0;
         R z;
     } else {
@@ -644,6 +717,7 @@ I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
 #endif
 
 int main(){C *s=NULL;int n=0;C *prompt="\t";
+    st.a = null; /* initialize symbol table root value */
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
