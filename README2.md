@@ -630,3 +630,5 @@ I've made use of this in the icecream program.
 
 The `x` function takes a string, prints a blank line, then the string, then executes the string and prints the result. It combines the blank-line and string into one object but sequences the printing and execution using the dummy-lambda described here.
 
+Aha! According to *Anatomy of Lisp*, this is a well-known technique for implementing *prog2* with a lambda for sequencing.
+
