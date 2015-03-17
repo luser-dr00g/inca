@@ -36,6 +36,7 @@ A newsymb(C *s,I n);
 
 /* ALPHA_NAME base ext input output */
 #define ALPHATAB(_) \
+    _( SPACE, ' ', 0, " ", " " ) \
     _( a, 'a', 0, "a", "a" ) /* basic latin alphabet */ \
     _( b, 'b', 0, "b", "b" ) \
     _( c, 'c', 0, "c", "c" ) \
@@ -506,7 +507,7 @@ enum { VERBTAB(VERBTAB_NAME) };
 #define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
 #define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DIGIT "0123456789"
-#define SPACE " \t\n"
+#define SPACE " \t"
 #define ZEROCL ""
 
 struct st { A a; struct st *tab[52]; } st; /* symbol-table */
@@ -712,8 +713,14 @@ A newsymb(C *s,I n){
     I t;
     //P("%d\n",n);DO(n,P("%c",s[i]))P("\n");
     if(strchr(DIGIT,*s)) {
+        char *end;
         A z=ga(INT,0,0);
-        *AV(z)=strtol(s,NULL,10);
+        *AV(z)=strtol(s,&end,10);
+        while(((C*)end-s) < n){
+            A r=ga(INT,0,0);
+            *AV(r)=strtol(end,&end,10);
+            z=cat(z,r);
+        }
         R z;
     } else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
         A z=ga(SYMB,1,(I[]){n+1});
@@ -729,11 +736,11 @@ A newsymb(C *s,I n){
 char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
 int wdtab[][4] = {
     /*char-class*/
-    /*0     a     d     s*/    /* state  */
-    { 30+2, 20+2, 10+2, 0+0 }, /* init   */
-    { 30+1, 20+1, 10+0, 0+1 }, /* number */
-    { 30+1, 20+0, 10+1, 0+1 }, /* name   */
-    { 30+1, 20+1, 10+1, 0+1 }, /* other  */
+    /*0     a     d      s*/    /* state  */
+    { 30+2, 20+2, 10+2,  0+0 }, /* init   */
+    { 30+1, 20+1, 10+0, 10+0 }, /* number */
+    { 30+1, 20+0, 10+1,  0+1 }, /* name   */
+    { 30+1, 20+1, 10+1,  0+1 }, /* other  */
     /*{newstate+action,...}*/
 };
 
