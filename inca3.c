@@ -155,8 +155,12 @@ A newsymb(C *s,I n);
     _( HBAR4,     MODE1('r'), 1, "r", ESC(n)"r""\xE" ) \
     _( HBAR5,     MODE1('s'), 1, "s", ESC(n)"s""\xE" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
-    _( LESSEQUAL, MODE1('y'), 1, "y", ESC(n)"y""\xE" ) \
-    _( MOREEQUAL, MODE1('z'), 1, "z", ESC(n)"z""\xE" ) \
+    _( LESS,            '<',  1, "#", "<" ) \
+    _( LESSEQUAL, MODE1('$'), 1, "$", ESC(n)"y""\xE" ) \
+    _( EQALT,           '=',  1, "%", "=" ) \
+    _( MOREEQUAL, MODE1('^'), 1, "^", ESC(n)"z""\xE" ) \
+    _( MORE,            '>',  1, "&", ">" ) \
+    _( EQSLASH,   MODE1('*'), 1, "*", ESC(n)"|""\xE" ) \
     _( GRAYBOX,   MODE1('a'), 1, "a", ESC(n)"a""\xE" ) \
     _( DEGREE,    MODE1('f'), 1, "f", ESC(n)"f""\xE" ) \
     _( HT,        '\x9', 0, "\t", ESC(n)"b""\xE" ) \
@@ -172,9 +176,9 @@ A newsymb(C *s,I n);
     _( VBAR,      MODE1('x'), 1, "x", ESC(n)"x""\xE" ) \
     _( JUNCF,     MODE1('t'), 1, "t", ESC(n)"t""\xE" ) \
     _( JUNC3,     MODE1('u'), 1, "u", ESC(n)"u""\xE" ) \
-    _( JUNCT,     MODE1('n'), 1, "n", ESC(n)"n""\xE" ) \
-    _( JUNCM,     MODE1('w'), 1, "w", ESC(n)"w""\xE" ) \
-    _( JUNCW,     MODE1('v'), 1, "v", ESC(n)"v""\xE" ) \
+    _( JUNCT,     MODE1('w'), 1, "w", ESC(n)"n""\xE" ) \
+    _( JUNCM,     MODE1('n'), 1, "n", ESC(n)"w""\xE" ) \
+    _( JUNCW,     MODE1('b'), 1, "b", ESC(n)"v""\xE" ) \
     /* ALPHA_NAME base       ext input output */ \
     _( INVEXCL,   MODE1('!'), 1, "!", ESC(o)"!""\xE" ) /* "uk" chars patch */ \
     _( INVQUEST,  MODE1('?'), 1, "?", ESC(o)"?""\xE" ) \
@@ -182,7 +186,7 @@ A newsymb(C *s,I n);
     _( GUILRIGHT, MODE1('>'), 1, ">", ESC(o)";""\xE" ) \
     _( COMPL,     MODE1('^'), 1, "^", ESC(o)",""\xE" ) \
     _( HIMINUS,   MODE1('_'), 1, "_", ESC(o)"/""\xE" ) \
-    _( TIMES,     MODE1('*'), 1, "*", ESC(o)"W""\xE" ) \
+    _( TIMES,     MODE1('='), 1, "=", ESC(o)"W""\xE" ) \
     _( DIVIDE,    MODE1('/'), 1, "/", ESC(o)"w""\xE" ) \
     _( CDOT,      MODE1('.'), 1, ".", ESC(o)"7""\xE" ) \
     _( HYPHEN,    MODE1('-'), 1, "-", ESC(o)"-""\xE" ) \
@@ -191,19 +195,18 @@ A newsymb(C *s,I n);
     _( PRIME,     MODE1('\''), 1, "'", ESC(o)"4""\xE" ) \
     _( TWODOTS,   MODE1('"'), 1, "\"", ESC(o)"(""\xE" ) \
     _( CIRCC,     MODE1('c'), 1, "c", ESC(o)")""\xE" ) \
-    _( ZEROSLASH, MODE1('b'), 1, "b", ESC(o)"X""\xE" ) \
+    _( ZEROSLASH, MODE1('v'), 1, "v", ESC(o)"X""\xE" ) \
     _( OBAR,      MODE1(';'), 1, ";", ESC(o)":""\xE" ) \
     /* ALPHA_NAME base       ext input output */ \
-    _( EQSLASH,   MODE1('='), 1, "=", ESC(n)"|""\xE" ) \
     _( PARAGRAPH, MODE1(','), 1, ",", ESC(o)"6""\xE" ) \
     _( BARA,      MODE1('@'), 1, "@", ESC(o)"*""\xE" ) \
     _( CIRCR,     MODE1('#'), 1, "#", ESC(o)".""\xE" ) \
     _( MU,        MODE1('$'), 1, "$", ESC(o)"5""\xE" ) \
-    _( COLONBAR,  MODE1('%'), 1, "%", ESC(o)"w""\xE" ) \
+    _( COLONBAR,  MODE1('+'), 1, "+", ESC(o)"w""\xE" ) \
     _( DEL,       MODE1('&'), 1, "&", ESC(o)"P""\xE" ) \
     _( SUPONE,    MODE1('('), 1, "(", ESC(o)"9""\xE" ) \
     _( SUPTWO,    MODE1(')'), 1, ")", ESC(o)"2""\xE" ) \
-    _( SUPTHREE,  MODE1('+'), 1, "+", ESC(o)"1""\xE" ) \
+    /*_( SUPTHREE,  MODE1('+'), 1, "+", ESC(o)"1""\xE" )*/ \
     _( a1, 'a', 1, "a", "a" ) /* fallback: basic latin alphabet */ \
     _( b1, 'b', 1, "b", "b" ) \
     _( c1, 'c', 1, "c", "c" ) \
@@ -325,7 +328,7 @@ void specialtty(){ tcgetattr(0,&tm);
             ESC(o)"\n", stdout);
 #endif
 
-#if 0
+#if 1
     //show the various alternate charsets available in xterm vt220 mode
     fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     //fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //these 2 are not interesting
@@ -552,7 +555,7 @@ qv(a){R 0<=abs(a)
      && abs(a)<'a'
      && abs(a)<(sizeof op/sizeof*op)
      && (op[a].vm || op[a].vd);}
-qc(a){R a=='=';}
+qc(a){R a==MODE1('<');}
 qm(a){R ((A)a)==mark;}
 ql(a){R a=='(';}
 qr(a){R a==')';}
@@ -597,19 +600,19 @@ A ex(I *e){I a=*e;
     for(i=0;i<n;i++) stackpush(lstk,((A)e[i])); //push to lstk
     rstk=malloc(sizeof*rstk + (1+i+j)*sizeof(A));
     rstk->top = 0;
-    stackpush(rstk,mark);
+    stackpush(rstk,null);
     while(lstk->top){ //push to rstk
         //for(i=0;i<lstk->top;i++)pr(lstk->a[i]); fflush(0);
         //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
         a=(I)stackpop(lstk);
-        if(qp(a)){ //parse defined names now
-            if (rstk->top && ((I)rstk->a[rstk->top-1])=='='){
+        if(qp(a)){                              //parse defined names now
+            if (rstk->top && qc((I)rstk->a[rstk->top-1])){
                 stackpush(rstk,((A)a));
             } else { char *s,*p; struct st *tab; A sa=(A)a;
                 s = p = (char*)AV(sa);
                 tab=findsymb(&st,&p,0);
                 while(*p){
-                    if (tab->a!=null){ // found a defined prefix
+                    if (tab->a!=null){          // found a defined prefix
                         stackpush(lstk,newsymb(s,p-s)); //pushback prefix
                         s=p;
                     }
@@ -677,14 +680,17 @@ A ex(I *e){I a=*e;
     }
     //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
     stackpop(rstk); //mark
-    R stackpop(rstk);
+    a = (I)stackpop(rstk);
+    free(rstk);
+    free(lstk);
+    R (A)a;
 #else
 
     if(!a)R null;
     if(qp((A)a)){ A sa = (A)a; char *s = (char*)AV(sa); //char *s = (char[]){a, 0};
         //pr(sa);
         //P("%d %d\n",e[1],ALPHA_EQUAL);
-        if(e[1]=='='){
+        if(qc(e[1])){
             R (findsymb(&st, &s, 1)->a)=ex(e+2);
         }
         a=(I)(findsymb(&st, &s, 0)->a);
