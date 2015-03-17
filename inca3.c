@@ -12,9 +12,11 @@ typedef struct a{I t, r,d[3], p[2];}*A;
 #define AR(a) ((a)->r)
 #define AD(a) ((a)->d)
 #define AV(a) ((a)->p)
-enum type { INT, BOX, SYMB, CHAR, DBL, };
+enum type { INT, BOX, SYMB, CHAR, DBL, MRK, };
 struct a nullob;
 A null = &nullob;
+struct a markob = { MRK };
+A mark = &markob;
 
 A newsymb(C *s,I n);
 
@@ -452,16 +454,15 @@ pr(A w){
     else {
         I r=AR(w),*d=AD(w),n=tr(r,d);
         if(w==null)R 0;
-        DO(r,pi(d[i]));
-        nl();
+        //DO(r,pi(d[i])); nl();
         if(AT(w)==1)
             DO(n,P("< ");pr((A)(AV(w)[i])))
         else if(AT(w)==SYMB)
             ps(w);
         else
             DO(n,pi(AV(w)[i]));
-        nl();
     }
+    nl();
 }
 
 V1(copy){I n=tr(AR(w),AD(w)); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
@@ -551,18 +552,28 @@ qv(a){R 0<=abs(a)
      && abs(a)<'a'
      && abs(a)<(sizeof op/sizeof*op)
      && (op[a].vm || op[a].vd);}
+qc(a){R a=='=';}
+qm(a){R ((A)a)==mark;}
+ql(a){R a=='(';}
+qr(a){R a==')';}
 
-#if 0
 
-I(*q[])() = { qa, qp, qn, qv };
-int classify(A a){ int i,v,r;
+I(*q[])() = { qa, qp, qn, qv, qc, qm, ql, qr };
+enum { ANY=1, VAR=2, NOUN=4, VERB=8, ASSN=16, MARK=32, LPAR=64, RPAR=128 };
+enum { EDGE = MARK+ASSN+LPAR };
+int classify(A a){ int i,v,r;  /* encode predicate applications into a binary number */
     for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)
         if(q[i](a)) r |= v;
     R r;}
 
 #define PARSETAB(_) \
-    _(SUBST, 0, 0, 0) \
-    _(NOACT, 0, 0, 0)
+    /*ACTION PAT1  PAT2  PAT3  PAT4*/ \
+    _(MONA,  EDGE, VERB, NOUN, ANY  ) \
+    _(MONB,  EDGE, VERB, VERB, NOUN ) \
+    _(DYAD,  EDGE, NOUN, VERB, NOUN ) \
+    _(SPEC,  VAR,  ASSN, ANY,  ANY  ) \
+    _(PUNC,  LPAR, ANY,  RPAR, ANY  ) \
+    _(NOACT, 0, 0, 0, 0)
 #define PARSETAB_ENT(name, ...) { __VA_ARGS__ },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_ENT) };
 #define PARSETAB_ACTION(name, ...) name,
@@ -572,21 +583,24 @@ typedef struct stack { int top; A a[1]; } stack;
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--(stkp)->top])
 
-#endif
 
 A ex(I *e){I a=*e;
 
-#if 0
+#if 1
     int i,j,n; stack *lstk,*rstk;
     //for(i=0;e[i];i++)pr((A)e[i]);
     for(i=0,j=0;e[i];i++)if(qp(e[i]))j+=AD(((A)e[i]))[0];
     n=i;
-    lstk=malloc(sizeof*lstk + (i+j)*sizeof(A));
+    lstk=malloc(sizeof*lstk + (1+i+j)*sizeof(A));
     lstk->top = 0;
+    stackpush(lstk,mark);
     for(i=0;i<n;i++) stackpush(lstk,((A)e[i])); //push to lstk
-    rstk=malloc(sizeof*rstk + (i+j)*sizeof(A));
+    rstk=malloc(sizeof*rstk + (1+i+j)*sizeof(A));
     rstk->top = 0;
+    stackpush(rstk,mark);
     while(lstk->top){ //push to rstk
+        //for(i=0;i<lstk->top;i++)pr(lstk->a[i]); fflush(0);
+        //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
         a=(I)stackpop(lstk);
         if(qp(a)){ //parse defined names now
             if (rstk->top && ((I)rstk->a[rstk->top-1])=='='){
@@ -605,19 +619,65 @@ A ex(I *e){I a=*e;
             }
         }else{stackpush(rstk,((A)a));}
 
-        if(rstk->top>=3){ I c[3];
-            for(j=0;j<3;j++)
-                c[j] = classify(rstk->a[rstk->top-j]);                
-            for(i=0;i<(sizeof parsetab/sizeof*parsetab);i++)
+        if(rstk->top>=4){ I c[4];  //enough elements to check?
+            for(j=0;j<4;j++)
+                c[j] = classify(rstk->a[rstk->top-1-j]);  //summarize attributes
+            for(i=0;i<(sizeof parsetab/sizeof*parsetab);i++)  //match against table
                 if( (c[0]&parsetab[i].c[0])
                   &&(c[1]&parsetab[i].c[1])
-                  &&(c[2]&parsetab[i].c[2]) )
+                  &&(c[2]&parsetab[i].c[2])
+                  &&(c[3]&parsetab[i].c[3]) )
                     switch(i){
-                    case SUBST: break;
-                    case NOACT: break;
+                    case MONA: {
+                                   A edg,vrb,nom;
+                                   edg=stackpop(rstk);
+                                   vrb=stackpop(rstk);
+                                   nom=stackpop(rstk);
+                                   stackpush(rstk,op[(I)vrb].vm(nom));
+                                   stackpush(rstk,edg);
+                               } break;
+                    case MONB: {
+                                   A edg,vb1,vb2,nom;
+                                   edg=stackpop(rstk);
+                                   vb1=stackpop(rstk);
+                                   vb2=stackpop(rstk);
+                                   nom=stackpop(rstk);
+                                   stackpush(rstk,op[(I)vb2].vm(nom));
+                                   stackpush(rstk,vb1);
+                                   stackpush(rstk,edg);
+                               } break;
+                    case DYAD: {
+                                   A edg,nm1,vrb,nm2;
+                                   edg=stackpop(rstk);
+                                   nm1=stackpop(rstk);
+                                   vrb=stackpop(rstk);
+                                   nm2=stackpop(rstk);
+                                   stackpush(rstk,op[(I)vrb].vd(nm1,nm2));
+                                   stackpush(rstk,edg);
+                               } break;
+                    case SPEC: {
+                                   A var,any;
+                                   char *s;
+                                   var=stackpop(rstk);
+                                   stackpop(rstk);
+                                   any=stackpop(rstk);
+                                   s = (char*)AV(var);
+                                   findsymb(&st,&s,1)->a=any;
+                                   stackpush(rstk,any);
+                               } break;
+                    case PUNC: {
+                                   A any;
+                                   stackpop(rstk);
+                                   any=stackpop(rstk);
+                                   stackpop(rstk);
+                                   stackpush(rstk,any);
+                               } break;
                     }
         }
     }
+    //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
+    stackpop(rstk); //mark
+    R stackpop(rstk);
 #else
 
     if(!a)R null;
@@ -668,6 +728,7 @@ int wdtab[][4] = {
     { 30+1, 20+1, 10+0, 0+1 }, /* number */
     { 30+1, 20+0, 10+1, 0+1 }, /* name   */
     { 30+1, 20+1, 10+1, 0+1 }, /* other  */
+    /*{newstate+action,...}*/
 };
 
 #define emit(a,b) (*z++=(I)newsymb(s+a,(b)-a)); 
