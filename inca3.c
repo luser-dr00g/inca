@@ -560,23 +560,27 @@ qc(a){R a==MODE1('<');}
 qm(a){R ((A)a)==mark;}
 ql(a){R a=='(';}
 qr(a){R a==')';}
+qu(a){R ((A)a)==null;}
 
 
-I(*q[])() = { qa, qp, qn, qv, qc, qm, ql, qr };
-enum { ANY=1, VAR=2, NOUN=4, VERB=8, ASSN=16, MARK=32, LPAR=64, RPAR=128 };
-enum { EDGE = MARK+ASSN+LPAR };
+I(*q[])() = { qa, qp, qn, qv, qc, qm, ql, qr, qu };
+enum { ANY=1, VAR=2, NOUN=4, VERB=8, ASSN=16, MARK=32, LPAR=64, RPAR=128, NULP=256 };
+enum { EDGE = MARK+ASSN+LPAR,
+        AVN = VERB+NOUN };
 int classify(A a){ int i,v,r;  /* encode predicate applications into a binary number */
     for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)
         if(q[i](a)) r |= v;
     R r;}
 
 #define PARSETAB(_) \
-    /*ACTION PAT1  PAT2  PAT3  PAT4*/ \
-    _(MONA,  EDGE, VERB, NOUN, ANY  ) \
-    _(MONB,  EDGE, VERB, VERB, NOUN ) \
-    _(DYAD,  EDGE, NOUN, VERB, NOUN ) \
-    _(SPEC,  VAR,  ASSN, ANY,  ANY  ) \
-    _(PUNC,  LPAR, ANY,  RPAR, ANY  ) \
+    /*ACTION PAT1      PAT2  PAT3  PAT4*/ \
+    _(MONA,  EDGE,     VERB, NOUN, ANY  ) \
+    _(MONB,  EDGE+AVN, VERB, VERB, NOUN ) \
+    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN ) \
+    _(SPEC,  VAR,      ASSN, AVN,  ANY  ) \
+    _(PUNC,  LPAR,     ANY,  RPAR, ANY  ) \
+    _(FAKL,  MARK,     ANY,  RPAR, ANY  ) \
+    _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP ) \
     _(NOACT, 0, 0, 0, 0)
 #define PARSETAB_ENT(name, ...) { __VA_ARGS__ },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_ENT) };
@@ -590,7 +594,8 @@ typedef struct stack { int top; A a[1]; } stack;
 
 A ex(I *e){I a=*e;
 
-    int i,j,n; stack *lstk,*rstk;
+    int i,j,n,docheck;
+    stack *lstk,*rstk;
     //for(i=0;e[i];i++)pr((A)e[i]);
     for(i=0,j=0;e[i];i++)if(qp(e[i]))j+=AD(((A)e[i]))[0];
     n=i;
@@ -622,69 +627,91 @@ A ex(I *e){I a=*e;
             }
         }else{stackpush(rstk,((A)a));}
 
-        if(rstk->top>=4){ I c[4];  //enough elements to check?
-            for(j=0;j<4;j++)
-                c[j] = classify(rstk->a[rstk->top-1-j]);  //summarize attributes
-            for(i=0;i<(sizeof parsetab/sizeof*parsetab);i++)  //match against table
-                if( (c[0]&parsetab[i].c[0])
-                  &&(c[1]&parsetab[i].c[1])
-                  &&(c[2]&parsetab[i].c[2])
-                  &&(c[3]&parsetab[i].c[3]) )
-                    switch(i){
-                    case MONA: {
-                                   A edg,vrb,nom;
-                                   edg=stackpop(rstk);
-                                   vrb=stackpop(rstk);
-                                   nom=stackpop(rstk);
-                                   stackpush(rstk,op[(I)vrb].vm(nom));
-                                   stackpush(rstk,edg);
-                               } break;
-                    case MONB: {
-                                   A edg,vb1,vb2,nom;
-                                   edg=stackpop(rstk);
-                                   vb1=stackpop(rstk);
-                                   vb2=stackpop(rstk);
-                                   nom=stackpop(rstk);
-                                   stackpush(rstk,op[(I)vb2].vm(nom));
-                                   stackpush(rstk,vb1);
-                                   stackpush(rstk,edg);
-                               } break;
-                    case DYAD: {
-                                   A edg,nm1,vrb,nm2;
-                                   edg=stackpop(rstk);
-                                   nm1=stackpop(rstk);
-                                   vrb=stackpop(rstk);
-                                   nm2=stackpop(rstk);
-                                   stackpush(rstk,op[(I)vrb].vd(nm1,nm2));
-                                   stackpush(rstk,edg);
-                               } break;
-                    case SPEC: {
-                                   A var,any;
-                                   char *s;
-                                   var=stackpop(rstk);
-                                   stackpop(rstk);
-                                   any=stackpop(rstk);
-                                   s = (char*)AV(var);
-                                   findsymb(&st,&s,1)->a=any;
-                                   stackpush(rstk,any);
-                               } break;
-                    case PUNC: {
-                                   A any;
-                                   stackpop(rstk);
-                                   any=stackpop(rstk);
-                                   stackpop(rstk);
-                                   stackpush(rstk,any);
-                               } break;
+        docheck=1;
+        while(docheck) {
+            docheck=0;
+            if(rstk->top>=4){ I c[4];  //enough elements to check?
+                for(j=0;j<4;j++)
+                    c[j] = classify(rstk->a[rstk->top-1-j]);  //summarize attributes
+                for(i=0;i<(sizeof parsetab/sizeof*parsetab);i++) { //match against table
+                    if( (c[0]&parsetab[i].c[0])
+                      &&(c[1]&parsetab[i].c[1])
+                      &&(c[2]&parsetab[i].c[2])
+                      &&(c[3]&parsetab[i].c[3]) ) {
+                        docheck=1;
+                        switch(i){
+                        case MONA: {
+                                       A edg,vrb,nom;
+                                       edg=stackpop(rstk);
+                                       vrb=stackpop(rstk);
+                                       nom=stackpop(rstk);
+                                       stackpush(rstk,op[(I)vrb].vm(nom));
+                                       stackpush(rstk,edg);
+                                   } break;
+                        case MONB: {
+                                       A edg,vb1,vb2,nom;
+                                       edg=stackpop(rstk);
+                                       vb1=stackpop(rstk);
+                                       vb2=stackpop(rstk);
+                                       nom=stackpop(rstk);
+                                       stackpush(rstk,op[(I)vb2].vm(nom));
+                                       stackpush(rstk,vb1);
+                                       stackpush(rstk,edg);
+                                   } break;
+                        case DYAD: {
+                                       A edg,nm1,vrb,nm2;
+                                       edg=stackpop(rstk);
+                                       nm1=stackpop(rstk);
+                                       vrb=stackpop(rstk);
+                                       nm2=stackpop(rstk);
+                                       stackpush(rstk,op[(I)vrb].vd(nm1,nm2));
+                                       stackpush(rstk,edg);
+                                   } break;
+                        case SPEC: {
+                                       A var,any;
+                                       char *s;
+                                       var=stackpop(rstk);
+                                       stackpop(rstk);
+                                       any=stackpop(rstk);
+                                       s = (char*)AV(var);
+                                       findsymb(&st,&s,1)->a=any;
+                                       stackpush(rstk,any);
+                                   } break;
+                        case PUNC: {
+                                       A any;
+                                       stackpop(rstk);
+                                       any=stackpop(rstk);
+                                       stackpop(rstk);
+                                       stackpush(rstk,any);
+                                   } break;
+                        case FAKL: {
+                                       A any;
+                                       stackpop(rstk);
+                                       any=stackpop(rstk);
+                                       stackpop(rstk);
+                                       stackpush(rstk,any);
+                                       stackpush(rstk,mark);
+                                   } break;
+                        case FAKR: {
+                                       A edg;
+                                       edg=stackpop(rstk);
+                                       stackpop(rstk);
+                                       stackpush(rstk,edg);
+                                   } break;
+                        }
                     }
+                }
+            }
         }
+
     }
-    //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
+
+    for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
     stackpop(rstk); //mark
     a = (I)stackpop(rstk);
     free(rstk);
     free(lstk);
     R (A)a;
-
 }
 
 verb(c){I i=0;
