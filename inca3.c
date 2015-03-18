@@ -12,8 +12,8 @@ typedef struct a{I t, r,d[3], p[2];}*A;
 #define AR(a) ((a)->r)
 #define AD(a) ((a)->d)
 #define AV(a) ((a)->p)
-enum type { INT, BOX, SYMB, CHAR, DBL, MRK, };
-struct a nullob;
+enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL };
+struct a nullob = { NLL };
 A null = &nullob;
 struct a markob = { MRK };
 A mark = &markob;
@@ -448,27 +448,6 @@ void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
 A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);R z;}
 
-ps(A i){P("%s",(char*)AV(i));}
-pc(i){P("%s",basetooutput(i));}
-pi(i){P("%d ",i);}
-nl(){P("\n");}
-pr(A w){
-    if (abs((I)w)<256)
-        pc(w);
-    else {
-        I r=AR(w),*d=AD(w),n=tr(r,d);
-        if(w==null)R 0;
-        //DO(r,pi(d[i])); nl();
-        if(AT(w)==1)
-            DO(n,P("< ");pr((A)(AV(w)[i])))
-        else if(AT(w)==SYMB)
-            ps(w);
-        else
-            DO(n,pi(AV(w)[i]));
-    }
-    nl();
-}
-
 V1(copy){I n=tr(AR(w),AD(w)); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
 V2(plus){I r=AR(w),*d=AD(w),n=tr(r,d);A z=ga(0,r,d);
@@ -503,6 +482,28 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };
+
+ps(A i){P("%s",(char*)AV(i));}
+pv(i){P("%s",basetooutput(alphatab[op[i].c].base));}
+pc(i){qv(i)?pv(i):P("%s",basetooutput(i));}
+pi(i){P("%d ",i);}
+nl(){P("\n");}
+pr(A w){
+    if (abs((I)w)<256)
+        pc(w);
+    else {
+        I r=AR(w),*d=AD(w),n=tr(r,d);
+        if(w==null)R 0;
+        //DO(r,pi(d[i])); nl();
+        if(AT(w)==1)
+            DO(n,P("< ");pr((A)(AV(w)[i])))
+        else if(AT(w)==SYMB)
+            ps(w);
+        else
+            DO(n,pi(AV(w)[i]));
+    }
+    nl();
+}
 
 #define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
 #define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -706,7 +707,7 @@ A ex(I *e){I a=*e;
 
     }
 
-    for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
+    //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
     stackpop(rstk); //mark
     a = (I)stackpop(rstk);
     free(rstk);
