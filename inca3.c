@@ -590,7 +590,6 @@ typedef struct stack { int top; A a[1]; } stack;
 
 A ex(I *e){I a=*e;
 
-#if 1
     int i,j,n; stack *lstk,*rstk;
     //for(i=0;e[i];i++)pr((A)e[i]);
     for(i=0,j=0;e[i];i++)if(qp(e[i]))j+=AD(((A)e[i]))[0];
@@ -685,21 +684,6 @@ A ex(I *e){I a=*e;
     free(rstk);
     free(lstk);
     R (A)a;
-#else
-
-    if(!a)R null;
-    if(qp((A)a)){ A sa = (A)a; char *s = (char*)AV(sa); //char *s = (char[]){a, 0};
-        //pr(sa);
-        //P("%d %d\n",e[1],ALPHA_EQUAL);
-        if(qc(e[1])){
-            R (findsymb(&st, &s, 1)->a)=ex(e+2);
-        }
-        a=(I)(findsymb(&st, &s, 0)->a);
-    }
-    R qv(a)?(op[a].vm)(ex(e+1)):
-        e[1]?(op[e[1]].vd)(a,ex(e+2)):
-        (A)a;
-#endif
 
 }
 
@@ -772,23 +756,6 @@ I *wd(C *s){
     *z++=0;
     R e;}
 
-#if 0
-noun(c){A z;
-    if(c<'0'||c>'9')R 0;
-    z=ga(0,0,0);
-    *AV(z)=c-'0';
-    R (I)z;}
-
-I *wd(s)C *s;{I a,n=strlen(s),*e=ma(n+1);C c;
-    DO(n,e[i]=
-         (a=noun(c=s[i]))?
-         a:
-         (a=verb(c))?
-             a:
-             c)
-    e[n]=0;
-    R e;}
-#endif
 
 int main(){C *s=NULL;int n=0;C *prompt="\t";
     st.a = null; /* initialize symbol table root value */
