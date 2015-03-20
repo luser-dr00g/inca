@@ -146,3 +146,9 @@ and the stack-based algorithms described in *An Implementation of J*
 and *A Dictionary of APL*. So that one will be reimplemented to be
 table-based as well and probably to use true right-to-left semantics now.
 
+-- 
+
+Table-driven parser is written and working, including an extra
+*implicit-parens* feature. The assignment character has been changed to
+left-guillemot, accessed from the alternate keyboard `^n` `<` `^o`.
+
