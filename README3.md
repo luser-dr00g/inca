@@ -115,6 +115,8 @@ Since it works on with Cygwin's xorg server on Windows 8, I feel safe
 in assuming that this will be fairly-easily portable among modern
 unix/linux systems.
 
+The editor itself is guided by [The Craft of Text Editing](http://www.finseth.com/craft/craft.pdf) (4.98MB pdf).
+
 Again with vt220 codes, I've added an *alternate keyboard* full of
 crazy shapes and doodles collected from the vt220 line-drawing set
 and "uk" set. These have yet to be sensibly organized, but I have
