@@ -144,17 +144,8 @@ A newsymb(C *s,I n);
     _( RPAREN,          ')',  0, ")", ")" ) \
     /* ALPHA_NAME base      ext input output */ \
     _( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) /* xterm alt graphics chars */ \
-    _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
-    _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
-    _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
-    _( POUND,     MODE1('}'), 1, "}", ESC(n)"}""\xE" ) \
-    _( CENT,      MODE1('e'), 1, "e", ESC(o)"\"""\xE" ) \
-    _( YEN,       MODE1('d'), 1, "d", ESC(o)"%""\xE" ) \
-    _( HBAR0,     MODE1('o'), 1, "o", ESC(n)"o""\xE" ) \
-    _( HBAR1,     MODE1('p'), 1, "p", ESC(n)"p""\xE" ) \
-    _( HBAR3,     MODE1('q'), 1, "q", ESC(n)"q""\xE" ) \
-    _( HBAR4,     MODE1('r'), 1, "r", ESC(n)"r""\xE" ) \
-    _( HBAR5,     MODE1('s'), 1, "s", ESC(n)"s""\xE" ) \
+    _( HIMINUS,   MODE1('@'), 1, "@", ESC(o)"/""\xE" ) \
+    _( MACRON,    MODE1('@'), 1, "@", /*U+00af*/ "\xc2\xaf" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
     _( LESS,            '<',  1, "#", "<" ) \
     _( LESSEQUAL, MODE1('$'), 1, "$", ESC(n)"y""\xE" ) \
@@ -162,6 +153,22 @@ A newsymb(C *s,I n);
     _( MOREEQUAL, MODE1('^'), 1, "^", ESC(n)"z""\xE" ) \
     _( MORE,            '>',  1, "&", ">" ) \
     _( EQSLASH,   MODE1('*'), 1, "*", ESC(n)"|""\xE" ) \
+    _( QUEST,           '?',  1, "q", "?" ) \
+    _( OMEGA,     MODE1('w'), 1, "w", /*U+2375*/ "\xe2\x8d\xb5" ) \
+    _( EPSILON,   MODE1('e'), 1, "e", /*U+2208*/ "\xe2\x88\x88" ) \
+    _( RHO,       MODE1('r'), 1, "r", /*U+2374*/ "\xe2\x8d\xb4" ) \
+    _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
+    _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
+    _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
+    _( POUND,     MODE1('}'), 1, "}", ESC(n)"}""\xE" ) \
+    _( EURO,      MODE1('e'), 1, "e", "\xe2\x82\xac" ) \
+    _( CENT,      MODE1('e'), 1, "e", ESC(o)"\"""\xE" ) \
+    _( YEN,       MODE1('d'), 1, "d", ESC(o)"%""\xE" ) \
+    _( HBAR0,     MODE1('o'), 1, "o", ESC(n)"o""\xE" ) \
+    _( HBAR1,     MODE1('p'), 1, "p", ESC(n)"p""\xE" ) \
+    _( HBAR3,     MODE1('q'), 1, "q", ESC(n)"q""\xE" ) \
+    _( HBAR4,     MODE1('r'), 1, "r", ESC(n)"r""\xE" ) \
+    _( HBAR5,     MODE1('s'), 1, "s", ESC(n)"s""\xE" ) \
     _( GRAYBOX,   MODE1('a'), 1, "a", ESC(n)"a""\xE" ) \
     _( DEGREE,    MODE1('f'), 1, "f", ESC(n)"f""\xE" ) \
     _( HT,        '\x9', 0, "\t", ESC(n)"b""\xE" ) \
@@ -186,7 +193,6 @@ A newsymb(C *s,I n);
     _( GUILLEFT,  MODE1('<'), 1, "<", ESC(o)"+""\xE" ) \
     _( GUILRIGHT, MODE1('>'), 1, ">", ESC(o)";""\xE" ) \
     _( COMPL,     MODE1('^'), 1, "^", ESC(o)",""\xE" ) \
-    _( HIMINUS,   MODE1('_'), 1, "_", ESC(o)"/""\xE" ) \
     _( TIMES,     MODE1('='), 1, "=", ESC(o)"W""\xE" ) \
     _( DIVIDE,    MODE1('/'), 1, "/", ESC(o)"w""\xE" ) \
     _( CDOT,      MODE1('.'), 1, ".", ESC(o)"7""\xE" ) \
