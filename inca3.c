@@ -157,6 +157,15 @@ A newsymb(C *s,I n);
     _( OMEGA,     MODE1('w'), 1, "w", /*U+2375*/ "\xe2\x8d\xb5" ) \
     _( EPSILON,   MODE1('e'), 1, "e", /*U+2208*/ "\xe2\x88\x88" ) \
     _( RHO,       MODE1('r'), 1, "r", /*U+2374*/ "\xe2\x8d\xb4" ) \
+    _( TILDEOP,   MODE1('t'), 1, "t", /*U+223c*/ "\xe2\x88\xbe" ) \
+    _( UPARROW,   MODE1('y'), 1, "y", /*U+2191*/ "\xe2\x86\x91" ) \
+    _( DNARROW,   MODE1('u'), 1, "u", /*U+2193*/ "\xe2\x86\x93" ) \
+    _( IOTA,      MODE1('i'), 1, "i", /*U+2373*/ "\xe2\x8d\xb3" ) \
+    _( CIRCLE,    MODE1('o'), 1, "o", /*U+25cb*/ "\xe2\x97\x8b" ) \
+    _( STAROP,    MODE1('p'), 1, "p", /*U+22c6*/ "\xe2\x8b\x86" ) \
+    _( LTARROW,   MODE1('['), 1, "[", /*U+2190*/ "\xe2\x86\x90" ) \
+    _( RTARROW,   MODE1('{'), 1, "{", /*U+2192*/ "\xe2\x86\x92" ) \
+    _( ALPHA,     MODE1('a'), 1, "a", /*U+237a*/ "\xe2\x8d\xba" ) \
     _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
     _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
     _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
