@@ -7,12 +7,13 @@
 
 typedef unsigned char C;
 typedef intptr_t I;
-typedef struct a{I t, r, k, d[1];}*A; /* The abstract array header */
-#define AT(a) ((a)->t) /* Type */
-#define AR(a) ((a)->r) /* Rank (size of Dims) */
-#define AK(a) ((a)->k) /* Offest of ravel */
-#define AD(a) ((a)->d) /* Dims */
-#define AV(a) ((I*)(((C*)a)+AK(a))) /* Values in ravelled order */
+typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
+#define AT(a) ((a)->t)                   /* Type */
+#define AR(a) ((a)->r)                   /* Rank (size of Dims) */
+#define AN(a) ((a)->n)                   /* Number of values in ravel */
+#define AK(a) ((a)->k)                   /* Offest of ravel */
+#define AD(a) ((a)->d)                   /* Dims */
+#define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
 enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, NTYPES };
 struct a nullob = { NLL };
 A null = &nullob;
@@ -422,8 +423,8 @@ C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
                       c = fgetc(stdin);
                       switch(c){
                       case 'Z':
-                          c = '\v';
-                          *p++ = c;                   // save base in string
+                          c = '\v';       //convert shift-TAB to vertical tab
+                          *p++ = c;                    // save base in string
                           fputs(basetooutput(c),stdout);  // echo output form
                           break;
                       }
@@ -449,8 +450,8 @@ C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
                    break;
         default:
                  c = inputtobase(c,mode);    // convert to internal "base" form
-                 *p++ = c;                   // save base in string
-                 fputs(basetooutput(c),stdout);  // echo output form
+                 *p++ = c;                               // save base in string
+                 fputs(basetooutput(c),stdout);             // echo output form
                  break;
         }
     }
@@ -463,26 +464,26 @@ err:
 I *ma(I n){R(I*)malloc(n*4);}
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
-A ga(I t,I r,I*d){A z=(A)ma(sizeof*z+r+tr(r,d));
-    AT(z)=t;AR(z)=r;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
+A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
+    AT(z)=t;AR(z)=r;AN(z)=n;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
     mv(AD(z),d,r);R z;}
 
-V1(copy){I n=tr(AR(w),AD(w)); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
+V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
-V2(plus){I r=AR(w),*d=AD(w),n=tr(r,d);A z=ga(0,r,d);
+V2(plus){I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
  DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
 V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
  A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
 V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
-V2(cat){I an=tr(AR(a),AD(a)),wn=tr(AR(w),AD(w)),n=an+wn;
+V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
  A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
 V2(find){}
-V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=tr(AR(w),AD(w));
+V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
  A z=ga(AT(w),r,AV(a));mv(AV(z),AV(w),wn=n>wn?wn:n);
  if(n-=wn)mv(AV(z)+wn,AV(z),n);R z;}
 V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 V1(id){R w;}
-V1(neg){ A z=copy(w); DO(tr(AR(z),AD(z)),AV(z)[i]=-AV(z)[i]) R z;}
+V1(neg){ A z=copy(w); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
 V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 
@@ -511,7 +512,7 @@ pr(A w){
     if (abs((I)w)<256)
         pc(w);
     else {
-        I r=AR(w),*d=AD(w),n=tr(r,d);
+        I r=AR(w),*d=AD(w),n=AN(w);
         if(w==null)R 0;
         //DO(r,pi(d[i])); nl();
         if(AT(w)==1)
@@ -582,15 +583,25 @@ ql(a){R a=='(';}
 qr(a){R a==')';}
 qu(a){R ((A)a)==null;}
 
-
-I(*q[])() = { qa, qp, qn, qv, qc, qm, ql, qr, qu };
-enum { ANY=1, VAR=2, NOUN=4, VERB=8, ASSN=16, MARK=32, LPAR=64, RPAR=128, NULP=256 };
-enum { EDGE = MARK+ASSN+LPAR,
-        AVN = VERB+NOUN };
-int classify(A a){ int i,v,r;  /* encode predicate applications into a binary number */
-    for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)
-        if(q[i](a)) r |= v;
-    R r;}
+#define PREDTAB(_) \
+    _( ANY = 1,   qa) \
+    _( VAR = 2,   qp) \
+    _(NOUN = 4,   qn) \
+    _(VERB = 8,   qv) \
+    _(ASSN = 16,  qc) \
+    _(MARK = 32,  qm) \
+    _(LPAR = 64,  ql) \
+    _(RPAR = 128, qr) \
+    _(NULP = 256, qu)
+#define PRED_ENT(a,...) __VA_ARGS__ ,
+I(*q[])() = { PREDTAB(PRED_ENT) };
+#define PRED_ENUM(a,...) a ,
+enum predicate { PREDTAB(PRED_ENUM)
+                 EDGE = MARK+ASSN+LPAR,
+                 AVN = VERB+NOUN };
+/* encode predicate applications into a binary number, a bitset */
+int classify(A a){ int i,v,r;
+    for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i](a))r|=v; R r;}
 
 #define PARSETAB(_) \
     /*ACTION PAT1      PAT2  PAT3  PAT4*/ \
@@ -607,7 +618,7 @@ struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_ENT) };
 #define PARSETAB_ACTION(name, ...) name,
 enum { PARSETAB(PARSETAB_ACTION) };
 
-typedef struct stack { int top; A a[1]; } stack;
+typedef struct stack { int top; A a[1]; } stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--(stkp)->top])
 
