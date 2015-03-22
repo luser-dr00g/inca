@@ -405,7 +405,10 @@ void specialtty(){ tcgetattr(0,&tm);
 }
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
-C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
+C * getln(C *prompt, C **s, int *len){
+    int mode = 0;
+    int tmpmode = 0;
+    C *p;
     if (prompt) fputs(prompt,stdout);
     if (!*s) *s = malloc(*len=256);
     p = *s;
@@ -419,6 +422,10 @@ C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
         case ESCCHR:
                   c = fgetc(stdin);
                   switch(c){
+                  default:
+                      tmpmode = 1;
+                      goto storechar;
+                      break;
                   case '[':
                       c = fgetc(stdin);
                       switch(c){
@@ -435,13 +442,14 @@ C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
                   fputc('\n',stdout);
                   *p++ = c;
                   goto breakwhile;
-        case CTL('N'): mode = 1; break;
-        case CTL('O'): mode = 0; break;
+        case CTL('N'): mode = 1; tmpmode = 0; break;
+        case CTL('O'): mode = 0; tmpmode = 0; break;
         case CTL('U'): 
                        while(p>*s){
                            fputs("\b \b",stdout);
                            --p;
                        }
+                       tmpmode = 0;
                        break;
         case '\b':
         case DEL:
@@ -449,8 +457,10 @@ C * getln(C *prompt, C **s, int *len){ int mode = 0; C *p;
                    if (p!=*s) --p;
                    break;
         default:
-                 c = inputtobase(c,mode);    // convert to internal "base" form
+storechar:
+                 c = inputtobase(c,mode|tmpmode);    // convert to internal "base" form
                  *p++ = c;                               // save base in string
+                 tmpmode = 0;
                  fputs(basetooutput(c),stdout);             // echo output form
                  break;
         }
