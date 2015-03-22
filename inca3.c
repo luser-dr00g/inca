@@ -7,12 +7,13 @@
 
 typedef unsigned char C;
 typedef intptr_t I;
-typedef struct a{I t, r,d[3], p[2];}*A;
-#define AT(a) ((a)->t)
-#define AR(a) ((a)->r)
-#define AD(a) ((a)->d)
-#define AV(a) ((a)->p)
-enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL };
+typedef struct a{I t, r, k, d[1];}*A; /* The abstract array header */
+#define AT(a) ((a)->t) /* Type */
+#define AR(a) ((a)->r) /* Rank (size of Dims) */
+#define AK(a) ((a)->k) /* Offest of ravel */
+#define AD(a) ((a)->d) /* Dims */
+#define AV(a) ((I*)(((C*)a)+AK(a))) /* Values in ravelled order */
+enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, NTYPES };
 struct a nullob = { NLL };
 A null = &nullob;
 struct a markob = { MRK };
@@ -462,7 +463,9 @@ err:
 I *ma(I n){R(I*)malloc(n*4);}
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
-A ga(I t,I r,I*d){A z=(A)ma(5+tr(r,d));AT(z)=t,AR(z)=r,mv(AD(z),d,r);R z;}
+A ga(I t,I r,I*d){A z=(A)ma(sizeof*z+r+tr(r,d));
+    AT(z)=t;AR(z)=r;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
+    mv(AD(z),d,r);R z;}
 
 V1(copy){I n=tr(AR(w),AD(w)); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
