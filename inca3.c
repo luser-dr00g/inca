@@ -580,30 +580,22 @@ struct st *findsymb(struct st *st, char **s, int mode) {
     return st; 
 }
 
-qa(a){R 1;}
-qp(a){R abs(a)>256 && AT(((A)a))==SYMB;}
-qn(a){R abs(a)>256 && AT(((A)a))!=SYMB;}
-qv(a){R 0<=abs(a)
-     && abs(a)<'a'
-     && abs(a)<(sizeof op/sizeof*op)
-     && (op[a].vm || op[a].vd);}
-qc(a){R a==MODE1('<');}
-qm(a){R ((A)a)==mark;}
-ql(a){R a=='(';}
-qr(a){R a==')';}
-qu(a){R ((A)a)==null;}
-
 #define PREDTAB(_) \
-    _( ANY = 1,   qa) \
-    _( VAR = 2,   qp) \
-    _(NOUN = 4,   qn) \
-    _(VERB = 8,   qv) \
-    _(ASSN = 16,  qc) \
-    _(MARK = 32,  qm) \
-    _(LPAR = 64,  ql) \
-    _(RPAR = 128, qr) \
-    _(NULP = 256, qu)
-#define PRED_ENT(a,...) __VA_ARGS__ ,
+    _( ANY = 1,   qa, 1)                               \
+    _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB)  \
+    _(NOUN = 4,   qn, abs(a)>256 && AT(((A)a))!=SYMB ) \
+    _(VERB = 8,   qv, 0<=abs(a)                        \
+                      && abs(a)<'a'                    \
+                      && abs(a)<(sizeof op/sizeof*op)  \
+                      && (op[a].vm || op[a].vd))       \
+    _(ASSN = 16,  qc, a==MODE1('<') )                  \
+    _(MARK = 32,  qm, ((A)a)==mark )                   \
+    _(LPAR = 64,  ql, a=='(')                          \
+    _(RPAR = 128, qr, a==')')                          \
+    _(NULP = 256, qu, ((A)a)==null)
+#define PRED_FUNC(X,Y,...) Y(a){R __VA_ARGS__;}
+PREDTAB(PRED_FUNC)
+#define PRED_ENT(a,b,...) b ,
 I(*q[])() = { PREDTAB(PRED_ENT) };
 #define PRED_ENUM(a,...) a ,
 enum predicate { PREDTAB(PRED_ENUM)
