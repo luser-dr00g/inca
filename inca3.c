@@ -11,7 +11,7 @@ typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AT(a) ((a)->t)                   /* Type */
 #define AR(a) ((a)->r)                   /* Rank (size of Dims) */
 #define AN(a) ((a)->n)                   /* Number of values in ravel */
-#define AK(a) ((a)->k)                   /* Offest of ravel */
+#define AK(a) ((a)->k)                   /* Offset of ravel */
 #define AD(a) ((a)->d)                   /* Dims */
 #define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
 enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, NTYPES };
@@ -36,7 +36,7 @@ A newsymb(C *s,I n);
 #define MODE1(x) (x|1<<7)
 #define MODE2(x) (x-32)
 
-/* ALPHA_NAME base ext input output */
+/* ALPHA_##NAME  base  ext input  output   (ext corresponds to 'mode' in getln)*/
 #define ALPHATAB(_) \
     _( SPACE, ' ', 0, " ", " " ) \
     _( a, 'a', 0, "a", "a" ) /* basic latin alphabet */ \
@@ -315,7 +315,7 @@ A newsymb(C *s,I n);
 #define ALPHATAB_ENT(a,...) {__VA_ARGS__},
 struct alpha{int base;int ext;char*input;char*output;}alphatab[]={ALPHATAB(ALPHATAB_ENT)};
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
-enum alphaname { ALPHATAB(ALPHATAB_NAME) };
+enum alphaname { ALPHATAB(ALPHATAB_NAME) }; /* NB. ALPHA_NAME!=alphatab[ALPHA_NAME].base */
 
 int inputtobase (int c, int mode){ int i;
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
@@ -442,8 +442,7 @@ C * getln(C *prompt, C **s, int *len){
                   fputc('\n',stdout);
                   *p++ = c;
                   goto breakwhile;
-        case CTL('N'): mode = 1; tmpmode = 0; break;
-        case CTL('O'): mode = 0; tmpmode = 0; break;
+        case CTL('N'): mode = !mode; tmpmode = 0; break;
         case CTL('U'): 
                        while(p>*s){
                            fputs("\b \b",stdout);
