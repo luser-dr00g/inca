@@ -16,7 +16,7 @@ typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
 enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, NTYPES };
 struct a nullob = { NLL };
-A null = &nullob;
+A null = &nullob;           //two "singular" objects
 struct a markob = { MRK };
 A mark = &markob;
 
@@ -508,9 +508,9 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
         _( COMMA,     ALPHA_COMMA,     0,    cat       ) \
         _( NULLFUNC,         0,        0,    0 ) 
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
-struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };
+struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table
 #define VERBTAB_NAME(a, ...) a ,
-enum { VERBTAB(VERBTAB_NAME) };
+enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
 ps(A i){P("%s",(char*)AV(i));}
 pv(i){P("%s",basetooutput(alphatab[op[i].c].base));}
@@ -580,24 +580,24 @@ struct st *findsymb(struct st *st, char **s, int mode) {
 }
 
 #define PREDTAB(_) \
-    _( ANY = 1,   qa, 1)                               \
-    _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB)  \
+    _( ANY = 1,   qa, 1                              ) \
+    _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB ) \
     _(NOUN = 4,   qn, abs(a)>256 && AT(((A)a))!=SYMB ) \
     _(VERB = 8,   qv, 0<=abs(a)                        \
                       && abs(a)<'a'                    \
                       && abs(a)<(sizeof op/sizeof*op)  \
-                      && (op[a].vm || op[a].vd))       \
-    _(ASSN = 16,  qc, a==MODE1('<') )                  \
-    _(MARK = 32,  qm, ((A)a)==mark )                   \
-    _(LPAR = 64,  ql, a=='(')                          \
-    _(RPAR = 128, qr, a==')')                          \
-    _(NULP = 256, qu, ((A)a)==null)
+                      && (op[a].vm || op[a].vd)      ) \
+    _(ASSN = 16,  qc, a==MODE1('<')                  ) \
+    _(MARK = 32,  qm, ((A)a)==mark                   ) \
+    _(LPAR = 64,  ql, a=='('                         ) \
+    _(RPAR = 128, qr, a==')'                         ) \
+    _(NULP = 256, qu, ((A)a)==null                   )
 #define PRED_FUNC(X,Y,...) Y(a){R __VA_ARGS__;}
-PREDTAB(PRED_FUNC)
+PREDTAB(PRED_FUNC)                      //generate predicate functions
 #define PRED_ENT(a,b,...) b ,
-I(*q[])() = { PREDTAB(PRED_ENT) };
+I(*q[])() = { PREDTAB(PRED_ENT) };      //generate predicate function table
 #define PRED_ENUM(a,...) a ,
-enum predicate { PREDTAB(PRED_ENUM)
+enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
                  EDGE = MARK+ASSN+LPAR,
                  AVN = VERB+NOUN };
 /* encode predicate applications into a binary number, a bitset */
@@ -613,7 +613,7 @@ int classify(A a){ int i,v,r;
     _(PUNC,  LPAR,     ANY,  RPAR, ANY  ) \
     _(FAKL,  MARK,     ANY,  RPAR, ANY  ) \
     _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP ) \
-    _(NOACT, 0, 0, 0, 0)
+    _(NOACT, 0,        0,    0,    0    )
 #define PARSETAB_ENT(name, ...) { __VA_ARGS__ },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_ENT) };
 #define PARSETAB_ACTION(name, ...) name,
