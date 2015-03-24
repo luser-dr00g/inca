@@ -741,6 +741,12 @@ A ex(I *e){I a=*e;
     //for(i=0;i<rstk->top;i++)pr(rstk->a[i]); fflush(0);
     stackpop(rstk); //mark
     a = (I)stackpop(rstk);
+    if (rstk->top){
+        P("Error extra elements on stack:\n");
+        while ((i=(I)stackpop(rstk))!=(I)null)
+            pr((A)i);
+        P("\n");
+    }
     free(rstk);
     free(lstk);
     R (A)a;
