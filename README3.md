@@ -154,3 +154,14 @@ Table-driven parser is written and working, including an extra
 *implicit-parens* feature. The assignment character has been changed to
 left-guillemot, accessed from the alternate keyboard `^n` `<` `^o`.
 
+-- 
+
+The alt keyboard is now accessible with the ALT key. Ctrl-N is now an
+"ALT-lock" toggle key.
+
+The code has been reworked to be very table-driven using X-Macros to 
+construct symbolically-indexed tables.
+
+The alt keyboard is being reworked to produce true Unicode APL characters
+(which xterm handles just fine).
+
