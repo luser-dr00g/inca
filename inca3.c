@@ -541,6 +541,7 @@ pr(A w){
 #define ZEROCL ""
 
 struct st { A a; struct st *tab[52]; } st; /* symbol-table */
+#define ST_INIT (st.a = null) /* initialize symbol table root value */
 
 char *alph=ALPHAUPPER ALPHALOWER; /* symbol-table collation-ordered set */
 /*  mode 0: search trie for longest-prefix match.
@@ -805,7 +806,7 @@ I *wd(C *s){
 
 
 int main(){C *s=NULL;int n=0;C *prompt="\t";
-    st.a = null; /* initialize symbol table root value */
+    ST_INIT; /* initialize symbol table root value */
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
