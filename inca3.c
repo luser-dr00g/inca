@@ -173,6 +173,21 @@ struct st *findsymb(struct st *st, char **s, int mode);
     _( LTARROW,   MODE1('['), 1, "[", /*U+2190*/ "\xe2\x86\x90" ) \
     _( RTARROW,   MODE1('{'), 1, "{", /*U+2192*/ "\xe2\x86\x92" ) \
     _( ALPHA,     MODE1('a'), 1, "a", /*U+237a*/ "\xe2\x8d\xba" ) \
+    _( LEFTCEIL,  MODE1('s'), 1, "s", /*U+2308*/ "\xe2\x8c\x88" ) \
+    _( LEFTFLOOR, MODE1('d'), 1, "d", /*U+230a*/ "\xe2\x8c\x8a" ) \
+    _( UNDBAR2,         '_',  1, "f", "_" ) \
+    _( NABLA,     MODE1('g'), 1, "g", /*U+2207*/ "\xe2\x88\x87" ) \
+    _( INCREMENT, MODE1('h'), 1, "h", /*U+2206*/ "\xe2\x88\x86" ) \
+    _( RING,      MODE1('j'), 1, "j", /*U+2218*/ "\xe2\x88\x98" ) \
+    _( KWOTE,          '\'',  1, "k", "'" ) \
+    _( QUAD,      MODE1('l'), 1, "l", /*U+2395*/ "\xe2\x8e\x95" ) \
+    _( SUBSET,    MODE1('z'), 1, "z", /*U+2282*/ "\xe2\x8a\x82" ) \
+    _( SUPERSET,  MODE1('x'), 1, "x", /*U+2283*/ "\xe2\x8a\x83" ) \
+    _( CAP,       MODE1('c'), 1, "c", /*U+2229*/ "\xe2\x88\xa9" ) \
+    _( CUP,       MODE1('v'), 1, "v", /*U+222a*/ "\xe2\x88\xaa" ) \
+    _( UPTACK,    MODE1('b'), 1, "b", /*U+22a5*/ "\xe2\x8a\xa5" ) \
+    _( DNTACK,    MODE1('n'), 1, "n", /*U+22a4*/ "\xe2\x8a\xa4" ) \
+    _( DIVIDES,   MODE1('m'), 1, "m", /*U+2223*/ "\xe2\x88\xa3" ) \
     _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
     _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
     _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
@@ -360,7 +375,7 @@ void specialtty(){
             ESC(o)"\n", stdout);
 #endif
 
-#if 1
+#if 0
     //show the various alternate charsets available in xterm vt220 mode
     fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     //fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //these 2 are not interesting
