@@ -650,7 +650,7 @@ int classify(A a){ int i,v,r;
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
 #define PARSETAB_INDEX(name, ...) name,
 enum { PARSETAB(PARSETAB_INDEX) };
-#define PARSETAB_ACTION(name, pat1, pat2, pat3, pat4, ...) case name: { __VA_ARGS__ } break;
+#define PARSETAB_ACTION(name, pat1, pat2, pat3, pat4, ...) case name: __VA_ARGS__ break;
 
 typedef struct stack { int top; A a[1]; } stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
