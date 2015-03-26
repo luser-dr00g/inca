@@ -5,6 +5,7 @@
 #include<termios.h>
 #include<unistd.h>
 
+
 typedef unsigned char C;
 typedef intptr_t I;
 typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
@@ -28,12 +29,13 @@ struct st *findsymb(struct st *st, char **s, int mode);
 #define V1(f) A f(A w)
 #define V2(f) A f(A a, A w)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
+
+
 #define ESC(x) "\x1b" #x
 #define ESCCHR '\x1b'
 #define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
-
 #define MODE1(x) (x|1<<7)
 #define MODE2(x) (x-32)
 
@@ -332,6 +334,7 @@ char *basetooutput (int c){ int i;
     return "";
 }
 
+
 struct termios tm;
 void specialtty(){ tcgetattr(0,&tm);
 //https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
@@ -406,6 +409,7 @@ void specialtty(){ tcgetattr(0,&tm);
 }
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
+
 C * getln(C *prompt, C **s, int *len){
     int mode = 0;
     int tmpmode = 0;
@@ -478,6 +482,7 @@ err:
     return p==*s?NULL:*s;
 }
 
+
 I *ma(I n){R(I*)malloc(n*4);}
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
@@ -504,6 +509,7 @@ V1(neg){ A z=copy(w); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
 V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 
+
 /*         FUNCNAME   ALPHA_NAME       vm    vd        */
 #define VERBTAB(_) \
         _( ZEROFUNC,  0,               0,    0         ) \
@@ -519,6 +525,7 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
+
 
 ps(A i){P("%s",(char*)AV(i));}
 pv(i){P("%s",basetooutput(alphatab[op[i].c].base));}
@@ -541,6 +548,7 @@ pr(A w){
     }
     nl();
 }
+
 
 #define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
 #define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -587,6 +595,7 @@ struct st *findsymb(struct st *st, char **s, int mode) {
     }
     return st; 
 }
+
 
 #define PREDTAB(_) \
     _( ANY = 1,   qa, 1                              ) \
@@ -729,6 +738,7 @@ A ex(I *e){I a=*e;
     R (A)a;
 }
 
+
 verb(c){I i=0;
     for(;op[++i].c;)
         if(alphatab[op[i].c].base==c)
@@ -758,6 +768,7 @@ A newsymb(C *s,I n){
         R (A)(c?c:(I)*s);
     }
 }
+
 
 char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
 int wdtab[][4] = {
