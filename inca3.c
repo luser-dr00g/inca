@@ -569,19 +569,21 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
    The verb's A representation is a small integer which indexes
    this table.
  */
-/*         FUNCNAME   ALPHA_NAME       vm    vd        */
+/*         FUNCNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
 #define VERBTAB(_) \
-        _( ZEROFUNC,  0,               0,    0         ) \
-        _( PLUS,      ALPHA_PLUS,      id,   plus      ) \
-        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus ) \
-        _( RBRACE,    ALPHA_RBRACE,    size, from      ) \
-        _( TILDE,     ALPHA_TILDE,     iota, find      ) \
-        _( RANG,      ALPHA_RANG,      box,  0         ) \
-        _( HASH,      ALPHA_HASH,      sha,  rsh       ) \
-        _( COMMA,     ALPHA_COMMA,     0,    cat       ) \
-        _( NULLFUNC,         0,        0,    0 ) 
+        _( ZEROFUNC,  0,               0,    0,        0, 0, 0,  0 ) \
+        _( PLUS,      ALPHA_PLUS,      id,   plus,     0, 0, 0,  0 ) \
+        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus,0, 0, 0,  0 ) \
+        _( RBRACE,    ALPHA_RBRACE,    size, from,     0, 0, 0,  0 ) \
+        _( TILDE,     ALPHA_TILDE,     iota, find,     0, 0, 0,  0 ) \
+        _( RANG,      ALPHA_RANG,      box,  0,        0, 0, 0,  0 ) \
+        _( HASH,      ALPHA_HASH,      sha,  rsh,      0, 0, 0,  0 ) \
+        _( COMMA,     ALPHA_COMMA,     0,    cat,      0, 0, 0,  0 ) \
+        _( NULLFUNC,         0,        0,    0,        0, 0, 0,  0 ) 
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
-struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
+struct {
+    I c; A (*vm)(); A (*vd)(); I mr,lr,rr; I id;
+} op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
