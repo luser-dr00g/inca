@@ -21,6 +21,7 @@ struct a markob = { MRK };
 A mark = &markob;
 
 A newsymb(C *s,I n);
+struct st *findsymb(struct st *st, char **s, int mode);
 
 #define P printf
 #define R return
@@ -426,9 +427,15 @@ C * getln(C *prompt, C **s, int *len){
                       tmpmode = 1;
                       goto storechar;
                       break;
+#if 0
                   case '[':
                       c = fgetc(stdin);
                       switch(c){
+                      default:
+                          *p++ = MODE1('[');
+                          fputs(basetooutput(MODE1('[')),stdout);
+                          ungetc(c,stdin);
+                          break;
                       case 'Z':
                           c = '\v';       //convert shift-TAB to vertical tab
                           *p++ = c;                    // save base in string
@@ -436,6 +443,7 @@ C * getln(C *prompt, C **s, int *len){
                           break;
                       }
                       break;
+#endif
                   }
                   break;
         case '\n':
@@ -606,51 +614,28 @@ int classify(A a){ int i,v,r;
     for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i](a))r|=v; R r;}
 
 #define PARSETAB(_) \
-    /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                \
-    _(MONA,  EDGE,     VERB, NOUN, ANY, A edg,vrb,nom;                           \
-                                        edg=stackpop(rstk);                      \
-                                        vrb=stackpop(rstk);                      \
-                                        nom=stackpop(rstk);                      \
-                                        stackpush(rstk,op[(I)vrb].vm(nom));      \
-                                        stackpush(rstk,edg); )                   \
-    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, A edg,vb1,vb2,nom;                      \
-                                         edg=stackpop(rstk);                     \
-                                         vb1=stackpop(rstk);                     \
-                                         vb2=stackpop(rstk);                     \
-                                         nom=stackpop(rstk);                     \
-                                         stackpush(rstk,op[(I)vb2].vm(nom));     \
-                                         stackpush(rstk,vb1);                    \
-                                         stackpush(rstk,edg); )                  \
-    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, A edg,nm1,vrb,nm2;                      \
-                                         edg=stackpop(rstk);                     \
-                                         nm1=stackpop(rstk);                     \
-                                         vrb=stackpop(rstk);                     \
-                                         nm2=stackpop(rstk);                     \
-                                         stackpush(rstk,op[(I)vrb].vd(nm1,nm2)); \
-                                         stackpush(rstk,edg); )                  \
-    _(SPEC,  VAR,      ASSN, AVN,  ANY,  A var,any;                              \
-                                         char *s;                                \
-                                         var=stackpop(rstk);                     \
-                                         stackpop(rstk);                         \
-                                         any=stackpop(rstk);                     \
-                                         s = (char*)AV(var);                     \
-                                         findsymb(&st,&s,1)->a=any;              \
-                                         stackpush(rstk,any); )                  \
-    _(PUNC,  LPAR,     ANY,  RPAR, ANY,  A any;                                  \
-                                         stackpop(rstk);                         \
-                                         any=stackpop(rstk);                     \
-                                         stackpop(rstk);                         \
-                                         stackpush(rstk,any); )                  \
-    _(FAKL,  MARK,     ANY,  RPAR, ANY,  A any;                                  \
-                                         stackpop(rstk);                         \
-                                         any=stackpop(rstk);                     \
-                                         stackpop(rstk);                         \
-                                         stackpush(rstk,any);                    \
-                                         stackpush(rstk,mark); )                 \
-    _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP, A edg;                                  \
-                                         edg=stackpop(rstk);                     \
-                                         stackpop(rstk);                         \
-                                         stackpush(rstk,edg);)                   \
+    /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                     \
+    /*     =>t[0]      t[1]  t[2]  t[3]        */                                     \
+    _(MONA,  EDGE,     VERB, NOUN, ANY,  {stackpush(rstk,t[3]);                       \
+                                          stackpush(rstk,op[(I)t[1]].vm(t[2]));       \
+                                          stackpush(rstk,t[0]);} )                    \
+    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,op[(I)t[2]].vm(t[3]));       \
+                                          stackpush(rstk,t[1]);                       \
+                                          stackpush(rstk,t[0]);} )                    \
+    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,op[(I)t[2]].vd(t[1],t[3]));  \
+                                          stackpush(rstk,t[0]);} )                    \
+    _(SPEC,  VAR,      ASSN, AVN,  ANY,  {char *s=(char*)AV(t[0]);                    \
+                                          struct st *slot = findsymb(&st,&s,1);       \
+                                          stackpush(rstk,t[3]);                       \
+                                          stackpush(rstk,slot->a=t[2]);} )            \
+    _(PUNC,  LPAR,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                       \
+                                          stackpush(rstk,t[1]);} )                    \
+    _(FAKL,  MARK,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                       \
+                                          stackpush(rstk,t[1]);                       \
+                                          stackpush(rstk,t[0]);} )                    \
+    _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP, {stackpush(rstk,t[3]);                       \
+                                          stackpush(rstk,t[2]);                       \
+                                          stackpush(rstk,t[0]);} )                    \
     _(NOACT, 0,        0,    0,    0,    0;)
 #define PARSETAB_PAT(name, pat1, pat2, pat3, pat4, ...) { pat1, pat2, pat3, pat4 },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
@@ -667,6 +652,7 @@ A ex(I *e){I a=*e;
 
     int i,j,n,docheck;
     stack *lstk,*rstk;
+    A t[4];
     //for(i=0;e[i];i++)pr((A)e[i]);
     for(i=0,j=0;e[i];i++)if(qp(e[i]))j+=AD(((A)e[i]))[0];
     n=i;
@@ -688,6 +674,10 @@ A ex(I *e){I a=*e;
                 s = p = (char*)AV(sa);
                 tab=findsymb(&st,&p,0);
                 while(*p){
+                    if (tab==&st){
+                        P("Error %s undefined\n",p);
+                        R (A)a;
+                    }
                     if (tab->a!=null){          // found a defined prefix
                         stackpush(lstk,newsymb(s,p-s)); //pushback prefix
                         s=p;
@@ -710,6 +700,10 @@ A ex(I *e){I a=*e;
                       &&(c[2]&parsetab[i].c[2])
                       &&(c[3]&parsetab[i].c[3]) ) {
                         docheck=1;
+                        t[0]=stackpop(rstk);
+                        t[1]=stackpop(rstk);
+                        t[2]=stackpop(rstk);
+                        t[3]=stackpop(rstk);
                         switch(i){
                             PARSETAB(PARSETAB_ACTION)
 
