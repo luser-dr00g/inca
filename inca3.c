@@ -583,7 +583,7 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
 struct {
     I c; A (*vm)(); A (*vd)(); I mr,lr,rr; I id;
-} op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
+} vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
@@ -591,7 +591,7 @@ enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 /* print symbol */
 ps(A i){P("%s",(char*)AV(i));}
 /* print verb */
-pv(i){P("%s",basetooutput(alphatab[op[i].c].base));}
+pv(i){P("%s",basetooutput(alphatab[vt[i].c].base));}
 /* print character */
 pc(i){qv(i)?pv(i):P("%s",basetooutput(i));}
 /* print integer */
@@ -682,8 +682,8 @@ struct st *findsymb(struct st *st, char **s, int mode) {
     _(NOUN = 4,   qn, abs(a)>256 && AT(((A)a))!=SYMB ) \
     _(VERB = 8,   qv, 0<=abs(a)                        \
                       && abs(a)<'a'                    \
-                      && abs(a)<(sizeof op/sizeof*op)  \
-                      && (op[a].vm || op[a].vd)      ) \
+                      && abs(a)<(sizeof vt/sizeof*vt)  \
+                      && (vt[a].vm || vt[a].vd)      ) \
     _(ASSN = 16,  qc, a==MODE1('<')                  ) \
     _(MARK = 32,  qm, ((A)a)==mark                   ) \
     _(LPAR = 64,  ql, a=='('                         ) \
@@ -708,12 +708,12 @@ int classify(A a){ int i,v,r;
     /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                     \
     /*     =>t[0]      t[1]  t[2]  t[3]        */                                     \
     _(MONA,  EDGE,     VERB, NOUN, ANY,  {stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,op[(I)t[1]].vm(t[2]));       \
+                                          stackpush(rstk,vt[(I)t[1]].vm(t[2]));       \
                                           stackpush(rstk,t[0]);} )                    \
-    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,op[(I)t[2]].vm(t[3]));       \
+    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vm(t[3]));       \
                                           stackpush(rstk,t[1]);                       \
                                           stackpush(rstk,t[0]);} )                    \
-    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,op[(I)t[2]].vd(t[1],t[3]));  \
+    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3]));  \
                                           stackpush(rstk,t[0]);} )                    \
     _(SPEC,  VAR,      ASSN, AVN,  ANY,  {char *s=(char*)AV(t[0]);                    \
                                           struct st *slot = findsymb(&st,&s,1);       \
@@ -842,8 +842,8 @@ A ex(I *e){I a=*e;
 
 /* lookup character (in internal representation) in verb table */
 verb(c){I i=0;
-    for(;op[++i].c;)
-        if(alphatab[op[i].c].base==c)
+    for(;vt[++i].c;)
+        if(alphatab[vt[i].c].base==c)
             R i;
     R 0;}
 
