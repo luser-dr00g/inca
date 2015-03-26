@@ -320,6 +320,7 @@ struct alpha{int base;int ext;char*input;char*output;}alphatab[]={ALPHATAB(ALPHA
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
 enum alphaname { ALPHATAB(ALPHATAB_NAME) }; /* NB. ALPHA_NAME!=alphatab[ALPHA_NAME].base */
 
+/* convert input character to internal representation */
 int inputtobase (int c, int mode){ int i;
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
         if (c==*alphatab[i].input && mode==alphatab[i].ext)
@@ -327,6 +328,7 @@ int inputtobase (int c, int mode){ int i;
     return mode? MODE1(c): c;
     //return c | mode << 7;
 }
+/* convert internal representation to output representation */
 char *basetooutput (int c){ int i;
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
         if (c==alphatab[i].base)
@@ -335,8 +337,15 @@ char *basetooutput (int c){ int i;
 }
 
 
-struct termios tm;
-void specialtty(){ tcgetattr(0,&tm);
+struct termios tm; /* terminal settings struct to save default settings */
+
+/* setup special terminal mode for line editor:
+   turn off canonical mode for char-at-a-time processing
+   select vt220 G2 and G3 character sets for display of extra glyphs
+ */
+void specialtty(){
+    tcgetattr(0,&tm);
+
 //https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
     //fputs("\x1B""*0\n",stdout);
 #if 0
@@ -407,9 +416,15 @@ void specialtty(){ tcgetattr(0,&tm);
         tt.c_cflag |= CS8;
         tcsetattr(0,TCSANOW,&tt); }
 }
+/* restore saved default terminal settings */
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
 
+/* read expression from terminal into buffer
+   (re)allocate buffer as necessary
+   process backspaces
+   process mode changes and alt key.
+ */
 C * getln(C *prompt, C **s, int *len){
     int mode = 0;
     int tmpmode = 0;
@@ -483,33 +498,62 @@ err:
 }
 
 
+/* allocate integer array */
 I *ma(I n){R(I*)malloc(n*4);}
+/* move integers */
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
+/* table rank, product of dimensions */
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
+/* generate (allocate and initialize) new abstract array 
+   of type t
+ */
 A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
     AT(z)=t;AR(z)=r;AN(z)=n;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
     mv(AD(z),d,r);R z;}
 
+/* make a copy */
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
+/* generate index vector */
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
+/* add */
 V2(plus){I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
  DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+/* index */
 V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
  A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
+/* pack array into a scalar */
 V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
+/* catenate two arrays */
 V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
  A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
+/* not implemented */
 V2(find){}
+/* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
  A z=ga(AT(w),r,AV(a));mv(AV(z),AV(w),wn=n>wn?wn:n);
  if(n-=wn)mv(AV(z)+wn,AV(z),n);R z;}
+/* return the shape of w */
 V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
+/* return w */
 V1(id){R w;}
+/* negate w */
 V1(neg){ A z=copy(w); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
+/* length of first dimension */
 V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
+/* return sum and difference */
 V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 
 
+/*
+   The verb table. The FUNCNAME symbolically indexes a
+   single functional symbol which has an associated 
+   ALPHATAB name and associated functions for monadic
+   (single right argument) or dyadic (left and right args) uses.
+   Verbs are recognized by the wd() function by being non-whitespace
+   non-alphanumeric and then refined by verb() called by newsymb().
+   The verb's A representation is a small integer which indexes
+   this table.
+ */
 /*         FUNCNAME   ALPHA_NAME       vm    vd        */
 #define VERBTAB(_) \
         _( ZEROFUNC,  0,               0,    0         ) \
@@ -522,16 +566,22 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
         _( COMMA,     ALPHA_COMMA,     0,    cat       ) \
         _( NULLFUNC,         0,        0,    0 ) 
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
-struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table
+struct { I c; A (*vm)(); A (*vd)(); } op[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
 
+/* print symbol */
 ps(A i){P("%s",(char*)AV(i));}
+/* print verb */
 pv(i){P("%s",basetooutput(alphatab[op[i].c].base));}
+/* print character */
 pc(i){qv(i)?pv(i):P("%s",basetooutput(i));}
+/* print integer */
 pi(i){P("%d ",i);}
+/* print newline */
 nl(){P("\n");}
+/* print any array */
 pr(A w){
     if (abs((I)w)<256)
         pc(w);
@@ -549,18 +599,27 @@ pr(A w){
     nl();
 }
 
-
+/*
+   Character classes used by the symbol table function
+   findsymb() and by the scanning functions.
+ */
 #define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
 #define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define DIGIT "0123456789"
 #define SPACE " \t"
 #define ZEROCL ""
 
+/*
+   The symbol table is implemented as a trie data structure
+   with 52-way branching, allowing strict alphabetic symbols.
+ */
 struct st { A a; struct st *tab[52]; } st; /* symbol-table */
 #define ST_INIT (st.a = null) /* initialize symbol table root value */
 
 char *alph=ALPHAUPPER ALPHALOWER; /* symbol-table collation-ordered set */
-/*  mode 0: search trie for longest-prefix match.
+/*
+   find symbol in symbol table.
+    mode 0: search trie for longest-prefix match.
         ret root on fail (val=null).
         update input string point to remainder (no change on fail).
     mode 1: search and allocate.
@@ -597,6 +656,9 @@ struct st *findsymb(struct st *st, char **s, int mode) {
 }
 
 
+/*
+   Predicate table for pattern matching in the parser ex().
+ */
 #define PREDTAB(_) \
     _( ANY = 1,   qa, 1                              ) \
     _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB ) \
@@ -622,6 +684,9 @@ enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
 int classify(A a){ int i,v,r;
     for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i](a))r|=v; R r;}
 
+/*
+   Parse table for processing expressions on top of the right-stack
+ */
 #define PARSETAB(_) \
     /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                     \
     /*     =>t[0]      t[1]  t[2]  t[3]        */                                     \
@@ -652,11 +717,30 @@ struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
 enum { PARSETAB(PARSETAB_INDEX) };
 #define PARSETAB_ACTION(name, pat1, pat2, pat3, pat4, ...) case name: __VA_ARGS__ break;
 
+/*
+   Stack data structure.
+   if stkp->top then top element is stkp->a[stkp->top-1]
+ */
 typedef struct stack { int top; A a[1]; } stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--(stkp)->top])
 
 
+/*
+   Evaluate an expression according to APL rules.
+   execute right-to-left.
+   The arguments to a function are the single element to the left
+   and the entire expression to the right.
+   Push expression to left-stack.
+   The loop:
+       move element to right stack, looking up variables.
+       check right stack for patterns
+             and execute appropriate actions, reducing the stack.
+   Terminate loop when left-stack is depleted and no further patterns
+   apply to the right stack.
+   Return remaining element.
+   Print error if expression has not fully reduced (unrecognized function).
+ */
 A ex(I *e){I a=*e;
 
     int i,j,n,docheck;
@@ -739,12 +823,16 @@ A ex(I *e){I a=*e;
 }
 
 
+/* lookup character (in internal representation) in verb table */
 verb(c){I i=0;
     for(;op[++i].c;)
         if(alphatab[op[i].c].base==c)
             R i;
     R 0;}
 
+/*
+   construct a single scanned token.
+ */
 A newsymb(C *s,I n){
     I t;
     //P("%d\n",n);DO(n,P("%c",s[i]))P("\n");
@@ -770,6 +858,13 @@ A newsymb(C *s,I n){
 }
 
 
+/*
+   scanner table for word formation
+   columns are indexed by matched character classes
+   rows are indexed by the current state of the scanner automaton
+   element returned yields newstate when divided by ten
+                and yields action code when remainder from division by ten is taken.
+ */
 char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
 int wdtab[][4] = {
     /*char-class*/
@@ -781,7 +876,12 @@ int wdtab[][4] = {
     /*{newstate+action,...}*/
 };
 
+/* construct new object giving start and end string positions */
 #define emit(a,b) (*z++=(I)newsymb(s+a,(b)-a)); 
+/*
+   scan expression for alphabetic and numeric parts 
+   delimited by whitespace
+ */
 I *wd(C *s){
     I a,b,n=strlen(s),*e=ma(n+1),*z=e;
     int i,j,i_,state;
@@ -810,6 +910,10 @@ I *wd(C *s){
     R e;}
 
 
+/*
+   setup special terminal mode if connected to a terminal
+   perform read-eval-print loop
+ */
 int main(){C *s=NULL;int n=0;C *prompt="\t";
     ST_INIT; /* initialize symbol table root value */
     if (isatty(fileno(stdin))) specialtty();
