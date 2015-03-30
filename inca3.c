@@ -513,7 +513,6 @@ err:
     return p==*s?NULL:*s;
 }
 
-
 /* allocate integer array */
 I *ma(I n){R(I*)malloc(n*4);}
 /* move integers */
@@ -527,6 +526,66 @@ A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
     AT(z)=t;AR(z)=r;AN(z)=n;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
     mv(AD(z),d,r);R z;}
 
+V1(copy);
+V1(iota);
+V2(find);
+
+V2(plus);
+V2(minus);
+V2(times);
+V2(quotient);
+
+V2(from);
+V1(box);
+V2(cat);
+
+V2(rsh);
+V1(sha);
+V1(id);
+V1(neg);
+V1(size);
+V2(plusminus);
+
+#define LOADV(x) \
+    V v=self? \
+        abs((I)self)<(sizeof vt/sizeof*vt)? \
+            vt+(I)self \
+            :(V)AV(self) \
+        :vt+x; 
+
+
+/*
+   The verb table. The VERBNAME symbolically indexes a
+   single functional symbol which has an associated 
+   ALPHATAB name and associated functions for monadic
+   (single right argument) or dyadic (left and right args) uses.
+   Verbs are recognized by the wd() function by being non-whitespace
+   non-alphanumeric and then refined by verb() called by newsymb().
+   The verb's A representation is a small integer which indexes
+   this table.
+ */
+/*         VERBNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
+#define VERBTAB(_) \
+        _( ZEROFUNC,  0,               0,    0,        0, 0, 0,  0 ) \
+        _( PLUS,      ALPHA_PLUS,      id,   plus,     0, 0, 0,  0 ) \
+        _( MINUS,     ALPHA_MINUS,     neg,  minus,    0, 0, 0,  0 ) \
+        _( TIMES,     ALPHA_TIMES,     0,    times,    0, 0, 0,  1 ) \
+        _( DIVIDE,    ALPHA_COLONBAR,  0,    quotient, 0, 0, 0,  1 ) \
+        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus,0, 0, 0,  0 ) \
+        _( RBRACE,    ALPHA_RBRACE,    size, from,     0, 0, 0,  0 ) \
+        _( TILDE,     ALPHA_TILDE,     iota, find,     0, 0, 0,  0 ) \
+        _( RANG,      ALPHA_RANG,      box,  0,        0, 0, 0,  0 ) \
+        _( HASH,      ALPHA_HASH,      sha,  rsh,      0, 0, 0,  0 ) \
+        _( COMMA,     ALPHA_COMMA,     0,    cat,      0, 0, 0,  0 ) \
+        _( NULLFUNC,         0,        0,    0,        0, 0, 0,  0 ) 
+typedef struct v *V; //dynamic verb type
+struct v { I c; A (*vm)(); A (*vd)(); I mr,lr,rr; I id; };
+#define VERBTAB_NAME(a, ...) a ,
+enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
+
+#define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
+struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
+
 /* make a copy */
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 /* generate index vector */
@@ -535,7 +594,10 @@ V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
 V2(find){}
 
 /* add */
-V2(plus){I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
+V2(plus){
+    LOADV(PLUS)
+    I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
+    //P("%d\n",v->id);
  DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
 V2(minus){A z=ga(0,AR(w),AD(w));
  DO(AN(w),AV(z)[i]=AV(a)[i]-AV(w)[i]);R z;}
@@ -568,37 +630,6 @@ V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 /* return sum and difference */
 V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
-
-/*
-   The verb table. The VERBNAME symbolically indexes a
-   single functional symbol which has an associated 
-   ALPHATAB name and associated functions for monadic
-   (single right argument) or dyadic (left and right args) uses.
-   Verbs are recognized by the wd() function by being non-whitespace
-   non-alphanumeric and then refined by verb() called by newsymb().
-   The verb's A representation is a small integer which indexes
-   this table.
- */
-/*         VERBNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
-#define VERBTAB(_) \
-        _( ZEROFUNC,  0,               0,    0,        0, 0, 0,  0 ) \
-        _( PLUS,      ALPHA_PLUS,      id,   plus,     0, 0, 0,  0 ) \
-        _( MINUS,     ALPHA_MINUS,     neg,  minus,    0, 0, 0,  0 ) \
-        _( TIMES,     ALPHA_TIMES,     0,    times,    0, 0, 0,  1 ) \
-        _( DIVIDE,    ALPHA_COLONBAR,  0,    quotient, 0, 0, 0,  1 ) \
-        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus,0, 0, 0,  0 ) \
-        _( RBRACE,    ALPHA_RBRACE,    size, from,     0, 0, 0,  0 ) \
-        _( TILDE,     ALPHA_TILDE,     iota, find,     0, 0, 0,  0 ) \
-        _( RANG,      ALPHA_RANG,      box,  0,        0, 0, 0,  0 ) \
-        _( HASH,      ALPHA_HASH,      sha,  rsh,      0, 0, 0,  0 ) \
-        _( COMMA,     ALPHA_COMMA,     0,    cat,      0, 0, 0,  0 ) \
-        _( NULLFUNC,         0,        0,    0,        0, 0, 0,  0 ) 
-#define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
-struct {
-    I c; A (*vm)(); A (*vd)(); I mr,lr,rr; I id;
-} vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
-#define VERBTAB_NAME(a, ...) a ,
-enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
 
 /* print symbol */
@@ -718,28 +749,28 @@ int classify(A a){ int i,v,r;
    Parse table for processing expressions on top of the right-stack
  */
 #define PARSETAB(_) \
-    /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                     \
-    /*     =>t[0]      t[1]  t[2]  t[3]        */                                     \
-    _(MONA,  EDGE,     VERB, NOUN, ANY,  {stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));       \
-                                          stackpush(rstk,t[0]);} )                    \
-    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));       \
-                                          stackpush(rstk,t[1]);                       \
-                                          stackpush(rstk,t[0]);} )                    \
-    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));  \
-                                          stackpush(rstk,t[0]);} )                    \
-    _(SPEC,  VAR,      ASSN, AVN,  ANY,  {char *s=(char*)AV(t[0]);                    \
-                                          struct st *slot = findsymb(&st,&s,1);       \
-                                          stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,slot->a=t[2]);} )            \
-    _(PUNC,  LPAR,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,t[1]);} )                    \
-    _(FAKL,  MARK,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,t[1]);                       \
-                                          stackpush(rstk,t[0]);} )                    \
-    _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP, {stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,t[2]);                       \
-                                          stackpush(rstk,t[0]);} )                    \
+    /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                           \
+    /*     =>t[0]      t[1]  t[2]  t[3]        */                                           \
+    _(MONA,  EDGE,     VERB, NOUN, ANY,  {stackpush(rstk,t[3]);                             \
+                                          stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));        \
+                                          stackpush(rstk,t[0]);} )                          \
+    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));        \
+                                          stackpush(rstk,t[1]);                             \
+                                          stackpush(rstk,t[0]);} )                          \
+    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));   \
+                                          stackpush(rstk,t[0]);} )                          \
+    _(SPEC,  VAR,      ASSN, AVN,  ANY,  {char *s=(char*)AV(t[0]);                          \
+                                          struct st *slot = findsymb(&st,&s,1);             \
+                                          stackpush(rstk,t[3]);                             \
+                                          stackpush(rstk,slot->a=t[2]);} )                  \
+    _(PUNC,  LPAR,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                             \
+                                          stackpush(rstk,t[1]);} )                          \
+    _(FAKL,  MARK,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                             \
+                                          stackpush(rstk,t[1]);                             \
+                                          stackpush(rstk,t[0]);} )                          \
+    _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP, {stackpush(rstk,t[3]);                             \
+                                          stackpush(rstk,t[2]);                             \
+                                          stackpush(rstk,t[0]);} )                          \
     _(NOACT, 0,        0,    0,    0,    0;)
 #define PARSETAB_PAT(name, pat1, pat2, pat3, pat4, ...) { pat1, pat2, pat3, pat4 },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
