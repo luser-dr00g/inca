@@ -1,3 +1,4 @@
+#include<limits.h>
 #include<stdint.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -15,7 +16,7 @@ typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AK(a) ((a)->k)                   /* Offset of ravel */
 #define AD(a) ((a)->d)                   /* Dims */
 #define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
-enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, NTYPES };
+enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, VRB, NTYPES };
 struct a nullob = { NLL };
 A null = &nullob;           //two "singular" objects
 struct a markob = { MRK };
@@ -517,7 +518,7 @@ err:
 I *ma(I n){R(I*)malloc(n*4);}
 /* move integers */
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
-/* table rank, product of dimensions */
+/* table rank, product of dimensions d[0..r-1] */
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
 /* generate (allocate and initialize) new abstract array 
    of type t
@@ -530,9 +531,19 @@ A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 /* generate index vector */
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
+/* not implemented */
+V2(find){}
+
 /* add */
 V2(plus){I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
  DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+V2(minus){A z=ga(0,AR(w),AD(w));
+ DO(AN(w),AV(z)[i]=AV(a)[i]-AV(w)[i]);R z;}
+V2(times){A z=ga(0,AR(w),AD(w));
+ DO(AN(w),AV(z)[i]=AV(a)[i]*AV(w)[i]);R z;}
+V2(quotient){A z=ga(0,AR(w),AD(w));
+ DO(AN(w),AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0);R z;}
+
 /* index */
 V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
  A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
@@ -541,8 +552,7 @@ V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
 /* catenate two arrays */
 V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
  A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
-/* not implemented */
-V2(find){}
+
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
  A z=ga(AT(w),r,AV(a));mv(AV(z),AV(w),wn=n>wn?wn:n);
@@ -560,7 +570,7 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
 
 
 /*
-   The verb table. The FUNCNAME symbolically indexes a
+   The verb table. The VERBNAME symbolically indexes a
    single functional symbol which has an associated 
    ALPHATAB name and associated functions for monadic
    (single right argument) or dyadic (left and right args) uses.
@@ -569,10 +579,13 @@ V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
    The verb's A representation is a small integer which indexes
    this table.
  */
-/*         FUNCNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
+/*         VERBNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
 #define VERBTAB(_) \
         _( ZEROFUNC,  0,               0,    0,        0, 0, 0,  0 ) \
         _( PLUS,      ALPHA_PLUS,      id,   plus,     0, 0, 0,  0 ) \
+        _( MINUS,     ALPHA_MINUS,     neg,  minus,    0, 0, 0,  0 ) \
+        _( TIMES,     ALPHA_TIMES,     0,    times,    0, 0, 0,  1 ) \
+        _( DIVIDE,    ALPHA_COLONBAR,  0,    quotient, 0, 0, 0,  1 ) \
         _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus,0, 0, 0,  0 ) \
         _( RBRACE,    ALPHA_RBRACE,    size, from,     0, 0, 0,  0 ) \
         _( TILDE,     ALPHA_TILDE,     iota, find,     0, 0, 0,  0 ) \
@@ -848,7 +861,7 @@ verb(c){I i=0;
     R 0;}
 
 /*
-   construct a single scanned token.
+   construct a single scanned token given a string pointer and length.
  */
 A newsymb(C *s,I n){
     I t;
