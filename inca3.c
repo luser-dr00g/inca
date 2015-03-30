@@ -27,8 +27,8 @@ struct st *findsymb(struct st *st, char **s, int mode);
 
 #define P printf
 #define R return
-#define V1(f) A f(A w)
-#define V2(f) A f(A a, A w)
+#define V1(f) A f(A w,      A self)
+#define V2(f) A f(A a, A w, A self)
 #define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
 
 
@@ -562,11 +562,11 @@ V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* return w */
 V1(id){R w;}
 /* negate w */
-V1(neg){ A z=copy(w); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
+V1(neg){ A z=copy(w,0); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
 /* length of first dimension */
 V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 /* return sum and difference */
-V2(plusminus){ w=cat(w,neg(w)); a=cat(a,a); R plus(a,w);}
+V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
 
 /*
@@ -721,12 +721,12 @@ int classify(A a){ int i,v,r;
     /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                     \
     /*     =>t[0]      t[1]  t[2]  t[3]        */                                     \
     _(MONA,  EDGE,     VERB, NOUN, ANY,  {stackpush(rstk,t[3]);                       \
-                                          stackpush(rstk,vt[(I)t[1]].vm(t[2]));       \
+                                          stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));       \
                                           stackpush(rstk,t[0]);} )                    \
-    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vm(t[3]));       \
+    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));       \
                                           stackpush(rstk,t[1]);                       \
                                           stackpush(rstk,t[0]);} )                    \
-    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3]));  \
+    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));  \
                                           stackpush(rstk,t[0]);} )                    \
     _(SPEC,  VAR,      ASSN, AVN,  ANY,  {char *s=(char*)AV(t[0]);                    \
                                           struct st *slot = findsymb(&st,&s,1);       \
@@ -749,7 +749,7 @@ enum { PARSETAB(PARSETAB_INDEX) };
 
 /*
    Stack data structure.
-   if stkp->top then top element is stkp->a[stkp->top-1]
+   if stkp->top!=0 then top element is stkp->a[stkp->top-1]
  */
 typedef struct stack { int top; A a[1]; } stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
@@ -873,7 +873,7 @@ A newsymb(C *s,I n){
         while(((C*)end-s) < n){
             A r=ga(INT,0,0);
             *AV(r)=strtol(end,&end,10);
-            z=cat(z,r);
+            z=cat(z,r,0);
         }
         R z;
     } else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
