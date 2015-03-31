@@ -546,13 +546,6 @@ V1(neg);
 V1(size);
 V2(plusminus);
 
-#define LOADV(x) \
-    V v=self? \
-        abs((I)self)<(sizeof vt/sizeof*vt)? \
-            vt+(I)self \
-            :(V)AV(self) \
-        :vt+x; 
-
 
 /*
    The verb table. The VERBNAME symbolically indexes a
@@ -585,6 +578,14 @@ enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
 struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
+
+/* create v pointer to access verb properties */
+#define LOADV(x) \
+    V v=self? \
+        abs((I)self)<(sizeof vt/sizeof*vt)? \
+            vt+(I)self \
+            :(V)AV(self) \
+        :vt+x; 
 
 /* make a copy */
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
@@ -662,10 +663,11 @@ pr(A w){
 
 /*
    Character classes used by the symbol table function
-   findsymb() and by the scanning functions.
+   findsymb() and by the scanning function wd().
  */
 #define ALPHALOWER "abcdefghijklmnopqrstuvwxyz"
 #define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define HIMINUS ((char[]){MODE1('@'), 0})
 #define DIGIT "0123456789"
 #define SPACE " \t"
 #define ZEROCL ""
@@ -897,8 +899,10 @@ verb(c){I i=0;
 A newsymb(C *s,I n){
     I t;
     //P("%d\n",n);DO(n,P("%c",s[i]))P("\n");
-    if(strchr(DIGIT,*s)) {
+    if(strchr(DIGIT,*s) || strchr(HIMINUS,*s)) {
         char *end;
+        s=strndup(s,n);
+        DO(n,if(s[i]==alphatab[ALPHA_MACRON].base)s[i]='-')
         A z=ga(INT,0,0);
         *AV(z)=strtol(s,&end,10);
         while(((C*)end-s) < n){
@@ -906,6 +910,7 @@ A newsymb(C *s,I n){
             *AV(r)=strtol(end,&end,10);
             z=cat(z,r,0);
         }
+        free(s);
         R z;
     } else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
         A z=ga(SYMB,1,(I[]){n+1});
@@ -926,14 +931,14 @@ A newsymb(C *s,I n){
    element returned yields newstate when divided by ten
                 and yields action code when remainder from division by ten is taken.
  */
-char *cclass[] = {0, ALPHAUPPER ALPHALOWER, DIGIT, SPACE};
-int wdtab[][4] = {
+char *cclass[] = {0, ALPHAUPPER ALPHALOWER, HIMINUS, DIGIT, SPACE};
+int wdtab[][5] = {
     /*char-class*/
-    /*0     a     d      s*/    /* state  */
-    { 30+2, 20+2, 10+2,  0+0 }, /* init   */
-    { 30+1, 20+1, 10+0, 10+0 }, /* number */
-    { 30+1, 20+0, 10+1,  0+1 }, /* name   */
-    { 30+1, 20+1, 10+1,  0+1 }, /* other  */
+    /*0     a     -     d      s*/    /* state  */
+    { 30+2, 20+2, 10+2, 10+2,  0+0 }, /*  0 init   */
+    { 30+1, 20+1, 10+0, 10+0, 10+0 }, /* 10 number */
+    { 30+1, 20+0, 10+1, 10+1,  0+1 }, /* 20 name   */
+    { 30+1, 20+1, 10+1, 10+1,  0+1 }, /* 30 other  */
     /*{newstate+action,...}*/
 };
 
