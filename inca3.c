@@ -529,6 +529,7 @@ A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
 V1(copy);
 V1(iota);
 V2(find);
+V2(match);
 
 V2(plus);
 V2(minus);
@@ -587,16 +588,55 @@ struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
             :(V)AV(self) \
         :vt+x; 
 
+#define LFRAME(r) \
+    A lf = ga(0,AR(a)?1:0,(I[]){AR(a)-r?AR(a)-r:1}); mv(AV(lf),AR(a)-r?AD(a):(I[]){0},AR(a)-r?AR(a)-r:1); \
+    /*A lf; AT(lf)=0;AR(lf)=1;*AD(lf)=AN(lf)=AR(a)-r;AK(lf)=((C*)AD(a))-((C*)lf);*/
+
+#define RFRAME(r) \
+    A rf = ga(0,AR(a)?1:0,(I[]){AR(w)-r?AR(w)-r:1}); mv(AV(rf),AR(w)-r?AD(w):(I[]){0},AR(w)-r?AR(w)-r:1); \
+    /*A rf; AT(rf)=0;AR(rf)=1;*AD(rf)=AN(rf)=AR(w)-r;AK(rf)=((C*)AD(w))-((C*)rf);*/
+
+#define RANK2(lr,rr) \
+    /*pr(a); pr(w);*/ \
+    LFRAME(lr) \
+    RFRAME(rr) \
+    /*P("%d_%d\n",AN(lf),AN(rf));*/ \
+    /*pr(lf);*/ \
+    /*pr(rf);*/ \
+    if (!match(lf,rf,0)) { \
+        /*P("no match\n");*/ \
+        if (AN(lf)==1) { \
+            /*P("reshape_a\n");*/ \
+            /*pr(rf);*/ \
+            a=rsh(rf,a,0); \
+            /*pr(a);*/ \
+        } else if (AN(rf)==1) { \
+            /*P("reshape_w\n");*/ \
+            /*pr(lf);*/ \
+            w=rsh(lf,w,0); \
+            /*pr(w);*/ \
+        } \
+    }
+
 /* make a copy */
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 /* generate index vector */
 V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
 /* not implemented */
 V2(find){}
+V2(match){
+    if(AR(a)!=AR(w)
+    || AN(a)!=AN(w)
+      )
+        R 0;
+    DO(AN(a),if(AV(a)[i]!=AV(w)[i])R 0;)
+    R(A)(I)1;
+}
 
 /* add */
 V2(plus){
     LOADV(PLUS)
+    RANK2(v->lr,v->rr)
     I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
     //P("%d\n",v->id);
  DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
@@ -618,8 +658,11 @@ V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
 
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
- A z=ga(AT(w),r,AV(a));mv(AV(z),AV(w),wn=n>wn?wn:n);
- if(n-=wn)mv(AV(z)+wn,AV(z),n);R z;}
+ A z=ga(AT(w),r,AV(a));
+ mv(AV(z),AV(w),wn=n>wn?wn:n);
+ if(n-=wn)mv(AV(z)+wn,AV(z),n);
+ //P("#");pr(z);
+ R z;}
 /* return the shape of w */
 V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* return w */
