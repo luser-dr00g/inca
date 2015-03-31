@@ -165,3 +165,10 @@ construct symbolically-indexed tables.
 The alt keyboard is being reworked to produce true Unicode APL characters
 (which xterm handles just fine).
 
+-- 
+
+Implemented scalar agreement (scalar extension) for the plus() function.
+Minus, times, and divide do not yet do this.
+
+Shifting thoughts toward the implementation of multiple numeric types.
+
