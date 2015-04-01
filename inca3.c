@@ -556,7 +556,8 @@ V2(plusminus);
    Verbs are recognized by the wd() function by being non-whitespace
    non-alphanumeric and then refined by verb() called by newsymb().
    The verb's A representation is a small integer which indexes
-   this table.
+   this table or an array of type VRB whose value is a (possibly
+   modified) copy of the verb record.
  */
 /*         VERBNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
 #define VERBTAB(_) \
@@ -588,19 +589,21 @@ struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
             :(V)AV(self) \
         :vt+x; 
 
+#define LOADFRAME(f,a,r) \
+    if (AR(a)-(r)>0) { \
+        f = ga(0,AR(a)?AR(a)==1?0:1:0,(I[]){AR(a)-(r)?AR(a)-(r):1}); \
+        mv(AV(f),AR(a)-(r)?AD(a):(I[]){0},AR(a)-(r)?AR(a)-(r):1); \
+    }
+
 #define LFRAME(r) \
     A lf = 0; \
-    if (AR(a)-(r)) { \
-        lf = ga(0,AR(a)?AR(a)==1?0:1:0,(I[]){AR(a)-(r)?AR(a)-(r):1}); \
-        mv(AV(lf),AR(a)-(r)?AD(a):(I[]){0},AR(a)-(r)?AR(a)-(r):1); \
-    }
+    if ((r)<0) { LOADFRAME(lf,a,r) } \
+    else { LOADFRAME(lf,a,-r) }
 
 #define RFRAME(r) \
     A rf = 0; \
-    if (AR(w)-(r)) { \
-        rf = ga(0,AR(w)?AR(w)==1?0:1:0,(I[]){AR(w)-(r)?AR(w)-(r):1}); \
-        mv(AV(rf),AR(w)-(r)?AD(w):(I[]){0},AR(w)-(r)?AR(w)-(r):1); \
-    }
+    if ((r)<0) { LOADFRAME(rf,w,r) } \
+    else { LOADFRAME(rf,w,r) } 
 
 #define RANK2(lr,rr) \
     /*pr(a); pr(w);*/ \
