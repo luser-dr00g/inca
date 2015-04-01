@@ -582,46 +582,54 @@ enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 
 /* create v pointer to access verb properties */
-#define LOADV(x) \
+#define LOADV(base) \
     V v=self? \
         abs((I)self)<(sizeof vt/sizeof*vt)? \
             vt+(I)self \
             :(V)AV(self) \
-        :vt+x; 
+        :vt+base; 
 
-#define LOADFRAME(f,a,r) \
-    if (AR(a)-(r)>0) { \
-        f = ga(0,AR(a)?AR(a)==1?0:1:0,(I[]){AR(a)-(r)?AR(a)-(r):1}); \
-        mv(AV(f),AR(a)-(r)?AD(a):(I[]){0},AR(a)-(r)?AR(a)-(r):1); \
+#define LOADFRAME(f,a,rk) \
+    if (AR(a)-(rk)>0) { \
+        /*f = ga(0,AR(a)?AR(a)==1?0:1:0,(I[]){AR(a)-(rk)?AR(a)-(rk):1});*/ \
+        /*mv(AV(f),AR(a)-(rk)?AD(a):(I[]){0},AR(a)-(rk)?AR(a)-(rk):1);*/ \
+        AR(f)=AR(a)-(rk)>1?1:0; \
+        AN(f)=AD(f)[0]=AR(a)-(rk); \
+        AK(f)=((C*)AD(a))-((C*)f); \
     }
 
-#define LFRAME(r) \
-    A lf = 0; \
-    if ((r)<0) { LOADFRAME(lf,a,r) } \
-    else { LOADFRAME(lf,a,-r) }
+#define LFRAME(rk) \
+    /*A lf = 0;*/ \
+    A lf = &(struct a){.t=INT,.n=0,.r=0}; \
+    if ((rk)<0) { LOADFRAME(lf,a,AR(w)+rk) } \
+    else { LOADFRAME(lf,a,rk) }
 
-#define RFRAME(r) \
-    A rf = 0; \
-    if ((r)<0) { LOADFRAME(rf,w,r) } \
-    else { LOADFRAME(rf,w,r) } 
+#define RFRAME(rk) \
+    /*A rf = 0;*/ \
+    A rf = &(struct a){.t=INT,.n=0,.r=0}; \
+    if ((rk)<0) { LOADFRAME(rf,w,AR(a)+rk) } \
+    else { LOADFRAME(rf,w,rk) } 
 
 #define RANK2(lr,rr) \
     /*pr(a); pr(w);*/ \
     LFRAME(lr) \
     RFRAME(rr) \
-    /*P("%d_%d\n",AR(a),AR(w));*/ \
-    /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
-    /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
-    /*pr(lf);*/ \
-    /*pr(rf);*/ \
+    P("%d_%d\n",AR(a),AR(w)); \
+    P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0); \
+    P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0); \
+    pr(lf); \
+    pr(rf); \
     if (!match(lf,rf,0)) { \
         /*P("no match\n");*/ \
-        if (lf==0) { \
+        if (AN(lf)==0) \
+        { \
             /*P("reshape_a\n");*/ \
             /*pr(rf);*/ \
             a=rsh(rf,a,0); \
             /*pr(a);*/ \
-        } else if (rf==0) { \
+        } else \
+        if (AN(rf)==0) \
+        { \
             /*P("reshape_w\n");*/ \
             /*pr(lf);*/ \
             w=rsh(lf,w,0); \
@@ -675,11 +683,11 @@ V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
 
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
- //P("rsh:\n"); pr(a); pr(w);
+ P("rsh:\n"); pr(a); pr(w);
  A z=ga(AT(w),r,AV(a));
  mv(AV(z),AV(w),wn=n>wn?wn:n);
  if(n-=wn)mv(AV(z)+wn,AV(z),n);
- //P("#");pr(z);
+ P("#");pr(z);
  R z;}
 /* return the shape of w */
 V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
@@ -711,7 +719,7 @@ pr(A w){
     else {
         I r=AR(w),*d=AD(w),n=AN(w);
         if(w==null)R 0;
-        //DO(r,pi(d[i])); nl();
+        DO(r,pi(d[i])); nl();
         if(AT(w)==1)
             DO(n,P("< ");pr((A)(AV(w)[i])))
         else if(AT(w)==SYMB)
