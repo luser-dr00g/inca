@@ -29,7 +29,9 @@ struct st *findsymb(struct st *st, char **s, int mode);
 #define R return
 #define V1(f) A f(A w,      A self)
 #define V2(f) A f(A a, A w, A self)
-#define DO(n,x) {I i=0,_n=(n);for(;i<_n;++i){x;}}
+#define DO(n,x)  {I i=0,_n=(n);for(;i<_n;++i){x;}}
+#define DO2(n,x) {I j=0,_o=(n);for(;j<_o;++j){x;}}
+#define DO3(n,x) {I k=0,_p=(n);for(;k<_p;++k){x;}}
 
 
 #define ESC(x) "\x1b" #x
@@ -401,7 +403,7 @@ void specialtty(){
     fputc(CTL('N'),stdout); //select G1 charset  ESC(n):select G2  ESC(o):select G3
 
 #if 1
-    {
+    { /* print ALT-keyboard layout */
         int i,j;
         char *keys[] = {
            "~!@#$%^&*()_+",
@@ -415,7 +417,7 @@ void specialtty(){
         };
         for (i=0;i<(sizeof keys/sizeof*keys);i++){
             int n = strlen(keys[i]);
-            for (j=0;j<n;j++)
+            for (j=0;j<n;j++)                          /* V- mode=1 */
                 fputs(basetooutput(inputtobase(keys[i][j],1)),stdout);
             fputc('\n',stdout);
         }
@@ -526,26 +528,21 @@ A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
     AT(z)=t;AR(z)=r;AN(z)=n;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
     mv(AD(z),d,r);R z;}
 
-V1(copy);
-V1(iota);
-V2(find);
-V2(match);
+A i0(I i){A z=ga(INT,0,0);*AV(z)=i;R z;}
+A i1(I n,I*v){A z=ga(INT,1,(I[]){n});mv(AV(z),v,n);R z;}
 
-V2(plus);
-V2(minus);
+V1(copy);
+V1(iota); V2(find);
+V2(match);
+V1(id); V2(plus);
+V1(neg); V2(minus); V2(plusminus);
 V2(times);
 V2(quotient);
-
-V2(from);
+V1(size); V2(from);
+V1(sha); V2(rsh);
 V1(box);
 V2(cat);
 
-V2(rsh);
-V1(sha);
-V1(id);
-V1(neg);
-V1(size);
-V2(plusminus);
 
 
 /*
@@ -573,13 +570,22 @@ V2(plusminus);
         _( HASH,      ALPHA_HASH,      sha,  rsh,      0, 0, 0,  0 ) \
         _( COMMA,     ALPHA_COMMA,     0,    cat,      0, 0, 0,  0 ) \
         _( NULLFUNC,         0,        0,    0,        0, 0, 0,  0 ) 
-typedef struct v *V; //dynamic verb type
 struct v { I c; A (*vm)(); A (*vd)(); I mr,lr,rr; I id; };
+typedef struct v *V; //dynamic verb type
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
 struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
+
+#define ADVTAB(_) \
+    _(ZEROOP, 0, 0, 0, 0, 0, 0, 0) \
+    _(WITH, ALPHA_AMPERSAND, 0, 0,  0, 0, 0, 0) \
+    _(NULLOP, 0)
+#define ADVTAB_NAME(a, ...) a ,
+enum { ADVTAB(ADVTAB_NAME) };
+
+struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
 
 /* create v pointer to access verb properties */
 #define LOADV(base) \
@@ -589,36 +595,55 @@ struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
             :(V)AV(self) \
         :vt+base; 
 
-#define LOADFRAME(f,a,rk) \
-    if (AR(a)-(rk)>0) { \
-        /*f = ga(0,AR(a)?AR(a)==1?0:1:0,(I[]){AR(a)-(rk)?AR(a)-(rk):1});*/ \
-        /*mv(AV(f),AR(a)-(rk)?AD(a):(I[]){0},AR(a)-(rk)?AR(a)-(rk):1);*/ \
-        AR(f)=AR(a)-(rk)>1?1:0; \
-        AN(f)=AD(f)[0]=AR(a)-(rk); \
-        AK(f)=((C*)AD(a))-((C*)f); \
+#define LOADFRAME(f,ar,rk) \
+    if (AR(ar)-(rk)>0) { \
+        /*f = ga(0,AR(ar)?AR(ar)==1?0:1:0,(I[]){AR(ar)-(rk)?AR(ar)-(rk):1});*/ \
+        /*mv(AV(f),AR(ar)-(rk)?AD(ar):(I[]){0},AR(ar)-(rk)?AR(ar)-(rk):1);*/ \
+        AR(f)=AR(ar)-(rk)>1?1:0; \
+        AN(f)=AD(f)[0]=AR(ar)-(rk); \
+        AK(f)=((C*)AD(ar))-((C*)f); /*make "indirect" array of ar's frame shape*/ \
     }
 
 #define LFRAME(rk) \
     /*A lf = 0;*/ \
     A lf = &(struct a){.t=INT,.n=0,.r=0}; \
-    if ((rk)<0) { LOADFRAME(lf,a,AR(w)+rk) } \
+    if ((rk)<0) { LOADFRAME(lf,a,AR(a)+(rk)) } \
     else { LOADFRAME(lf,a,rk) }
 
 #define RFRAME(rk) \
     /*A rf = 0;*/ \
     A rf = &(struct a){.t=INT,.n=0,.r=0}; \
-    if ((rk)<0) { LOADFRAME(rf,w,AR(a)+rk) } \
+    if ((rk)<0) { LOADFRAME(rf,w,AR(w)+(rk)) } \
     else { LOADFRAME(rf,w,rk) } 
+
+#define LOADCELL(c,ar,rk) \
+    if ((rk)>0) { \
+        AR(c)=(rk)>1?1:0; \
+        AN(c)=AD(c)[0]=rk; \
+        AK(c)=((C*)(AD(ar)+AR(ar)-rk))-((C*)c); /* indirect array of ar's cell shape */ \
+    }
+
+#define LCELL(rk) \
+    A lc = &(struct a){.t=INT,.n=0,.r=0}; \
+    if ((rk)<0) { LOADCELL(lc,a,AR(a)-(rk)) } \
+    else { LOADCELL(lc,a,rk) }
+
+#define RCELL(rk) \
+    A rc = &(struct a){.t=INT,.n=0,.r=0}; \
+    if ((rk)<0) { LOADCELL(rc,w,AR(w)-(rk)) } \
+    else { LOADCELL(rc,w,rk) }
 
 #define RANK2(lr,rr) \
     /*pr(a); pr(w);*/ \
     LFRAME(lr) \
     RFRAME(rr) \
-    P("%d_%d\n",AR(a),AR(w)); \
-    P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0); \
-    P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0); \
-    pr(lf); \
-    pr(rf); \
+    LCELL(lr) \
+    RCELL(rr) \
+    /*P("%d_%d\n",AR(a),AR(w));*/ \
+    /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
+    /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
+    /*pr(lf); pr(rf);*/ \
+    /*pr(lc); pr(rc);*/ \
     if (!match(lf,rf,0)) { \
         /*P("no match\n");*/ \
         if (AN(lf)==0) \
@@ -637,14 +662,8 @@ struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
         } \
     }
 
-/* make a copy */
-V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
-/* generate index vector */
-V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
-/* not implemented */
-V2(find){}
 V2(match){
-    if(a==w) R(A)(I)1;
+    if(a==w) R i0(1);
     if(a && w) {
         if(AR(a)!=AR(w)
         || AN(a)!=AN(w)
@@ -655,9 +674,11 @@ V2(match){
     } else {
         R 0;
     }
-    R(A)(I)1;
+    R i0(1);
 }
 
+/* return w */
+V1(id){R w;}
 /* add */
 V2(plus){
     LOADV(PLUS)
@@ -665,40 +686,50 @@ V2(plus){
     I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
     //P("%d\n",v->id);
  DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+
+/* negate w */
+V1(neg){ A z=copy(w,0); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
 V2(minus){A z=ga(0,AR(w),AD(w));
  DO(AN(w),AV(z)[i]=AV(a)[i]-AV(w)[i]);R z;}
+
+/* return sum and difference */
+V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
+
 V2(times){A z=ga(0,AR(w),AD(w));
  DO(AN(w),AV(z)[i]=AV(a)[i]*AV(w)[i]);R z;}
+
 V2(quotient){A z=ga(0,AR(w),AD(w));
  DO(AN(w),AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0);R z;}
 
+/* make a copy */
+V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
+/* generate index vector */
+V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
+/* not implemented */
+V2(find){}
+
+/* length of first dimension */
+V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 /* index */
 V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
  A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
+
 /* pack array into a scalar */
 V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
 /* catenate two arrays */
 V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
  A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
 
+/* return the shape of w */
+V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
- P("rsh:\n"); pr(a); pr(w);
+ /*P("rsh:\n"); pr(a); pr(w);*/
  A z=ga(AT(w),r,AV(a));
  mv(AV(z),AV(w),wn=n>wn?wn:n);
  if(n-=wn)mv(AV(z)+wn,AV(z),n);
- P("#");pr(z);
+ /*P("#");pr(z);*/
  R z;}
-/* return the shape of w */
-V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
-/* return w */
-V1(id){R w;}
-/* negate w */
-V1(neg){ A z=copy(w,0); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
-/* length of first dimension */
-V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
-/* return sum and difference */
-V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
 
 
@@ -799,11 +830,12 @@ struct st *findsymb(struct st *st, char **s, int mode) {
                       && abs(a)<'a'                    \
                       && abs(a)<(sizeof vt/sizeof*vt)  \
                       && (vt[a].vm || vt[a].vd)      ) \
-    _(ASSN = 16,  qc, a==MODE1('<')                  ) \
-    _(MARK = 32,  qm, ((A)a)==mark                   ) \
-    _(LPAR = 64,  ql, a=='('                         ) \
-    _(RPAR = 128, qr, a==')'                         ) \
-    _(NULP = 256, qu, ((A)a)==null                   )
+    _(ADV  = 16,  qo, ) \
+    _(ASSN = 32,  qc, a==MODE1('<')                  ) \
+    _(MARK = 64,  qm, ((A)a)==mark                   ) \
+    _(LPAR = 128,  ql, a=='('                         ) \
+    _(RPAR = 256, qr, a==')'                         ) \
+    _(NULP = 512, qu, ((A)a)==null                   )
 #define PRED_FUNC(X,Y,...) Y(a){R __VA_ARGS__;}
 PREDTAB(PRED_FUNC)                      //generate predicate functions
 #define PRED_ENT(a,b,...) b ,
@@ -812,7 +844,8 @@ I(*q[])() = { PREDTAB(PRED_ENT) };      //generate predicate function table
 enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
                  EDGE = MARK+ASSN+LPAR,
                  AVN = VERB+NOUN };
-/* encode predicate applications into a binary number, a bitset */
+/* encode predicate applications into a binary number,
+   a bitset represented as a bit mask */
 int classify(A a){ int i,v,r;
     for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i](a))r|=v; R r;}
 
