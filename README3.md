@@ -172,3 +172,35 @@ Minus, times, and divide do not yet do this.
 
 Shifting thoughts toward the implementation of multiple numeric types.
 
+-- 
+
+I had a great idea for numeric types. The thing I most want to avoid is
+different sizes of atoms in the array data. Because then all access to
+the data has to be cast to the appropriate pointer type, and we need to
+switch on the type even just to iterate through it.
+
+So everything needs to be the same size. Drawing from the Lisp book I just
+finished reading, this is the exact same problem that early Lisp
+implementations faced when dealing with numeric types. So we can borrow 
+some of the same solutions. I don't want to add a type word to every atom.
+I like having the basis as `int`, passing the issue off to the C implementation
+to determine what `int` is most appropriate for a given machine. 
+
+So the idea is to steal bits off the top of the `int` to use as a type 
+indicator. So we'll lose some precision for atomic integers. But full-width
+integers will also be accessible in a separate table. Floating-point numbers
+will also be stored in a separate table.
+
+I haven't decided exactly how many bits to use, so I hope to make the
+code adaptable to different choices of partition. But for the first draft,
+the `int` will divide right down the middle. So atomic integers will
+be in the range -32768..32767 .
+
+    0x00112233 
+      0000nnnn  small atomic integer nnnn
+      bbbbiiii  indirect number at table[bbbb][iiii]
+                stored as (bank+1,index)
+
+There will be a master table of pointers to tables for each type. These
+should be `struct` so each level can maintain its own bookkeeping fields.
+
