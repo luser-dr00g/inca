@@ -16,13 +16,13 @@ typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AK(a) ((a)->k)                   /* Offset of ravel */
 #define AD(a) ((a)->d)                   /* Dims */
 #define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
-enum type { INT, BOX, SYMB, CHAR, DBL, MRK, NLL, VRB, NTYPES };
+enum type { INT, BOX, SYMB, CHAR, NUM, DBL, MRK, NLL, VRB, NTYPES };
 struct a nullob = { NLL };
 A null = &nullob;           //two "singular" objects
 struct a markob = { MRK };
 A mark = &markob;
 
-A newsymb(C *s,I n);
+A newsymb(C *s,I n,I state);
 struct st *findsymb(struct st *st, char **s, int mode);
 
 #define P printf
@@ -32,6 +32,7 @@ struct st *findsymb(struct st *st, char **s, int mode);
 #define DO(n,x)  {I i=0,_n=(n);for(;i<_n;++i){x;}}
 #define DO2(n,x) {I j=0,_o=(n);for(;j<_o;++j){x;}}
 #define DO3(n,x) {I k=0,_p=(n);for(;k<_p;++k){x;}}
+
 
 
 #define ESC(x) "\x1b" #x
@@ -937,7 +938,7 @@ A ex(I *e){I a=*e;
                         R (A)a;
                     }
                     if (tab->a!=null){          // found a defined prefix
-                        stackpush(lstk,newsymb(s,p-s)); //pushback prefix
+                        stackpush(lstk,newsymb(s,p-s,2)); //pushback prefix
                         s=p;
                     }
                     tab=findsymb(&st,&p,0);
@@ -998,30 +999,40 @@ verb(c){I i=0;
 /*
    construct a single scanned token given a string pointer and length.
  */
-A newsymb(C *s,I n){
+A newsymb(C *s,I n,I state){
     I t;
     //P("%d\n",n);DO(n,P("%c",s[i]))P("\n");
-    if(strchr(DIGIT,*s) || strchr(HIMINUS,*s)) {
+    //if(strchr(DIGIT,*s) || strchr(HIMINUS,*s)) {
+    switch(state){
+    case 1:
+        {
         char *end;
         s=strndup(s,n);
         DO(n,if(s[i]==alphatab[ALPHA_MACRON].base)s[i]='-')
-        A z=ga(INT,0,0);
-        *AV(z)=strtol(s,&end,10);
+        //A z=ga(INT,0,0); *AV(z)=strtol(s,&end,10);
+        A z=i0(strtol(s,&end,10));
         while(((C*)end-s) < n){
-            A r=ga(INT,0,0);
-            *AV(r)=strtol(end,&end,10);
+            //A r=ga(INT,0,0); *AV(r)=strtol(end,&end,10);
+            A r=i0(strtol(end,&end,10));
             z=cat(z,r,0);
         }
         free(s);
         R z;
-    } else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
+        }
+    //} else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
+    case 2:
+        {
         A z=ga(SYMB,1,(I[]){n+1});
         mv(AV(z),(I*)s,n+3/4);
         ((C*)AV(z))[n] = 0;
         R z;
-    } else {
+        }
+    //} else {
+    case 3:
+        {
         I c=verb(*s);
         R (A)(c?c:(I)*s);
+        }
     }
 }
 
@@ -1045,14 +1056,14 @@ int wdtab[][5] = {
 };
 
 /* construct new object giving start and end string positions */
-#define emit(a,b) (*z++=(I)newsymb(s+a,(b)-a)); 
+#define emit(a,b,c) (*z++=(I)newsymb(s+(a),(b)-a,c)); 
 /*
    scan expression for alphabetic and numeric parts 
    delimited by whitespace
  */
 I *wd(C *s){
     I a,b,n=strlen(s),*e=ma(n+1),*z=e;
-    int i,j,i_,state;
+    int i,j,i_,state,oldstate;
     C c, *cp;
     state=0;
     for(i=0;i<n;i++){
@@ -1067,10 +1078,11 @@ I *wd(C *s){
         }
         b=wdtab[state][a];
         //P("%d\n",b);
+        oldstate=state;
         state=b/10;
         switch(b%10){ //encoded actions
         case 0: break;
-        case 1: emit(j,i);
+        case 1: emit(j,i,oldstate);
         case 2: j=i; break;
         }
     }
