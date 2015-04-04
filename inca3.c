@@ -517,7 +517,7 @@ err:
 }
 
 /* allocate integer array */
-I *ma(I n){R(I*)malloc(n*4);}
+I *ma(I n){R(I*)malloc(n*sizeof(I));}
 /* move integers */
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
 /* table rank, product of dimensions d[0..r-1] */
@@ -597,13 +597,15 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
         :vt+base; 
 
 #define LOADFRAME(f,ar,rk) \
+    /*P("rk=%d\n",rk);*/ \
     if (AR(ar)-(rk)>0) { \
         /*f = ga(0,AR(ar)?AR(ar)==1?0:1:0,(I[]){AR(ar)-(rk)?AR(ar)-(rk):1});*/ \
         /*mv(AV(f),AR(ar)-(rk)?AD(ar):(I[]){0},AR(ar)-(rk)?AR(ar)-(rk):1);*/ \
         AR(f)=AR(ar)-(rk)>1?1:0; \
         AN(f)=AD(f)[0]=AR(ar)-(rk); \
         AK(f)=((C*)AD(ar))-((C*)f); /*make "indirect" array of ar's frame shape*/ \
-    }
+    } \
+    /*P("AR(f)=%d\n", AR(f));*/ 
 
 #define LFRAME(rk) \
     /*A lf = 0;*/ \
@@ -650,14 +652,18 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
         if (AN(lf)==0) \
         { \
             /*P("reshape_a\n");*/ \
-            /*pr(rf);*/ \
+            /*pr(rf); pr(lc);*/ \
+            if (AN(lc)>0) \
+                rf=cat(rf,lc,0); \
             a=rsh(rf,a,0); \
             /*pr(a);*/ \
         } else \
         if (AN(rf)==0) \
         { \
             /*P("reshape_w\n");*/ \
-            /*pr(lf);*/ \
+            /*pr(lf); pr(rc);*/ \
+            if (AN(rc)>0) \
+                lf=cat(lf,rc,0); \
             w=rsh(lf,w,0); \
             /*pr(w);*/ \
         } \
@@ -718,8 +724,12 @@ V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
 /* pack array into a scalar */
 V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
 /* catenate two arrays */
-V2(cat){I an=AN(a),wn=AN(w),n=an+wn;
- A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);R z;}
+V2(cat){
+     //P("cat:\n"); pr(a); pr(w);
+     I an=AN(a),wn=AN(w),n=an+wn;
+     A z=ga(AT(w),1,&n);mv(AV(z),AV(a),an);mv(AV(z)+an,AV(w),wn);
+     //pr(z);
+     R z;}
 
 /* return the shape of w */
 V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
@@ -751,7 +761,7 @@ pr(A w){
     else {
         I r=AR(w),*d=AD(w),n=AN(w);
         if(w==null)R 0;
-        DO(r,pi(d[i])); nl();
+        DO(r,pi(d[i])); P("#"); nl();
         if(AT(w)==1)
             DO(n,P("< ");pr((A)(AV(w)[i])))
         else if(AT(w)==SYMB)
