@@ -9,6 +9,7 @@
 
 typedef unsigned char C;
 typedef intptr_t I;
+typedef double D;
 typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AT(a) ((a)->t)                   /* Type */
 #define AR(a) ((a)->r)                   /* Rank (size of Dims) */
@@ -439,6 +440,7 @@ void specialtty(){
 void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
 
 
+
 /* read expression from terminal into buffer
    (re)allocate buffer as necessary
    process backspaces
@@ -516,21 +518,104 @@ err:
     return p==*s?NULL:*s;
 }
 
+
+
 /* allocate integer array */
 I *ma(I n){R(I*)malloc(n*sizeof(I));}
+
 /* move integers */
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
+
 /* table rank, product of dimensions d[0..r-1] */
 I tr(I r,I*d){I z=1;DO(r,z=z*d[i]);R z;}
+
 /* generate (allocate and initialize) new abstract array 
-   of type t
- */
+   of type t */
 A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
     AT(z)=t;AR(z)=r;AN(z)=n;AK(z)=sizeof*z+(-1+AR(z))*sizeof(I);
     mv(AD(z),d,r);R z;}
 
+/* integer scalar */
 A i0(I i){A z=ga(INT,0,0);*AV(z)=i;R z;}
+
+/* integer vector */
 A i1(I n,I*v){A z=ga(INT,1,(I[]){n});mv(AV(z),v,n);R z;}
+
+
+
+/* integer-encoded numbers in the NUM type */
+
+enum {
+    IMM_BIT = 16,
+    IMM_MASK = (1<<IMM_BIT)-1,
+    BANK_BIT = sizeof(I)*CHAR_BIT - IMM_BIT,
+    BANK_MASK = ((1<<BANK_BIT)-1) << IMM_BIT,
+};
+#define encodenum(bnk,idx) ((bnk<<IMM_BIT)|idx)
+
+A bank;
+#define BANK_INIT (bank=ga(BOX,1,(I[]){1<<BANK_BIT})), \
+                  (AV(bank)[0]=0)
+A fixnum;
+#define FIXNUM_INIT (fixnum=(A) (AV(bank)[1]=(I)ga(INT,1,(I[]){1<<IMM_BIT}))), \
+                    (AV(fixnum)[0]=0)
+A flonum;
+#define FLONUM_INIT (flonum=(A) (AV(bank)[2]=(I)ga(DBL,1,(I[]){1<<IMM_BIT}))), \
+                    (((D*)AV(flonum))[0]=0.0)
+
+/* "number"-encoded integer */
+
+I num(I i){
+    if ((unsigned)i&BANK_MASK) {
+        if (((unsigned)i&BANK_MASK)==BANK_MASK) { //small negative number
+            R i&IMM_MASK;
+        }
+        else
+            R fix(i);
+    } else 
+        R i;
+}
+
+/* number scalar */
+A num0(I i){
+    A z=i0(num(i));
+    AT(z)=NUM;
+    R z;
+}
+
+/* search full-width integer in bank[FIXNUM]
+   allocate if not found
+   return encoded (bank,index) */
+I fix(I i){
+    int j,n;
+    for(j=0,n=AV(fixnum)[0];++j<=n;)
+        if (AV(fixnum)[j]==i)
+            R encodenum(1,j);
+    //TODO: check for full table
+    // allocate new fixnum table in bank,
+    // update global fixnum pointer
+    // use a cursor variable here instead of constant 1
+    AV(fixnum)[j]=i;
+    ++AV(fixnum)[0];
+    R encodenum(1,j);
+}
+
+/* search floating number in bank[FLONUM]
+   allocate if not found
+   return encoded(bank,index) */
+I flo(D d){
+    int j,n;
+    for(j=0,n=(I)(((D*)AV(flonum))[0]);++j<=n;)
+        if (((D*)AV(flonum))[j]==d)
+            R encodenum(2,j);
+    //TODO: check for full table as in fix()
+    ((D*)AV(flonum))[j]=d;
+    ++((D*)AV(flonum))[0];
+    R encodenum(2,j);
+}
+
+
+/* verb function declarations */
 
 V1(copy);
 V1(iota); V2(find);
@@ -579,6 +664,7 @@ enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 #define VERBTAB_ENT(a, ...) { __VA_ARGS__ },
 struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 
+
 #define ADVTAB(_) \
     _(ZEROOP, 0, 0, 0, 0, 0, 0, 0) \
     _(WITH, ALPHA_AMPERSAND, 0, 0,  0, 0, 0, 0) \
@@ -587,6 +673,7 @@ struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 enum { ADVTAB(ADVTAB_NAME) };
 
 struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
+
 
 /* create v pointer to access verb properties */
 #define LOADV(base) \
@@ -647,7 +734,7 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
     /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
     /*pr(lf); pr(rf);*/ \
     /*pr(lc); pr(rc);*/ \
-    if (!match(lf,rf,0)) { \
+    if (!*AV(match(lf,rf,0))) { \
         /*P("no match\n");*/ \
         if (AN(lf)==0) \
         { \
@@ -670,18 +757,18 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
     }
 
 V2(match){
-    if(a==w) R i0(1);
+    if(a==w) R num0(1);
     if(a && w) {
         if(AR(a)!=AR(w)
         || AN(a)!=AN(w)
           ) {
-            R 0;
+            R num0(0);
         }
         DO(AN(a),if(AV(a)[i]!=AV(w)[i])R 0;)
     } else {
-        R 0;
+        R num0(0);
     }
-    R i0(1);
+    R num0(1);
 }
 
 /* return w */
@@ -1020,10 +1107,10 @@ A newsymb(C *s,I n,I state){
         s=strndup(s,n);
         DO(n,if(s[i]==alphatab[ALPHA_MACRON].base)s[i]='-')
         //A z=ga(INT,0,0); *AV(z)=strtol(s,&end,10);
-        A z=i0(strtol(s,&end,10));
+        A z=num0(strtol(s,&end,10));
         while(((C*)end-s) < n){
             //A r=ga(INT,0,0); *AV(r)=strtol(end,&end,10);
-            A r=i0(strtol(end,&end,10));
+            A r=num0(strtol(end,&end,10));
             z=cat(z,r,0);
         }
         free(s);
@@ -1106,6 +1193,9 @@ I *wd(C *s){
  */
 int main(){C *s=NULL;int n=0;C *prompt="\t";
     ST_INIT; /* initialize symbol table root value */
+    BANK_INIT;
+    FIXNUM_INIT;
+    FLONUM_INIT;
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
