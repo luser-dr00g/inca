@@ -204,3 +204,15 @@ be in the range -32768..32767 .
 There will be a master table of pointers to tables for each type. These
 should be `struct` so each level can maintain its own bookkeeping fields.
 
+-- 
+
+Instead of structs, the master table is an abstract BOX array. For 
+bookkeeping, element[0] is treated as a top-of-list counter/cursor, 
+and the remaining elements treated as a 1-index-origin array.
+
+The fixnum and flonum tables also use element[0] as a counter 
+and the remaining elements are the data.
+
+Presumably, to extend this to rationals, element[0] of ratnum will
+be count/1. :)
+
