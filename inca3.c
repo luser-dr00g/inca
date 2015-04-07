@@ -615,6 +615,7 @@ I flo(D d){
 }
 
 
+
 /* verb function declarations */
 
 V1(copy);
@@ -771,15 +772,43 @@ V2(match){
     R num0(1);
 }
 
+enum { IMM = 1, FIX, FLO, NUM_TYPES,
+};
+#define TYPEPAIR(a,b) \
+    ((a)*NUM_TYPES+(b))
+
+#define NUMERIC_TYPES(a,b) \
+    TYPEPAIR(((a)&BANK_MASK?(AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL?FLO:FIX):IMM), \
+             ((b)&BANK_MASK?(AT(((A)AV(bank)[((b)&BANK_MASK)>>IMM_BIT]))==DBL?FLO:FIX):IMM))
+
 /* return w */
 V1(id){R w;}
-/* add */
+/*
+   add
+TODO: sign-extend immediate ints
+ */
 V2(plus){
     LOADV(PLUS)
     RANK2(v->lr,v->rr)
     I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
     //P("%d\n",v->id);
- DO(n,AV(z)[i]=AV(a)[i]+AV(w)[i]);R z;}
+ DO(n,
+         switch(NUMERIC_TYPES(AV(a)[i],AV(w)[i])){
+         case TYPEPAIR(IMM,IMM): AV(z)[i]=num(AV(a)[i]+AV(w)[i]); break;
+         case TYPEPAIR(IMM,FIX): AV(z)[i]=num(AV(a)[i]+
+                     AV(((A)AV(bank)[(AV(w)[i]&BANK_MASK)>>IMM_BIT]))[AV(w)[i]&IMM_MASK]);
+             break;
+         case TYPEPAIR(IMM,FLO):
+         case TYPEPAIR(FIX,IMM):
+         case TYPEPAIR(FIX,FIX):
+         case TYPEPAIR(FIX,FLO):
+         case TYPEPAIR(FLO,IMM):
+         case TYPEPAIR(FLO,FIX):
+         case TYPEPAIR(FLO,FLO):
+             break;
+         }
+     )
+ R z;}
 
 /* negate w */
 V1(neg){ A z=copy(w,0); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
