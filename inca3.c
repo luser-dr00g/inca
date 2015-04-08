@@ -548,6 +548,7 @@ A i1(I n,I*v){A z=ga(INT,1,(I[]){n});mv(AV(z),v,n);R z;}
 enum {
     IMM_BIT = 16,
     IMM_MASK = (1<<IMM_BIT)-1,
+    IMM_SIGN = 1<<(IMM_BIT-1),
     BANK_BIT = sizeof(I)*CHAR_BIT - IMM_BIT,
     BANK_MASK = ((1<<BANK_BIT)-1) << IMM_BIT,
 };
@@ -567,7 +568,7 @@ A flonum;
 
 I num(I i){
     if ((unsigned)i&BANK_MASK) {
-        if (((unsigned)i&BANK_MASK)==BANK_MASK) { //small negative number
+        if (((unsigned)i&(BANK_MASK|IMM_SIGN))==(BANK_MASK|IMM_SIGN)) { //small negative number
             R i&IMM_MASK;
         }
         else
@@ -612,6 +613,18 @@ I flo(D d){
     ((D*)AV(flonum))[j]=d;
     ++((D*)AV(flonum))[0];
     R encodenum(2,j);
+}
+
+I numimm(I n){
+    R -(1+(n^IMM_MASK));
+}
+
+I numint(I n){
+    R AV((A)(AV(bank)[n&BANK_MASK>>IMM_BIT]))[n&IMM_MASK];
+}
+
+D numdbl(I n){
+    R ((D*)AV((A)(AV(bank)[n&BANK_MASK>>IMM_BIT])))[n&IMM_MASK];
 }
 
 
@@ -777,9 +790,14 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES,
 #define TYPEPAIR(a,b) \
     ((a)*NUM_TYPES+(b))
 
+#define TYPENUM(a) ((a)&BANK_MASK? \
+        (AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL? \
+             FLO \
+             :FIX) \
+        :IMM)
+
 #define NUMERIC_TYPES(a,b) \
-    TYPEPAIR(((a)&BANK_MASK?(AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL?FLO:FIX):IMM), \
-             ((b)&BANK_MASK?(AT(((A)AV(bank)[((b)&BANK_MASK)>>IMM_BIT]))==DBL?FLO:FIX):IMM))
+    TYPEPAIR(TYPENUM(a), TYPENUM(b))
 
 /* return w */
 V1(id){R w;}
@@ -794,18 +812,15 @@ V2(plus){
     //P("%d\n",v->id);
  DO(n,
          switch(NUMERIC_TYPES(AV(a)[i],AV(w)[i])){
-         case TYPEPAIR(IMM,IMM): AV(z)[i]=num(AV(a)[i]+AV(w)[i]); break;
-         case TYPEPAIR(IMM,FIX): AV(z)[i]=num(AV(a)[i]+
-                     AV(((A)AV(bank)[(AV(w)[i]&BANK_MASK)>>IMM_BIT]))[AV(w)[i]&IMM_MASK]);
-             break;
-         case TYPEPAIR(IMM,FLO):
-         case TYPEPAIR(FIX,IMM):
-         case TYPEPAIR(FIX,FIX):
-         case TYPEPAIR(FIX,FLO):
-         case TYPEPAIR(FLO,IMM):
-         case TYPEPAIR(FLO,FIX):
-         case TYPEPAIR(FLO,FLO):
-             break;
+         case TYPEPAIR(IMM,IMM): AV(z)[i]=num(numimm(AV(a)[i])+numimm(AV(w)[i])); break;
+         case TYPEPAIR(IMM,FIX): AV(z)[i]=num(numimm(AV(a)[i])+numint(AV(w)[i])); break;
+         case TYPEPAIR(IMM,FLO): AV(z)[i]=num(numimm(AV(a)[i])+numdbl(AV(w)[i])); break;
+         case TYPEPAIR(FIX,IMM): AV(z)[i]=num(numint(AV(a)[i])+numimm(AV(w)[i])); break;
+         case TYPEPAIR(FIX,FIX): AV(z)[i]=num(numint(AV(a)[i])+numint(AV(w)[i])); break;
+         case TYPEPAIR(FIX,FLO): AV(z)[i]=num(numint(AV(a)[i])+numdbl(AV(w)[i])); break;
+         case TYPEPAIR(FLO,IMM): AV(z)[i]=num(numdbl(AV(a)[i])+numimm(AV(w)[i])); break;
+         case TYPEPAIR(FLO,FIX): AV(z)[i]=num(numdbl(AV(a)[i])+numint(AV(w)[i])); break;
+         case TYPEPAIR(FLO,FLO): AV(z)[i]=num(numdbl(AV(a)[i])+numdbl(AV(w)[i])); break;
          }
      )
  R z;}
@@ -866,8 +881,14 @@ ps(A i){P("%s",(char*)AV(i));}
 pv(i){P("%s",basetooutput(alphatab[vt[i].c].base));}
 /* print character */
 pc(i){qv(i)?pv(i):P("%s",basetooutput(i));}
-/* print integer */
-pi(i){P("%d ",i);}
+/* print number */
+pi(i){
+    switch(TYPENUM(i)){
+    case IMM: P("%d ",numimm(i)); break;
+    case FIX: P("%d ",numint(i)); break;
+    case FLO: P("%f ",numdbl(i)); break;
+    }
+}
 /* print newline */
 nl(){P("\n");}
 /* print any array */
