@@ -616,7 +616,7 @@ I flo(D d){
 }
 
 I numimm(I n){
-    R -(1+(n^IMM_MASK));
+    R n&IMM_SIGN?n|BANK_MASK:n;
 }
 
 I numint(I n){
@@ -737,18 +737,19 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
     if ((rk)<0) { LOADCELL(rc,w,AR(w)-(rk)) } \
     else { LOADCELL(rc,w,rk) }
 
-#define RANK2(lr,rr) \
+#define RANK2(base,lrk,rrk) \
+    LOADV(base) \
     /*pr(a); pr(w);*/ \
-    LFRAME(lr) \
-    RFRAME(rr) \
-    LCELL(lr) \
-    RCELL(rr) \
+    LFRAME(lrk) \
+    RFRAME(rrk) \
+    LCELL(lrk) \
+    RCELL(rrk) \
     /*P("%d_%d\n",AR(a),AR(w));*/ \
     /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
     /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
     /*pr(lf); pr(rf);*/ \
     /*pr(lc); pr(rc);*/ \
-    if (!*AV(match(lf,rf,0))) { \
+    if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
         /*P("no match\n");*/ \
         if (AN(lf)==0) \
         { \
@@ -768,6 +769,9 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
             w=rsh(lf,w,0); \
             /*pr(w);*/ \
         } \
+    } \
+    if (self&& (vt[base].lr != lrk || vt[base].rr != rrk)) { \
+        /* requested cell is not base cell */ \
     }
 
 V2(match){
@@ -799,45 +803,66 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES,
 #define NUMERIC_TYPES(a,b) \
     TYPEPAIR(TYPENUM(a), TYPENUM(b))
 
+#define MON_MATH_FUNC(func,z,y) \
+    switch(TYPENUM(y)){ \
+    case IMM: z=num(func numimm(y)); break; \
+    case FIX: z=num(func numint(y)); break; \
+    case FLO: z=flo(func numdbl(y)); break; \
+    }
+
+#define BIN_MATH_FUNC(func,z,x,y) \
+     switch(NUMERIC_TYPES(x,y)){ \
+     case TYPEPAIR(IMM,IMM): z=num(numimm(x) func numimm(y)); break; \
+     case TYPEPAIR(IMM,FIX): z=num(numimm(x) func numint(y)); break; \
+     case TYPEPAIR(IMM,FLO): z=flo(numimm(x) func numdbl(y)); break; \
+     case TYPEPAIR(FIX,IMM): z=num(numint(x) func numimm(y)); break; \
+     case TYPEPAIR(FIX,FIX): z=num(numint(x) func numint(y)); break; \
+     case TYPEPAIR(FIX,FLO): z=flo(numint(x) func numdbl(y)); break; \
+     case TYPEPAIR(FLO,IMM): z=flo(numdbl(x) func numimm(y)); break; \
+     case TYPEPAIR(FLO,FIX): z=flo(numdbl(x) func numint(y)); break; \
+     case TYPEPAIR(FLO,FLO): z=flo(numdbl(x) func numdbl(y)); break; \
+     }
+
 /* return w */
 V1(id){R w;}
 /*
    add
-TODO: sign-extend immediate ints
  */
 V2(plus){
-    LOADV(PLUS)
-    RANK2(v->lr,v->rr)
+    RANK2(PLUS,v->lr,v->rr)
     I r=AR(w),*d=AD(w),n=AN(w); A z=ga(0,r,d);
     //P("%d\n",v->id);
- DO(n,
-         switch(NUMERIC_TYPES(AV(a)[i],AV(w)[i])){
-         case TYPEPAIR(IMM,IMM): AV(z)[i]=num(numimm(AV(a)[i])+numimm(AV(w)[i])); break;
-         case TYPEPAIR(IMM,FIX): AV(z)[i]=num(numimm(AV(a)[i])+numint(AV(w)[i])); break;
-         case TYPEPAIR(IMM,FLO): AV(z)[i]=num(numimm(AV(a)[i])+numdbl(AV(w)[i])); break;
-         case TYPEPAIR(FIX,IMM): AV(z)[i]=num(numint(AV(a)[i])+numimm(AV(w)[i])); break;
-         case TYPEPAIR(FIX,FIX): AV(z)[i]=num(numint(AV(a)[i])+numint(AV(w)[i])); break;
-         case TYPEPAIR(FIX,FLO): AV(z)[i]=num(numint(AV(a)[i])+numdbl(AV(w)[i])); break;
-         case TYPEPAIR(FLO,IMM): AV(z)[i]=num(numdbl(AV(a)[i])+numimm(AV(w)[i])); break;
-         case TYPEPAIR(FLO,FIX): AV(z)[i]=num(numdbl(AV(a)[i])+numint(AV(w)[i])); break;
-         case TYPEPAIR(FLO,FLO): AV(z)[i]=num(numdbl(AV(a)[i])+numdbl(AV(w)[i])); break;
-         }
-     )
- R z;}
+    DO(n, BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i]) )
+    R z;}
 
 /* negate w */
-V1(neg){ A z=copy(w,0); DO(AN(z),AV(z)[i]=-AV(z)[i]) R z;}
-V2(minus){A z=ga(0,AR(w),AD(w));
- DO(AN(w),AV(z)[i]=AV(a)[i]-AV(w)[i]);R z;}
+V1(neg){ A z=copy(w,0);
+    DO(AN(z), MON_MATH_FUNC(-,AV(z)[i],AV(z)[i]))
+    R z;}
+V2(minus){
+    A z=ga(0,AR(w),AD(w));
+    DO(AN(w), BIN_MATH_FUNC(-,AV(z)[i],AV(a)[i],AV(w)[i]))
+    R z;}
 
 /* return sum and difference */
 V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
 V2(times){A z=ga(0,AR(w),AD(w));
- DO(AN(w),AV(z)[i]=AV(a)[i]*AV(w)[i]);R z;}
+    DO(AN(w),
+            BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i])
+            //AV(z)[i]=AV(a)[i]*AV(w)[i]
+            )
+    R z;}
 
 V2(quotient){A z=ga(0,AR(w),AD(w));
- DO(AN(w),AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0);R z;}
+    DO(AN(w),
+            if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) {
+                AV(z)[i]=0;
+            } else
+                BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i])
+            //AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0
+                )
+    R z;}
 
 /* make a copy */
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
