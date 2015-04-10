@@ -657,21 +657,21 @@ V2(cat);
    this table or an array of type VRB whose value is a (possibly
    modified) copy of the verb record.
  */
-/*         VERBNAME   ALPHA_NAME       vm    vd        mr lr rr  id */
+/*         VERBNAME   ALPHA_NAME       vm    vd         f  g  mr lr rr  id */
 #define VERBTAB(_) \
-        _( ZEROFUNC,  0,               0,    0,        0, 0, 0,  0 ) \
-        _( PLUS,      ALPHA_PLUS,      id,   plus,     0, 0, 0,  0 ) \
-        _( MINUS,     ALPHA_MINUS,     neg,  minus,    0, 0, 0,  0 ) \
-        _( TIMES,     ALPHA_TIMES,     0,    times,    0, 0, 0,  1 ) \
-        _( DIVIDE,    ALPHA_COLONBAR,  0,    quotient, 0, 0, 0,  1 ) \
-        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus,0, 0, 0,  0 ) \
-        _( RBRACE,    ALPHA_RBRACE,    size, from,     0, 0, 0,  0 ) \
-        _( IOTA,      ALPHA_IOTA,      iota, find,     0, 0, 0,  0 ) \
-        _( BOXF,      ALPHA_RANG,      box,  0,        0, 0, 0,  0 ) \
-        _( RHO,       ALPHA_RHO,       sha,  rsh,      0, 0, 0,  0 ) \
-        _( COMMA,     ALPHA_COMMA,     0,    cat,      0, 0, 0,  0 ) \
-        _( NULLFUNC,         0,        0,    0,        0, 0, 0,  0 ) 
-struct v { I c; A (*vm)(); A (*vd)(); I mr,lr,rr; I id; };
+        _( ZEROFUNC,  0,               0,    0,         0, 0, 0, 0, 0,  0 ) \
+        _( PLUS,      ALPHA_PLUS,      id,   plus,      0, 0, 0, 0, 0,  0 ) \
+        _( MINUS,     ALPHA_MINUS,     neg,  minus,     0, 0, 0, 0, 0,  0 ) \
+        _( TIMES,     ALPHA_TIMES,     0,    times,     0, 0, 0, 0, 0,  1 ) \
+        _( DIVIDE,    ALPHA_COLONBAR,  0,    quotient,  0, 0, 0, 0, 0,  1 ) \
+        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus, 0, 0, 0, 0, 0,  0 ) \
+        _( RBRACE,    ALPHA_RBRACE,    size, from,      0, 0, 0, 0, 0,  0 ) \
+        _( IOTA,      ALPHA_IOTA,      iota, find,      0, 0, 0, 0, 0,  0 ) \
+        _( BOXF,      ALPHA_RANG,      box,  0,         0, 0, 0, 0, 0,  0 ) \
+        _( RHO,       ALPHA_RHO,       sha,  rsh,       0, 0, 0, 0, 0,  0 ) \
+        _( COMMA,     ALPHA_COMMA,     0,    cat,       0, 0, 0, 0, 0,  0 ) \
+        _( NULLFUNC,         0,        0,    0,         0, 0, 0, 0, 0,  0 ) 
+struct v { I c; A (*vm)(); A (*vd)(); I f,g,mr,lr,rr; I id; };
 typedef struct v *V; //dynamic verb type
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
@@ -680,18 +680,90 @@ enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
 struct v vt[] = { VERBTAB(VERBTAB_ENT) };  //generate verb table array
 
 
+/* adverb function declarations */
+V1(withl);
+V1(withr);
+V1(on1);
+V2(on2);
+V2(amp);
+V2(rank);
+
+/*
+   The adverb table uses the same struct as a verb but is 
+   separated to better distinguish the two classes of object.
+ */
+/*   ADVNAME  ALPHA_NAME       vm vd    f  g  mr lr rr id) */
 #define ADVTAB(_) \
-    _(ZEROOP, 0, 0, 0, 0, 0, 0, 0) \
-    _(WITH, ALPHA_AMPERSAND, 0, 0,  0, 0, 0, 0) \
+    _(ZEROOP=NULLFUNC, 0,               0, 0,    0, 0, 0, 0, 0, 0) \
+    _(WITH,   ALPHA_AMPERSAND, 0, amp,  0, 0, 0, 0, 0, 0) \
+    _(RANK,   ALPHA_TWODOTS,   0, rank, 0, 0, 0, 0, 0, 0) \
     _(NULLOP, 0)
 #define ADVTAB_NAME(a, ...) a ,
 enum { ADVTAB(ADVTAB_NAME) };
 
 struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
 
+#define DERIV(...) \
+    ((z=ga(VRB,1,(I[]){sizeof(struct v)})), \
+    (*((V)AV(z))=(struct v){__VA_ARGS__}), \
+    z)
+
+I qv();
+enum { ANOUN = 1, AVERB, N_A,
+    NN=ANOUN*N_A+ANOUN,
+    NV=ANOUN*N_A+AVERB,
+    VN=AVERB*N_A+ANOUN,
+    VV=AVERB*N_A+AVERB,
+};
+#define VERBNOUN(x) \
+    (qv(x)?AVERB:ANOUN)
+
+#define CONJCASE(a,w) \
+    (VERBNOUN(a)*N_A+VERBNOUN(w))
+
+#define LOADV(x) \
+    abs((I)x)<(sizeof vt/sizeof*vt)? \
+        (x=DERIV(vt[(I)x].c, vt[(I)x].vm, vt[(I)x].vd, vt[(I)x].f, vt[(I)x].g, \
+                vt[(I)x].mr, vt[(I)x].lr, vt[(I)x].rr, vt[(I)x].id)) \
+        :0
+
+V2(amp){
+    A z;
+    switch(CONJCASE(a,w)){
+    case NN: R 0;
+    case NV: R DERIV(ALPHA_AMPERSAND, withl, NULL, 0, 0, 0, 0, 0, 0);
+    case VN: R DERIV(ALPHA_AMPERSAND, withr, NULL, 0, 0, 0, 0, 0, 0);
+    case VV: R DERIV(ALPHA_AMPERSAND, on1,   on2,  0, 0, 0, 0, 0, 0);
+    }
+}
+
+V2(rank){
+    A z;
+    switch(CONJCASE(a,w)){
+    case NN: R 0;
+    case NV: R 0;
+    case VN: LOADV(a);
+             switch(AN(w)){
+             case 0: R 0;
+             case 1: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
+                             *AV(w), *AV(w), *AV(w), ((V)AV(a))->id);
+             case 2: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
+                             AV(w)[0], AV(w)[1], AV(w)[0], ((V)AV(a))->id);
+             case 3: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
+                             AV(w)[0], AV(w)[1], AV(w)[2], ((V)AV(a))->id);
+             default: R 0;
+             }
+    case VV: LOADV(a);
+             LOADV(w);
+             R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
+                     ((V)AV(w))->mr, ((V)AV(w))->lr, ((V)AV(w))->rr, ((V)AV(a))->id);
+    }
+}
+
+/* Verb macros */
 
 /* create v pointer to access verb properties */
-#define LOADV(base) \
+#define LOADVSELF(base) \
     V v=self? \
         abs((I)self)<(sizeof vt/sizeof*vt)? \
             vt+(I)self \
@@ -739,7 +811,7 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
     else { LOADCELL(rc,w,rk) }
 
 #define RANK2(base) \
-    LOADV(base) \
+    LOADVSELF(base) \
     /*pr(a); pr(w);*/ \
     LFRAME(v->lr) \
     RFRAME(v->rr) \
@@ -771,9 +843,27 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
             /*pr(w);*/ \
         } \
     } \
-    if (self&& (vt[base].lr != v->lr || vt[base].rr != v->rr)) { \
-        /* requested cell is not base cell */ \
+    if (self&& (vt[base].lr != v->lr && vt[base].rr != v->rr)) { \
+        /* requested cells are not base cells */ \
+    } else if (self&& vt[base].lr != v->lr) { \
+        /* left cell is not base cell */ \
+    } else if (self&& vt[base].rr != v->rr) { \
+        /* right cell is not base cell */ \
     }
+
+#define DECLFG(base) \
+    LOADVSELF(base) \
+    A fs = (A)v->f; \
+    A gs = (A)v->g; \
+    V1((*f1)) = (A(*)())v->f; \
+    V1((*g1)) = (A(*)())v->g; \
+    V2((*f2)) = (A(*)())v->f; \
+    V2((*g2)) = (A(*)())v->g; \
+
+V1(withl){ DECLFG(WITH); R g2(fs,w,gs); }
+V1(withr){ DECLFG(WITH); R f2(w,gs,fs); }
+V1(on1){ DECLFG(WITH); R f1(g1(w,gs),fs); }
+V2(on2){ DECLFG(WITH); R f2(g1(a,gs),g1(w,gs),fs); }
 
 V2(match){
     if(a==w) R num0(1);
@@ -1008,18 +1098,20 @@ struct st *findsymb(struct st *st, char **s, int mode) {
    Predicate table for pattern matching in the parser ex().
  */
 #define PREDTAB(_) \
-    _( ANY = 1,   qa, 1                              ) \
-    _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB ) \
-    _(NOUN = 4,   qn, abs(a)>256 && AT(((A)a))!=SYMB ) \
-    _(VERB = 8,   qv, 0<=abs(a)                        \
-                      && abs(a)<'a'                    \
-                      && abs(a)<(sizeof vt/sizeof*vt)  \
-                      && (vt[a].vm || vt[a].vd)      ) \
-    _(ADV  = 16,  qo, ) \
-    _(ASSN = 32,  qc, a==MODE1('<')                  ) \
-    _(MARK = 64,  qm, ((A)a)==mark                   ) \
-    _(LPAR = 128,  ql, a=='('                         ) \
-    _(RPAR = 256, qr, a==')'                         ) \
+    _( ANY = 1,   qa, 1                              )                    \
+    _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB )                    \
+    _(NOUN = 4,   qn, abs(a)>256 && AT(((A)a))!=SYMB )                    \
+    _(VERB = 8,   qv, /*0<=abs(a)                                         \
+                      && abs(a)<'a'                                       \
+                      &&*/ abs(a)<(sizeof vt/sizeof*vt)                   \
+                      && (vt[a].vm || vt[a].vd)      )                    \
+    _(ADV  = 16,  qo, abs(a)>(sizeof vt/sizeof*vt)                        \
+                      && abs(a)<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot) \
+                      && (ot[a-NULLFUNC].vm || ot[a-NULLFUNC].vd) )       \
+    _(ASSN = 32,  qc, a==MODE1('<')                  )                    \
+    _(MARK = 64,  qm, ((A)a)==mark                   )                    \
+    _(LPAR = 128, ql, a=='('                         )                    \
+    _(RPAR = 256, qr, a==')'                         )                    \
     _(NULP = 512, qu, ((A)a)==null                   )
 #define PRED_FUNC(X,Y,...) Y(a){R __VA_ARGS__;}
 PREDTAB(PRED_FUNC)                      //generate predicate functions
@@ -1178,6 +1270,9 @@ verb(c){I i=0;
     for(;vt[++i].c;)
         if(alphatab[vt[i].c].base==c)
             R i;
+    for(i=0;ot[++i].c;)
+        if(alphatab[ot[i].c].base==c)
+            R NULLFUNC+i; //operators take the values after the last verb
     R 0;}
 
 /*
