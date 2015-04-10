@@ -810,6 +810,14 @@ V2(rank){
     if ((rk)<0) { LOADCELL(rc,w,AR(w)-(rk)) } \
     else { LOADCELL(rc,w,rk) }
 
+#define RANK1(base) \
+    LOADVSELF(base) \
+    RFRAME(v->mr) \
+    RCELL(v->mr) \
+    if (self&& (vt[base].mr != v->mr)) { \
+        /* requested cell is not base cell */ \
+    }
+
 #define RANK2(base) \
     LOADVSELF(base) \
     /*pr(a); pr(w);*/ \
@@ -915,9 +923,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 
 /* return w */
 V1(id){R w;}
-/*
-   add
- */
+/* add */
 V2(plus){
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
@@ -926,7 +932,8 @@ V2(plus){
     R z;}
 
 /* negate w */
-V1(neg){ A z=copy(w,0);
+V1(neg){ RANK1(MINUS)
+    A z=copy(w,0);
     DO(AN(z), MON_MATH_FUNC(-,AV(z)[i],AV(z)[i]))
     R z;}
 V2(minus){
