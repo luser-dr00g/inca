@@ -1117,30 +1117,37 @@ struct st *findsymb(struct st *st, char **s, int mode) {
    Predicate table for pattern matching in the parser ex().
  */
 #define PREDTAB(_) \
-    _( ANY = 1,    qa, 1                              )                     \
-    _( VAR = 2,    qp, abs(a)>256 && AT(((A)a))==SYMB )                     \
-    _(NOUN = 4,    qn, abs(a)>256 && AT(((A)a))!=SYMB )                     \
-    _(VERB = 8,    qv, (a>0                                                 \
-                           && a<(sizeof vt/sizeof*vt)                       \
-                           && (vt[a].vm || vt[a].vd))                       \
-                       || (abs(a)>256 && AT(((A)a))==VRB)  )                \
-    _(ADV  = 16,   qo, a>0                                                  \
-                       && a>(sizeof vt/sizeof*vt)                           \
-                       && a<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)       \
-                       && (ot[a-ZEROOP].vm)       )                         \
-    _(CONJ = 32,   qj, a>0                                                  \
-                       && a>(sizeof vt/sizeof*vt)                           \
-                       && a<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)       \
-                       && (ot[a-ZEROOP].vd)       )                         \
-    _(ASSN = 64,   qc, a==MODE1('<')                  )                     \
-    _(MARK = 128,  qm, ((A)a)==mark                   )                     \
-    _(LPAR = 256,  ql, a=='('                         )                     \
-    _(RPAR = 512,  qr, a==')'                         )                     \
-    _(NULP = 1024, qu, ((A)a)==null                   )
-#define PRED_FUNC(X,Y,...) Y(a){R __VA_ARGS__;}
+    _( ANY = 1,    qa, 1                                )                       \
+    _( VAR = 2,    qp, abs(a)>256                                               \
+                       && AT((A)a)==SYMB                )                       \
+    _(NOUN = 4,    qn, abs(a)>256                                               \
+                       && AT((A)a)!=SYMB                                        \
+                       && AT((A)a)!=VRB                                         \
+                       && AT((A)a)!=MRK                                         \
+                       && AT((A)a)!=NLL                                         \
+                       && ((A)a)!=null                                          \
+                       && ((A)a)!=&nullob               )                       \
+    _(VERB = 8,    qv, (a>0                                                     \
+                           && a<(sizeof vt/sizeof*vt)                           \
+                           && (vt[a].vm || vt[a].vd))                           \
+                       || (abs(a)>256 && AT((A)a)==VRB) )                       \
+    _(ADV  = 16,   qo, a>0                                                      \
+                       && a>(sizeof vt/sizeof*vt)                               \
+                       && a<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)           \
+                       && (ot[a-ZEROOP].vm)             )                       \
+    _(CONJ = 32,   qj, a>0                                                      \
+                       && a>(sizeof vt/sizeof*vt)                               \
+                       && a<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)           \
+                       && (ot[a-ZEROOP].vd)             )                       \
+    _(ASSN = 64,   qc, a==MODE1('[')                    )                       \
+    _(MARK = 128,  qm, ((A)a)==mark                     )                       \
+    _(LPAR = 256,  ql, a=='('                           )                       \
+    _(RPAR = 512,  qr, a==')'                           )                       \
+    _(NULP = 1024, qu, ((A)a)==null                     )
+#define PRED_FUNC(X,Y,...) I Y(I a){R __VA_ARGS__;}
 PREDTAB(PRED_FUNC)                      //generate predicate functions
 #define PRED_ENT(a,b,...) b ,
-I(*q[])() = { PREDTAB(PRED_ENT) };      //generate predicate function table
+I(*q[])(I) = { PREDTAB(PRED_ENT) };      //generate predicate function table
 #define PRED_ENUM(a,...) a ,
 enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
                  EDGE = MARK+ASSN+LPAR,
@@ -1148,7 +1155,9 @@ enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
 /* encode predicate applications into a binary number,
    a bitset represented as a bit mask */
 int classify(A a){ int i,v,r;
-    for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i](a))r|=v; R r;}
+    for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i]((I)a))r|=v;
+    P("%d ", r); pr(a);
+    R r;}
 
 /*
    Parse table for processing expressions on top of the right-stack
@@ -1168,7 +1177,7 @@ int classify(A a){ int i,v,r;
                                                     else stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));   \
                                                     stackpush(rstk,t[0]);} )                          \
     /*_(ADVB,  EDGE+AVN, NOUN+VERB, ADV,  ANY,       {stackpush(rstk,t[3]); })*/                        \
-    _(FORM,  EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2])); \
+    _(FRMJ,  EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2])); \
                                                     stackpush(rstk,t[0]); })                         \
     _(SPEC,  VAR,      ASSN,      AVN,  ANY,       {char *s=(char*)AV(t[0]);                          \
                                                     struct st *slot = findsymb(&st,&s,1);             \
