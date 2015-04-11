@@ -694,7 +694,7 @@ V2(rank);
  */
 /*   ADVNAME  ALPHA_NAME       vm vd    f  g  mr lr rr id) */
 #define ADVTAB(_) \
-    _(ZEROOP=NULLFUNC, 0,               0, 0,    0, 0, 0, 0, 0, 0) \
+    _(ZEROOP=NULLFUNC+1, 0,    0, 0,    0, 0, 0, 0, 0, 0) \
     _(WITH,   ALPHA_AMPERSAND, 0, amp,  0, 0, 0, 0, 0, 0) \
     _(RANK,   ALPHA_TWODOTS,   0, rank, 0, 0, 0, 0, 0, 0) \
     _(NULLOP, 0)
@@ -731,9 +731,9 @@ V2(amp){
     A z;
     switch(CONJCASE(a,w)){
     case NN: R 0;
-    case NV: R DERIV(ALPHA_AMPERSAND, withl, NULL, 0, 0, 0, 0, 0, 0);
-    case VN: R DERIV(ALPHA_AMPERSAND, withr, NULL, 0, 0, 0, 0, 0, 0);
-    case VV: R DERIV(ALPHA_AMPERSAND, on1,   on2,  0, 0, 0, 0, 0, 0);
+    case NV: R DERIV(ALPHA_AMPERSAND, withl, NULL, (I)a, (I)w, 0, 0, 0, 0);
+    case VN: R DERIV(ALPHA_AMPERSAND, withr, NULL, (I)a, (I)w, 0, 0, 0, 0);
+    case VV: R DERIV(ALPHA_AMPERSAND, on1,   on2,  (I)a, (I)w, 0, 0, 0, 0);
     }
 }
 
@@ -860,13 +860,14 @@ V2(rank){
     }
 
 #define DECLFG(base) \
+    A z; \
     LOADVSELF(base) \
-    A fs = (A)v->f; \
-    A gs = (A)v->g; \
-    V1((*f1)) = (A(*)())v->f; \
-    V1((*g1)) = (A(*)())v->g; \
-    V2((*f2)) = (A(*)())v->f; \
-    V2((*g2)) = (A(*)())v->g; \
+    A fs = (A)v->f; LOADV(fs); \
+    A gs = (A)v->g; LOADV(gs); \
+    V1((*f1)) = ((V)AV(fs))->vm; \
+    V1((*g1)) = ((V)AV(gs))->vm; \
+    V2((*f2)) = ((V)AV(fs))->vd; \
+    V2((*g2)) = ((V)AV(gs))->vd;
 
 V1(withl){ DECLFG(WITH); R g2(fs,w,gs); }
 V1(withr){ DECLFG(WITH); R f2(w,gs,fs); }
@@ -938,7 +939,7 @@ V1(neg){ RANK1(MINUS)
     R z;}
 V2(minus){
     RANK2(MINUS)
-    A z=ga(0,AR(w),AD(w));
+    A z=ga(NUM,AR(w),AD(w));
     DO(AN(z), BIN_MATH_FUNC(-,AV(z)[i],AV(a)[i],AV(w)[i]))
     R z;}
 
@@ -947,13 +948,13 @@ V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
 V2(times){
     RANK2(TIMES)
-    A z=ga(0,AR(w),AD(w));
+    A z=ga(NUM,AR(w),AD(w));
     DO(AN(z), BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i]))
     R z;}
 
 V2(quotient){
     RANK2(DIVIDE)
-    A z=ga(0,AR(w),AD(w));
+    A z=ga(NUM,AR(w),AD(w));
     DO(AN(w),
             if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) { AV(z)[i]=0; }
             else //BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i])
@@ -976,12 +977,12 @@ V2(quotient){
 /* make a copy */
 V1(copy){I n=AN(w); A z=ga(AT(w),AR(w),AD(w)); mv(AV(z),AV(w),n); R z;}
 /* generate index vector */
-V1(iota){I n=*AV(w);A z=ga(0,1,&n);DO(n,AV(z)[i]=i);R z;}
+V1(iota){I n=*AV(w);A z=ga(INT,1,&n);DO(n,AV(z)[i]=i);R z;}
 /* not implemented */
 V2(find){}
 
 /* length of first dimension */
-V1(size){A z=ga(0,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
+V1(size){A z=ga(INT,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 /* index */
 V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
  A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
@@ -997,7 +998,7 @@ V2(cat){
      R z;}
 
 /* return the shape of w */
-V1(sha){A z=ga(0,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
+V1(sha){A z=ga(INT,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
  /*P("rsh:\n"); pr(a); pr(w);*/
@@ -1012,11 +1013,21 @@ V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
 /* print symbol */
 ps(A i){P("%s",(char*)AV(i));}
 /* print verb */
-pv(i){P("%s",basetooutput(alphatab[vt[i].c].base));}
+pv(i){
+    if (i>0 && i<sizeof vt/sizeof*vt)
+        P("%s",basetooutput(alphatab[vt[i].c].base));
+    else if (i>0 && i<sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)
+        P("%s",basetooutput(alphatab[ot[i-ZEROOP].c].base));
+    else
+        pc(i);
+}
 /* print character */
 pc(i){qv(i)?pv(i):P("%s",basetooutput(i));}
-/* print number */
 pi(i){
+    P("%d ",i);
+}
+/* print number */
+pn(i){
     switch(TYPENUM(i)){
     case IMM: P("%d ",numimm(i)); break;
     case FIX: P("%d ",numint(i)); break;
@@ -1027,18 +1038,19 @@ pi(i){
 nl(){P("\n");}
 /* print any array */
 pr(A w){
-    if (abs((I)w)<256)
-        pc(w);
+    if (abs((I)w)<256) /* "scalar" verb repr */
+        pv(w);
     else {
         I r=AR(w),*d=AD(w),n=AN(w);
         if(w==null)R 0;
         DO(r,pi(d[i])); P("#"); nl();
-        if(AT(w)==1)
-            DO(n,P("< ");pr((A)(AV(w)[i])))
-        else if(AT(w)==SYMB)
-            ps(w);
-        else
-            DO(n,pi(AV(w)[i]));
+        switch(AT(w)){
+        case BOX: DO(n,P("< ");pr((A)(AV(w)[i]))) break;
+        case SYMB: ps(w); break;
+        case NUM: DO(n,pn(AV(w)[i])) break;
+        case INT: DO(n,pi(AV(w)[i])) break;
+        default: P("unprintable ");
+        }
     }
     nl();
 }
@@ -1105,21 +1117,26 @@ struct st *findsymb(struct st *st, char **s, int mode) {
    Predicate table for pattern matching in the parser ex().
  */
 #define PREDTAB(_) \
-    _( ANY = 1,   qa, 1                              )                    \
-    _( VAR = 2,   qp, abs(a)>256 && AT(((A)a))==SYMB )                    \
-    _(NOUN = 4,   qn, abs(a)>256 && AT(((A)a))!=SYMB )                    \
-    _(VERB = 8,   qv, /*0<=abs(a)                                         \
-                      && abs(a)<'a'                                       \
-                      &&*/ abs(a)<(sizeof vt/sizeof*vt)                   \
-                      && (vt[a].vm || vt[a].vd)      )                    \
-    _(ADV  = 16,  qo, abs(a)>(sizeof vt/sizeof*vt)                        \
-                      && abs(a)<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot) \
-                      && (ot[a-NULLFUNC].vm || ot[a-NULLFUNC].vd) )       \
-    _(ASSN = 32,  qc, a==MODE1('<')                  )                    \
-    _(MARK = 64,  qm, ((A)a)==mark                   )                    \
-    _(LPAR = 128, ql, a=='('                         )                    \
-    _(RPAR = 256, qr, a==')'                         )                    \
-    _(NULP = 512, qu, ((A)a)==null                   )
+    _( ANY = 1,    qa, 1                              )                     \
+    _( VAR = 2,    qp, abs(a)>256 && AT(((A)a))==SYMB )                     \
+    _(NOUN = 4,    qn, abs(a)>256 && AT(((A)a))!=SYMB )                     \
+    _(VERB = 8,    qv, (a>0                                                 \
+                           && a<(sizeof vt/sizeof*vt)                       \
+                           && (vt[a].vm || vt[a].vd))                       \
+                       || (abs(a)>256 && AT(((A)a))==VRB)  )                \
+    _(ADV  = 16,   qo, a>0                                                  \
+                       && a>(sizeof vt/sizeof*vt)                           \
+                       && a<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)       \
+                       && (ot[a-ZEROOP].vm)       )                         \
+    _(CONJ = 32,   qj, a>0                                                  \
+                       && a>(sizeof vt/sizeof*vt)                           \
+                       && a<(sizeof vt/sizeof*vt+sizeof ot/sizeof*ot)       \
+                       && (ot[a-ZEROOP].vd)       )                         \
+    _(ASSN = 64,   qc, a==MODE1('<')                  )                     \
+    _(MARK = 128,  qm, ((A)a)==mark                   )                     \
+    _(LPAR = 256,  ql, a=='('                         )                     \
+    _(RPAR = 512,  qr, a==')'                         )                     \
+    _(NULP = 1024, qu, ((A)a)==null                   )
 #define PRED_FUNC(X,Y,...) Y(a){R __VA_ARGS__;}
 PREDTAB(PRED_FUNC)                      //generate predicate functions
 #define PRED_ENT(a,b,...) b ,
@@ -1127,7 +1144,7 @@ I(*q[])() = { PREDTAB(PRED_ENT) };      //generate predicate function table
 #define PRED_ENUM(a,...) a ,
 enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
                  EDGE = MARK+ASSN+LPAR,
-                 AVN = VERB+NOUN };
+                 AVN = VERB+NOUN+ADV };
 /* encode predicate applications into a binary number,
    a bitset represented as a bit mask */
 int classify(A a){ int i,v,r;
@@ -1137,28 +1154,34 @@ int classify(A a){ int i,v,r;
    Parse table for processing expressions on top of the right-stack
  */
 #define PARSETAB(_) \
-    /*INDEX  PAT1      PAT2  PAT3  PAT4  ACTION*/                                           \
-    /*     =>t[0]      t[1]  t[2]  t[3]        */                                           \
-    _(MONA,  EDGE,     VERB, NOUN, ANY,  {stackpush(rstk,t[3]);                             \
-                                          stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));        \
-                                          stackpush(rstk,t[0]);} )                          \
-    _(MONB,  EDGE+AVN, VERB, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));        \
-                                          stackpush(rstk,t[1]);                             \
-                                          stackpush(rstk,t[0]);} )                          \
-    _(DYAD,  EDGE+AVN, NOUN, VERB, NOUN, {stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));   \
-                                          stackpush(rstk,t[0]);} )                          \
-    _(SPEC,  VAR,      ASSN, AVN,  ANY,  {char *s=(char*)AV(t[0]);                          \
-                                          struct st *slot = findsymb(&st,&s,1);             \
-                                          stackpush(rstk,t[3]);                             \
-                                          stackpush(rstk,slot->a=t[2]);} )                  \
-    _(PUNC,  LPAR,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                             \
-                                          stackpush(rstk,t[1]);} )                          \
-    _(FAKL,  MARK,     ANY,  RPAR, ANY,  {stackpush(rstk,t[3]);                             \
-                                          stackpush(rstk,t[1]);                             \
-                                          stackpush(rstk,t[0]);} )                          \
-    _(FAKR,  EDGE+AVN, LPAR, ANY,  NULP, {stackpush(rstk,t[3]);                             \
-                                          stackpush(rstk,t[2]);                             \
-                                          stackpush(rstk,t[0]);} )                          \
+    /*INDEX  PAT1      PAT2       PAT3  PAT4       ACTION*/                                           \
+    /*     =>t[0]      t[1]       t[2]  t[3]        */                                                \
+    _(MONA,  EDGE,     VERB,      NOUN, ANY,       {stackpush(rstk,t[3]);                             \
+                                                    if(abs((I)t[1])>256) stackpush(rstk,((V)AV(t[1]))->vm(t[2],t[1])); \
+                                                    else stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));        \
+                                                    stackpush(rstk,t[0]);} )                          \
+    _(MONB,  EDGE+AVN, VERB,      VERB, NOUN,      {if(abs((I)t[2])>256) stackpush(rstk,((V)AV(t[2]))->vm(t[3],t[2])); \
+                                                    else stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));        \
+                                                    stackpush(rstk,t[1]);                             \
+                                                    stackpush(rstk,t[0]);} )                          \
+    _(DYAD,  EDGE+AVN, NOUN,      VERB, NOUN,      {if(abs((I)t[2])>256) stackpush(rstk,((V)AV(t[2]))->vd(t[1],t[3],t[2])); \
+                                                    else stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));   \
+                                                    stackpush(rstk,t[0]);} )                          \
+    /*_(ADVB,  EDGE+AVN, NOUN+VERB, ADV,  ANY,       {stackpush(rstk,t[3]); })*/                        \
+    _(FORM,  EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2])); \
+                                                    stackpush(rstk,t[0]); })                         \
+    _(SPEC,  VAR,      ASSN,      AVN,  ANY,       {char *s=(char*)AV(t[0]);                          \
+                                                    struct st *slot = findsymb(&st,&s,1);             \
+                                                    stackpush(rstk,t[3]);                             \
+                                                    stackpush(rstk,slot->a=t[2]);} )                  \
+    _(PUNC,  LPAR,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                             \
+                                                    stackpush(rstk,t[1]);} )                          \
+    _(FAKL,  MARK,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                             \
+                                                    stackpush(rstk,t[1]);                             \
+                                                    stackpush(rstk,t[0]);} )                          \
+    _(FAKR,  EDGE+AVN, LPAR,      ANY,  NULP,      {stackpush(rstk,t[3]);                             \
+                                                    stackpush(rstk,t[2]);                             \
+                                                    stackpush(rstk,t[0]);} )                          \
     _(NOACT, 0,        0,    0,    0,    0;)
 #define PARSETAB_PAT(name, pat1, pat2, pat3, pat4, ...) { pat1, pat2, pat3, pat4 },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
@@ -1279,7 +1302,7 @@ verb(c){I i=0;
             R i;
     for(i=0;ot[++i].c;)
         if(alphatab[ot[i].c].base==c)
-            R NULLFUNC+i; //operators take the values after the last verb
+            R i+ZEROOP; //operators take the values after the last verb
     R 0;}
 
 /*
