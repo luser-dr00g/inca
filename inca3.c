@@ -7,26 +7,30 @@
 #include<unistd.h>
 
 
+/* Basic types */
 typedef unsigned char C;
 typedef intptr_t I;
 typedef uintptr_t U;
 typedef double D;
 typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
-#define AT(a) ((a)->t)                   /* Type */
+#define AT(a) ((a)->t)                   /* Type (takes values from enum type) */
 #define AR(a) ((a)->r)                   /* Rank (size of Dims) */
 #define AN(a) ((a)->n)                   /* Number of values in ravel */
 #define AK(a) ((a)->k)                   /* Offset of ravel */
 #define AD(a) ((a)->d)                   /* Dims */
 #define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
 enum type { INT, BOX, SYMB, CHAR, NUM, DBL, MRK, NLL, VRB, NTYPES };
+
+/* "singleton" objects */
 struct a nullob = { NLL };
-A null = &nullob;           //two "singular" objects
+A null = &nullob;
 struct a markob = { MRK };
 A mark = &markob;
 
 A newsymb(C *s,I n,I state);
 struct st *findsymb(struct st *st, char **s, int mode);
 
+/* Idioms */
 #define P printf
 #define R return
 #define V1(f) A f(A w,      A self)
@@ -36,7 +40,10 @@ struct st *findsymb(struct st *st, char **s, int mode);
 #define DO3(n,x) {I k=0,_p=(n);for(;k<_p;++k){x;}}
 
 
-
+/* Special ascii control-code macros
+   MODE1() defines the internal "base" representation for non-ascii APL symbols,
+   which just sets the top bit.
+ */
 #define ESC(x) "\x1b" #x
 #define ESCCHR '\x1b'
 #define CTL(x) (x-64)
@@ -45,6 +52,10 @@ struct st *findsymb(struct st *st, char **s, int mode);
 #define MODE1(x) (x|1<<7)
 #define MODE2(x) (x-32)
 
+/*
+   The Alphabet table defines the input and output of character data
+   (including non-ascii APL symbols).
+ */
 /* ALPHA_##NAME  base  ext input  output   (ext corresponds to 'mode' in getln)*/
 #define ALPHATAB(_) \
     _( SPACE, ' ', 0, " ", " " ) \
@@ -540,12 +551,11 @@ A ga(I t,I r,I*d){I n;A z=(A)ma(sizeof*z+r+(n=tr(r,d)));
 A i0(I i){A z=ga(INT,0,0);*AV(z)=i;R z;}
 
 /* integer vector */
-A i1(I n,I*v){A z=ga(INT,1,(I[]){n});mv(AV(z),v,n);R z;}
+A i1(I n,I*v){A z=ga(INT,1,&n);mv(AV(z),v,n);R z;}
 
 
 
 /* integer-encoded numbers in the NUM type */
-
 enum {
     IMM_BIT = 16,
     IMM_MASK = (1<<IMM_BIT)-1,
@@ -555,35 +565,15 @@ enum {
 };
 #define encodenum(bnk,idx) ((bnk<<IMM_BIT)|idx)
 
-A bank;
+A bank; /* the top-level number bank */
 #define BANK_INIT (bank=ga(BOX,1,(I[]){1<<BANK_BIT})), \
                   (AV(bank)[0]=0)
-A fixnum;
+A fixnum; /* current full-width integer allocation block */
 #define FIXNUM_INIT (fixnum=(A) (AV(bank)[1]=(I)ga(INT,1,(I[]){1<<IMM_BIT}))), \
                     (AV(fixnum)[0]=0)
-A flonum;
+A flonum; /* current floating point number allocation block */
 #define FLONUM_INIT (flonum=(A) (AV(bank)[2]=(I)ga(DBL,1,(I[]){1<<IMM_BIT}))), \
                     (((D*)AV(flonum))[0]=0.0)
-
-/* "number"-encoded integer */
-
-I num(I i){
-    if ((unsigned)i&BANK_MASK) {
-        if (((unsigned)i&(BANK_MASK|IMM_SIGN))==(BANK_MASK|IMM_SIGN)) { //small negative number
-            R i&IMM_MASK;
-        }
-        else
-            R fix(i);
-    } else 
-        R i;
-}
-
-/* number scalar */
-A num0(I i){
-    A z=i0(num(i));
-    AT(z)=NUM;
-    R z;
-}
 
 /* search full-width integer in bank[FIXNUM]
    allocate if not found
@@ -616,14 +606,34 @@ I flo(D d){
     R encodenum(2,j);
 }
 
+/* "number"-encoded integer */
+I num(I i){
+    if ((unsigned)i&BANK_MASK) {
+        if (((unsigned)i&(BANK_MASK|IMM_SIGN))==(BANK_MASK|IMM_SIGN)) {
+            R i&IMM_MASK;           //small negative number
+        }
+        else
+            R fix(i);
+    } else 
+        R i;
+}
+
+/* number scalar */
+A num0(I i){ A z=i0(num(i)); AT(z)=NUM; R z; }
+/* "raw" number scalar. don't overcook. */
+A num0r(I i){ A z=i0(i); AT(z)=NUM; R z;}
+
+/* convert immediate num to full-width integer */
 I numimm(I n){
     R n&IMM_SIGN?n|BANK_MASK:n;
 }
 
+/* fetch full-width integer from bank */
 I numint(I n){
     R AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT]))[n&IMM_MASK];
 }
 
+/* fetch floating-point number from bank */
 D numdbl(I n){
     R ((D*)AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT])))[n&IMM_MASK];
 }
@@ -631,7 +641,6 @@ D numdbl(I n){
 
 
 /* verb function declarations */
-
 V1(copy);
 V1(iota); V2(find);
 V2(match);
@@ -645,6 +654,7 @@ V1(box);
 V2(cat);
 
 
+V1(reduce);
 
 /*
    The verb table. The VERBNAME symbolically indexes a
@@ -657,20 +667,21 @@ V2(cat);
    this table or an array of type VRB whose value is a (possibly
    modified) copy of the verb record.
  */
-/*         VERBNAME   ALPHA_NAME       vm    vd         f  g  mr lr rr  id */
+/*         VERBNAME   ALPHA_NAME       vm       vd         f  g  mr lr rr  id */
 #define VERBTAB(_) \
-        _( ZEROFUNC,  0,               0,    0,         0, 0, 0, 0, 0,  0 ) \
-        _( PLUS,      ALPHA_PLUS,      id,   plus,      0, 0, 0, 0, 0,  0 ) \
-        _( MINUS,     ALPHA_MINUS,     neg,  minus,     0, 0, 0, 0, 0,  0 ) \
-        _( TIMES,     ALPHA_TIMES,     0,    times,     0, 0, 0, 0, 0,  1 ) \
-        _( DIVIDE,    ALPHA_COLONBAR,  0,    quotient,  0, 0, 0, 0, 0,  1 ) \
-        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,  plusminus, 0, 0, 0, 0, 0,  0 ) \
-        _( RBRACE,    ALPHA_RBRACE,    size, from,      0, 0, 0, 0, 0,  0 ) \
-        _( IOTA,      ALPHA_IOTA,      iota, find,      0, 0, 0, 0, 0,  0 ) \
-        _( BOXF,      ALPHA_RANG,      box,  0,         0, 0, 0, 0, 0,  0 ) \
-        _( RHO,       ALPHA_RHO,       sha,  rsh,       0, 0, 0, 0, 0,  0 ) \
-        _( COMMA,     ALPHA_COMMA,     0,    cat,       0, 0, 0, 0, 0,  0 ) \
-        _( NULLFUNC,         0,        0,    0,         0, 0, 0, 0, 0,  0 ) 
+        _( ZEROFUNC,  0,               0,       0,         0, 0, 0, 0, 0,  0 ) \
+        _( PLUS,      ALPHA_PLUS,      id,      plus,      0, 0, 0, 0, 0,  0 ) \
+        _( MINUS,     ALPHA_MINUS,     neg,     minus,     0, 0, 0, 0, 0,  0 ) \
+        _( TIMES,     ALPHA_TIMES,     0,       times,     0, 0, 0, 0, 0,  1 ) \
+        _( DIVIDE,    ALPHA_COLONBAR,  0,       quotient,  0, 0, 0, 0, 0,  1 ) \
+        _( PLUSMINUS, ALPHA_PLUSMINUS, neg,     plusminus, 0, 0, 0, 0, 0,  0 ) \
+        _( RBRACE,    ALPHA_RBRACE,    size,    from,      0, 0, 0, 0, 0,  0 ) \
+        _( IOTA,      ALPHA_IOTA,      iota,    find,      0, 0, 0, 0, 0,  0 ) \
+        _( BOXF,      ALPHA_RANG,      box,     0,         0, 0, 0, 0, 0,  0 ) \
+        _( RHO,       ALPHA_RHO,       sha,     rsh,       0, 0, 0, 0, 0,  0 ) \
+        _( COMMA,     ALPHA_COMMA,     0,       cat,       0, 0, 0, 0, 0,  0 ) \
+        _( SLASH,     0,               0,       0,         0, 0, 0, 0, 0,  0 ) \
+        _( NULLFUNC,  0,               0,       0,         0, 0, 0, 0, 0,  0 ) 
 struct v { I c; A (*vm)(); A (*vd)(); I f,g,mr,lr,rr; I id; };
 typedef struct v *V; //dynamic verb type
 #define VERBTAB_NAME(a, ...) a ,
@@ -687,28 +698,38 @@ V1(on1);
 V2(on2);
 V2(amp);
 V2(rank);
+V1(areduce);
 
 /*
    The adverb table uses the same struct as a verb but is 
    separated to better distinguish the two classes of object.
+   The adverb's A representation is a small integer, biased by
+   the range of verb codes, which indexes this table. (Adverbs it
+   seems do not exist as dynamic entities, since the application
+   of an adverb produces a derived *verb*; thus there is no such
+   thing as a derived adverb (as defined in J and APL87).)
  */
-/*   ADVNAME  ALPHA_NAME       vm vd    f  g  mr lr rr id) */
+/*   ADVNAME  ALPHA_NAME       vm       vd    f  g  mr lr rr id) */
 #define ADVTAB(_) \
-    _(ZEROOP=NULLFUNC+1, 0,    0, 0,    0, 0, 0, 0, 0, 0) \
-    _(WITH,   ALPHA_AMPERSAND, 0, amp,  0, 0, 0, 0, 0, 0) \
-    _(RANK,   ALPHA_TWODOTS,   0, rank, 0, 0, 0, 0, 0, 0) \
+    _(ZEROOP=NULLFUNC+1, 0,    0,       0,    0, 0, 0, 0, 0, 0) \
+    _(WITH,   ALPHA_AMPERSAND, 0,       amp,  0, 0, 0, 0, 0, 0) \
+    _(RANK,   ALPHA_TWODOTS,   0,       rank, 0, 0, 0, 0, 0, 0) \
+    _(ASLASH, ALPHA_SLASH,     areduce, 0,    0, 0, 0, 0, 0, 0) \
     _(NULLOP, 0)
 #define ADVTAB_NAME(a, ...) a ,
 enum { ADVTAB(ADVTAB_NAME) };
 
 struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
 
+/* produce a new derived verb with specified fields. must have A z;
+   declared and available for scratch. */
 #define DERIV(...) \
     ((z=ga(VRB,1,(I[]){sizeof(struct v)})), \
     (*((V)AV(z))=(struct v){__VA_ARGS__}), \
     z)
 
-I qv();
+/* adverb/conjunction macros */
+I qv(); /* declare the verb predicate */
 enum { ANOUN = 1, AVERB, N_A,
     NN=ANOUN*N_A+ANOUN,
     NV=ANOUN*N_A+AVERB,
@@ -721,12 +742,15 @@ enum { ANOUN = 1, AVERB, N_A,
 #define CONJCASE(a,w) \
     (VERBNOUN(a)*N_A+VERBNOUN(w))
 
+/* load verb data from code in x.
+   save new derived verb in x. */
 #define LOADV(x) \
     abs((I)x)<(sizeof vt/sizeof*vt)? \
         (x=DERIV(vt[(I)x].c, vt[(I)x].vm, vt[(I)x].vd, vt[(I)x].f, vt[(I)x].g, \
                 vt[(I)x].mr, vt[(I)x].lr, vt[(I)x].rr, vt[(I)x].id)) \
-        :0
+        :x
 
+/* & conjunction */
 V2(amp){
     A z;
     switch(CONJCASE(a,w)){
@@ -737,6 +761,7 @@ V2(amp){
     }
 }
 
+/* rank conjunction */
 V2(rank){
     A z;
     switch(CONJCASE(a,w)){
@@ -760,12 +785,18 @@ V2(rank){
     }
 }
 
+/* reduce adverb */
+V1(areduce){
+    A z;
+    R DERIV(ALPHA_SLASH, reduce, NULL, (I)w, 0, 0, 0, 0, 0);
+}
+
 /* Verb macros */
 
 /* create v pointer to access verb properties */
 #define LOADVSELF(base) \
     V v=self? \
-        abs((I)self)<(sizeof vt/sizeof*vt)? \
+        (I)self>0&&(I)self<(sizeof vt/sizeof*vt)? \
             vt+(I)self \
             :(V)AV(self) \
         :vt+base; 
@@ -818,6 +849,7 @@ V2(rank){
         /* requested cell is not base cell */ \
     }
 
+/* general rank/frame/cell behavior for verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
     /*pr(a); pr(w);*/ \
@@ -859,9 +891,12 @@ V2(rank){
         /* right cell is not base cell */ \
     }
 
+/* derived verb data cracker for derived verb actions */
 #define DECLFG(base) \
     A z; \
-    LOADVSELF(base) \
+    /*LOADVSELF(base)*/ \
+    LOADV(self); \
+    V v=(V)AV(self); \
     A fs = (A)v->f; LOADV(fs); \
     A gs = (A)v->g; LOADV(gs); \
     V1((*f1)) = ((V)AV(fs))->vm; \
@@ -869,11 +904,32 @@ V2(rank){
     V2((*f2)) = ((V)AV(fs))->vd; \
     V2((*g2)) = ((V)AV(gs))->vd;
 
+/* derived verb actions */
 V1(withl){ DECLFG(WITH); R g2(fs,w,gs); }
 V1(withr){ DECLFG(WITH); R f2(w,gs,fs); }
 V1(on1){ DECLFG(WITH); R f1(g1(w,gs),fs); }
 V2(on2){ DECLFG(WITH); R f2(g1(a,gs),g1(w,gs),fs); }
 
+/* derived action for reduce */
+V1(reduce){
+    DECLFG(SLASH); 
+    pr(self);
+    switch(AR(w)){
+    case 0: z=w; break;
+    case 1: z=num0(((V)AV(fs))->id);
+            switch(AN(w)){
+            case 0: break;
+            //case 1: z=num0r(*AV(w)); break;
+            default:  z=num0r(AV(w)[AN(w)-1]);
+                    DO(AN(w)-1, z=f2(num0r(AV(w)[AN(w)-2-i]),z,fs));
+            }
+    default:
+            ;
+    }
+    R z;
+}
+
+/* (internal) match verb. used in rank agreement by all verbs. */
 V2(match){
     if(a==w) R num0(1);
     if(a && w) {
@@ -889,6 +945,7 @@ V2(match){
     R num0(1);
 }
 
+/* numeric type crackers for math function verbs */
 enum { IMM = 1, FIX, FLO, NUM_TYPES };
 #define TYPEPAIR(a,b) \
     ((a)*NUM_TYPES+(b))
@@ -902,6 +959,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 #define NUMERIC_TYPES(a,b) \
     TYPEPAIR(TYPENUM(a), TYPENUM(b))
 
+/* apply unary math op to num, yielding num */
 #define MON_MATH_FUNC(func,z,y) \
     switch(TYPENUM(y)){ \
     case IMM: z=num(func numimm(y)); break; \
@@ -909,6 +967,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
     case FLO: z=flo(func numdbl(y)); break; \
     }
 
+/* apply binary math op to nums, yielding num */
 #define BIN_MATH_FUNC(func,z,x,y) \
      switch(NUMERIC_TYPES(x,y)){ \
      case TYPEPAIR(IMM,IMM): z=num(numimm(x) func numimm(y)); break; \
@@ -926,6 +985,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 V1(id){R w;}
 /* add */
 V2(plus){
+    P("plus!\n");
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
     //P("%d\n",v->id);
@@ -1001,12 +1061,12 @@ V2(cat){
 V1(sha){A z=ga(INT,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
- /*P("rsh:\n"); pr(a); pr(w);*/
- A z=ga(AT(w),r,AV(a));
- mv(AV(z),AV(w),wn=n>wn?wn:n);
- if(n-=wn)mv(AV(z)+wn,AV(z),n);
- /*P("#");pr(z);*/
- R z;}
+    /*P("rsh:\n"); pr(a); pr(w);*/
+    A z=ga(AT(w),r,AV(a));
+    mv(AV(z),AV(w),wn=n>wn?wn:n);
+    if(n-=wn)mv(AV(z)+wn,AV(z),n);
+    /*P("#");pr(z);*/
+    R z;}
 
 
 
@@ -1156,41 +1216,55 @@ enum predicate { PREDTAB(PRED_ENUM)     //generate predicate symbols
    a bitset represented as a bit mask */
 int classify(A a){ int i,v,r;
     for(i=0,v=1,r=0;i<(sizeof q/sizeof*q);i++,v*=2)if(q[i]((I)a))r|=v;
-    P("%d ", r); pr(a);
+    //P("%d ", r); pr(a);
     R r;}
 
 /*
    Parse table for processing expressions on top of the right-stack
  */
 #define PARSETAB(_) \
-    /*INDEX  PAT1      PAT2       PAT3  PAT4       ACTION*/                                           \
-    /*     =>t[0]      t[1]       t[2]  t[3]        */                                                \
-    _(MONA,  EDGE,     VERB,      NOUN, ANY,       {stackpush(rstk,t[3]);                             \
-                                                    if(abs((I)t[1])>256) stackpush(rstk,((V)AV(t[1]))->vm(t[2],t[1])); \
-                                                    else stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));        \
-                                                    stackpush(rstk,t[0]);} )                          \
-    _(MONB,  EDGE+AVN, VERB,      VERB, NOUN,      {if(abs((I)t[2])>256) stackpush(rstk,((V)AV(t[2]))->vm(t[3],t[2])); \
-                                                    else stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));        \
-                                                    stackpush(rstk,t[1]);                             \
-                                                    stackpush(rstk,t[0]);} )                          \
-    _(DYAD,  EDGE+AVN, NOUN,      VERB, NOUN,      {if(abs((I)t[2])>256) stackpush(rstk,((V)AV(t[2]))->vd(t[1],t[3],t[2])); \
-                                                    else stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));   \
-                                                    stackpush(rstk,t[0]);} )                          \
-    /*_(ADVB,  EDGE+AVN, NOUN+VERB, ADV,  ANY,       {stackpush(rstk,t[3]); })*/                        \
-    _(FRMJ,  EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2])); \
-                                                    stackpush(rstk,t[0]); })                         \
-    _(SPEC,  VAR,      ASSN,      AVN,  ANY,       {char *s=(char*)AV(t[0]);                          \
-                                                    struct st *slot = findsymb(&st,&s,1);             \
-                                                    stackpush(rstk,t[3]);                             \
-                                                    stackpush(rstk,slot->a=t[2]);} )                  \
-    _(PUNC,  LPAR,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                             \
-                                                    stackpush(rstk,t[1]);} )                          \
-    _(FAKL,  MARK,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                             \
-                                                    stackpush(rstk,t[1]);                             \
-                                                    stackpush(rstk,t[0]);} )                          \
-    _(FAKR,  EDGE+AVN, LPAR,      ANY,  NULP,      {stackpush(rstk,t[3]);                             \
-                                                    stackpush(rstk,t[2]);                             \
-                                                    stackpush(rstk,t[0]);} )                          \
+    /*INDEX   PAT1      PAT2       PAT3  PAT4       ACTION*/                                                     \
+    /*      =>t[0]      t[1]       t[2]  t[3]        */                                                          \
+    _(MONA,   EDGE,     VERB,      NOUN, ANY,       {stackpush(rstk,t[3]);                                       \
+                                                     if(abs((I)t[1])>256)                                        \
+                                                         stackpush(rstk,((V)AV(t[1]))->vm(t[2],t[1]));           \
+                                                     else stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));             \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
+    _(MONB,   EDGE+AVN, VERB,      VERB, NOUN,      {if(abs((I)t[2])>256)                                        \
+                                                         stackpush(rstk,((V)AV(t[2]))->vm(t[3],t[2]));           \
+                                                     else stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));             \
+                                                     stackpush(rstk,t[1]);                                       \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
+    _(DYAD,   EDGE+AVN, NOUN,      VERB, NOUN,      {if(abs((I)t[2])>256)                                        \
+                                                         stackpush(rstk,((V)AV(t[2]))->vd(t[1],t[3],t[2]));      \
+                                                     else stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));        \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
+    _(ADVB,   EDGE+AVN, NOUN+VERB, ADV,  ANY,       {stackpush(rstk,t[3]);                                       \
+                                                     stackpush(rstk,ot[((I)t[2])-ZEROOP].vm(t[1],t[2]));         \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
+    _(FRMJ,   EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2]));    \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
+    _(SPEC,   VAR,      ASSN,      AVN,  ANY,       {char *s=(char*)AV(t[0]);                                    \
+                                                     struct st *slot = findsymb(&st,&s,1);                       \
+                                                     stackpush(rstk,t[3]);                                       \
+                                                     stackpush(rstk,slot->a=t[2]);} )                            \
+    \
+    _(PUNC,   LPAR,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                                       \
+                                                     stackpush(rstk,t[1]);} )                                    \
+    \
+    _(FAKL,   MARK,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                                       \
+                                                     stackpush(rstk,t[1]);                                       \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
+    _(FAKR,   EDGE+AVN, LPAR,      ANY,  NULP,      {stackpush(rstk,t[3]);                                       \
+                                                     stackpush(rstk,t[2]);                                       \
+                                                     stackpush(rstk,t[0]);} )                                    \
+    \
     _(NOACT, 0,        0,    0,    0,    0;)
 #define PARSETAB_PAT(name, pat1, pat2, pat3, pat4, ...) { pat1, pat2, pat3, pat4 },
 struct parsetab { I c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
@@ -1315,7 +1389,7 @@ verb(c){I i=0;
     R 0;}
 
 /*
-   construct a single scanned token given a string pointer and length.
+   construct a single scanned token given a string pointer, length and type.
  */
 A newsymb(C *s,I n,I state){
     I t;
