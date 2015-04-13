@@ -913,7 +913,7 @@ V2(on2){ DECLFG(WITH); R f2(g1(a,gs),g1(w,gs),fs); }
 /* derived action for reduce */
 V1(reduce){
     DECLFG(SLASH); 
-    pr(self);
+    //pr(self);
     switch(AR(w)){
     case 0: z=w; break;
     case 1: z=num0(((V)AV(fs))->id);
@@ -985,7 +985,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 V1(id){R w;}
 /* add */
 V2(plus){
-    P("plus!\n");
+    //P("plus!\n");
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
     //P("%d\n",v->id);
