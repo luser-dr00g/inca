@@ -849,6 +849,52 @@ V1(areduce){
         /* requested cell is not base cell */ \
     }
 
+#define FRAME_AGREE \
+    if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
+        /*P("no match\n");*/ \
+        if (AN(lf)==0) /* Scalar extension on left frame */ \
+        { \
+            /*P("reshape_a\n");*/ \
+            /*pr(rf); pr(lc);*/ \
+            if (AN(lc)>0) \
+                a=rsh(cat(rf,lc,0),a,0); \
+            else \
+                a=rsh(rf,a,0); \
+            /*pr(a);*/ \
+        } else \
+        if (AN(rf)==0) /* Scalar extension on right frame */ \
+        { \
+            /*P("reshape_w\n");*/ \
+            /*pr(lf); pr(rc);*/ \
+            if (AN(rc)>0) \
+                w=rsh(cat(lf,rc,0),w,0); \
+            else \
+                w=rsh(lf,w,0); \
+            /*pr(w);*/ \
+        } \
+    }
+
+#define CSZ (cs+sizeof(struct a))
+
+#define CELL_HANDLE \
+    if (self&& (vt[base].lr != v->lr && vt[base].rr != v->rr)) { \
+        /* requested cells are not base cells */ \
+    } else if (self&& vt[base].lr != v->lr) { \
+        /* left cell is not base cell */ \
+    } else if (self&& vt[base].rr != v->rr) { \
+        /* right cell is not base cell */ \
+        I cs=tr(AR(rc),AD(rc)); /* cell size */ \
+        A bw=ga(BOX,AN(rf),AV(rf)); /* boxed w */ \
+        A bwm=ma(CSZ)*tr(AR(rf),AD(rf))); /* boxed w memory (for array headers) */ \
+        DO(AN(bw), AV(bw)[i]=(I)(((I*)bwm)+CSZ*i); /* set pointer to header in box array */ \
+                AT((A)(((I*)bwm)+CSZ*i))=AT(w); /* type of header is type of w */ \
+                AN((A)(((I*)bwm)+CSZ*i))=cs;    /* num elements is cell size */ \
+                AR((A)(((I*)bwm)+CSZ*i))=AN(rc); /* rank is length of cell shape */ \
+                mv(AD((A)(((I*)bwm)+CSZ*i)),AV(rc),AN(rc)); /* dims are cell data */ \
+                AK((A)(((I*)bwm)+CSZ*i))=((C*)(AV(w)+CSZ*i))-((C*)(((I*)bwm)+CSZ*i)); /* array data is cell slice of w */ \
+          ) \
+    }
+
 /* general rank/frame/cell behavior for verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
@@ -862,34 +908,8 @@ V1(areduce){
     /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
     /*pr(lf); pr(rf);*/ \
     /*pr(lc); pr(rc);*/ \
-    if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
-        /*P("no match\n");*/ \
-        if (AN(lf)==0) \
-        { \
-            /*P("reshape_a\n");*/ \
-            /*pr(rf); pr(lc);*/ \
-            if (AN(lc)>0) \
-                rf=cat(rf,lc,0); \
-            a=rsh(rf,a,0); \
-            /*pr(a);*/ \
-        } else \
-        if (AN(rf)==0) \
-        { \
-            /*P("reshape_w\n");*/ \
-            /*pr(lf); pr(rc);*/ \
-            if (AN(rc)>0) \
-                lf=cat(lf,rc,0); \
-            w=rsh(lf,w,0); \
-            /*pr(w);*/ \
-        } \
-    } \
-    if (self&& (vt[base].lr != v->lr && vt[base].rr != v->rr)) { \
-        /* requested cells are not base cells */ \
-    } else if (self&& vt[base].lr != v->lr) { \
-        /* left cell is not base cell */ \
-    } else if (self&& vt[base].rr != v->rr) { \
-        /* right cell is not base cell */ \
-    }
+    FRAME_AGREE \
+    CELL_HANDLE
 
 /* derived verb data cracker for derived verb actions */
 #define DECLFG(base) \
