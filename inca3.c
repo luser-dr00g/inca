@@ -667,7 +667,7 @@ V1(reduce);
    this table or an array of type VRB whose value is a (possibly
    modified) copy of the verb record.
  */
-/*         VERBNAME   ALPHA_NAME       vm       vd         f  g  mr lr rr  id */
+/*         VERBNAME   ALPHA_NAME       vm       vd         f  g  k  m  n  id */
 #define VERBTAB(_) \
         _( ZEROFUNC,  0,               0,       0,         0, 0, 0, 0, 0,  0 ) \
         _( PLUS,      ALPHA_PLUS,      id,      plus,      0, 0, 0, 0, 0,  0 ) \
@@ -682,7 +682,7 @@ V1(reduce);
         _( COMMA,     ALPHA_COMMA,     0,       cat,       0, 0, 0, 0, 0,  0 ) \
         _( SLASH,     0,               0,       0,         0, 0, 0, 0, 0,  0 ) \
         _( NULLFUNC,  0,               0,       0,         0, 0, 0, 0, 0,  0 ) 
-struct v { I c; A (*vm)(); A (*vd)(); I f,g,mr,lr,rr; I id; };
+struct v { I c; A (*vm)(); A (*vd)(); I f,g,k,m,n; I id; };
 typedef struct v *V; //dynamic verb type
 #define VERBTAB_NAME(a, ...) a ,
 enum { VERBTAB(VERBTAB_NAME) };     //generate verb symbols
@@ -709,7 +709,7 @@ V1(areduce);
    of an adverb produces a derived *verb*; thus there is no such
    thing as a derived adverb (as defined in J and APL87).)
  */
-/*   ADVNAME  ALPHA_NAME       vm       vd    f  g  mr lr rr id) */
+/*   ADVNAME  ALPHA_NAME       vm       vd    f  g  k  m  n id) */
 #define ADVTAB(_) \
     _(ZEROOP=NULLFUNC+1, 0,    0,       0,    0, 0, 0, 0, 0, 0) \
     _(WITH,   ALPHA_AMPERSAND, 0,       amp,  0, 0, 0, 0, 0, 0) \
@@ -747,7 +747,7 @@ enum { ANOUN = 1, AVERB, N_A,
 #define LOADV(x) \
     abs((I)x)<(sizeof vt/sizeof*vt)? \
         (x=DERIV(vt[(I)x].c, vt[(I)x].vm, vt[(I)x].vd, vt[(I)x].f, vt[(I)x].g, \
-                vt[(I)x].mr, vt[(I)x].lr, vt[(I)x].rr, vt[(I)x].id)) \
+                vt[(I)x].k, vt[(I)x].m, vt[(I)x].n, vt[(I)x].id)) \
         :x
 
 /* & conjunction */
@@ -781,7 +781,7 @@ V2(rank){
     case VV: LOADV(a);
              LOADV(w);
              R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
-                     ((V)AV(w))->mr, ((V)AV(w))->lr, ((V)AV(w))->rr, ((V)AV(a))->id);
+                     ((V)AV(w))->k, ((V)AV(w))->m, ((V)AV(w))->n, ((V)AV(a))->id);
     }
 }
 
@@ -843,9 +843,9 @@ V1(areduce){
 
 #define RANK1(base) \
     LOADVSELF(base) \
-    RFRAME(v->mr) \
-    RCELL(v->mr) \
-    if (self&& (vt[base].mr != v->mr)) { \
+    RFRAME(v->k) \
+    RCELL(v->k) \
+    if (self&& (vt[base].k != v->k)) { \
         /* requested cell is not base cell */ \
     }
 
@@ -876,16 +876,16 @@ V1(areduce){
 
 #define CSZ (cs+sizeof(struct a))
 
-#define CELL_HANDLE \
-    if (self&& (vt[base].lr != v->lr && vt[base].rr != v->rr)) { \
+#define CELL_HANDLE(base) \
+    if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
         /* requested cells are not base cells */ \
-    } else if (self&& vt[base].lr != v->lr) { \
+    } else if (self&& vt[base].m != v->m) { \
         /* left cell is not base cell */ \
-    } else if (self&& vt[base].rr != v->rr) { \
+    } else if (self&& vt[base].n != v->n) { \
         /* right cell is not base cell */ \
         I cs=tr(AR(rc),AD(rc)); /* cell size */ \
         A bw=ga(BOX,AN(rf),AV(rf)); /* boxed w */ \
-        A bwm=ma(CSZ)*tr(AR(rf),AD(rf))); /* boxed w memory (for array headers) */ \
+        A bwm=(A)ma(CSZ*tr(AR(rf),AD(rf))); /* boxed w memory (for array headers) */ \
         DO(AN(bw), AV(bw)[i]=(I)(((I*)bwm)+CSZ*i); /* set pointer to header in box array */ \
                 AT((A)(((I*)bwm)+CSZ*i))=AT(w); /* type of header is type of w */ \
                 AN((A)(((I*)bwm)+CSZ*i))=cs;    /* num elements is cell size */ \
@@ -893,23 +893,28 @@ V1(areduce){
                 mv(AD((A)(((I*)bwm)+CSZ*i)),AV(rc),AN(rc)); /* dims are cell data */ \
                 AK((A)(((I*)bwm)+CSZ*i))=((C*)(AV(w)+CSZ*i))-((C*)(((I*)bwm)+CSZ*i)); /* array data is cell slice of w */ \
           ) \
+        A bz=v->vd(a,bw,self); /* call self recursively */ \
+        /* assemble results */ \
     }
+
+#define BOX_HANDLE
 
 /* general rank/frame/cell behavior for verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
     /*pr(a); pr(w);*/ \
-    LFRAME(v->lr) \
-    RFRAME(v->rr) \
-    LCELL(v->lr) \
-    RCELL(v->rr) \
+    LFRAME(v->m) \
+    RFRAME(v->n) \
+    LCELL(v->m) \
+    RCELL(v->n) \
     /*P("%d_%d\n",AR(a),AR(w));*/ \
     /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
     /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
     /*pr(lf); pr(rf);*/ \
     /*pr(lc); pr(rc);*/ \
     FRAME_AGREE \
-    CELL_HANDLE
+    CELL_HANDLE(base) \
+    BOX_HANDLE \
 
 /* derived verb data cracker for derived verb actions */
 #define DECLFG(base) \
