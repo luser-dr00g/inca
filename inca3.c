@@ -827,9 +827,9 @@ V1(areduce){
 
 #define LOADCELL(c,ar,rk) \
     if ((rk)>0 && (rk)<AR(ar)) { \
-        AR(c)=(rk)>1?1:0; \
+        AR(c)=(rk)>0?1:0; \
         AN(c)=AD(c)[0]=rk; \
-        AK(c)=((C*)(AD(ar)+AR(ar)-rk))-((C*)c); /* indirect array of ar's cell shape */ \
+        AK(c)=((C*)(AD(ar)+AR(ar)-(rk)))-((C*)c); /* indirect array of ar's cell shape */ \
     }
 
 #define LCELL(rk) \
@@ -851,17 +851,18 @@ V1(areduce){
     }
 
 #define FRAME_AGREE \
+    P("frame agree\n"); \
     if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
-        /*P("no match\n");*/ \
+        P("no match\n"); \
         if (AN(lf)==0) /* Scalar extension on left frame */ \
         { \
-            /*P("reshape_a\n");*/ \
-            /*pr(rf); pr(lc);*/ \
+            P("reshape_a\n"); \
+            pr(rf); pr(lc); \
             if (AN(lc)>0) \
                 a=rsh(cat(rf,lc,0),a,0); \
             else \
                 a=rsh(rf,a,0); \
-            /*pr(a);*/ \
+            pr(a); \
         } else \
         if (AN(rf)==0) /* Scalar extension on right frame */ \
         { \
@@ -927,8 +928,9 @@ V1(areduce){
         free(ms); free(zslice); free(ba); free(bam); R z; \
 
 #define CELL_HANDLE(base) \
+    P("cell handle\n"); \
     if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
-        /* requested cells are not base cells */ \
+        P(" requested cells are not base cells\n"); \
         I csz; \
         BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
         BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
@@ -937,7 +939,7 @@ V1(areduce){
         free(ba); free(bam); \
         ASSEMBLE_RESULTS(bw,bwm) \
     } else if (self&& vt[base].m != v->m) { \
-        /* left cell is not base cell */ \
+        P(" left cell is not base cell\n"); \
         I csz; \
         BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
         A bz=v->vd(ba,w,base); /* call self recursively with base ranks */ \
@@ -945,7 +947,7 @@ V1(areduce){
         /* assemble results */ \
         ASSEMBLE_RESULTS(ba,bam) \
     } else if (self&& vt[base].n != v->n) { \
-        /* right cell is not base cell */ \
+        P(" right cell is not base cell\n"); \
         I csz; \
         BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
         A bz=v->vd(a,bw,base); /* call self recursively with base ranks */ \
@@ -1003,8 +1005,8 @@ V1(areduce){
     P("%d_%d\n",AR(a),AR(w)); \
     P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0); \
     P("%d_%d\n",lc?AN(lc):0,rc?AN(rc):0); \
-    /*pr(lf); pr(rf);*/ \
-    /*pr(lc); pr(rc);*/ \
+    pr(lf); pr(lc); \
+    pr(rf); pr(rc); \
     FRAME_AGREE \
     CELL_HANDLE(base) \
     BOX_HANDLE(base) \
@@ -1056,7 +1058,7 @@ V2(match){
           ) {
             R num0(0);
         }
-        DO(AN(a),if(AV(a)[i]!=AV(w)[i])R 0;)
+        DO(AN(a),if(AV(a)[i]!=AV(w)[i])R num0(0);)
     } else {
         R num0(0);
     }
