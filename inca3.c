@@ -851,18 +851,18 @@ V1(areduce){
     }
 
 #define FRAME_AGREE \
-    P("frame agree\n"); \
+    /*P("frame agree\n");*/ \
     if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
-        P("no match\n"); \
+        /*P("no match\n");*/ \
         if (AN(lf)==0) /* Scalar extension on left frame */ \
         { \
-            P("reshape_a\n"); \
-            pr(rf); pr(lc); \
+            /*P("reshape_a\n");*/ \
+            /*pr(rf); pr(lc);*/ \
             if (AN(lc)>0) \
                 a=rsh(cat(rf,lc,0),a,0); \
             else \
                 a=rsh(rf,a,0); \
-            pr(a); \
+            /*pr(a);*/ \
         } else \
         if (AN(rf)==0) /* Scalar extension on right frame */ \
         { \
@@ -891,11 +891,11 @@ V1(areduce){
             mv(AD((A)(((I*)bam)+HSZ(lc)*i)),AV(lc),AN(lc)); /* dims are cell data */ \
             AK((A)(((I*)bam)+HSZ(lc)*i))= \
                 ((C*)(AV(w)+csz*i))-((C*)(((I*)bam)+HSZ(lc)*i)); /* array data is (ptr to) slice of a */ \
-            pr(AV(ba)[i]); \
+            /*pr(AV(ba)[i]);*/ \
           ) \
 
 #define ASSEMBLE_RESULTS(ba,bam) \
-        P("assemble results\n"); \
+        /*P("assemble results\n");*/ \
         A ms = ga(INT,1,(I[]){0}); \
         DO(AN(bz), /* find max shape */ \
                 if ( (AR((A)(AV(bz)[i]))>AN(ms)) \
@@ -907,7 +907,7 @@ V1(areduce){
                     mv(AV(ms),AD((A)(AV(bz)[i])),AR((A)(AV(bz)[i]))); \
                 } \
           ) \
-        pr(ms); \
+        /*pr(ms);*/ \
         DO(AN(bz), /* pad to max shape */ \
                 if ( (AR((A)(AV(bz)[i]))<AN(ms)) \
                   || (tr(AR((A)(AV(bz)[i])),AD((A)(AV(bz)[i])))<tr(AN(ms),AV(ms))) \
@@ -917,7 +917,7 @@ V1(areduce){
                 } \
           ) \
         rf=cat(rf,ms,0); \
-        pr(rf); \
+        /*pr(rf);*/ \
         A z=ga(AT(w),AN(rf),AV(rf)); \
         A zslice=ga(AT(w),1,&AN(ms)); \
         AR(zslice)=AN(ms); \
@@ -926,49 +926,49 @@ V1(areduce){
         AN(zslice)=tr(AR(zslice),AD(zslice)); \
         DO(AN(bz), \
                 mv(AV(zslice),AV((A)AV(bz)[i]),AN(zslice)); \
-                pr(zslice); \
+                /*pr(zslice);*/ \
                 AK(zslice)+=AN(zslice)*sizeof(I); \
           ) \
         free(ms); free(zslice); free(ba); free(bam); R z; \
 
 #define CELL_HANDLE(base) \
-    P("cell handle\n"); \
+    /*P("cell handle\n");*/ \
     if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
-        P(" requested cells are not base cells\n"); \
+        /*P(" requested cells are not base cells\n");*/ \
         I csz; \
         BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
         BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
         A bz=v->vd(ba,bw,base); \
-        pr(bz); \
+        /*pr(bz);*/ \
         free(ba); free(bam); \
         ASSEMBLE_RESULTS(bw,bwm) \
     } else if (self&& vt[base].m != v->m) { \
-        P(" left cell is not base cell\n"); \
+        /*P(" left cell is not base cell\n");*/ \
         I csz; \
         BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
         A bz=v->vd(ba,w,base); /* call self recursively with base ranks */ \
-        pr(bz); \
+        /*pr(bz);*/ \
         /* assemble results */ \
         ASSEMBLE_RESULTS(ba,bam) \
     } else if (self&& vt[base].n != v->n) { \
-        P(" right cell is not base cell\n"); \
+        /*P(" right cell is not base cell\n");*/ \
         I csz; \
         BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
         A bz=v->vd(a,bw,base); /* call self recursively with base ranks */ \
-        pr(bz); \
+        /*pr(bz);*/ \
         ASSEMBLE_RESULTS(bw,bwm) \
     }
 
 #define BOX_HANDLE(base) \
     if (AT(a)==BOX&&AT(w)==BOX){ \
-        P("BOXaw\n"); \
+        /*P("BOXaw\n");*/ \
         A z=ga(BOX,AN(lf),AV(lf)); \
         DO(AN(z), \
                 AV(z)[i]=(I)v->vd(AV(a)[i],AV(w)[i],base); \
           ) \
         R z; \
     } else if (AT(a)==BOX) { \
-        P("BOXa\n"); \
+        /*P("BOXa\n");*/ \
         A wslice=ga(AT(w),1,&AN(rc)); \
         AR(wslice)=AN(rc); \
         mv(AD(wslice),AV(rc),AN(rc)); \
@@ -982,7 +982,7 @@ V1(areduce){
         free(wslice); \
         R z; \
     } else if (AT(w)==BOX) { \
-        P("BOXw\n"); \
+        /*P("BOXw\n");*/ \
         A aslice=ga(AT(a),1,&AN(lc)); \
         AR(aslice)=AN(lc); \
         mv(AD(aslice),AV(lc),AN(lc)); \
@@ -990,10 +990,10 @@ V1(areduce){
         AN(aslice)=tr(AR(aslice),AD(aslice)); \
         A z=ga(BOX,AN(rf),AV(rf)); \
         DO(AN(z), \
-                P("slice=%d %d %d %d\n", AR(aslice), *AD(aslice), AN(aslice), AK(aslice)); \
-                pr(aslice); \
-                pr(AV(w)[i]); \
-                P("recurse(slice,box) %d\n",i); \
+                /*P("slice=%d %d %d %d\n", AR(aslice), *AD(aslice), AN(aslice), AK(aslice));*/ \
+                /*pr(aslice);*/ \
+                /*pr(AV(w)[i]);*/ \
+                /*P("recurse(slice,box) %d\n",i);*/ \
                 AV(z)[i]=(I)v->vd(aslice,AV(w)[i],base); \
                 AK(aslice)+=AN(aslice)*sizeof(I); \
           ) \
@@ -1009,12 +1009,12 @@ V1(areduce){
     RFRAME(v->n) \
     LCELL(v->m) \
     RCELL(v->n) \
-    P("%d_%d\n",v->m,v->n); \
-    P("%d_%d\n",AR(a),AR(w)); \
-    P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0); \
-    P("%d_%d\n",lc?AN(lc):0,rc?AN(rc):0); \
-    pr(lf); pr(lc); \
-    pr(rf); pr(rc); \
+    /*P("%d_%d\n",v->m,v->n);*/ \
+    /*P("%d_%d\n",AR(a),AR(w));*/ \
+    /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
+    /*P("%d_%d\n",lc?AN(lc):0,rc?AN(rc):0);*/ \
+    /*pr(lf); pr(lc);*/ \
+    /*pr(rf); pr(rc);*/ \
     FRAME_AGREE \
     CELL_HANDLE(base) \
     BOX_HANDLE(base) \
@@ -1115,7 +1115,7 @@ TODO: overflow predicates + (configurable) handling.
 V1(id){R w;}
 /* add */
 V2(plus){
-    P("plus!\n");
+    /*P("plus!\n");*/
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
     //P("%d\n",v->id);
@@ -1191,11 +1191,11 @@ V2(cat){
 V1(sha){A z=ga(INT,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?AN(a):1,n=tr(r,AV(a)),wn=AN(w);
-    P("rsh:\n"); pr(a); pr(w);
+    //P("rsh:\n"); pr(a); pr(w);
     A z=ga(AT(w),r,AV(a));
     mv(AV(z),AV(w),wn=n>wn?wn:n);  /* copy */
     if((n-=wn)>0)mv(AV(z)+wn,AV(z),n); /* move */
-    P("#:");pr(z);
+    //P("#:");pr(z);
     R z;}
 
 
@@ -1529,6 +1529,7 @@ A newsymb(C *s,I n,I state){
     case 1: {
         char *end;
         s=strndup(s,n);
+        while(isspace(s[n-1])) s[--n]=0;
         DO(n,if(s[i]==alphatab[ALPHA_MACRON].base)s[i]='-')
         //A z=ga(INT,0,0); *AV(z)=strtol(s,&end,10);
         A z=num0(strtol(s,&end,10));
