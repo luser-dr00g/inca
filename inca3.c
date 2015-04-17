@@ -630,6 +630,7 @@ I numimm(I n){
 
 /* fetch full-width integer from bank */
 I numint(I n){
+    if ((n&BANK_MASK)==0) R numimm(n);
     R AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT]))[n&IMM_MASK];
 }
 
@@ -771,11 +772,11 @@ V2(rank){
              switch(AN(w)){
              case 0: R 0;
              case 1: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
-                             *AV(w), *AV(w), *AV(w), ((V)AV(a))->id);
+                             numint(*AV(w)), numint(*AV(w)), numint(*AV(w)), ((V)AV(a))->id);
              case 2: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
-                             AV(w)[1], AV(w)[0], AV(w)[1], ((V)AV(a))->id);
+                             numint(AV(w)[1]), numint(AV(w)[0]), numint(AV(w)[1]), ((V)AV(a))->id);
              case 3: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
-                             AV(w)[0], AV(w)[1], AV(w)[2], ((V)AV(a))->id);
+                             numint(AV(w)[0]), numint(AV(w)[1]), numint(AV(w)[2]), ((V)AV(a))->id);
              default: R 0;
              }
     case VV: LOADV(a);
@@ -803,10 +804,10 @@ V1(areduce){
 
 #define LOADFRAME(f,ar,rk) \
     /*P("rk=%d\n",rk);*/ \
-    if (AR(ar)-(rk)>0) { \
+    if (AR(ar)-(rk)>=0) { \
         /*f = ga(0,AR(ar)?AR(ar)==1?0:1:0,(I[]){AR(ar)-(rk)?AR(ar)-(rk):1});*/ \
         /*mv(AV(f),AR(ar)-(rk)?AD(ar):(I[]){0},AR(ar)-(rk)?AR(ar)-(rk):1);*/ \
-        AR(f)=AR(ar)-(rk)>1?1:0; \
+        AR(f)=AR(ar)-(rk)>0?1:0; \
         AN(f)=AD(f)[0]=AR(ar)-(rk); \
         AK(f)=((C*)AD(ar))-((C*)f); /*make "indirect" array of ar's frame shape*/ \
     } \
@@ -833,12 +834,12 @@ V1(areduce){
 
 #define LCELL(rk) \
     A lc = &(struct a){.t=INT,.n=0,.r=0}; \
-    if ((rk)<0) { LOADCELL(lc,a,AR(a)-(rk)) } \
+    if ((rk)<0) { LOADCELL(lc,a,AR(a)+(rk)) } \
     else { LOADCELL(lc,a,rk) }
 
 #define RCELL(rk) \
     A rc = &(struct a){.t=INT,.n=0,.r=0}; \
-    if ((rk)<0) { LOADCELL(rc,w,AR(w)-(rk)) } \
+    if ((rk)<0) { LOADCELL(rc,w,AR(w)+(rk)) } \
     else { LOADCELL(rc,w,rk) }
 
 #define RANK1(base) \
@@ -993,16 +994,17 @@ V1(areduce){
 /* general rank/frame/cell behavior for verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
-    pr(a); pr(w); \
+    /*pr(a); pr(w);*/ \
     LFRAME(v->m) \
     RFRAME(v->n) \
     LCELL(v->m) \
     RCELL(v->n) \
-    /*P("%d_%d\n",AR(a),AR(w));*/ \
-    /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
-    /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
-    pr(lf); pr(rf); \
-    pr(lc); pr(rc); \
+    P("%d_%d\n",v->m,v->n); \
+    P("%d_%d\n",AR(a),AR(w)); \
+    P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0); \
+    P("%d_%d\n",lc?AN(lc):0,rc?AN(rc):0); \
+    /*pr(lf); pr(rf);*/ \
+    /*pr(lc); pr(rc);*/ \
     FRAME_AGREE \
     CELL_HANDLE(base) \
     BOX_HANDLE(base) \
