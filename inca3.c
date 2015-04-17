@@ -1569,7 +1569,11 @@ int wdtab[][5] = {
     { 30+1, 20+1, 10+0, 10+0, 10+0 }, /* 10 number */
     { 30+1, 20+0, 10+1, 10+1,  0+1 }, /* 20 name   */
     { 30+1, 20+1, 10+1, 10+1,  0+1 }, /* 30 other  */
-    /*{newstate+action,...}*/
+    /*{newstate+action,...}
+      action=0:do nothing
+      action=1:generate a token and reset start index
+      action=2:reset start index
+     */
 };
 
 /* construct new object giving start and end string positions */
@@ -1599,8 +1603,8 @@ I *wd(C *s){
         state=b/10;
         switch(b%10){ //encoded actions
         case 0: break;
-        case 1: emit(j,i,oldstate);
-        case 2: j=i; break;
+        case 1: emit(j,i,oldstate);  // generate a token (and)
+        case 2: j=i; break;          // reset start index
         }
     }
     *z++=0;
