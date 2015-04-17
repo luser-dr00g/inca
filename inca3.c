@@ -677,7 +677,7 @@ V1(reduce);
         _( PLUSMINUS, ALPHA_PLUSMINUS, neg,     plusminus, 0, 0, 0, 0, 0,  0 ) \
         _( RBRACE,    ALPHA_RBRACE,    size,    from,      0, 0, 0, 0, 0,  0 ) \
         _( IOTA,      ALPHA_IOTA,      iota,    find,      0, 0, 0, 0, 0,  0 ) \
-        _( BOXF,      ALPHA_RANG,      box,     0,         0, 0, 0, 0, 0,  0 ) \
+        _( BOXF,      ALPHA_LANG,      box,     0,         0, 0, 0, 0, 0,  0 ) \
         _( RHO,       ALPHA_RHO,       sha,     rsh,       0, 0, 0, 0, 0,  0 ) \
         _( COMMA,     ALPHA_COMMA,     0,       cat,       0, 0, 0, 0, 0,  0 ) \
         _( SLASH,     0,               0,       0,         0, 0, 0, 0, 0,  0 ) \
@@ -773,7 +773,7 @@ V2(rank){
              case 1: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
                              *AV(w), *AV(w), *AV(w), ((V)AV(a))->id);
              case 2: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
-                             AV(w)[0], AV(w)[1], AV(w)[0], ((V)AV(a))->id);
+                             AV(w)[1], AV(w)[0], AV(w)[1], ((V)AV(a))->id);
              case 3: R DERIV(((V)AV(a))->c, ((V)AV(a))->vm, ((V)AV(a))->vd, 0, 0,
                              AV(w)[0], AV(w)[1], AV(w)[2], ((V)AV(a))->id);
              default: R 0;
@@ -825,7 +825,7 @@ V1(areduce){
     else { LOADFRAME(rf,w,rk) } 
 
 #define LOADCELL(c,ar,rk) \
-    if ((rk)>0) { \
+    if ((rk)>0 && (rk)<AR(ar)) { \
         AR(c)=(rk)>1?1:0; \
         AN(c)=AD(c)[0]=rk; \
         AK(c)=((C*)(AD(ar)+AR(ar)-rk))-((C*)c); /* indirect array of ar's cell shape */ \
@@ -874,7 +874,8 @@ V1(areduce){
         } \
     }
 
-#define CSZ (cs+sizeof(struct a))
+/* header size */
+#define HSZ(rc) ((AR(rc)?AR(rc):0)+sizeof(struct a))
 
 #define CELL_HANDLE(base) \
     if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
@@ -883,26 +884,80 @@ V1(areduce){
         /* left cell is not base cell */ \
     } else if (self&& vt[base].n != v->n) { \
         /* right cell is not base cell */ \
-        I cs=tr(AR(rc),AD(rc)); /* cell size */ \
+        I csz=tr(AR(rc),AD(rc)); /* cell size */ \
         A bw=ga(BOX,AN(rf),AV(rf)); /* boxed w */ \
-        A bwm=(A)ma(CSZ*tr(AR(rf),AD(rf))); /* boxed w memory (for array headers) */ \
-        DO(AN(bw), AV(bw)[i]=(I)(((I*)bwm)+CSZ*i); /* set pointer to header in box array */ \
-                AT((A)(((I*)bwm)+CSZ*i))=AT(w); /* type of header is type of w */ \
-                AN((A)(((I*)bwm)+CSZ*i))=cs;    /* num elements is cell size */ \
-                AR((A)(((I*)bwm)+CSZ*i))=AN(rc); /* rank is length of cell shape */ \
-                mv(AD((A)(((I*)bwm)+CSZ*i)),AV(rc),AN(rc)); /* dims are cell data */ \
-                AK((A)(((I*)bwm)+CSZ*i))=((C*)(AV(w)+CSZ*i))-((C*)(((I*)bwm)+CSZ*i)); /* array data is cell slice of w */ \
+        A bwm=(A)ma(HSZ(rc)*tr(AR(rf),AD(rf))); /* boxed w memory (for array headers) */ \
+        DO(AN(bw), \
+            AV(bw)[i]=(I)(((I*)bwm)+HSZ(rc)*i); /* set pointer to header in box array */ \
+            AT((A)(((I*)bwm)+HSZ(rc)*i))=AT(w); /* type of header is type of w */ \
+            AN((A)(((I*)bwm)+HSZ(rc)*i))=csz;    /* num elements is cell size */ \
+            AR((A)(((I*)bwm)+HSZ(rc)*i))=AN(rc); /* rank is length of cell shape */ \
+            mv(AD((A)(((I*)bwm)+HSZ(rc)*i)),AV(rc),AN(rc)); /* dims are cell data */ \
+            AK((A)(((I*)bwm)+HSZ(rc)*i))= \
+                ((C*)(AV(w)+csz*i))-((C*)(((I*)bwm)+HSZ(rc)*i)); /* array data is (ptr to) slice of w */ \
           ) \
-        A bz=v->vd(a,bw,self); /* call self recursively */ \
+        A bz=v->vd(a,bw,base); /* call self recursively with base ranks */ \
+        pr(bz); \
+        free(bw); free(bwm); R 0; \
         /* assemble results */ \
+        A ms = ga(INT,1,(I[]){0}); \
+        DO(AN(bz), /* find max shape */ \
+                if ( (AR((A)(AV(bz)[i]))>AN(ms)) \
+                  || (tr(AR((A)(AV(bz)[i])),AD((A)(AV(bz)[i]))) > tr(AR(ms),AD(ms))) \
+                   ) \
+                { \
+                    free(ms); \
+                    ms = ga(INT,1,&AR((A)(AV(bz)[i]))); \
+                    mv(AV(ms),AD((A)(AV(bz)[i])),AR((A)(AV(bz)[i]))); \
+                } \
+          ) \
+        pr(ms); \
+        DO(AN(bz), /* pad to max shape */ \
+          ) \
     }
 
-#define BOX_HANDLE
+#define BOX_HANDLE(base) \
+    if (AT(a)==BOX&&AT(w)==BOX){ \
+        P("BOX\n"); \
+        A z=ga(BOX,AR(lf),AD(lf)); \
+        DO(AN(z), \
+                AV(z)[i]=(I)v->vd(AV(a)[i],AV(w)[i],base); \
+          ) \
+        R z; \
+    } else if (AT(a)==BOX) { \
+        P("BOX\n"); \
+        A wslice=ga(AT(w),1,&AR(rc)); \
+        AR(wslice)=AR(rc); \
+        mv(AD(wslice),AD(rc),AR(rc)); \
+        AK(wslice)=((C*)AV(w))-((C*)wslice); \
+        AN(wslice)=tr(AR(wslice),AD(wslice)); \
+        A z=ga(BOX,AR(lf),AD(lf)); \
+        DO(AN(z), \
+                AV(z)[i]=(I)v->vd(AV(a)[i],wslice,base); \
+                AK(wslice)+=AN(wslice); \
+          ) \
+        free(wslice); \
+        R z; \
+    } else if (AT(w)==BOX) { \
+        P("BOX\n"); \
+        A aslice=ga(AT(a),1,&AR(lc)); \
+        AR(aslice)=AR(lc); \
+        mv(AD(aslice),AD(lc),AR(lc)); \
+        AK(aslice)=((C*)AV(a))-((C*)aslice); \
+        AN(aslice)=tr(AR(aslice),AD(aslice)); \
+        A z=ga(BOX,AR(rf),AD(rf)); \
+        DO(AN(z), \
+                AV(z)[i]=(I)v->vd(aslice,AV(w)[i],base); \
+                AK(aslice)+=AN(aslice); \
+          ) \
+        free(aslice); \
+        R z; \
+    }
 
 /* general rank/frame/cell behavior for verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
-    /*pr(a); pr(w);*/ \
+    pr(a); pr(w); \
     LFRAME(v->m) \
     RFRAME(v->n) \
     LCELL(v->m) \
@@ -910,11 +965,11 @@ V1(areduce){
     /*P("%d_%d\n",AR(a),AR(w));*/ \
     /*P("%d_%d\n",lf?AR(lf):0,rf?AR(rf):0);*/ \
     /*P("%d_%d\n",lf?AN(lf):0,rf?AN(rf):0);*/ \
-    /*pr(lf); pr(rf);*/ \
-    /*pr(lc); pr(rc);*/ \
+    pr(lf); pr(rf); \
+    pr(lc); pr(rc); \
     FRAME_AGREE \
     CELL_HANDLE(base) \
-    BOX_HANDLE \
+    BOX_HANDLE(base) \
 
 /* derived verb data cracker for derived verb actions */
 #define DECLFG(base) \
@@ -1010,7 +1065,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 V1(id){R w;}
 /* add */
 V2(plus){
-    //P("plus!\n");
+    P("plus!\n");
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
     //P("%d\n",v->id);
