@@ -1083,7 +1083,9 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
     case FLO: z=flo(func numdbl(y)); break; \
     }
 
-/* apply binary math op to nums, yielding num */
+/* apply binary math op to nums, yielding num
+TODO: overflow predicates + (configurable) handling.
+ */
 #define BIN_MATH_FUNC(func,z,x,y) \
      switch(NUMERIC_TYPES(x,y)){ \
      case TYPEPAIR(IMM,IMM): z=num(numimm(x) func numimm(y)); break; \
@@ -1176,11 +1178,11 @@ V2(cat){
 /* return the shape of w */
 V1(sha){A z=ga(INT,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* reshape w to dimensions a */
-V2(rsh){I r=AR(a)?*AD(w):1,n=tr(r,AV(a)),wn=AN(w);
+V2(rsh){I r=AR(a)?AN(a):1,n=tr(r,AV(a)),wn=AN(w);
     /*P("rsh:\n"); pr(a); pr(w);*/
     A z=ga(AT(w),r,AV(a));
-    mv(AV(z),AV(w),wn=n>wn?wn:n);
-    if(n-=wn)mv(AV(z)+wn,AV(z),n);
+    mv(AV(z),AV(w),wn=n>wn?wn:n);  /* copy */
+    if((n-=wn)>0)mv(AV(z)+wn,AV(z),n); /* move */
     /*P("#");pr(z);*/
     R z;}
 
@@ -1512,8 +1514,7 @@ A newsymb(C *s,I n,I state){
     //P("%d\n",n);DO(n,P("%c",s[i]))P("\n");
     //if(strchr(DIGIT,*s) || strchr(HIMINUS,*s)) {
     switch(state){
-    case 1:
-        {
+    case 1: {
         char *end;
         s=strndup(s,n);
         DO(n,if(s[i]==alphatab[ALPHA_MACRON].base)s[i]='-')
@@ -1525,22 +1526,17 @@ A newsymb(C *s,I n,I state){
             z=cat(z,r,0);
         }
         free(s);
-        R z;
-        }
+        R z; }
     //} else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
-    case 2:
-        {
+    case 2: {
         A z=ga(SYMB,1,(I[]){n+1});
         mv(AV(z),(I*)s,n+3/4);
         ((C*)AV(z))[n] = 0;
-        R z;
-        }
+        R z; }
     //} else {
-    case 3:
-        {
+    case 3: {
         I c=verb(*s);
-        R (A)(c?c:(I)*s);
-        }
+        R (A)(c?c:(I)*s); }
     }
 }
 
