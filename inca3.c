@@ -877,29 +877,21 @@ V1(areduce){
 /* header size */
 #define HSZ(rc) ((AR(rc)?AR(rc):0)+sizeof(struct a))
 
-#define CELL_HANDLE(base) \
-    if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
-        /* requested cells are not base cells */ \
-    } else if (self&& vt[base].m != v->m) { \
-        /* left cell is not base cell */ \
-    } else if (self&& vt[base].n != v->n) { \
-        /* right cell is not base cell */ \
-        I csz=tr(AR(rc),AD(rc)); /* cell size */ \
-        A bw=ga(BOX,AN(rf),AV(rf)); /* boxed w */ \
-        A bwm=(A)ma(HSZ(rc)*tr(AR(rf),AD(rf))); /* boxed w memory (for array headers) */ \
-        DO(AN(bw), \
-            AV(bw)[i]=(I)(((I*)bwm)+HSZ(rc)*i); /* set pointer to header in box array */ \
-            AT((A)(((I*)bwm)+HSZ(rc)*i))=AT(w); /* type of header is type of w */ \
-            AN((A)(((I*)bwm)+HSZ(rc)*i))=csz;    /* num elements is cell size */ \
-            AR((A)(((I*)bwm)+HSZ(rc)*i))=AN(rc); /* rank is length of cell shape */ \
-            mv(AD((A)(((I*)bwm)+HSZ(rc)*i)),AV(rc),AN(rc)); /* dims are cell data */ \
-            AK((A)(((I*)bwm)+HSZ(rc)*i))= \
-                ((C*)(AV(w)+csz*i))-((C*)(((I*)bwm)+HSZ(rc)*i)); /* array data is (ptr to) slice of w */ \
+#define BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
+        csz=tr(AR(lc),AD(lc)); /* cell size */ \
+        A ba=ga(BOX,AN(lf),AV(lf)); /* boxed a */ \
+        A bam=(A)ma(HSZ(lc)*tr(AR(lf),AD(lf))); /* boxed a memory (for array headers) */ \
+        DO(AN(ba), \
+            AV(ba)[i]=(I)(((I*)bam)+HSZ(lc)*i); /* set pointer to header in box array */ \
+            AT((A)(((I*)bam)+HSZ(lc)*i))=AT(a); /* type of header is type of a */ \
+            AN((A)(((I*)bam)+HSZ(lc)*i))=csz;    /* num elements is cell size */ \
+            AR((A)(((I*)bam)+HSZ(lc)*i))=AN(lc); /* rank is length of cell shape */ \
+            mv(AD((A)(((I*)bam)+HSZ(lc)*i)),AV(lc),AN(lc)); /* dims are cell data */ \
+            AK((A)(((I*)bam)+HSZ(lc)*i))= \
+                ((C*)(AV(w)+csz*i))-((C*)(((I*)bam)+HSZ(lc)*i)); /* array data is (ptr to) slice of a */ \
           ) \
-        A bz=v->vd(a,bw,base); /* call self recursively with base ranks */ \
-        pr(bz); \
-        free(bw); free(bwm); R 0; \
-        /* assemble results */ \
+
+#define ASSEMBLE_RESULTS(ba,bam) \
         A ms = ga(INT,1,(I[]){0}); \
         DO(AN(bz), /* find max shape */ \
                 if ( (AR((A)(AV(bz)[i]))>AN(ms)) \
@@ -913,7 +905,51 @@ V1(areduce){
           ) \
         pr(ms); \
         DO(AN(bz), /* pad to max shape */ \
+                if ( (AR((A)(AV(bz)[i]))<AN(ms)) \
+                  || (tr(AR((A)(AV(bz)[i])),AD((A)(AV(bz)[i])))) \
+                   ) \
+                { \
+                    AV(bz)[i]=(I)rsh(ms,(A)AV(bz)[i],0); \
+                } \
           ) \
+        rf=cat(rf,ms,0); \
+        A z=ga(AT(w),AN(rf),AD(rf)); \
+        A zslice=ga(AT(w),1,&AN(ms)); \
+        AR(zslice)=AR(ms); \
+        mv(AD(zslice),AD(ms),AR(ms)); \
+        AK(zslice)=((C*)AV(z))-((C*)zslice); \
+        AN(zslice)=tr(AR(zslice),AD(zslice)); \
+        DO(AN(bz), \
+                mv(AV(zslice),AV((A)AV(bz)[i]),AN(ms)); \
+                AK(zslice)+=AN(zslice); \
+          ) \
+        free(ms); free(zslice); free(ba); free(bam); R z; \
+
+#define CELL_HANDLE(base) \
+    if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
+        /* requested cells are not base cells */ \
+        I csz; \
+        BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
+        BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
+        A bz=v->vd(ba,bw,base); \
+        pr(bz); \
+        free(ba); free(bam); \
+        ASSEMBLE_RESULTS(bw,bwm) \
+    } else if (self&& vt[base].m != v->m) { \
+        /* left cell is not base cell */ \
+        I csz; \
+        BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
+        A bz=v->vd(ba,w,base); /* call self recursively with base ranks */ \
+        pr(bz); \
+        /* assemble results */ \
+        ASSEMBLE_RESULTS(ba,bam) \
+    } else if (self&& vt[base].n != v->n) { \
+        /* right cell is not base cell */ \
+        I csz; \
+        BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
+        A bz=v->vd(a,bw,base); /* call self recursively with base ranks */ \
+        pr(bz); \
+        ASSEMBLE_RESULTS(bw,bwm) \
     }
 
 #define BOX_HANDLE(base) \
@@ -1128,7 +1164,7 @@ V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
  A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
 
 /* pack array into a scalar */
-V1(box){A z=ga(1,0,0);*AV(z)=(I)w;R z;}
+V1(box){A z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
 /* catenate two arrays */
 V2(cat){
      //P("cat:\n"); pr(a); pr(w);
