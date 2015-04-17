@@ -880,9 +880,9 @@ V1(areduce){
 #define HSZ(rc) ((AR(rc)?AR(rc):0)+sizeof(struct a))
 
 #define BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
-        csz=tr(AR(lc),AD(lc)); /* cell size */ \
+        csz=tr(AN(lc),AV(lc)); /* cell size */ \
         A ba=ga(BOX,AN(lf),AV(lf)); /* boxed a */ \
-        A bam=(A)ma(HSZ(lc)*tr(AR(lf),AD(lf))); /* boxed a memory (for array headers) */ \
+        A bam=(A)ma(HSZ(lc)*tr(AN(lf),AV(lf))); /* boxed a memory (for array headers) */ \
         DO(AN(ba), \
             AV(ba)[i]=(I)(((I*)bam)+HSZ(lc)*i); /* set pointer to header in box array */ \
             AT((A)(((I*)bam)+HSZ(lc)*i))=AT(a); /* type of header is type of a */ \
@@ -891,9 +891,11 @@ V1(areduce){
             mv(AD((A)(((I*)bam)+HSZ(lc)*i)),AV(lc),AN(lc)); /* dims are cell data */ \
             AK((A)(((I*)bam)+HSZ(lc)*i))= \
                 ((C*)(AV(w)+csz*i))-((C*)(((I*)bam)+HSZ(lc)*i)); /* array data is (ptr to) slice of a */ \
+            pr(AV(ba)[i]); \
           ) \
 
 #define ASSEMBLE_RESULTS(ba,bam) \
+        P("assemble results\n"); \
         A ms = ga(INT,1,(I[]){0}); \
         DO(AN(bz), /* find max shape */ \
                 if ( (AR((A)(AV(bz)[i]))>AN(ms)) \
@@ -908,22 +910,24 @@ V1(areduce){
         pr(ms); \
         DO(AN(bz), /* pad to max shape */ \
                 if ( (AR((A)(AV(bz)[i]))<AN(ms)) \
-                  || (tr(AR((A)(AV(bz)[i])),AD((A)(AV(bz)[i])))) \
+                  || (tr(AR((A)(AV(bz)[i])),AD((A)(AV(bz)[i])))<tr(AN(ms),AV(ms))) \
                    ) \
                 { \
                     AV(bz)[i]=(I)rsh(ms,(A)AV(bz)[i],0); \
                 } \
           ) \
         rf=cat(rf,ms,0); \
-        A z=ga(AT(w),AN(rf),AD(rf)); \
+        pr(rf); \
+        A z=ga(AT(w),AN(rf),AV(rf)); \
         A zslice=ga(AT(w),1,&AN(ms)); \
-        AR(zslice)=AR(ms); \
-        mv(AD(zslice),AD(ms),AR(ms)); \
+        AR(zslice)=AN(ms); \
+        mv(AD(zslice),AV(ms),AN(ms)); \
         AK(zslice)=((C*)AV(z))-((C*)zslice); \
         AN(zslice)=tr(AR(zslice),AD(zslice)); \
         DO(AN(bz), \
-                mv(AV(zslice),AV((A)AV(bz)[i]),AN(ms)); \
-                AK(zslice)+=AN(zslice); \
+                mv(AV(zslice),AV((A)AV(bz)[i]),AN(zslice)); \
+                pr(zslice); \
+                AK(zslice)+=AN(zslice)*sizeof(I); \
           ) \
         free(ms); free(zslice); free(ba); free(bam); R z; \
 
@@ -957,37 +961,41 @@ V1(areduce){
 
 #define BOX_HANDLE(base) \
     if (AT(a)==BOX&&AT(w)==BOX){ \
-        P("BOX\n"); \
-        A z=ga(BOX,AR(lf),AD(lf)); \
+        P("BOXaw\n"); \
+        A z=ga(BOX,AN(lf),AV(lf)); \
         DO(AN(z), \
                 AV(z)[i]=(I)v->vd(AV(a)[i],AV(w)[i],base); \
           ) \
         R z; \
     } else if (AT(a)==BOX) { \
-        P("BOX\n"); \
-        A wslice=ga(AT(w),1,&AR(rc)); \
-        AR(wslice)=AR(rc); \
-        mv(AD(wslice),AD(rc),AR(rc)); \
+        P("BOXa\n"); \
+        A wslice=ga(AT(w),1,&AN(rc)); \
+        AR(wslice)=AN(rc); \
+        mv(AD(wslice),AV(rc),AN(rc)); \
         AK(wslice)=((C*)AV(w))-((C*)wslice); \
         AN(wslice)=tr(AR(wslice),AD(wslice)); \
-        A z=ga(BOX,AR(lf),AD(lf)); \
+        A z=ga(BOX,AN(lf),AV(lf)); \
         DO(AN(z), \
                 AV(z)[i]=(I)v->vd(AV(a)[i],wslice,base); \
-                AK(wslice)+=AN(wslice); \
+                AK(wslice)+=AN(wslice)*sizeof(I); \
           ) \
         free(wslice); \
         R z; \
     } else if (AT(w)==BOX) { \
-        P("BOX\n"); \
-        A aslice=ga(AT(a),1,&AR(lc)); \
-        AR(aslice)=AR(lc); \
-        mv(AD(aslice),AD(lc),AR(lc)); \
+        P("BOXw\n"); \
+        A aslice=ga(AT(a),1,&AN(lc)); \
+        AR(aslice)=AN(lc); \
+        mv(AD(aslice),AV(lc),AN(lc)); \
         AK(aslice)=((C*)AV(a))-((C*)aslice); \
         AN(aslice)=tr(AR(aslice),AD(aslice)); \
-        A z=ga(BOX,AR(rf),AD(rf)); \
+        A z=ga(BOX,AN(rf),AV(rf)); \
         DO(AN(z), \
+                P("slice=%d %d %d %d\n", AR(aslice), *AD(aslice), AN(aslice), AK(aslice)); \
+                pr(aslice); \
+                pr(AV(w)[i]); \
+                P("recurse(slice,box) %d\n",i); \
                 AV(z)[i]=(I)v->vd(aslice,AV(w)[i],base); \
-                AK(aslice)+=AN(aslice); \
+                AK(aslice)+=AN(aslice)*sizeof(I); \
           ) \
         free(aslice); \
         R z; \
@@ -1183,11 +1191,11 @@ V2(cat){
 V1(sha){A z=ga(INT,1,&AR(w));mv(AV(z),AD(w),AR(w));R z;}
 /* reshape w to dimensions a */
 V2(rsh){I r=AR(a)?AN(a):1,n=tr(r,AV(a)),wn=AN(w);
-    /*P("rsh:\n"); pr(a); pr(w);*/
+    P("rsh:\n"); pr(a); pr(w);
     A z=ga(AT(w),r,AV(a));
     mv(AV(z),AV(w),wn=n>wn?wn:n);  /* copy */
     if((n-=wn)>0)mv(AV(z)+wn,AV(z),n); /* move */
-    /*P("#");pr(z);*/
+    P("#:");pr(z);
     R z;}
 
 
