@@ -172,8 +172,10 @@ struct st *findsymb(struct st *st, char **s, int mode);
     _( MACRON,    MODE1('@'), 1, "@", /*U+00af*/ /*"\xc2"*/"\xaf" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
     _( LESS,            '<',  1, "#", "<" ) \
+    _( LESSEQ,    MODE1('$'), 1, "$", /*U+2264*/ "\xe2\x89\xa4") \
     _( LESSEQUAL, MODE1('$'), 1, "$", ESC(n)"y""\xE" ) \
     _( EQALT,           '=',  1, "%", "=" ) \
+    _( MOREEQ,    MODE1('^'), 1, "^", /*U+2265*/ "\xe2\x89\xa5") \
     _( MOREEQUAL, MODE1('^'), 1, "^", ESC(n)"z""\xE" ) \
     _( MORE,            '>',  1, "&", ">" ) \
     _( EQSLASH,   MODE1('*'), 1, "*", ESC(n)"|""\xE" ) \
@@ -1115,9 +1117,7 @@ TODO: overflow predicates + (configurable) handling.
      case TYPEPAIR(FLO,FLO): z=flo(numdbl(x) func numdbl(y)); break; \
      }
 
-I plusover(I x,I y){
-    R 0;
-}
+I plusover(I x,I y){ R (((x>0)&&(y>0)&&(x>(INT_MAX-y))) || ((x<0)&&(y<0)&&(x<(INT_MAX-y)))); }
 
 /* return w */
 V1(id){R w;}
@@ -1130,9 +1130,7 @@ V2(plus){
     DO(AN(z), BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i],plusover) )
     R z;}
 
-I minusover(I x,I y){
-    R 0;
-}
+I minusover(I x,I y){ R (y==INT_MIN&&x!=0)?1:plusover(x,-y); }
 
 /* negate w */
 V1(neg){ RANK1(MINUS)
@@ -1369,47 +1367,55 @@ int classify(A a){ int i,v,r;
    Parse table for processing expressions on top of the right-stack
  */
 #define PARSETAB(_) \
-    /*INDEX   PAT1      PAT2       PAT3  PAT4       ACTION*/                                                     \
-    /*      =>t[0]      t[1]       t[2]  t[3]        */                                                          \
-    _(MONA,   EDGE,     VERB,      NOUN, ANY,       {stackpush(rstk,t[3]);                                       \
-                                                     if(abs((I)t[1])>256)                                        \
-                                                         stackpush(rstk,((V)AV(t[1]))->vm(t[2],t[1]));           \
-                                                     else stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));             \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    /*INDEX   PAT1      PAT2       PAT3  PAT4       ACTION*/                                                        \
+    /*      =>t[0]      t[1]       t[2]  t[3]        */                                                             \
+    _(MONA,   EDGE,     VERB,      NOUN, ANY,       {stackpush(rstk,t[3]);                                          \
+                                                     if(abs((I)t[1])>256) {                                         \
+                                                         if(((V)AV(t[1]))->vm) stackpush(rstk,((V)AV(t[1]))->vm(t[2],t[1]));        \
+                                                         else stackpush(rstk,((V)AV(t[1]))->vd(num0(((V)AV(t[1]))->id),t[2],t[1]));  \
+                                                     } else {                                                                       \
+                                                         if(vt[(I)t[1]].vm) stackpush(rstk,vt[(I)t[1]].vm(t[2],t[1]));              \
+                                                         else stackpush(rstk,vt[(I)t[1]].vd(num0(vt[(I)t[1]].id),t[2],t[1]));       \
+                                                     }                                                              \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
-    _(MONB,   EDGE+AVN, VERB,      VERB, NOUN,      {if(abs((I)t[2])>256)                                        \
-                                                         stackpush(rstk,((V)AV(t[2]))->vm(t[3],t[2]));           \
-                                                     else stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));             \
-                                                     stackpush(rstk,t[1]);                                       \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    _(MONB,   EDGE+AVN, VERB,      VERB, NOUN,      {if(abs((I)t[2])>256) {                                         \
+                                                         if (((V)AV(t[2]))->vm) stackpush(rstk,((V)AV(t[2]))->vm(t[3],t[2]));       \
+                                                         else stackpush(rstk,((V)AV(t[2]))->vd(num0(((V)AV(t[2]))->id),t[3],t[2])); \
+                                                     } else {                                                                       \
+                                                         if (vt[(I)t[2]].vm) stackpush(rstk,vt[(I)t[2]].vm(t[3],t[2]));             \
+                                                         else stackpush(rstk,vt[(I)t[2]].vd(num0(vt[(I)t[2]].id),t[3],t[2]));       \
+                                                     }                                                              \
+                                                     stackpush(rstk,t[1]);                                          \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
-    _(DYAD,   EDGE+AVN, NOUN,      VERB, NOUN,      {if(abs((I)t[2])>256)                                        \
-                                                         stackpush(rstk,((V)AV(t[2]))->vd(t[1],t[3],t[2]));      \
-                                                     else stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));        \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    _(DYAD,   EDGE+AVN, NOUN,      VERB, NOUN,      {if(abs((I)t[2])>256)                                           \
+                                                         stackpush(rstk,((V)AV(t[2]))->vd(t[1],t[3],t[2]));         \
+                                                     else stackpush(rstk,vt[(I)t[2]].vd(t[1],t[3],t[2]));           \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
-    _(ADVB,   EDGE+AVN, NOUN+VERB, ADV,  ANY,       {stackpush(rstk,t[3]);                                       \
-                                                     stackpush(rstk,ot[((I)t[2])-ZEROOP].vm(t[1],t[2]));         \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    _(ADVB,   EDGE+AVN, NOUN+VERB, ADV,  ANY,       {stackpush(rstk,t[3]);                                          \
+                                                     stackpush(rstk,ot[((I)t[2])-ZEROOP].vm(t[1],t[2]));            \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
-    _(FRMJ,   EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2]));    \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    _(FRMJ,   EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, {stackpush(rstk,ot[((I)t[2])-ZEROOP].vd(t[1],t[3],t[2]));       \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
-    _(SPEC,   VAR,      ASSN,      AVN,  ANY,       {char *s=(char*)AV(t[0]);                                    \
-                                                     struct st *slot = findsymb(&st,&s,1);                       \
-                                                     stackpush(rstk,t[3]);                                       \
-                                                     stackpush(rstk,slot->a=t[2]);} )                            \
+    _(SPEC,   VAR,      ASSN,      AVN,  ANY,       {char *s=(char*)AV(t[0]);                                       \
+                                                     struct st *slot = findsymb(&st,&s,1);                          \
+                                                     stackpush(rstk,t[3]);                                          \
+                                                     stackpush(rstk,slot->a=t[2]);} )                               \
     \
-    _(PUNC,   LPAR,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                                       \
-                                                     stackpush(rstk,t[1]);} )                                    \
+    _(PUNC,   LPAR,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                                          \
+                                                     stackpush(rstk,t[1]);} )                                       \
     \
-    _(FAKL,   MARK,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                                       \
-                                                     stackpush(rstk,t[1]);                                       \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    _(FAKL,   MARK,     ANY,       RPAR, ANY,       {stackpush(rstk,t[3]);                                          \
+                                                     stackpush(rstk,t[1]);                                          \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
-    _(FAKR,   EDGE+AVN, LPAR,      ANY,  NULP,      {stackpush(rstk,t[3]);                                       \
-                                                     stackpush(rstk,t[2]);                                       \
-                                                     stackpush(rstk,t[0]);} )                                    \
+    _(FAKR,   EDGE+AVN, LPAR,      ANY,  NULP,      {stackpush(rstk,t[3]);                                          \
+                                                     stackpush(rstk,t[2]);                                          \
+                                                     stackpush(rstk,t[0]);} )                                       \
     \
     _(NOACT, 0,        0,    0,    0,    0;)
 #define PARSETAB_PAT(name, pat1, pat2, pat3, pat4, ...) { pat1, pat2, pat3, pat4 },
