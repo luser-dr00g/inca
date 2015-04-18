@@ -1090,15 +1090,17 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
     TYPEPAIR(TYPENUM(a), TYPENUM(b))
 
 /* apply unary math op to num, yielding num */
-#define MON_MATH_FUNC(func,z,y) \
+#define MON_MATH_FUNC(func,z,y,overflow) \
     switch(TYPENUM(y)){ \
-    case IMM: z=num(func numimm(y)); break; \
-    case FIX: z=num(func numint(y)); break; \
+    case IMM: if (overflow(numimm(y))) z=flo(func (D)numimm(y)); \
+              else z=num(func numimm(y)); break; \
+    case FIX: if (overflow(numint(y))) z=flo(func (D)numint(y)); \
+              else z=num(func numint(y)); break; \
     case FLO: z=flo(func numdbl(y)); break; \
     }
 
 /* apply binary math op to nums, yielding num
-TODO: overflow predicates + (configurable) handling.
+TODO: configurable overflow promotion handling.
  */
 #define BIN_MATH_FUNC(func,z,x,y,overflow) \
      switch(NUMERIC_TYPES(x,y)){ \
@@ -1131,11 +1133,12 @@ V2(plus){
     R z;}
 
 I minusover(I x,I y){ R (y==INT_MIN&&x!=0)?1:plusover(x,-y); }
+I negover(I y){ R minusover(0,y); }
 
 /* negate w */
 V1(neg){ RANK1(MINUS)
     A z=copy(w,0);
-    DO(AN(z), MON_MATH_FUNC(-,AV(z)[i],AV(z)[i]))
+    DO(AN(z), MON_MATH_FUNC(-,AV(z)[i],AV(z)[i],negover))
     R z;}
 V2(minus){
     RANK2(MINUS)
@@ -1147,7 +1150,11 @@ V2(minus){
 V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
 I timesover(I x,I y){
-    R 0;
+    int sign = 1;
+    if(x==0||y==0)R 0;
+    if(x<0){x=-x;sign=-sign;}
+    if(y<0){y=-y;sign=-sign;}
+    R x>(INT_MAX/y);
 }
 
 V2(times){
@@ -1156,12 +1163,17 @@ V2(times){
     DO(AN(z), BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i],timesover))
     R z;}
 
+I divover(I x,I y){
+    R 1;
+}
+
 V2(quotient){
     RANK2(DIVIDE)
     A z=ga(NUM,AR(w),AD(w));
     DO(AN(w),
             if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) { AV(z)[i]=0; }
-            else //BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i])
+            else BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i],divover)
+#if 0
                 switch(NUMERIC_TYPES(AV(a)[i],AV(w)[i])){ \
                 case TYPEPAIR(IMM,IMM): AV(z)[i]=flo((D)numimm(AV(a)[i]) / numimm(AV(w)[i])); break; \
                 case TYPEPAIR(IMM,FIX): AV(z)[i]=flo((D)numimm(AV(a)[i]) / numint(AV(w)[i])); break; \
@@ -1173,6 +1185,7 @@ V2(quotient){
                 case TYPEPAIR(FLO,FIX): AV(z)[i]=flo(   numdbl(AV(a)[i]) / numint(AV(w)[i])); break; \
                 case TYPEPAIR(FLO,FLO): AV(z)[i]=flo(   numdbl(AV(a)[i]) / numdbl(AV(w)[i])); break; \
                 }
+#endif
 
             //AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0
         )

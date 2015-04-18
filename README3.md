@@ -216,3 +216,20 @@ and the remaining elements are the data.
 Presumably, to extend this to rationals, element[0] of ratnum will
 be count/1. :)
 
+
+-- 
+
+Some big updates. The Rank conjunction and generalized rank:frame/cell behavior
+for verbs, all wrapped in macros for easy inclusion in verb functions.
+
+Overflow detection for integer arithmetic. Currently this triggers a promotion
+to floating-point (double) which is the only larger type. But I'm carefully 
+considering how to add an arbitrary precision integer. And then it will need
+a configuration option, perhaps accessed by a conjunction like rank.
+
+Only a very few functions are implemented so far. And only the math functions
+use the rank behavior. So plus, minus, times, divide. Iota and rho are partially
+implemented. And the reduce adverb. And the conjunctions rank and curry/compose.
+
+This iteration of the code is more "depth"-first than earlier gos.
+
