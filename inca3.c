@@ -1098,18 +1098,26 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 /* apply binary math op to nums, yielding num
 TODO: overflow predicates + (configurable) handling.
  */
-#define BIN_MATH_FUNC(func,z,x,y) \
+#define BIN_MATH_FUNC(func,z,x,y,overflow) \
      switch(NUMERIC_TYPES(x,y)){ \
-     case TYPEPAIR(IMM,IMM): z=num(numimm(x) func numimm(y)); break; \
-     case TYPEPAIR(IMM,FIX): z=num(numimm(x) func numint(y)); break; \
+     case TYPEPAIR(IMM,IMM): if (overflow(numimm(x),numimm(y))) z=flo((D)numimm(x) func numimm(y)); \
+                             else z=num(numimm(x) func numimm(y)); break; \
+     case TYPEPAIR(IMM,FIX): if (overflow(numimm(x),numint(y))) z=flo((D)numimm(x) func numint(y)); \
+                             else z=num(numimm(x) func numint(y)); break; \
      case TYPEPAIR(IMM,FLO): z=flo(numimm(x) func numdbl(y)); break; \
-     case TYPEPAIR(FIX,IMM): z=num(numint(x) func numimm(y)); break; \
-     case TYPEPAIR(FIX,FIX): z=num(numint(x) func numint(y)); break; \
+     case TYPEPAIR(FIX,IMM): if (overflow(numint(x),numimm(y))) z=flo((D)numint(x) func numimm(y)); \
+                             else z=num(numint(x) func numimm(y)); break; \
+     case TYPEPAIR(FIX,FIX): if (overflow(numint(x),numint(y))) z=flo((D)numint(x) func numint(y)); \
+                             else z=num(numint(x) func numint(y)); break; \
      case TYPEPAIR(FIX,FLO): z=flo(numint(x) func numdbl(y)); break; \
      case TYPEPAIR(FLO,IMM): z=flo(numdbl(x) func numimm(y)); break; \
      case TYPEPAIR(FLO,FIX): z=flo(numdbl(x) func numint(y)); break; \
      case TYPEPAIR(FLO,FLO): z=flo(numdbl(x) func numdbl(y)); break; \
      }
+
+I plusover(I x,I y){
+    R 0;
+}
 
 /* return w */
 V1(id){R w;}
@@ -1119,8 +1127,12 @@ V2(plus){
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
     //P("%d\n",v->id);
-    DO(AN(z), BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i]) )
+    DO(AN(z), BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i],plusover) )
     R z;}
+
+I minusover(I x,I y){
+    R 0;
+}
 
 /* negate w */
 V1(neg){ RANK1(MINUS)
@@ -1130,16 +1142,20 @@ V1(neg){ RANK1(MINUS)
 V2(minus){
     RANK2(MINUS)
     A z=ga(NUM,AR(w),AD(w));
-    DO(AN(z), BIN_MATH_FUNC(-,AV(z)[i],AV(a)[i],AV(w)[i]))
+    DO(AN(z), BIN_MATH_FUNC(-,AV(z)[i],AV(a)[i],AV(w)[i],minusover))
     R z;}
 
 /* return sum and difference */
 V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
+I timesover(I x,I y){
+    R 0;
+}
+
 V2(times){
     RANK2(TIMES)
     A z=ga(NUM,AR(w),AD(w));
-    DO(AN(z), BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i]))
+    DO(AN(z), BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i],timesover))
     R z;}
 
 V2(quotient){
