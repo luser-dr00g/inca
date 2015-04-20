@@ -1160,7 +1160,7 @@ I timesover(I x,I y){
     if(y<0){
         y=-y;//sign=-sign;
     }
-    R x>((INT_MAX)/(2*y));
+    R x>((INT_MAX)/(y));
 }
 
 V2(times){
@@ -1170,7 +1170,7 @@ V2(times){
     R z;}
 
 I divover(I x,I y){
-    R 1;
+    R x%y;
 }
 
 V2(quotient){
@@ -1179,20 +1179,6 @@ V2(quotient){
     DO(AN(w),
             if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) { AV(z)[i]=0; }
             else BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i],divover)
-#if 0
-                switch(NUMERIC_TYPES(AV(a)[i],AV(w)[i])){ \
-                case TYPEPAIR(IMM,IMM): AV(z)[i]=flo((D)numimm(AV(a)[i]) / numimm(AV(w)[i])); break; \
-                case TYPEPAIR(IMM,FIX): AV(z)[i]=flo((D)numimm(AV(a)[i]) / numint(AV(w)[i])); break; \
-                case TYPEPAIR(IMM,FLO): AV(z)[i]=flo((D)numimm(AV(a)[i]) / numdbl(AV(w)[i])); break; \
-                case TYPEPAIR(FIX,IMM): AV(z)[i]=flo((D)numint(AV(a)[i]) / numimm(AV(w)[i])); break; \
-                case TYPEPAIR(FIX,FIX): AV(z)[i]=flo((D)numint(AV(a)[i]) / numint(AV(w)[i])); break; \
-                case TYPEPAIR(FIX,FLO): AV(z)[i]=flo((D)numint(AV(a)[i]) / numdbl(AV(w)[i])); break; \
-                case TYPEPAIR(FLO,IMM): AV(z)[i]=flo(   numdbl(AV(a)[i]) / numimm(AV(w)[i])); break; \
-                case TYPEPAIR(FLO,FIX): AV(z)[i]=flo(   numdbl(AV(a)[i]) / numint(AV(w)[i])); break; \
-                case TYPEPAIR(FLO,FLO): AV(z)[i]=flo(   numdbl(AV(a)[i]) / numdbl(AV(w)[i])); break; \
-                }
-#endif
-
             //AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0
         )
     R z;}
