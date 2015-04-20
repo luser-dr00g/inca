@@ -26,6 +26,7 @@ struct a nullob = { NLL };
 A null = &nullob;
 struct a markob = { MRK };
 A mark = &markob;
+I unavailable; /* result for function arguments not in function domain */
 
 A newsymb(C *s,I n,I state);
 struct st *findsymb(struct st *st, char **s, int mode);
@@ -1100,27 +1101,40 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
     case FLO: z=flo(func numdbl(y)); break; \
     }
 
+#define DOM(d,z,x,y)    if (!d(x,y)){ z=unavailable; } else
+
 /* apply binary math op to nums, yielding num
 TODO: configurable overflow promotion handling.
  */
-#define BIN_MATH_FUNC(func,z,x,y,overflow) \
+#define BIN_MATH_FUNC(func,z,x,y,overflow,domainI,domainD) \
      switch(NUMERIC_TYPES(x,y)){ \
-     case TYPEPAIR(IMM,IMM): if (overflow(numimm(x),numimm(y))) z=flo((D)numimm(x) func numimm(y)); \
+     case TYPEPAIR(IMM,IMM): DOM(domainI,z,numimm(x),numimm(y)) \
+                             if (overflow(numimm(x),numimm(y))) z=flo((D)numimm(x) func (D)numimm(y)); \
                              else z=num(numimm(x) func numimm(y)); break; \
-     case TYPEPAIR(IMM,FIX): if (overflow(numimm(x),numint(y))) z=flo((D)numimm(x) func numint(y)); \
+     case TYPEPAIR(IMM,FIX): DOM(domainI,z,numimm(x),numint(y)) \
+                             if (overflow(numimm(x),numint(y))) z=flo((D)numimm(x) func (D)numint(y)); \
                              else z=num(numimm(x) func numint(y)); break; \
-     case TYPEPAIR(IMM,FLO): z=flo(numimm(x) func numdbl(y)); break; \
-     case TYPEPAIR(FIX,IMM): if (overflow(numint(x),numimm(y))) z=flo((D)numint(x) func numimm(y)); \
+     case TYPEPAIR(IMM,FLO): DOM(domainD,z,numimm(x),numdbl(y)) \
+                             z=flo(numimm(x) func numdbl(y)); break; \
+     case TYPEPAIR(FIX,IMM): DOM(domainI,z,numint(x),numimm(y)) \
+                             if (overflow(numint(x),numimm(y))) z=flo((D)numint(x) func (D)numimm(y)); \
                              else z=num(numint(x) func numimm(y)); break; \
-     case TYPEPAIR(FIX,FIX): if (overflow(numint(x),numint(y))) z=flo((D)numint(x) func numint(y)); \
+     case TYPEPAIR(FIX,FIX): DOM(domainI,z,numint(x),numint(y)) \
+                             if (overflow(numint(x),numint(y))) z=flo((D)numint(x) func (D)numint(y)); \
                              else z=num(numint(x) func numint(y)); break; \
-     case TYPEPAIR(FIX,FLO): z=flo(numint(x) func numdbl(y)); break; \
-     case TYPEPAIR(FLO,IMM): z=flo(numdbl(x) func numimm(y)); break; \
-     case TYPEPAIR(FLO,FIX): z=flo(numdbl(x) func numint(y)); break; \
-     case TYPEPAIR(FLO,FLO): z=flo(numdbl(x) func numdbl(y)); break; \
+     case TYPEPAIR(FIX,FLO): DOM(domainD,z,numint(x),numdbl(y)) \
+                             z=flo(numint(x) func numdbl(y)); break; \
+     case TYPEPAIR(FLO,IMM): DOM(domainD,z,numdbl(x),numimm(y)) \
+                             z=flo(numdbl(x) func numimm(y)); break; \
+     case TYPEPAIR(FLO,FIX): DOM(domainD,z,numdbl(x),numint(y)) \
+                             z=flo(numdbl(x) func numint(y)); break; \
+     case TYPEPAIR(FLO,FLO): DOM(domainD,z,numdbl(x),numdbl(y)) \
+                             z=flo(numdbl(x) func numdbl(y)); break; \
      }
 
 I plusover(I x,I y){ R (((x>0)&&(y>0)&&(x>(INT_MAX-y))) || ((x<0)&&(y<0)&&(x<(INT_MAX-y)))); }
+I plusdomainI(I x,I y){ R 1; }
+I plusdomainD(D x,D y){ R 1; }
 
 /* return w */
 V1(id){R w;}
@@ -1130,7 +1144,7 @@ V2(plus){
     RANK2(PLUS)
     A z=ga(NUM,AR(w),AD(w));
     //P("%d\n",v->id);
-    DO(AN(z), BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i],plusover) )
+    DO(AN(z), BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i],plusover,plusdomainI,plusdomainD) )
     R z;}
 
 I minusover(I x,I y){ R (y==INT_MIN&&x!=0)?1:plusover(x,-y); }
@@ -1144,7 +1158,7 @@ V1(neg){ RANK1(MINUS)
 V2(minus){
     RANK2(MINUS)
     A z=ga(NUM,AR(w),AD(w));
-    DO(AN(z), BIN_MATH_FUNC(-,AV(z)[i],AV(a)[i],AV(w)[i],minusover))
+    DO(AN(z), BIN_MATH_FUNC(-,AV(z)[i],AV(a)[i],AV(w)[i],minusover,plusdomainI,plusdomainD))
     R z;}
 
 /* return sum and difference */
@@ -1166,19 +1180,19 @@ I timesover(I x,I y){
 V2(times){
     RANK2(TIMES)
     A z=ga(NUM,AR(w),AD(w));
-    DO(AN(z), BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i],timesover))
+    DO(AN(z), BIN_MATH_FUNC(*,AV(z)[i],AV(a)[i],AV(w)[i],timesover,plusdomainI,plusdomainD))
     R z;}
 
-I divover(I x,I y){
-    R x%y;
-}
+I divover(I x,I y){ R y?x%y:1; }
+I divdomainI(I x,I y){ R y; }
+I divdomainD(D x,D y){ R (I)y; }
 
 V2(quotient){
     RANK2(DIVIDE)
     A z=ga(NUM,AR(w),AD(w));
     DO(AN(w),
-            if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) { AV(z)[i]=0; }
-            else BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i],divover)
+            //if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) { AV(z)[i]=0; } else
+            BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i],divover,divdomainI,divdomainD)
             //AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0
         )
     R z;}
@@ -1647,6 +1661,7 @@ int main(){C *s=NULL;int n=0;C *prompt="\t";
     BANK_INIT;
     FIXNUM_INIT;
     FLONUM_INIT;
+    unavailable = flo(strtod("inf", NULL));
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
