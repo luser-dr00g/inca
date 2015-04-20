@@ -610,8 +610,8 @@ I flo(D d){
 
 /* "number"-encoded integer */
 I num(I i){
-    if ((unsigned)i&BANK_MASK) {
-        if (((unsigned)i&(BANK_MASK|IMM_SIGN))==(BANK_MASK|IMM_SIGN)) {
+    if ((i)&(BANK_MASK|IMM_SIGN)) {
+        if (((i)&(BANK_MASK|IMM_SIGN))==(BANK_MASK|IMM_SIGN)) {
             R i&IMM_MASK;           //small negative number
         }
         else
@@ -1080,11 +1080,12 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
 #define TYPEPAIR(a,b) \
     ((a)*NUM_TYPES+(b))
 
-#define TYPENUM(a) ((a)&BANK_MASK? \
-        (AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL? \
-             FLO \
-             :FIX) \
-        :IMM)
+#define TYPENUM(a) \
+        ((a)&BANK_MASK? \
+            (AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL? \
+                 FLO \
+                 :FIX) \
+            :IMM)
 
 #define NUMERIC_TYPES(a,b) \
     TYPEPAIR(TYPENUM(a), TYPENUM(b))
@@ -1150,11 +1151,16 @@ V2(minus){
 V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
 I timesover(I x,I y){
-    int sign = 1;
+    //int sign = 1;
     if(x==0||y==0)R 0;
-    if(x<0){x=-x;sign=-sign;}
-    if(y<0){y=-y;sign=-sign;}
-    R x>(INT_MAX/y);
+    if(x==INT_MIN||y==INT_MIN)R 1;
+    if(x<0){
+        x=-x;//sign=-sign;
+    }
+    if(y<0){
+        y=-y;//sign=-sign;
+    }
+    R x>((INT_MAX)/(2*y));
 }
 
 V2(times){
