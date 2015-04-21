@@ -1,3 +1,42 @@
+Inca3 is the third re-write of the inca language interpreter (which is more or less
+defined by its implementation if/where the behavior disagrees with the documentation).
+
+Each rewrite has begun with the J incunabulum to which I then apply edits.
+Not only that, but I retype I from my handwritten notebook copy. This passes the
+code through my brain and fingers even though I'm merely "copying".
+
+Each additional feature or change is made compilable (and usually tested and apparently
+correct) before committing. Thus the commit log provides a time-wise view of the entire
+source. I also employ a select few "methodologies" which I try to apply consistently.
+These include DRY or Don't Repeat Yourself, which means that any two places in the source
+which "do the same thing" ought to be factored to maintain that condition. The practice 
+of starting from a working, simple interpreter and extending is an application of the
+Tracer-Bullet strategy, where the first order of business is build a column connecting
+the top-down and bottom-up designs so the basic functionality can be directly tested and
+debugged, and each new feature can be directly tested and debugged.
+
+The features:
+
+The symbol table interacts nicely with the parsing to analyze variable names at execution
+time. Many of the features of inca 1's *interpolation* abilities are now made available with
+a more natural behavior. A symbol is interpreted when passing from the left-stack to the
+right-stack by splitting off the longest defined prefix (which is pushed back onto the
+left-stack) and then repeating until the symbol is exhausted. Thus symbols can be directly
+adjacent to one-another with or without intervening whitespace.
+
+True APL characters. (Some are fake.)
+
+True APL shift-reduce parsing.
+
+Modern APL/J handling of verb rank as it applies to the frame/cell handling of its arguments.
+
+
+
+Above this line is topical.
+-- 
+Below this line is chronological.
+
+
 Beginning thoughts on a third rewrite.
 Oettinger's paper (http://www.mt-archive.info/Oettinger-1961.pdf)
 suggests unifying the representations of variables and
@@ -25,7 +64,7 @@ The behavior of inca "1" is:
 
 The behavior of inca2 is:
 
-    integer overflow -> promot to double
+    integer overflow -> promote to double
 
 For the next one, I want to offer several options and several new floating-point types.
 
