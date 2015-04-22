@@ -1516,6 +1516,8 @@ A ex(I *e){I a=*e;
             }
         }else{stackpush(rstk,((A)a));}
 
+        //niladic function?
+
         docheck=1;
         while(docheck) {
             docheck=0;
