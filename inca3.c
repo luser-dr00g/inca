@@ -26,7 +26,7 @@ struct a nullob = { NLL };
 A null = &nullob;
 struct a markob = { MRK };
 A mark = &markob;
-I unavailable; /* result for function arguments not in function domain */
+I infinity; /* result for function arguments not in function domain */
 
 A newsymb(C *s,I n,I state);
 struct st *findsymb(struct st *st, char **s, int mode);
@@ -625,6 +625,8 @@ I num(I i){
 A num0(I i){ A z=i0(num(i)); AT(z)=NUM; R z; }
 /* "raw" number scalar. don't overcook. */
 A num0r(I i){ A z=i0(i); AT(z)=NUM; R z;}
+/* floating number scalar */
+A num0f(D d){ A z=i0(flo(d)); AT(z)=NUM; R z; }
 
 /* convert immediate num to full-width integer */
 I numimm(I n){
@@ -1101,10 +1103,11 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
     case FLO: z=flo(func numdbl(y)); break; \
     }
 
-#define DOM(d,z,x,y)    if (!d(x,y)){ z=unavailable; } else
+#define DOM(d,z,x,y)    if (!d(x,y)){ z=infinity; } else
 
 /* apply binary math op to nums, yielding num
-TODO: configurable overflow promotion handling.
+TODO: additional numeric types.
+    configurable overflow promotion handling.
  */
 #define BIN_MATH_FUNC(func,z,x,y,overflow,domainI,domainD) \
      switch(NUMERIC_TYPES(x,y)){ \
@@ -1180,16 +1183,12 @@ V2(times){
 
 I divover(I x,I y){ R y?x%y:1; }
 I divdomainI(I x,I y){ R y; }
-I divdomainD(D x,D y){ R (I)y; }
+I divdomainD(D x,D y){ R y!=0.0; }
 
 V2(quotient){
     RANK2(DIVIDE)
     A z=ga(NUM,AR(w),AD(w));
-    DO(AN(w),
-            //if (AV(w)[i]==0 || AV(w)[i]==flo(0.0)) { AV(z)[i]=0; } else
-            BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i],divover,divdomainI,divdomainD)
-            //AV(z)[i]=AV(w)[i]?AV(a)[i]/AV(w)[i]:AV(a)[i]?INT_MIN:0
-        )
+    DO(AN(w), BIN_MATH_FUNC(/,AV(z)[i],AV(a)[i],AV(w)[i],divover,divdomainI,divdomainD))
     R z;}
 
 /* make a copy */
@@ -1281,6 +1280,7 @@ pr(A w){
 #define ALPHAUPPER "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 #define HIMINUS ((char[]){MODE1('@'), 0})
 #define DIGIT "0123456789"
+#define DOT "."
 #define SPACE " \t"
 #define ZEROCL ""
 
@@ -1584,10 +1584,21 @@ A newsymb(C *s,I n,I state){
         while(isspace(s[n-1])) s[--n]=0;
         DO(n,if(s[i]==alphatab[ALPHA_MACRON].base)s[i]='-')
         //A z=ga(INT,0,0); *AV(z)=strtol(s,&end,10);
-        A z=num0(strtol(s,&end,10));
+        A z;
+        {
+            long n=strtol(s,&end,10);
+            if(*end=='.') z=num0f(strtod(s,&end));
+            else z=num0(n);
+        }
         while(((C*)end-s) < n){
             //A r=ga(INT,0,0); *AV(r)=strtol(end,&end,10);
-            A r=num0(strtol(end,&end,10));
+            A r;
+            {
+                char *sp=end;
+                long n=strtol(sp,&end,10);
+                if(*end=='.') r=num0f(strtod(sp,&end));
+                else r=num0(n);
+            }
             z=cat(z,r,0);
         }
         free(s);
@@ -1613,14 +1624,14 @@ A newsymb(C *s,I n,I state){
    element returned yields newstate when divided by ten
                 and yields action code when remainder from division by ten is taken.
  */
-char *cclass[] = {0, ALPHAUPPER ALPHALOWER, HIMINUS, DIGIT, SPACE};
-int wdtab[][5] = {
+char *cclass[] = {0, ALPHAUPPER ALPHALOWER, HIMINUS, DIGIT, DOT, SPACE};
+int wdtab[][sizeof cclass/sizeof*cclass] = {
     /*char-class*/
-    /*0     a     -     d      s*/    /* state  */
-    { 30+2, 20+2, 10+2, 10+2,  0+0 }, /*  0 init   */
-    { 30+1, 20+1, 10+0, 10+0, 10+0 }, /* 10 number */
-    { 30+1, 20+0, 10+1, 10+1,  0+1 }, /* 20 name   */
-    { 30+1, 20+1, 10+1, 10+1,  0+1 }, /* 30 other  */
+    /*0     a     -     d     .     s    */ /*    state  */
+    { 30+2, 20+2, 10+2, 10+2, 10+2, 0+0  }, /*  0 init   */
+    { 30+1, 20+1, 10+0, 10+0, 10+0, 10+0 }, /* 10 number */
+    { 30+1, 20+0, 10+1, 10+1, 10+1, 0+1  }, /* 20 name   */
+    { 30+1, 20+1, 10+1, 10+1, 10+1, 0+1  }, /* 30 other  */
     /*{newstate+action,...}
       action=0:do nothing
       action=1:generate a token and reset start index
@@ -1672,7 +1683,7 @@ int main(){C *s=NULL;int n=0;C *prompt="\t";
     BANK_INIT;
     FIXNUM_INIT;
     FLONUM_INIT;
-    unavailable = flo(strtod("inf", NULL));
+    infinity = flo(strtod("inf", NULL));
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
