@@ -1,4 +1,7 @@
-Inca3 is the third re-write of the inca language interpreter (which is more or less
+Inca3
+-- 
+
+**Inca3** is the third re-write of the inca language interpreter (which is more or less
 defined by its implementation if/where the behavior disagrees with the documentation).
 
 Each rewrite has begun with the J incunabulum to which I then apply edits.
@@ -16,6 +19,7 @@ the top-down and bottom-up designs so the basic functionality can be directly te
 debugged, and each new feature can be directly tested and debugged.
 
 The features:
+--- 
 
 The symbol table interacts nicely with the parsing to analyze variable names at execution
 time. Many of the features of inca 1's *interpolation* abilities are now made available with
@@ -33,7 +37,7 @@ Modern APL/J handling of verb rank as it applies to the frame/cell handling of i
 
 
 Above this line is topical.
--- 
+<hr>
 Below this line is chronological.
 
 
@@ -271,4 +275,6 @@ use the rank behavior. So plus, minus, times, divide. Iota and rho are partially
 implemented. And the reduce adverb. And the conjunctions rank and curry/compose.
 
 This iteration of the code is more "depth"-first than earlier gos.
+
+Assignment is now the left-arrow (ALT-[).
 
