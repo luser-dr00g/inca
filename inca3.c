@@ -847,14 +847,6 @@ V1(areduce){
     if ((rk)<0) { LOADCELL(rc,w,AR(w)+(rk)) } \
     else { LOADCELL(rc,w,rk) }
 
-#define RANK1(base) \
-    LOADVSELF(base) \
-    RFRAME(v->k) \
-    RCELL(v->k) \
-    if (self&& (vt[base].k != v->k)) { \
-        /* requested cell is not base cell */ \
-    }
-
 #define FRAME_AGREE \
     /*P("frame agree\n");*/ \
     if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
@@ -936,7 +928,16 @@ V1(areduce){
           ) \
         free(ms); free(zslice); free(ba); free(bam); R z; \
 
-#define CELL_HANDLE(base) \
+#define CELL_HANDLE1(base) \
+    if (self&& (vt[base].k != v->k)) { \
+        /* requested cell is not base cell */ \
+        I csz; \
+        BOX_CELLS(base,csz,rf,rc,w,bw,bwm) \
+        A bz=v->vm(bw,base); \
+        ASSEMBLE_RESULTS(bw,bwm) \
+    }
+
+#define CELL_HANDLE2(base) \
     /*P("cell handle\n");*/ \
     if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
         /*P(" requested cells are not base cells\n");*/ \
@@ -964,7 +965,16 @@ V1(areduce){
         ASSEMBLE_RESULTS(bw,bwm) \
     }
 
-#define BOX_HANDLE(base) \
+#define BOX_HANDLE1(base) \
+    if (AT(w)==BOX) { \
+        A z=ga(BOX,AN(rf),AV(rf)); \
+        DO(AN(z), \
+                AV(z)[i]=(I)v->vm(AV(w)[i],base); \
+          ) \
+        R z; \
+    }
+
+#define BOX_HANDLE2(base) \
     if (AT(a)==BOX&&AT(w)==BOX){ \
         /*P("BOXaw\n");*/ \
         A z=ga(BOX,AN(lf),AV(lf)); \
@@ -1006,6 +1016,13 @@ V1(areduce){
         R z; \
     }
 
+#define RANK1(base) \
+    LOADVSELF(base) \
+    RFRAME(v->k) \
+    RCELL(v->k) \
+    CELL_HANDLE1(base) \
+    BOX_HANDLE1(base)
+
 /* general rank/frame/cell behavior for verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
@@ -1021,8 +1038,8 @@ V1(areduce){
     /*pr(lf); pr(lc);*/ \
     /*pr(rf); pr(rc);*/ \
     FRAME_AGREE \
-    CELL_HANDLE(base) \
-    BOX_HANDLE(base) \
+    CELL_HANDLE2(base) \
+    BOX_HANDLE2(base) \
 
 /* derived verb data cracker for derived verb actions */
 #define DECLFG(base) \
@@ -1135,6 +1152,8 @@ TODO: additional numeric types.
                              z=flo(numdbl(x) func numdbl(y)); break; \
      }
 
+#define BIN_BOOL_FUNC()
+
 I plusover(I x,I y){ R (((x>0)&&(y>0)&&(x>(INT_MAX-y))) || ((x<0)&&(y<0)&&(x<(INT_MAX-y)))); }
 I plusdomainI(I x,I y){ R 1; }
 I plusdomainD(D x,D y){ R 1; }
@@ -1154,7 +1173,8 @@ I minusover(I x,I y){ R (y==INT_MIN&&x!=0)?1:plusover(x,-y); }
 I negover(I y){ R minusover(0,y); }
 
 /* negate w */
-V1(neg){ RANK1(MINUS)
+V1(neg){
+    RANK1(MINUS)
     A z=copy(w,0);
     DO(AN(z), MON_MATH_FUNC(-,AV(z)[i],AV(z)[i],negover))
     R z;}
@@ -1174,6 +1194,12 @@ I timesover(I x,I y){
     if(y<0){ y=-y; }
     R x>((INT_MAX)/(y));
 }
+
+V1(signum){
+    RANK1(TIMES)
+    A z=ga(NUM,AR(w),AD(w));
+    DO(AN(z), BIN_BOOL_FUNC())
+    R z;}
 
 V2(times){
     RANK2(TIMES)
@@ -1630,8 +1656,8 @@ int wdtab[][sizeof cclass/sizeof*cclass] = {
     /*0     a     -     d     .     s    */ /*    state  */
     { 30+2, 20+2, 10+2, 10+2, 10+2, 0+0  }, /*  0 init   */
     { 30+1, 20+1, 10+0, 10+0, 10+0, 10+0 }, /* 10 number */
-    { 30+1, 20+0, 10+1, 10+1, 10+1, 0+1  }, /* 20 name   */
-    { 30+1, 20+1, 10+1, 10+1, 10+1, 0+1  }, /* 30 other  */
+    { 30+1, 20+0, 10+1, 10+1, 30+1, 0+1  }, /* 20 name   */
+    { 30+1, 20+1, 10+1, 10+1, 30+1, 0+1  }, /* 30 other  */
     /*{newstate+action,...}
       action=0:do nothing
       action=1:generate a token and reset start index
