@@ -1042,9 +1042,8 @@ V1(areduce){
     BOX_HANDLE2(base) \
 
 /* derived verb data cracker for derived verb actions */
-#define DECLFG(base) \
+#define DECLFG \
     A z; \
-    /*LOADVSELF(base)*/ \
     LOADV(self); \
     V v=(V)AV(self); \
     A fs = (A)v->f; LOADV(fs); \
@@ -1055,14 +1054,14 @@ V1(areduce){
     V2((*g2)) = ((V)AV(gs))->vd;
 
 /* derived verb actions */
-V1(withl){ DECLFG(WITH); R g2(fs,w,gs); }
-V1(withr){ DECLFG(WITH); R f2(w,gs,fs); }
-V1(on1){ DECLFG(WITH); R f1(g1(w,gs),fs); }
-V2(on2){ DECLFG(WITH); R f2(g1(a,gs),g1(w,gs),fs); }
+V1(withl){ DECLFG; R g2(fs,w,gs); }
+V1(withr){ DECLFG; R f2(w,gs,fs); }
+V1(on1){ DECLFG; R f1(g1(w,gs),fs); }
+V2(on2){ DECLFG; R f2(g1(a,gs),g1(w,gs),fs); }
 
 /* derived action for reduce */
 V1(reduce){
-    DECLFG(SLASH); 
+    DECLFG; 
     //pr(self);
     switch(AR(w)){
     case 0: z=w; break;
@@ -1129,18 +1128,22 @@ TODO: additional numeric types.
 #define BIN_MATH_FUNC(func,z,x,y,overflow,domainI,domainD) \
      switch(NUMERIC_TYPES(x,y)){ \
      case TYPEPAIR(IMM,IMM): DOM(domainI,z,numimm(x),numimm(y)) \
-                             if (overflow(numimm(x),numimm(y))) z=flo((D)numimm(x) func (D)numimm(y)); \
+                             if (overflow(numimm(x),numimm(y))) \
+                                 z=flo((D)numimm(x) func (D)numimm(y)); \
                              else z=num(numimm(x) func numimm(y)); break; \
      case TYPEPAIR(IMM,FIX): DOM(domainI,z,numimm(x),numint(y)) \
-                             if (overflow(numimm(x),numint(y))) z=flo((D)numimm(x) func (D)numint(y)); \
+                             if (overflow(numimm(x),numint(y))) \
+                                 z=flo((D)numimm(x) func (D)numint(y)); \
                              else z=num(numimm(x) func numint(y)); break; \
      case TYPEPAIR(IMM,FLO): DOM(domainD,z,numimm(x),numdbl(y)) \
                              z=flo(numimm(x) func numdbl(y)); break; \
      case TYPEPAIR(FIX,IMM): DOM(domainI,z,numint(x),numimm(y)) \
-                             if (overflow(numint(x),numimm(y))) z=flo((D)numint(x) func (D)numimm(y)); \
+                             if (overflow(numint(x),numimm(y))) \
+                                 z=flo((D)numint(x) func (D)numimm(y)); \
                              else z=num(numint(x) func numimm(y)); break; \
      case TYPEPAIR(FIX,FIX): DOM(domainI,z,numint(x),numint(y)) \
-                             if (overflow(numint(x),numint(y))) z=flo((D)numint(x) func (D)numint(y)); \
+                             if (overflow(numint(x),numint(y))) \
+                                 z=flo((D)numint(x) func (D)numint(y)); \
                              else z=num(numint(x) func numint(y)); break; \
      case TYPEPAIR(FIX,FLO): DOM(domainD,z,numint(x),numdbl(y)) \
                              z=flo(numint(x) func numdbl(y)); break; \
