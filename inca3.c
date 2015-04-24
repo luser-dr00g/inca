@@ -646,6 +646,74 @@ D numdbl(I n){
 
 
 
+enum { MPIBASE = 1<<16 };
+A mpint;
+I mpzero;
+#define MPINT_INIT (mpint=(A) (AV(bank)[ ++AV(bank)[0] ]=(I)ga(BOX,1,(I[]){1<<IMM_BIT}))), \
+                    (AV(mpint)[0]=0), \
+                    (mpzero=mpi(0))
+
+I newmpint(I n){
+    I j = ++AV(mpint)[0];
+    AV(mpint)[j]=(I)ga(INT,1,(I[]){n});
+    R encodenum(3,j);
+}
+
+A numbox(I n){
+    R (A)AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT]))[n&IMM_MASK];
+}
+
+A promote(A x,I n){
+    A z=ga(INT,1,(I[]){n});
+    DO(n-AN(x),AV(z)[i]=0)
+    DO(AN(x),AV(z)[i+(n-AN(x))]=AV(x)[i])
+    R z;
+}
+
+I mpi(I i){
+    I r=newmpint(2);
+    A z=numbox(r);
+    AV(z)[0]=i/MPIBASE;
+    AV(z)[1]=i%MPIBASE;
+    R r;
+}
+
+I mpop(I x,C op,I y){
+    A a,w,z;
+    I r;
+    I b=MPIBASE;
+    a=numbox(x);
+    w=numbox(y);
+    I n=AN(a);
+    if (n<AN(w)){ a=promote(a,AN(w)); n=AN(w); }
+    if (n>AN(w)){ w=promote(w,n); }
+    switch(op){
+    case '+':
+        r=newmpint(n+1);
+        z=numbox(r);
+        {
+            int j=n,k=0;
+            while(j){
+                I t = AV(a)[j-1] + AV(w)[j-1]+ k;
+                AV(z)[j]= t%b;
+                k= t/b;
+                j--;
+            }
+            AV(z)[0]=k;
+        }
+        break;
+    case '-':
+        break;
+    case '*':
+        break;
+    case '/':
+        break;
+    }
+    R r;
+}
+
+
+
 /* verb function declarations */
 V1(copy);
 V1(iota); V2(find);
@@ -1095,7 +1163,7 @@ V2(match){
 }
 
 /* numeric type crackers for math function verbs */
-enum { IMM = 1, FIX, FLO, NUM_TYPES };
+enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
 #define TYPEPAIR(a,b) \
     ((a)*NUM_TYPES+(b))
 
@@ -1103,7 +1171,10 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
         ((a)&BANK_MASK? \
             (AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL? \
                  FLO \
-                 :FIX) \
+                 : (AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==BOX? \
+                     MPI \
+                     :FIX) \
+             ) \
             :IMM)
 
 #define NUMERIC_TYPES(a,b) \
@@ -1117,6 +1188,7 @@ enum { IMM = 1, FIX, FLO, NUM_TYPES };
     case FIX: if (overflow(numint(y))) z=flo(func (D)numint(y)); \
               else z=num(func numint(y)); break; \
     case FLO: z=flo(func numdbl(y)); break; \
+    case MPI: z=mpop(mpzero, *#func, y); break; \
     }
 
 #define DOM(d,z,x,y)    if (!d(x,y)){ z=infinity; } else
@@ -1153,6 +1225,11 @@ TODO: additional numeric types.
                              z=flo(numdbl(x) func numint(y)); break; \
      case TYPEPAIR(FLO,FLO): DOM(domainD,z,numdbl(x),numdbl(y)) \
                              z=flo(numdbl(x) func numdbl(y)); break; \
+     case TYPEPAIR(IMM,MPI): z=mpop(mpi(numimm(x)), *#func, y); break; \
+     case TYPEPAIR(FIX,MPI): z=mpop(mpi(numint(x)), *#func, y); break; \
+     case TYPEPAIR(MPI,IMM): z=mpop(x, *#func, mpi(numimm(y))); break; \
+     case TYPEPAIR(MPI,FIX): z=mpop(x, *#func, mpi(numint(y))); break; \
+     case TYPEPAIR(MPI,MPI): z=mpop(x, *#func, y); break; \
      }
 
 #define BIN_BOOL_FUNC()
@@ -1712,6 +1789,7 @@ int main(){C *s=NULL;int n=0;C *prompt="\t";
     BANK_INIT;
     FIXNUM_INIT;
     FLONUM_INIT;
+    MPINT_INIT;
     infinity = flo(strtod("inf", NULL));
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
