@@ -381,7 +381,8 @@ struct termios tm; /* terminal settings struct to save default settings */
 void specialtty(){
     tcgetattr(0,&tm);
 
-//https://web.archive.org/web/20060117034503/http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt
+/*https://web.archive.org/web/20060117034503/\
+http://www.cs.utk.edu/~shuford/terminal/xterm_codes_news.txt*/
     //fputs("\x1B""*0\n",stdout);
 #if 0
     //experiment with line-drawing chars
@@ -398,8 +399,9 @@ void specialtty(){
 #if 0
     //show the various alternate charsets available in xterm vt220 mode
     fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
-    //fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //these 2 are not interesting
-    //fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n"); //
+    //these 2 are not interesting:
+    //fputs("\x1B*1\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
+    //fputs("\x1B*2\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
     fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',P("%c",' '+i))P("\x1Bo\n");
 #endif
@@ -413,6 +415,8 @@ void specialtty(){
            "ZXCVBNM<>?"    "\n" "zxcvbnm,./"     "\n" , stdout);
         fputs(ESC(o),stdout);
 #endif
+
+/* Select vt220 character sets */
 
     fputs(ESC()")B",stdout); //set G1 charset to B : usascii
     fputs(ESC(*0),stdout); //set G2 charset to 0 : special char and line drawing set ESC(n)
@@ -441,6 +445,12 @@ void specialtty(){
     }
 #endif
 
+/*
+   Set special terminal mode.
+   * No echo. (we'll control what you see)
+   * No echo of newline. (we'll control what you say)
+   * Ignore XON/XOFF semantics. (so ctrl-s and ctrl-q are available)
+   */
     { struct termios tt=tm; //man termios
         //cfmakeraw(&tt);
         tt.c_iflag &= ~(IGNBRK | /*BRKINT |*/
@@ -460,6 +470,9 @@ void restoretty(){ tcsetattr(0,TCSANOW,&tm); }
    (re)allocate buffer as necessary
    process backspaces
    process mode changes and alt key.
+
+   pass characters through the translation table,
+       storing the "base" form, echoing the "output" form.
  */
 C * getln(C *prompt, C **s, int *len){
     int mode = 0;
@@ -483,6 +496,9 @@ C * getln(C *prompt, C **s, int *len){
                       goto storechar;
                       break;
 #if 0
+/*
+TODO: learn how the arrow keys can be distinguished from alt-[
+ */
                   case '[':
                       c = fgetc(stdin);
                       switch(c){
@@ -646,23 +662,27 @@ D numdbl(I n){
 
 
 
-enum { MPIBASE = 1<<16 };
+#define MPI_BASE (1U<<31)
+#define MPI_MASK (MPI_BASE-1)
 A mpint;
 I mpzero;
 #define MPINT_INIT (mpint=(A) (AV(bank)[ ++AV(bank)[0] ]=(I)ga(BOX,1,(I[]){1<<IMM_BIT}))), \
                     (AV(mpint)[0]=0), \
                     (mpzero=mpi(0))
 
+/* construct new multiprecision int of length n. return encoded bank:index. */
 I newmpint(I n){
     I j = ++AV(mpint)[0];
     AV(mpint)[j]=(I)ga(INT,1,(I[]){n});
     R encodenum(3,j);
 }
 
+/* yield the array representation of mpi designated n */
 A numbox(I n){
     R (A)AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT]))[n&IMM_MASK];
 }
 
+/* allocate a larger array, left-padded with 0, containing the same value as x */
 A promote(A x,I n){
     A z=ga(INT,1,(I[]){n});
     DO(n-AN(x),AV(z)[i]=0)
@@ -670,18 +690,20 @@ A promote(A x,I n){
     R z;
 }
 
+/* construct a multiprecision int with value i. return encoded bank:index. */
 I mpi(I i){
     I r=newmpint(2);
     A z=numbox(r);
-    AV(z)[0]=i/MPIBASE;
-    AV(z)[1]=i%MPIBASE;
+    AV(z)[0]=i/MPI_BASE;
+    AV(z)[1]=i%MPI_BASE;
     R r;
 }
 
+/* perform math function op on mpi x and mpi y, yielding new mpi result. */
 I mpop(I x,C op,I y){
     A a,w,z;
     I r;
-    I b=MPIBASE;
+    I b=MPI_BASE;
     a=numbox(x);
     w=numbox(y);
     I n=AN(a);
@@ -694,12 +716,17 @@ I mpop(I x,C op,I y){
         {
             int j=n,k=0;
             while(j){
-                I t = AV(a)[j-1] + AV(w)[j-1]+ k;
-                AV(z)[j]= t%b;
-                k= t/b;
+                U t = (U)AV(a)[j-1] + (U)AV(w)[j-1] + k;
+                AV(z)[j]= t & MPI_MASK;
+                k= !!(t&MPI_BASE);
                 j--;
             }
-            AV(z)[0]=k;
+            if (k) AV(z)[0]=k;
+            else {
+                AK(z)+=sizeof(I); //don't keep adding zeros on the left
+                --AN(z);
+                --AD(z)[0];
+            }
         }
         break;
     case '-':
@@ -1193,6 +1220,8 @@ enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
 
 #define DOM(d,z,x,y)    if (!d(x,y)){ z=infinity; } else
 
+static int overflow_mpi = 1;
+
 /* apply binary math op to nums, yielding num
 TODO: additional numeric types.
     configurable overflow promotion handling.
@@ -1201,21 +1230,33 @@ TODO: additional numeric types.
      switch(NUMERIC_TYPES(x,y)){ \
      case TYPEPAIR(IMM,IMM): DOM(domainI,z,numimm(x),numimm(y)) \
                              if (overflow(numimm(x),numimm(y))) \
-                                 z=flo((D)numimm(x) func (D)numimm(y)); \
+                                 if (overflow_mpi) \
+                                     z=mpop(mpi(numimm(x)),*#func,mpi(numimm(y))); \
+                                 else \
+                                     z=flo((D)numimm(x) func (D)numimm(y)); \
                              else z=num(numimm(x) func numimm(y)); break; \
      case TYPEPAIR(IMM,FIX): DOM(domainI,z,numimm(x),numint(y)) \
                              if (overflow(numimm(x),numint(y))) \
-                                 z=flo((D)numimm(x) func (D)numint(y)); \
+                                 if (overflow_mpi) \
+                                     z=mpop(mpi(numimm(x)),*#func,mpi(numint(y))); \
+                                 else \
+                                     z=flo((D)numimm(x) func (D)numint(y)); \
                              else z=num(numimm(x) func numint(y)); break; \
      case TYPEPAIR(IMM,FLO): DOM(domainD,z,numimm(x),numdbl(y)) \
                              z=flo(numimm(x) func numdbl(y)); break; \
      case TYPEPAIR(FIX,IMM): DOM(domainI,z,numint(x),numimm(y)) \
                              if (overflow(numint(x),numimm(y))) \
-                                 z=flo((D)numint(x) func (D)numimm(y)); \
+                                 if (overflow_mpi) \
+                                     z=mpop(mpi(numint(x)),*#func,mpi(numimm(y))); \
+                                 else \
+                                     z=flo((D)numint(x) func (D)numimm(y)); \
                              else z=num(numint(x) func numimm(y)); break; \
      case TYPEPAIR(FIX,FIX): DOM(domainI,z,numint(x),numint(y)) \
                              if (overflow(numint(x),numint(y))) \
-                                 z=flo((D)numint(x) func (D)numint(y)); \
+                                 if (overflow_mpi) \
+                                     z=mpop(mpi(numint(x)),*#func,mpi(numint(y))); \
+                                 else \
+                                     z=flo((D)numint(x) func (D)numint(y)); \
                              else z=num(numint(x) func numint(y)); break; \
      case TYPEPAIR(FIX,FLO): DOM(domainD,z,numint(x),numdbl(y)) \
                              z=flo(numint(x) func numdbl(y)); break; \
@@ -1355,6 +1396,7 @@ pn(i){
     case IMM: P("%d ",numimm(i)); break;
     case FIX: P("%d ",numint(i)); break;
     case FLO: P("%f ",numdbl(i)); break;
+    case MPI: P("mpi:"); pr(numbox(i)); break;
     }
 }
 /* print newline */
