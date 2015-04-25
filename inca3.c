@@ -664,6 +664,9 @@ D numdbl(I n){
 
 #define MPI_BASE (1U<<31)
 #define MPI_MASK (MPI_BASE-1)
+#define MPI_SIGN(x) (!!(AV(x)[0]&MPI_BASE))
+#define SET_MPI_SIGN(x) (AV(x)[0]|=MPI_BASE)
+#define CLEAR_MPI_SIGN(x) (AV(x)[0]&=MPI_MASK)
 A mpint;
 I mpzero;
 #define MPINT_INIT (mpint=(A) (AV(bank)[ ++AV(bank)[0] ]=(I)ga(BOX,1,(I[]){1<<IMM_BIT}))), \
@@ -691,12 +694,19 @@ A promote(A x,I n){
 }
 
 /* construct a multiprecision int with value i. return encoded bank:index. */
-I mpi(I i){
+I mpi(U i){
     I r=newmpint(2);
     A z=numbox(r);
+    I sign = !!(i&MPI_BASE);
+    if (sign) i=(~i)+1; //unsigned 2's-comp negate
     AV(z)[0]=i/MPI_BASE;
     AV(z)[1]=i%MPI_BASE;
+    if (sign) SET_MPI_SIGN(z);
     R r;
+}
+
+I mpi_lt(A a, A w){ // is a less than w?
+    R 0;
 }
 
 /* perform math function op on mpi x and mpi y, yielding new mpi result. */
@@ -706,18 +716,41 @@ I mpop(I x,C op,I y){
     I b=MPI_BASE;
     a=numbox(x);
     w=numbox(y);
+
     I n=AN(a);
     if (n<AN(w)){ a=promote(a,AN(w)); n=AN(w); }
     if (n>AN(w)){ w=promote(w,n); }
-    switch(op){
+
+    I signa=MPI_SIGN(a);
+    CLEAR_MPI_SIGN(a);
+    I signw=MPI_SIGN(w);
+    CLEAR_MPI_SIGN(w);
+    I signz=signa;
+
+    switch(op){ // handle signs
+    case '+':
+        if (signa!=signw){
+            op='-';
+            if (mpi_lt(a,w)){
+                A t=w;w=a;a=t;
+                signz=signw;
+                I tsign=signw;signw=signa;signa=tsign;
+            }
+        }
+        break;
+    case '-':
+        break;
+    }
+
+    switch(op){ // handle arithmetic
     case '+':
         r=newmpint(n+1);
         z=numbox(r);
         {
             int j=n,k=0;
             while(j){
-                U t = (U)AV(a)[j-1] + (U)AV(w)[j-1] + k;
-                AV(z)[j]= t & MPI_MASK;
+                U t= (U)AV(a)[j-1] + (U)AV(w)[j-1] + k;
+                AV(z)[j]= t&MPI_MASK;
                 k= !!(t&MPI_BASE);
                 j--;
             }
@@ -736,6 +769,9 @@ I mpop(I x,C op,I y){
     case '/':
         break;
     }
+    if (signa) SET_MPI_SIGN(a);  // restore signs to the data representation
+    if (signw) SET_MPI_SIGN(w);
+    if (signz) SET_MPI_SIGN(z);
     R r;
 }
 
