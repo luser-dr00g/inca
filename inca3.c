@@ -1511,6 +1511,7 @@ pn(i){
                   if (MPI_SIGN(b)) P("-");
                   DO(AN(b), P("%04d",AV(b)[i]&~MPI_SIGN_BIT))
               }
+              P(" ");
               break;
     }
 }
@@ -1852,8 +1853,8 @@ A newsymb(C *s,I n,I state){
             long n=strtol(s,&end,10);
             if(*end=='.') { z=num0f(strtod(s,&end)); }
             else {
-                //if (n/MPI_BASE) z=num0(mpi(n)); else
-                z=num0r(mpi(n));
+                if (abs(n)/MPI_BASE) z=num0r(mpi(n));
+                else z=num0(n);
             }
         }
         while(((C*)end-s) < n){
@@ -1864,8 +1865,8 @@ A newsymb(C *s,I n,I state){
                 long n=strtol(sp,&end,10);
                 if(*end=='.') { r=num0f(strtod(sp,&end)); }
                 else {
-                    //if (n/MPI_BASE) z=num0(mpi(n)); else
-                    r=num0r(mpi(n));
+                    if (abs(n)/MPI_BASE) z=num0r(mpi(n));
+                    else r=num0(n);
                 }
             }
             z=cat(z,r,0);
