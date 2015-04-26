@@ -1,4 +1,5 @@
 #include<limits.h>
+#include<math.h>
 #include<stdint.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -26,7 +27,7 @@ struct a nullob = { NLL };
 A null = &nullob;
 struct a markob = { MRK };
 A mark = &markob;
-I infinity; /* result for function arguments not in function domain */
+I infinite; /* result for function arguments not in function domain */
 
 A newsymb(C *s,I n,I state);
 struct st *findsymb(struct st *st, char **s, int mode);
@@ -662,11 +663,18 @@ D numdbl(I n){
 
 
 
-#define MPI_BASE (1U<<31)
-#define MPI_MASK (MPI_BASE-1)
-#define MPI_SIGN(x) (!!(AV(x)[0]&MPI_BASE))
-#define SET_MPI_SIGN(x) (AV(x)[0]|=MPI_BASE)
-#define CLEAR_MPI_SIGN(x) (AV(x)[0]&=MPI_MASK)
+#define MPI_SIGN_BIT (1U<<31)
+#ifdef MPI_POWER_OF_2
+#   define MPI_BITS 31
+#   define MPI_BASE (1U<<MPI_BITS)
+#else
+#   define MPI_BASE 10000
+#endif
+
+#define MPI_MAX (MPI_BASE-1)
+#define MPI_SIGN(x) (!!(AV(x)[0]&MPI_SIGN_BIT))
+#define SET_MPI_SIGN(x) (AV(x)[0]|=MPI_SIGN_BIT)
+#define CLEAR_MPI_SIGN(x) (AV(x)[0]&=~MPI_SIGN_BIT) /*(AV(x)[0]&=MPI_MAX)*/
 A mpint;
 I mpzero;
 #define MPINT_INIT (mpint=(A) (AV(bank)[ ++AV(bank)[0] ]=(I)ga(BOX,1,(I[]){1<<IMM_BIT}))), \
@@ -685,7 +693,9 @@ A numbox(I n){
     R (A)AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT]))[n&IMM_MASK];
 }
 
-/* allocate a larger array, left-padded with 0, containing the same value as x */
+/* allocate a larger array, left-padded with 0, containing the same value as x
+note: does not allocate a slot in the mpint bank.
+ */
 A promote(A x,I n){
     A z=ga(INT,1,(I[]){n});
     DO(n-AN(x),AV(z)[i]=0)
@@ -694,13 +704,24 @@ A promote(A x,I n){
 }
 
 /* construct a multiprecision int with value i. return encoded bank:index. */
-I mpi(U i){
+I mpi(U u){
+    I sign = !!(u&MPI_SIGN_BIT);
+    if (sign) u=(~u)+1; //unsigned 2's-comp negate
+#ifdef MPI_POWER_OF_2
     I r=newmpint(2);
     A z=numbox(r);
-    I sign = !!(i&MPI_BASE);
-    if (sign) i=(~i)+1; //unsigned 2's-comp negate
-    AV(z)[0]=i/MPI_BASE;
-    AV(z)[1]=i&MPI_MASK;
+    AV(z)[0]=u>>MPI_BITS;
+    AV(z)[1]=u&MPI_MAX;
+#else
+    I n=u?ceil(ceil(log10((D)u))/floor(log10((D)MPI_MAX))):1;
+    if(!n)n=1;
+    I r=newmpint(n);
+    A z=numbox(r);
+    I t;
+    DO(n, AV(z)[(AN(z)-1)-i]=u%MPI_BASE; u/=MPI_BASE)
+    //AV(z)[0]=i/MPI_BASE;
+    //AV(z)[1]=i%MPI_BASE;
+#endif
     if (sign) SET_MPI_SIGN(z);
     R r;
 }
@@ -708,7 +729,11 @@ I mpi(U i){
 I mpi_lt_mag(A a, A w){ // is a less than w?
     if(AN(a)<AN(w)) R 1;
     if(AN(a)>AN(w)) R 0;
+#ifdef MPI_POWER_OF_2
     DO(AN(w),if((AV(a)[i]&MPI_BASE)>(AV(w)[i]&MPI_BASE))R 0)
+#else
+    DO(AN(w),if((AV(a)[i]&~MPI_SIGN_BIT)>(AV(w)[i]&~MPI_SIGN_BIT))R 0)
+#endif
     R 1;
 }
 
@@ -754,6 +779,10 @@ I mpop(I x,C op,I y){
             signz=!signz;
         }
         break;
+    case '*':
+    case '/':
+        signz=signa!=signw;
+        break;
     }
 
     switch(op){ // handle arithmetic
@@ -764,8 +793,13 @@ I mpop(I x,C op,I y){
             int j=n,k=0;
             while(j){
                 U t= (U)AV(a)[j-1] + (U)AV(w)[j-1] + (U)k;
-                AV(z)[j]= t&MPI_MASK;
+#ifdef MPI_POWER_OF_2
+                AV(z)[j]= t&MPI_MAX;
                 k= !!(t&MPI_BASE);
+#else
+                AV(z)[j]= t%MPI_BASE;
+                k= t/MPI_BASE;
+#endif
                 --j;
             }
             if (k) AV(z)[0]=k;
@@ -776,6 +810,7 @@ I mpop(I x,C op,I y){
             }
         }
         break;
+
     case '-':
         r=newmpint(n);
         z=numbox(r);
@@ -783,17 +818,25 @@ I mpop(I x,C op,I y){
             int j=n,k=0;
             while(j){
                 U t= ((U)AV(a)[j-1] - (U)AV(w)[j-1]) - (U)k;
-                AV(z)[j-1]= t&MPI_MASK;
+#ifdef MPI_POWER_OF_2
+                AV(z)[j-1]= t&MPI_MAX;
                 k= !!(t&MPI_BASE);
+#else
+                AV(z)[j-1]= t%MPI_BASE;
+                k= t/MPI_BASE;
+#endif
                 --j;
             }
         }
         break;
+
     case '*':
         break;
+
     case '/':
         break;
     }
+
     if (signa) SET_MPI_SIGN(a);  // restore signs to the data representation
     if (signw) SET_MPI_SIGN(w);
     if (signz) SET_MPI_SIGN(z);
@@ -1279,7 +1322,7 @@ enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
     case MPI: z=mpop(mpzero, *#func, y); break; \
     }
 
-#define DOM(d,z,x,y)    if (!d(x,y)){ z=infinity; } else
+#define DOM(d,z,x,y)    if (!d(x,y)){ z=infinite; } else
 
 static int overflow_mpi = 1;
 
@@ -1336,7 +1379,12 @@ TODO: additional numeric types.
 
 #define BIN_BOOL_FUNC()
 
+#define TEST_MPI
+#ifdef TEST_MPI
+I plusover(I x,I y){ R (((x>0)&&(y>0)&&(x>(MPI_MAX-y))) || ((x<0)&&(y<0)&&(x<(MPI_MAX-y)))); }
+#else
 I plusover(I x,I y){ R (((x>0)&&(y>0)&&(x>(INT_MAX-y))) || ((x<0)&&(y<0)&&(x<(INT_MAX-y)))); }
+#endif
 I plusdomainI(I x,I y){ R 1; }
 I plusdomainD(D x,D y){ R 1; }
 
@@ -1457,7 +1505,13 @@ pn(i){
     case IMM: P("%d ",numimm(i)); break;
     case FIX: P("%d ",numint(i)); break;
     case FLO: P("%f ",numdbl(i)); break;
-    case MPI: P("mpi:"); pr(numbox(i)); break;
+    case MPI: P("mpi:");
+              {
+                  A b=numbox(i);
+                  if (MPI_SIGN(b)) P("-");
+                  DO(AN(b), P("%04d",AV(b)[i]&~MPI_SIGN_BIT))
+              }
+              break;
     }
 }
 /* print newline */
@@ -1796,8 +1850,11 @@ A newsymb(C *s,I n,I state){
         A z;
         {
             long n=strtol(s,&end,10);
-            if(*end=='.') z=num0f(strtod(s,&end));
-            else z=num0(n);
+            if(*end=='.') { z=num0f(strtod(s,&end)); }
+            else {
+                //if (n/MPI_BASE) z=num0(mpi(n)); else
+                z=num0r(mpi(n));
+            }
         }
         while(((C*)end-s) < n){
             //A r=ga(INT,0,0); *AV(r)=strtol(end,&end,10);
@@ -1805,8 +1862,11 @@ A newsymb(C *s,I n,I state){
             {
                 char *sp=end;
                 long n=strtol(sp,&end,10);
-                if(*end=='.') r=num0f(strtod(sp,&end));
-                else r=num0(n);
+                if(*end=='.') { r=num0f(strtod(sp,&end)); }
+                else {
+                    //if (n/MPI_BASE) z=num0(mpi(n)); else
+                    r=num0r(mpi(n));
+                }
             }
             z=cat(z,r,0);
         }
@@ -1893,7 +1953,7 @@ int main(){C *s=NULL;int n=0;C *prompt="\t";
     FIXNUM_INIT;
     FLONUM_INIT;
     MPINT_INIT;
-    infinity = flo(strtod("inf", NULL));
+    infinite = flo(strtod("inf", NULL));
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
