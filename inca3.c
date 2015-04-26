@@ -700,13 +700,16 @@ I mpi(U i){
     I sign = !!(i&MPI_BASE);
     if (sign) i=(~i)+1; //unsigned 2's-comp negate
     AV(z)[0]=i/MPI_BASE;
-    AV(z)[1]=i%MPI_BASE;
+    AV(z)[1]=i&MPI_MASK;
     if (sign) SET_MPI_SIGN(z);
     R r;
 }
 
-I mpi_lt(A a, A w){ // is a less than w?
-    R 0;
+I mpi_lt_mag(A a, A w){ // is a less than w?
+    if(AN(a)<AN(w)) R 1;
+    if(AN(a)>AN(w)) R 0;
+    DO(AN(w),if((AV(a)[i]&MPI_BASE)>(AV(w)[i]&MPI_BASE))R 0)
+    R 1;
 }
 
 /* perform math function op on mpi x and mpi y, yielding new mpi result. */
@@ -718,8 +721,11 @@ I mpop(I x,C op,I y){
     w=numbox(y);
 
     I n=AN(a);
-    if (n<AN(w)){ a=promote(a,AN(w)); n=AN(w); }
-    if (n>AN(w)){ w=promote(w,n); }
+    switch(op){
+    case '+': case '-':
+        if (n<AN(w)){ a=promote(a,AN(w)); n=AN(w); }
+        if (n>AN(w)){ w=promote(w,n); }
+    }
 
     I signa=MPI_SIGN(a);
     CLEAR_MPI_SIGN(a);
@@ -731,14 +737,22 @@ I mpop(I x,C op,I y){
     case '+':
         if (signa!=signw){
             op='-';
-            if (mpi_lt(a,w)){
+            if (mpi_lt_mag(a,w)){
                 A t=w;w=a;a=t;
-                signz=signw;
                 I tsign=signw;signw=signa;signa=tsign;
+                signz=signa;
             }
         }
         break;
     case '-':
+        if (signa!=signw){
+            signz=!signw;
+            op='+';
+        } else if (mpi_lt_mag(a,w)){
+            A t=w;w=a;a=t;
+            I tsign=signw;signw=signa;signa=tsign;
+            signz=!signz;
+        }
         break;
     }
 
@@ -749,10 +763,10 @@ I mpop(I x,C op,I y){
         {
             int j=n,k=0;
             while(j){
-                U t= (U)AV(a)[j-1] + (U)AV(w)[j-1] + k;
+                U t= (U)AV(a)[j-1] + (U)AV(w)[j-1] + (U)k;
                 AV(z)[j]= t&MPI_MASK;
                 k= !!(t&MPI_BASE);
-                j--;
+                --j;
             }
             if (k) AV(z)[0]=k;
             else {
@@ -763,6 +777,17 @@ I mpop(I x,C op,I y){
         }
         break;
     case '-':
+        r=newmpint(n);
+        z=numbox(r);
+        {
+            int j=n,k=0;
+            while(j){
+                U t= ((U)AV(a)[j-1] - (U)AV(w)[j-1]) - (U)k;
+                AV(z)[j-1]= t&MPI_MASK;
+                k= !!(t&MPI_BASE);
+                --j;
+            }
+        }
         break;
     case '*':
         break;
