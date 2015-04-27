@@ -787,7 +787,7 @@ I mpop(I x,C op,I y){
         break;
     }
 
-    switch(op){ // handle arithmetic
+    switch(op){           // multiprecision arithmetic
     case '+':
         r=newmpint(n+1);
         z=numbox(r);
@@ -860,6 +860,14 @@ I mpop(I x,C op,I y){
         break;
 
     case '/':
+        {
+            I allzero=1;
+            DO(AN(a),if((AV(a)[i]&~MPI_SIGN_BIT)==0)continue;allzero=0;)
+            if (allzero) 
+                R 0;
+            allzero=1;
+            DO(AN(w),if((AV(w)[i]&~MPI_SIGN_BIT)==0)continue;allzero=0;)
+        }
         break;
     }
 
@@ -1535,7 +1543,7 @@ pn(i){
               {
                   A b=numbox(i);
                   I allzero=1;
-                  DO(AN(b),if((AV(b)[i]&~MPI_SIGN_BIT)==0)continue;allzero=1;)
+                  DO(AN(b),if((AV(b)[i]&~MPI_SIGN_BIT)==0)continue;allzero=0;)
                   if (allzero) 
                       P("0");
                   else {
