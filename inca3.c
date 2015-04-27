@@ -730,14 +730,16 @@ I mpi_lt_mag(A a, A w){ // is a less than w?
     if(AN(a)<AN(w)) R 1;
     if(AN(a)>AN(w)) R 0;
 #ifdef MPI_POWER_OF_2
-    DO(AN(w),if((AV(a)[i]&MPI_BASE)>(AV(w)[i]&MPI_BASE))R 0)
+    DO(AN(w),if((AV(a)[i]&MPI_MAX)>(AV(w)[i]&MPI_MAX))R 0)
 #else
     DO(AN(w),if((AV(a)[i]&~MPI_SIGN_BIT)>(AV(w)[i]&~MPI_SIGN_BIT))R 0)
 #endif
     R 1;
 }
 
-/* perform math function op on mpi x and mpi y, yielding new mpi result. */
+/* perform math function op on mpi x and mpi y, yielding new mpi result.
+   allocates a new mpi value in the mpint bank.
+ */
 I mpop(I x,C op,I y){
     A a,w,z;
     I r;
@@ -831,6 +833,25 @@ I mpop(I x,C op,I y){
         break;
 
     case '*':
+        r=newmpint(n+AN(w)); /* m+n*/
+        z=numbox(r);
+        DO(AN(z),AV(z)[i]=0)
+        {
+            I j=n; /* m ==AN(a) */
+            while(j){
+                if (AV(w)[j-1]==0){ AV(z)[j-1]=0; } else {
+                    U i=AN(w), /* n */
+                      k=0;
+                    while (i>0){
+                        uint64_t t = AV(a)[i-1] * AV(w)[j-1] + AV(z)[(i+j)-1] + k;
+                        AV(z)[(i+j)-1]= t%MPI_BASE;
+                        k= t/MPI_BASE;
+                        --i;
+                    }
+                }
+                --j;
+            }
+        }
         break;
 
     case '/':
