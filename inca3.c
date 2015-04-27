@@ -844,8 +844,13 @@ I mpop(I x,C op,I y){
                       k=0;
                     while (i>0){
                         uint64_t t = AV(a)[i-1] * AV(w)[j-1] + AV(z)[(i+j)-1] + k;
+#ifdef MPI_POWER_OF_2
+                        AV(z)[(i+j)-1]= t&MPI_MAX;
+                        k= t>>MPI_BITS;
+#else
                         AV(z)[(i+j)-1]= t%MPI_BASE;
                         k= t/MPI_BASE;
+#endif
                         --i;
                     }
                 }
@@ -1529,8 +1534,14 @@ pn(i){
     case MPI: P("mpi:");
               {
                   A b=numbox(i);
-                  if (MPI_SIGN(b)) P("-");
-                  DO(AN(b), P("%04d",AV(b)[i]&~MPI_SIGN_BIT))
+                  I allzero=1;
+                  DO(AN(b),if((AV(b)[i]&~MPI_SIGN_BIT)==0)continue;allzero=1;)
+                  if (allzero) 
+                      P("0");
+                  else {
+                      if (MPI_SIGN(b)) P("-");
+                      DO(AN(b), P("%04d",AV(b)[i]&~MPI_SIGN_BIT))
+                  }
               }
               P(" ");
               break;
