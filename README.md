@@ -14,9 +14,9 @@ the design. Add the new feature (user-function call without the ' or ''
 function-call functions) broke the existing code in tea.sh
 (the "use-case"). And so, the project was begun anew with a better design.
 
-It may surprise or amusing readers to learn that even the earliest inca.c was not my first brush with APL. Some years ago I read a great deal of the J wiki and then could not get it to compile and completely forgot. A few years later, having issued a programming challenge and received a few J answers, I looked again and wrote two postscript program to simulate what I thought was going on. https://gist.github.com/luser-dr00g/9382217 and https://gist.github.com/luser-dr00g/9502855
+It may surprise or amuse readers to learn that even the earliest inca.c was not my first brush with APL. Some years ago I read a great deal of the J wiki and then could not get it to compile and completely forgot. A few years later, having issued a programming challenge and received a few J answers, I looked again and wrote two postscript programs to simulate what I thought was going on. https://gist.github.com/luser-dr00g/9382217 and https://gist.github.com/luser-dr00g/9502855
 
-And some time later I stumbled upon some old source code of mine which attempted a similar arbitrary-dimensional system in C++. https://groups.google.com/d/topic/comp.lang.apl/3VNPOzcQMMI/discussion
+And some time later I stumbled upon some very old source code of mine which attempted (anticipated?) a similar arbitrary-dimensional system in C++. https://groups.google.com/d/topic/comp.lang.apl/3VNPOzcQMMI/discussion
 
 Summary:
 monadic functions: + id  { size  ~ iota  < box  # shape  > unbox  | abs  ! not  @ rev  
