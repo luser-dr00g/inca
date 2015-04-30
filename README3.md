@@ -5,7 +5,7 @@ Inca3
 defined by its implementation if/where the behavior disagrees with the documentation).
 
 Each rewrite has begun with the J incunabulum to which I then apply edits.
-Not only that, but I retype I from my handwritten notebook copy. This passes the
+Not only that, but I retype it from my handwritten notebook copy. This passes the
 code through my brain and fingers even though I'm merely "copying".
 
 Each additional feature or change is made compilable (and usually tested and apparently
@@ -16,7 +16,7 @@ which "do the same thing" ought to be factored to maintain that condition. The p
 of starting from a working, simple interpreter and extending is an application of the
 Tracer-Bullet strategy, where the first order of business is build a column connecting
 the top-down and bottom-up designs so the basic functionality can be directly tested and
-debugged, and each new feature can be directly tested and debugged.
+debugged, and each new feature can be added *laterally* and directly tested and debugged.
 
 The features:
 --- 
@@ -34,6 +34,7 @@ True APL shift-reduce parsing.
 
 Modern APL/J handling of verb rank as it applies to the frame/cell handling of its arguments.
 
+Multiprecision integers.
 
 
 Above this line is topical.
@@ -277,4 +278,15 @@ implemented. And the reduce adverb. And the conjunctions rank and curry/compose.
 This iteration of the code is more "depth"-first than earlier gos.
 
 Assignment is now the left-arrow (ALT-[).
+
+-- 
+
+
+Addeed Multiprecision integers. Addition, subtraction, and multiplication are
+working. I'm stilling working on division.
+
+The issue of what to do with arithmetic when one argument is a Multiprecision
+integer and the other is a floating-point number is posed on Programmers.SE: 
+http://programmers.stackexchange.com/questions/280335/what-do-you-get-when-you-cross-a-multi-precision-integer-with-a-floating-point-n
+
 
