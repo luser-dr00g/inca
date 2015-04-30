@@ -646,9 +646,7 @@ A num0r(I i){ A z=i0(i); AT(z)=NUM; R z;}
 A num0f(D d){ A z=i0(flo(d)); AT(z)=NUM; R z; }
 
 /* convert immediate num to full-width integer */
-I numimm(I n){
-    R n&IMM_SIGN?n|BANK_MASK:n;
-}
+I numimm(I n){ R n&IMM_SIGN?n|BANK_MASK:n; }
 
 /* fetch full-width integer from bank */
 I numint(I n){
@@ -693,7 +691,8 @@ A numbox(I n){
     R (A)AV((A)(AV(bank)[((unsigned)n&BANK_MASK)>>IMM_BIT]))[n&IMM_MASK];
 }
 
-/* allocate a larger array, left-padded with 0, containing the same value as x
+/* allocate a larger array, left-padded with 0, containing the same value as x,
+   assumed unsigned.
 note: does not allocate a slot in the mpint bank.
  */
 A promote(A x,I n){
@@ -748,7 +747,7 @@ I mpop(I x,C op,I y){
     w=numbox(y);
 
     I n=AN(a);
-    switch(op){
+    switch(op){ // handle sizes
     case '+': case '-':
         if (n<AN(w)){ a=promote(a,AN(w)); n=AN(w); }
         if (n>AN(w)){ w=promote(w,n); }
@@ -867,6 +866,8 @@ I mpop(I x,C op,I y){
                 R 0;
             allzero=1;
             DO(AN(w),if((AV(w)[i]&~MPI_SIGN_BIT)==0)continue;allzero=0;)
+            if (allzero)
+                R infinite;
         }
         break;
     }
@@ -1032,7 +1033,9 @@ V1(areduce){
 
 /* Verb macros */
 
-/* create v pointer to access verb properties */
+/* create v pointer to access verb properties
+   if self is zero, load base verb from verb table
+ */
 #define LOADVSELF(base) \
     V v=self? \
         (I)self>0&&(I)self<(sizeof vt/sizeof*vt)? \
@@ -1040,6 +1043,7 @@ V1(areduce){
             :(V)AV(self) \
         :vt+base; 
 
+/* fill-in array f with rk elements of ar's shape vector */
 #define LOADFRAME(f,ar,rk) \
     /*P("rk=%d\n",rk);*/ \
     if (AR(ar)-(rk)>=0) { \
@@ -1051,18 +1055,21 @@ V1(areduce){
     } \
     /*P("AR(f)=%d\n", AR(f));*/ 
 
+/* load the left frame */
 #define LFRAME(rk) \
     /*A lf = 0;*/ \
     A lf = &(struct a){.t=INT,.n=0,.r=0}; \
     if ((rk)<0) { LOADFRAME(lf,a,AR(a)+(rk)) } \
     else { LOADFRAME(lf,a,rk) }
 
+/* load the right frame */
 #define RFRAME(rk) \
     /*A rf = 0;*/ \
     A rf = &(struct a){.t=INT,.n=0,.r=0}; \
     if ((rk)<0) { LOADFRAME(rf,w,AR(w)+(rk)) } \
     else { LOADFRAME(rf,w,rk) } 
 
+/* fill-in array c with rk elements from the tail of ar's shape vector */
 #define LOADCELL(c,ar,rk) \
     if ((rk)>0 && (rk)<AR(ar)) { \
         AR(c)=(rk)>0?1:0; \
@@ -1070,16 +1077,19 @@ V1(areduce){
         AK(c)=((C*)(AD(ar)+AR(ar)-(rk)))-((C*)c); /* indirect array of ar's cell shape */ \
     }
 
+/* load the left cell */
 #define LCELL(rk) \
     A lc = &(struct a){.t=INT,.n=0,.r=0}; \
     if ((rk)<0) { LOADCELL(lc,a,AR(a)+(rk)) } \
     else { LOADCELL(lc,a,rk) }
 
+/* load the right celll */
 #define RCELL(rk) \
     A rc = &(struct a){.t=INT,.n=0,.r=0}; \
     if ((rk)<0) { LOADCELL(rc,w,AR(w)+(rk)) } \
     else { LOADCELL(rc,w,rk) }
 
+/* reshape arguments to make frames agree */
 #define FRAME_AGREE \
     /*P("frame agree\n");*/ \
     if (!*AV(match(lf,rf,0))) { /* Frame Agreement */ \
@@ -1109,6 +1119,11 @@ V1(areduce){
 /* header size */
 #define HSZ(rc) ((AR(rc)?AR(rc):0)+sizeof(struct a))
 
+/*
+   create an box array of frame dimensions, 
+   each element of which is an indirect array 
+   accessing a cell-sized slice of the argument array.
+ */
 #define BOX_CELLS(base,csz,lf,lc,a,ba,bam) \
         csz=tr(AN(lc),AV(lc)); /* cell size */ \
         A ba=ga(BOX,AN(lf),AV(lf)); /* boxed a */ \
@@ -1124,6 +1139,9 @@ V1(areduce){
             /*pr(AV(ba)[i]);*/ \
           ) \
 
+/*
+   unpack and expand the boxed results from the recursive call to the verb
+   */
 #define ASSEMBLE_RESULTS(ba,bam) \
         /*P("assemble results\n");*/ \
         A ms = ga(INT,1,(I[]){0}); \
@@ -1161,6 +1179,9 @@ V1(areduce){
           ) \
         free(ms); free(zslice); free(ba); free(bam); R z; \
 
+/*
+   monadic verb behavior for handling non-base cells
+   */
 #define CELL_HANDLE1(base) \
     if (self&& (vt[base].k != v->k)) { \
         /* requested cell is not base cell */ \
@@ -1170,6 +1191,9 @@ V1(areduce){
         ASSEMBLE_RESULTS(bw,bwm) \
     }
 
+/*
+   dyadic verb behavior for handling non-base cells
+   */
 #define CELL_HANDLE2(base) \
     /*P("cell handle\n");*/ \
     if (self&& (vt[base].m != v->m && vt[base].n != v->n)) { \
@@ -1198,6 +1222,10 @@ V1(areduce){
         ASSEMBLE_RESULTS(bw,bwm) \
     }
 
+/*
+   monadic behavior for handling a boxed argument:
+   call verb recursively upon each element
+   */
 #define BOX_HANDLE1(base) \
     if (AT(w)==BOX) { \
         A z=ga(BOX,AN(rf),AV(rf)); \
@@ -1207,6 +1235,10 @@ V1(areduce){
         R z; \
     }
 
+/*
+   dyadic behavior for handling boxed arguments:
+   call verb recursively upon boxed elements or slices
+   */
 #define BOX_HANDLE2(base) \
     if (AT(a)==BOX&&AT(w)==BOX){ \
         /*P("BOXaw\n");*/ \
@@ -1249,6 +1281,7 @@ V1(areduce){
         R z; \
     }
 
+/* general rank/frame/cell behavior for monadic verbs */
 #define RANK1(base) \
     LOADVSELF(base) \
     RFRAME(v->k) \
@@ -1256,7 +1289,7 @@ V1(areduce){
     CELL_HANDLE1(base) \
     BOX_HANDLE1(base)
 
-/* general rank/frame/cell behavior for verbs */
+/* general rank/frame/cell behavior for dyadic verbs */
 #define RANK2(base) \
     LOADVSELF(base) \
     /*pr(a); pr(w);*/ \
@@ -1548,7 +1581,9 @@ pn(i){
                       P("0");
                   else {
                       if (MPI_SIGN(b)) P("-");
-                      DO(AN(b), P("%04d",AV(b)[i]&~MPI_SIGN_BIT))
+                      if (AN(b)>1 && AV(b)[0]&~MPI_SIGN_BIT)
+                          P("%d",AV(b)[0]&~MPI_SIGN_BIT);
+                      DO(AN(b)-1, P("%04d",AV(b)[i+1]))
                   }
               }
               P(" ");
