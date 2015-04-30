@@ -29,14 +29,14 @@ struct a markob = { MRK };
 A mark = &markob;
 I infinite; /* result for function arguments not in function domain */
 
-A newsymb(C *s,I n,I state);
-struct st *findsymb(struct st *st, char **s, int mode);
+A newsymb(C *s,I n,I state);  /* symbol constructor */
+struct st *findsymb(struct st *st, char **s, int mode); /* symbol lookup */
 
 /* Idioms */
 #define P printf
 #define R return
-#define V1(f) A f(A w,      A self)
-#define V2(f) A f(A a, A w, A self)
+#define V1(f) A f(A w,      A self)  /* monadic verb signature */
+#define V2(f) A f(A a, A w, A self)  /* dyadic verb signature */
 #define DO(n,x)  {I i=0,_n=(n);for(;i<_n;++i){x;}}
 #define DO2(n,x) {I j=0,_o=(n);for(;j<_o;++j){x;}}
 #define DO3(n,x) {I k=0,_p=(n);for(;k<_p;++k){x;}}
