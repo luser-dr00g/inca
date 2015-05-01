@@ -484,6 +484,11 @@ C * getln(C *prompt, C **s, int *len){
     p = *s;
     while(1){
         int c;
+        if (p-*s>*len){
+            C *t = realloc(*s,*len*=2);
+            if (t) *s=t;
+            else { *len/=2; R NULL; }
+        }
         c = fgetc(stdin);
         switch(c){
         case EOF:
@@ -1365,6 +1370,7 @@ enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
 #define TYPEPAIR(a,b) \
     ((a)*NUM_TYPES+(b))
 
+/* yield the type of a num */
 #define TYPENUM(a) \
         ((a)&BANK_MASK? \
             (AT(((A)AV(bank)[((a)&BANK_MASK)>>IMM_BIT]))==DBL? \
@@ -1375,6 +1381,7 @@ enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
              ) \
             :IMM)
 
+/* compose types of 2 arguments into a value */
 #define NUMERIC_TYPES(a,b) \
     TYPEPAIR(TYPENUM(a), TYPENUM(b))
 
@@ -1389,13 +1396,15 @@ enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
     case MPI: z=mpop(mpzero, *#func, y); break; \
     }
 
+/* perform the domain-checking case in BIN_MATH_FUNC macro */
 #define DOM(d,z,x,y)    if (!d(x,y)){ z=infinite; } else
 
-static int overflow_mpi = 1;
+/* select overflow promotion behavior. 0=double 1=mpi */
+static int overflow_mpi = 0;
 
-/* apply binary math op to nums, yielding num
+/* apply binary math op to nums x and y, assigning result as num z.
 TODO: additional numeric types.
-    configurable overflow promotion handling.
+    configurable overflow promotion handling. <-- partially done.
  */
 #define BIN_MATH_FUNC(func,z,x,y,overflow,domainI,domainD) \
      switch(NUMERIC_TYPES(x,y)){ \
@@ -1446,7 +1455,7 @@ TODO: additional numeric types.
 
 #define BIN_BOOL_FUNC()
 
-#define TEST_MPI
+//#define TEST_MPI
 #ifdef TEST_MPI
 I plusover(I x,I y){ R (((x>0)&&(y>0)&&(x>(MPI_MAX-y))) || ((x<0)&&(y<0)&&(x<(MPI_MAX-y)))); }
 #else
@@ -1466,7 +1475,7 @@ V2(plus){
     DO(AN(z), BIN_MATH_FUNC(+,AV(z)[i],AV(a)[i],AV(w)[i],plusover,plusdomainI,plusdomainD) )
     R z;}
 
-I minusover(I x,I y){ R (y==INT_MIN&&x!=0)?1:plusover(x,-y); }
+I minusover(I x,I y){ R (y==INT_MIN&&x==0)?1:plusover(x,-y); }
 I negover(I y){ R minusover(0,y); }
 
 /* negate w */
@@ -1484,6 +1493,14 @@ V2(minus){
 /* return sum and difference */
 V2(plusminus){ w=cat(w,neg(w,0),0); a=cat(a,a,0); R plus(a,w,0);}
 
+#ifdef TEST_MPI
+I timesover(I x,I y){
+    if(x==0||y==0)R 0;
+    if(x<0){x=-x;}
+    if(y<0){y=-y;}
+    R x>((MPI_MAX)/(y));
+}
+#else
 I timesover(I x,I y){
     if(x==0||y==0)R 0;
     if(x==INT_MIN||y==INT_MIN)R 1;
@@ -1491,6 +1508,8 @@ I timesover(I x,I y){
     if(y<0){ y=-y; }
     R x>((INT_MAX)/(y));
 }
+#endif
+
 
 V1(signum){
     RANK1(TIMES)
