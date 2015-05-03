@@ -290,3 +290,28 @@ integer and the other is a floating-point number is posed on Programmers.SE:
 http://programmers.stackexchange.com/questions/280335/what-do-you-get-when-you-cross-a-multi-precision-integer-with-a-floating-point-n
 
 
+-- 
+
+I'm thinking about creating a new type for a new kind of indirect array.
+Some of the ideas were described in this post:
+https://groups.google.com/d/topic/comp.lang.apl/0_Y4bwankxY/discussion .
+And an unrelated discussion from comp.lang.c will catch any one up on the
+background of the array structure and the C implementation.
+
+
+This new type will be called DOPE. And the array data contains a vector
+the same length as the dimensions. This is the dope-vector which contains
+the multipliers for each index. For a simple indirect array, a shared-data
+array, the dope-vector will contain the cached results of weighting vector
+which is calculated as part of applying normal index tuples.
+
+A transpose operation can simply reorder these weights to match the new
+index ordering (as well as reordering the dims).
+
+Another new piece that is needed is a mixed-radix increment function to
+facilitate iterating through higher-dimensional arrays while still having
+the indices for computation (and for DOPE arrays, for accessing the data).
+That is, DOPE arrays do not have a ravelled representation. They have a
+"linear" representation in a broader algebraic sense than the usual
+hard-linked contiguous arrays.
+
