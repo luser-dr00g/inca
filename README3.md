@@ -297,7 +297,7 @@ Some of the ideas were described in this post:
 https://groups.google.com/d/topic/comp.lang.apl/0_Y4bwankxY/discussion .
 And an unrelated discussion from comp.lang.c will catch any one up on the
 background of the array structure and the C implementation.
-
+https://groups.google.com/d/topic/comp.lang.c/Dvbze4_foZY/discussion
 
 This new type will be called DOPE. And the array data contains a vector
 the same length as the dimensions. This is the dope-vector which contains
