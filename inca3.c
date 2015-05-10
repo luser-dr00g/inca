@@ -19,7 +19,7 @@ typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AN(a) ((a)->n)                   /* Number of values in ravel */
 #define AK(a) ((a)->k)                   /* Offset of ravel */
 #define AD(a) ((a)->d)                   /* Dims */
-#define AV(a) ((I*)(((C*)a)+AK(a)))      /* Values in ravelled order */
+#define AV(a) ((I*)(((C*)(a))+AK(a)))    /* Values in ravelled order */
 enum type { INT, BOX, SYMB, CHAR, NUM, DBL, MRK, NLL, VRB, NTYPES };
 
 /* "singleton" objects */
@@ -558,7 +558,7 @@ err:
 
 
 /* allocate integer array */
-I *ma(I n){R(I*)malloc(n*sizeof(I));}
+I *ma(I n){R(I*)calloc(n,sizeof(I));}
 
 /* move integers */
 void mv(I*d,I*s,I n){DO(n,d[i]=s[i]);}
@@ -665,6 +665,17 @@ D numdbl(I n){
 }
 
 
+/* Multiprecision Integers
+   MPIs are a subtype of NUM (as are FIX FLO and IMM).
+   They are allocated in the mpint bank which is a BOX array.
+   Each element (the mpi data) is an INT array.
+   Numbers are stored in a sign-magnitude representation.
+   The top bit of the first int is the sign bit. 
+   The base must therefore be <= 2^31.
+   The implementation can use either power-of-2 or power-of-10 bases.
+   Until a general radix-conversion is written for the output, 
+   the base 10000 is used so the output routine can take shortcuts.
+ */
 
 #define MPI_SIGN_BIT (1U<<31)
 #ifdef MPI_POWER_OF_2
@@ -678,13 +689,17 @@ D numdbl(I n){
 #define MPI_SIGN(x) (!!(AV(x)[0]&MPI_SIGN_BIT))
 #define SET_MPI_SIGN(x) (AV(x)[0]|=MPI_SIGN_BIT)
 #define CLEAR_MPI_SIGN(x) (AV(x)[0]&=~MPI_SIGN_BIT) /*(AV(x)[0]&=MPI_MAX)*/
+
 A mpint;
 I mpzero;
 #define MPINT_INIT (mpint=(A) (AV(bank)[ ++AV(bank)[0] ]=(I)ga(BOX,1,(I[]){1<<IMM_BIT}))), \
                     (AV(mpint)[0]=0), \
                     (mpzero=mpi(0))
 
-/* construct new multiprecision int of length n. return encoded bank:index. */
+/* construct new multiprecision int of length n.
+   return encoded bank:index.
+TODO: check for full table as in fix()
+ */
 I newmpint(I n){
     I j = ++AV(mpint)[0];
     AV(mpint)[j]=(I)ga(INT,1,(I[]){n});
@@ -707,7 +722,10 @@ A promote(A x,I n){
     R z;
 }
 
-/* construct a multiprecision int with value i. return encoded bank:index. */
+/*
+   construct a multiprecision int with (signed) value u.
+   return encoded bank:index.
+ */
 I mpi(U u){
     I sign = !!(u&MPI_SIGN_BIT);
     if (sign) u=(~u)+1; //unsigned 2's-comp negate
@@ -730,7 +748,7 @@ I mpi(U u){
     R r;
 }
 
-I mpi_lt_mag(A a, A w){ // is a less than w?
+I mpi_lt_mag(A a, A w){ // is a smaller than w?
     if(AN(a)<AN(w)) R 1;
     if(AN(a)>AN(w)) R 0;
 #ifdef MPI_POWER_OF_2
@@ -758,7 +776,7 @@ I mpop(I x,C op,I y){
         if (n>AN(w)){ w=promote(w,n); }
     }
 
-    I signa=MPI_SIGN(a);
+    I signa=MPI_SIGN(a);  // save and remove signs from data representation
     CLEAR_MPI_SIGN(a);
     I signw=MPI_SIGN(w);
     CLEAR_MPI_SIGN(w);
@@ -791,7 +809,7 @@ I mpop(I x,C op,I y){
         break;
     }
 
-    switch(op){           // multiprecision arithmetic
+    switch(op){           // unsigned multiprecision arithmetic
     case '+':
         r=newmpint(n+1);
         z=numbox(r);
@@ -969,7 +987,7 @@ struct v ot[] = { ADVTAB(VERBTAB_ENT) };  //generate adverb table array
 /* produce a new derived verb with specified fields. must have A z;
    declared and available for scratch. */
 #define DERIV(...) \
-    ((z=ga(VRB,1,(I[]){sizeof(struct v)})), \
+    ((z=ga(VRB,1,(I[]){sizeof(struct v)/sizeof(int)})), \
     (*((V)AV(z))=(struct v){__VA_ARGS__}), \
     z)
 
@@ -1088,7 +1106,7 @@ V1(areduce){
     if ((rk)<0) { LOADCELL(lc,a,AR(a)+(rk)) } \
     else { LOADCELL(lc,a,rk) }
 
-/* load the right celll */
+/* load the right cell */
 #define RCELL(rk) \
     A rc = &(struct a){.t=INT,.n=0,.r=0}; \
     if ((rk)<0) { LOADCELL(rc,w,AR(w)+(rk)) } \
@@ -1400,7 +1418,7 @@ enum { IMM = 1, FIX, FLO, MPI, NUM_TYPES };
 #define DOM(d,z,x,y)    if (!d(x,y)){ z=infinite; } else
 
 /* select overflow promotion behavior. 0=double 1=mpi */
-static int overflow_mpi = 0;
+static int overflow_mpi = 1;
 
 /* apply binary math op to nums x and y, assigning result as num z.
 TODO: additional numeric types.
@@ -1580,6 +1598,13 @@ pv(i){
     else
         pc(i);
 }
+/* print derived verb */
+pdv(i){
+    A w=(A)i;
+    V v=(V)AV(w);
+    P("derived ");
+    pv(v->c);
+}
 /* print character */
 pc(i){qv(i)?pv(i):P("%s",basetooutput(i));}
 pi(i){
@@ -1624,6 +1649,7 @@ pr(A w){
         case SYMB: ps(w); break;
         case NUM: DO(n,pn(AV(w)[i])) break;
         case INT: DO(n,pi(AV(w)[i])) break;
+        case VRB: pdv(w); break;
         default: P("unprintable ");
         }
     }
@@ -1835,10 +1861,10 @@ typedef struct stack { int top; A a[1]; } stack; /* top==0::empty */
    Print error if expression has not fully reduced (unrecognized function).
  */
 A ex(I *e){I a=*e;
-
     int i,j,n,docheck;
     stack *lstk,*rstk;
     A t[4];
+
     //for(i=0;e[i];i++)pr((A)e[i]);
     for(i=0,j=0;e[i];i++)if(qp(e[i]))j+=AD(((A)e[i]))[0];
     n=i;
@@ -2005,6 +2031,7 @@ int wdtab[][sizeof cclass/sizeof*cclass] = {
 
 /* construct new object giving start and end string positions */
 #define emit(a,b,c) (*z++=(I)newsymb(s+(a),(b)-a,c)); 
+
 /*
    scan expression for alphabetic and numeric parts 
    delimited by whitespace
@@ -2031,6 +2058,7 @@ I *wd(C *s){
         switch(b%10){ //encoded actions
         case 0: break;
         case 1: emit(j,i,oldstate);  // generate a token (and)
+                /*fallthrough*/
         case 2: j=i; break;          // reset start index
         }
     }
@@ -2049,10 +2077,13 @@ int main(){C *s=NULL;int n=0;C *prompt="\t";
     FLONUM_INIT;
     MPINT_INIT;
     infinite = flo(strtod("inf", NULL));
+
     if (isatty(fileno(stdin))) specialtty();
     while(getln(prompt,&s,&n))
         pr(ex(wd(s)));
     if (isatty(fileno(stdin))) restoretty();
+
     R 0;
 }
 
+/* eof */
