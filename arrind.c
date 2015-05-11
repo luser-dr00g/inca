@@ -1,3 +1,5 @@
+//arrind.c - Arrays, indirect.
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -164,42 +166,46 @@ arr copy(arr a){
     return z;
 }
 
-/* perform binary operation F upon corresponding elements of X and Y */
+#define OPERATORS(_) \
+    /* f  F id */ \
+    _('+',+,0) \
+    _('*',*,1) \
+    _('=',==,1) \
+    /**/
+
+/* perform binary operation F upon corresponding elements of vectors X and Y */
 #define binop(X,F,Y) (binop)(X,*#F,Y)
-#define BINOP(f,F) case f: *elem(z,i) = *elem(x,i) F *elem(y,i); break;
+#define BINOP(f,F,id) case f: *elem(z,i) = *elem(x,i) F *elem(y,i); break;
 arr (binop)(arr x, char f, arr y){
     arr z=copy(x);
     int n=x->dims[0];
     int i;
     for (i=0; i<n; i++){
         switch(f){
-        BINOP('+',+)
-        BINOP('*',*)
+            OPERATORS(BINOP)
         }
     }
     return z;
 }
 #undef BINOP
 
-/* perform binary operation F upon adjacent elements, right to left,
+/* perform binary operation F upon adjacent elements of vector X, right to left,
    reducing vector to a single value */
 #define reduce(F,X) (reduce)(*#F,X)
-#define REDID(f,id) case f: x = id; break;
-#define REDOP(f,F) case f: x = *elem(a,i) F x; break;
+#define REDID(f,F,id) case f: x = id; break;
+#define REDOP(f,F,id) case f: x = *elem(a,i) F x; break;
 int (reduce)(char f, arr a){
-    int n = productdims(a->rank,a->dims);
+    int n = a->dims[0];
     int x;
     int i;
     switch(f){
-    REDID('+',0)
-    REDID('*',1)
+        OPERATORS(REDID)
     }
     if (n) {
         x=*elem(a,n-1);
         for (i=n-2;i>=0;i--){
             switch(f){
-            REDOP('+',+)
-            REDOP('*',*)
+                OPERATORS(REDOP)
             }
         }
     }
@@ -208,17 +214,22 @@ int (reduce)(char f, arr a){
 #undef REDID
 #undef REDOP
 
-/* perform a (2D) matrix multiplication upon x and y */
-arr matmul(arr x, arr y){
+/* perform a (2D) matrix multiplication upon x and y
+   using operations F and G.
+       Z[i,j] = F/ X[i,*] G Y'[j,*]
+ */
+#define matmul(X,F,G,Y) (matmul)(X,*#F,*#G,Y)
+arr (matmul)(arr x, char f, char g, arr y){
     int i,j;
     arr z=array(x->dims[0],y->dims[1]);
+
     y=clone(y);
     transpose2(y);
     for (i=0; i<x->dims[0]; i++){
         for (j=0; j<y->dims[0]; j++){
             arr xs = slice(x,i);
             arr ys = slice(y,j);
-            *elem(z,i,j)=reduce(+,binop(xs,*,ys));
+            *elem(z,i,j)=(reduce)(f,(binop)(xs,g,ys));
             free(xs);
             free(ys);
         }
@@ -338,9 +349,23 @@ int main(){
     {   /* testing reduce() */
         int i,n=3;
         arr a=array(n);
+        arr b;
         for (i=0; i<n; i++)
             *elem(a,i) = i+1;
         printf("%2d\n", reduce(*,a));
+
+        free(a);
+
+        n=6;
+        a=array(n);
+        for (i=0; i<n; i++)
+            *elem(a,i) = 5;
+        b=binop(a,=,a);
+        for (i=0; i<n; i++,printf(" "))
+            printf("%2d", *elem(b,i));
+        printf("\n%2d\n", reduce(=,b));
+        free(a);
+        free(b);
     }
 
     {   /* testing matmul() */
@@ -351,7 +376,7 @@ int main(){
         for (i=0;i<n;i++)
             for (j=0;j<n;j++)
                 *elem(a,i,j) = ((i*n)+j)+1;
-        b = matmul(a,a);
+        b = matmul(a,+,*,a);
         for (i=0;i<n;i++,printf("\n"))
             for (j=0;j<n;j++,printf(" "))
                 printf("%2d",*elem(a,i,j));
@@ -361,6 +386,8 @@ int main(){
                 printf("%2d",*elem(b,i,j));
         printf("\n");
 
+        free(a);
+        free(b);
     }
 
     return 0;
