@@ -1796,6 +1796,11 @@ I *wd(C *s){
     *z++=0;
     R e;}
 
+void cmd(char *s){
+    char *head=strsep(&s," \n");
+    P("cmd:\nhead:%s\n",head);
+    P("%s\n",s?s:"");
+}
 
 /* main{REPL} */
 
@@ -1816,8 +1821,12 @@ int main(){
     infinite = flo(strtod("inf", NULL));
 
     if (isatty(fileno(stdin))) specialtty();
-    while(getln(prompt,&s,&n))
-        pr(ex(wd(s)));
+    while(getln(prompt,&s,&n)){
+        if (s[0]==')')
+            cmd(s+1);
+        else
+            pr(ex(wd(s)));
+    }
     if (isatty(fileno(stdin))) restoretty();
 
     R 0;
