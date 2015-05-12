@@ -22,12 +22,18 @@ int productdims(int rank, int *dims){
     return z;
 }
 
-/* create a new array with specified dimensions */
-#define array(...) (makearr)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
+void loaddimsv(int rank, int dims[], va_list ap){
+    int i;
+    for (i=0; i<rank; i++){
+        dims[i]=va_arg(ap,int);
+    }
+}
 
+/* create a new array with specified dimensions */
+#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
 /* create a new array with specified rank and dimensions
    */
-arr (makearr)(int rank, ...){
+arr (array)(int rank, ...){
     va_list ap;
     //int *dims=calloc(rank,sizeof(int));
     int dims[rank];
@@ -37,9 +43,7 @@ arr (makearr)(int rank, ...){
     arr z;
 
     va_start(ap,rank);
-    for (i=0; i<rank; i++){
-        dims[i]=va_arg(ap,int);
-    }
+    loaddimsv(rank,dims,ap);
     va_end(ap);
 
     datasz=productdims(rank,dims);
@@ -57,6 +61,34 @@ arr (makearr)(int rank, ...){
     }
 
     //free(dims);
+    return z;
+}
+
+/* create an array header to access existing data in multidimensional layout */
+arr cast(int *data, int rank, ...){
+    va_list ap;
+    int dims[rank];
+    int i;
+    int x;
+    arr z;
+
+    va_start(ap,rank);
+    loaddimsv(rank,dims,ap);
+    va_end(ap);
+
+    z=malloc(sizeof(struct arr)
+            + (rank+rank)*sizeof(int));
+
+    z->rank = rank;
+    z->dims = (int *)(((char *)z) + sizeof(struct arr));
+    z->weight = z->dims + rank;
+    z->data = data;
+    memmove(z->dims,dims,rank*sizeof(int));
+    for(x=1, i=rank-1; i>=0; i--){
+        z->weight[i] = x;
+        x *= z->dims[i];
+    }
+
     return z;
 }
 
@@ -81,6 +113,37 @@ void transpose2(arr a){
     //if (a->rank != 2) error();
     t = a->dims[0]; a->dims[0] = a->dims[1]; a->dims[1] = t;
     t = a->weight[0]; a->weight[0] = a->weight[1]; a->weight[1] = t;
+}
+
+/* rotate dims and weights according to sign and magnitude of shift
+   transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D
+ */
+void transpose(int shift, arr a){
+    int i;
+    int t;
+    while(shift){
+        if (shift>0){
+            t=a->dims[0];
+            for (i=1; i<a->rank; i++)
+                a->dims[i-1]=a->dims[i];
+            a->dims[a->rank-1]=t;
+            t=a->weight[0];
+            for (i=1; i<a->rank; i++)
+                a->weight[i-1]=a->weight[i];
+            a->weight[a->rank-1]=t;
+            --shift;
+        } else {
+            t=a->dims[a->rank-1];
+            for (i=a->rank-2; i>=0; i--)
+                a->dims[i+1]=a->dims[i];
+            a->dims[0]=t;
+            t=a->weight[a->rank-1];
+            for (i=a->rank-2; i>=0; i--)
+                a->weight[i+1]=a->weight[i];
+            a->weight[0]=t;
+            ++shift;
+        }
+    }
 }
 
 /* take a (row) slice (in 2D) */
@@ -224,7 +287,7 @@ arr (matmul)(arr x, char f, char g, arr y){
     arr z=array(x->dims[0],y->dims[1]);
 
     y=clone(y);
-    transpose2(y);
+    transpose(1,y);
     for (i=0; i<x->dims[0]; i++){
         for (j=0; j<y->dims[0]; j++){
             arr xs = slice(x,i);
@@ -236,6 +299,14 @@ arr (matmul)(arr x, char f, char g, arr y){
     }
 
     free(y);
+    return z;
+}
+
+arr iota(int n){
+    arr z = array(n);
+    int i;
+    for (i=0;i<n;i++)
+        *elem(z,i)=i;
     return z;
 }
 
@@ -346,6 +417,7 @@ int main(){
     }
 #endif
 
+#if 1
     {   /* testing reduce() */
         int i,n=3;
         arr a=array(n);
@@ -389,6 +461,32 @@ int main(){
         free(a);
         free(b);
     }
+#endif
+
+#if 0
+    {   /* testing cast() */
+        int i,j,k,n=3;
+        int q[n][n][n];
+        arr a=cast((int *)q,3,n,n,n);
+
+        for (i=0;i<n;i++)
+            for (j=0;j<n;j++)
+                for (k=0;k<n;k++)
+                    *elem(a,i,j,k) = n*n*n - ((i*n+j)*n+k);
+        for (i=0;i<n;i++,printf("\n"))
+            for (j=0;j<n;j++,printf("\n"))
+                for (k=0;k<n;k++,printf(" "))
+                    printf("%2d",*elem(a,i,j,k));
+        printf("\n");
+        for (i=0;i<n;i++,printf("\n"))
+            for (j=0;j<n;j++,printf("\n"))
+                for (k=0;k<n;k++,printf(" "))
+                    printf("%2d", q[i][j][k]);
+        printf("\n");
+
+        free(a);
+    }
+#endif
 
     return 0;
 }
