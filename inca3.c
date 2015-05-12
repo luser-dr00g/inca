@@ -1263,8 +1263,17 @@ V2(find){}
 /* length of first dimension */
 V1(size){A z=ga(INT,0,0);*AV(z)=AR(w)?*AD(w):1;R z;}
 /* index */
-V2(from){I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
- A z=ga(AT(w),r,d);mv(AV(z),AV(w)+(n**AV(a)),n);R z;}
+V2(from){
+    if (AT(a)==BOX){
+        DO(AN(a),w=from((A)AV(a)[i],w,0))
+        R w;
+    } else {
+        I r=AR(w)-1,*d=AD(w)+1,n=tr(r,d);
+        A z=ga(AT(w),r,d);
+        mv(AV(z),AV(w)+(n**AV(a)),n);
+        R z;
+    }
+}
 
 /* pack array into a scalar */
 V1(box){A z=ga(BOX,0,0);*AV(z)=(I)w;R z;}
