@@ -10,9 +10,9 @@
 
 /* Basic types */
 typedef unsigned char C;
-typedef intptr_t I;
-typedef uintptr_t U;
-typedef double D;
+typedef intptr_t      I;
+typedef uintptr_t     U;
+typedef double        D;
 typedef struct a{I t, r, n, k, d[1];}*A; /* The abstract array header */
 #define AT(a) ((a)->t)                   /* Type (takes values from enum type) */
 #define AR(a) ((a)->r)                   /* Rank (size of Dims) */
