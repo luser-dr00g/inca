@@ -1448,7 +1448,7 @@ struct st *findsymb(struct st *st, char **s, int mode) {
  */
 #define PREDTAB(_) \
     _( ANY = 1,    qa, 1                                )                       \
-    _( VAR = 2,    qp, abs(a)>256                                               \
+    _( VAR = 2,    qp, (a<0 || a>256)                                           \
                        && AT((A)a)==SYMB                )                       \
     _(NOUN = 4,    qn, abs(a)>256                                               \
                        && AT((A)a)!=SYMB                                        \
@@ -1613,15 +1613,19 @@ A ex(I *e){I a=*e;
             } else { char *s,*p; struct st *tab; A sa=(A)a;
                 s = p = (char*)AV(sa);
                 tab=findsymb(&st,&p,0);
+                if (tab->a==null){
+                    P("Error %s undefined\n",p);
+                    R (A)a;
+                }
                 while(*p){
-                    if (tab==&st){
+                    if (tab==&st || tab->a==null){
                         P("Error %s undefined\n",p);
                         R (A)a;
                     }
-                    if (tab->a!=null){          // found a defined prefix
+                    //if (tab->a!=null){          // found a defined prefix
                         stackpush(lstk,newsymb(s,p-s,2)); //pushback prefix
                         s=p;
-                    }
+                    //}
                     tab=findsymb(&st,&p,0);
                 }
                 stackpush(rstk,tab->a);
@@ -1727,7 +1731,7 @@ A newsymb(C *s,I n,I state){
     //} else if(strchr(ALPHAUPPER ALPHALOWER,*s)) {
     case 2: {
         A z=ga(SYMB,1,(I[]){n+1});
-        mv(AV(z),(I*)s,n+3/4);
+        mv(AV(z),(I*)s,(n+3)/4);
         ((C*)AV(z))[n] = 0;
         R z; }
     //} else {
@@ -1796,10 +1800,30 @@ I *wd(C *s){
     *z++=0;
     R e;}
 
+#define COMMANDS(_) \
+        _(save, { }) \
+        _(undef, if(s){ \
+                    I *e=wd(s); \
+                    while (*e){ \
+                        /*pr((A)*e);*/ \
+                        if (qp(*e)){ \
+                            char *s = (C*)AV((A)*e); \
+                            /*printf("^%d$\n",(int)*s);*/ \
+                            struct st *t=findsymb(&st, &s, 0); \
+                            /*printf("^%d$\n",(int)*s);*/ \
+                            if (!*s){ t->a=null; } \
+                        } \
+                        ++e; \
+                    } \
+                }) \
+        /**/
+
+#define DOIF(n,f) if (strstr(head,#n)==head) {f}
 void cmd(char *s){
-    char *head=strsep(&s," \n");
-    P("cmd:\nhead:%s\n",head);
-    P("%s\n",s?s:"");
+    char *head=strsep(&s," \n"); //strtok
+    /*P("cmd:\nhead:%s\n",head);
+    P("%s\n",s?s:"");*/
+    COMMANDS(DOIF)
 }
 
 /* main{REPL} */
