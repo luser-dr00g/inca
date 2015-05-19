@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ppnarg.h"
+#include "ppnarg.h" //https://github.com/luser-dr00g/inca/ppnarg.h
 
 typedef struct arr {
     int rank;
@@ -19,6 +19,28 @@ int productdims(int rank, int *dims){
     int i,z=1;
     for(i=0; i<rank; i++)
         z *= dims[i];
+    return z;
+}
+
+arr arraya(int rank, int *dims){
+    int datasz;
+    int i;
+    int x;
+    arr z;
+    datasz=productdims(rank,dims);
+    z=malloc(sizeof(struct arr)
+            + (rank+rank+datasz)*sizeof(int));
+
+    z->rank = rank;
+    z->dims = (int*)(((char*)z) + sizeof(struct arr));
+    z->weight = z->dims + rank;
+    z->data = z->weight + rank;
+    memmove(z->dims,dims,rank*sizeof(int));
+    for(x=1, i=rank-1; i>=0; i--){
+        z->weight[i] = x;
+        x *= z->dims[i];
+    }
+
     return z;
 }
 
@@ -37,7 +59,6 @@ arr (array)(int rank, ...){
     va_list ap;
     //int *dims=calloc(rank,sizeof(int));
     int dims[rank];
-    int datasz;
     int i;
     int x;
     arr z;
@@ -46,20 +67,7 @@ arr (array)(int rank, ...){
     loaddimsv(rank,dims,ap);
     va_end(ap);
 
-    datasz=productdims(rank,dims);
-    z=malloc(sizeof(struct arr)
-            + (rank+rank+datasz)*sizeof(int));
-
-    z->rank = rank;
-    z->dims = (int*)(((char*)z) + sizeof(struct arr));
-    z->weight = z->dims + rank;
-    z->data = z->weight + rank;
-    memmove(z->dims,dims,rank*sizeof(int));
-    for(x=1, i=rank-1; i>=0; i--){
-        z->weight[i] = x;
-        x *= z->dims[i];
-    }
-
+    z = arraya(rank,dims);
     //free(dims);
     return z;
 }
@@ -195,6 +203,41 @@ int *elem(arr a, ...){
     return z;
 }
 
+/* compute vector index list for ravel index ind */
+int *vector_index(int ind, int *dims, int n, int *vec){
+    int i,t=ind, *z=vec;
+    for (i=0; i<n; i++){
+        z[n-1-i] = t % dims[n-1-i];
+        t /= dims[n-1-i];
+    }
+    return z;
+}
+
+/* compute ravel index for vector index list */
+int ravel_index(int *vec, int *dims, int n){
+    int i,z=*vec;
+    for (i=0; i<n-1;i++){
+        z*=dims[i+1];
+        z+=vec[i+1];
+    }
+    return z;
+}
+
+/* create a vector of all elements of x followed by all elements of y */
+arr catv(arr x, arr y){
+    int xsz = productdims(x->rank,x->dims);
+    int ysz = productdims(y->rank,y->dims);
+    int datasz = xsz + ysz;
+    arr z=array(datasz);
+    int scratch[x->rank+y->rank];
+    int i;
+    for (i=0; i<xsz; i++)
+        *elem(z,i) = *elema(x,vector_index(i,x->dims,x->rank,scratch));
+    for (i=0; i<ysz; i++)
+        *elem(z,xsz+i) = *elema(y,vector_index(i,y->dims,y->rank,scratch));
+    return z;
+}
+
 /* create a (contiguous) copy of a (not necessarily contiguous)
    existing array
    */
@@ -218,11 +261,15 @@ arr copy(arr a){
 
     for (i=0;i<datasz;i++){
         int j;
+        
+#if 0
         int idx = i;
         for (j=z->rank-1; j>=0; j--) { //generate index
             ind[j] = idx % z->dims[j];
             idx /= z->dims[j];
         }
+#endif
+        vector_index(i,z->dims,z->rank,ind);
         z->data[i] = *elema(a,ind);
     }
 
@@ -277,25 +324,49 @@ int (reduce)(char f, arr a){
 #undef REDID
 #undef REDOP
 
-/* perform a (2D) matrix multiplication upon x and y
+/* perform a (2D) matrix multiplication upon rows of x and columns of y
    using operations F and G.
+       Z = X F.G Y
        Z[i,j] = F/ X[i,*] G Y'[j,*]
+
+   more generally,
+   perform an inner product on arguments of compatible dimension.
+       Z = X[A;B;C;D;E;F] +.* Y[G;H;I;J;K]  |(F = G)
+       Z[A;B;C;D;E;H;I;J;K] = +/ X[A;B;C;D;E;*] * Y[*;H;I;J;K]
  */
 #define matmul(X,F,G,Y) (matmul)(X,*#F,*#G,Y)
 arr (matmul)(arr x, char f, char g, arr y){
     int i,j;
-    arr z=array(x->dims[0],y->dims[1]);
+    //arr z=array(x->dims[0],y->dims[y->rank-1]);
+    arr xdims = cast(x->dims,1,x->rank);
+    arr ydims = cast(y->dims,1,y->rank);
+    xdims->dims[0]--;
+    ydims->dims[0]--;
+    ydims->data++;
+    arr z=arraya(x->rank+y->rank-2,catv(xdims,ydims)->data);
+    int datasz = productdims(z->rank,z->dims);
+    int k=y->dims[0];
+    arr xs = array(k);
+    arr ys = array(k);
 
     y=clone(y);
     transpose(1,y);
-    for (i=0; i<x->dims[0]; i++){
-        for (j=0; j<y->dims[0]; j++){
-            arr xs = slice(x,i);
-            arr ys = slice(y,j);
-            *elem(z,i,j)=(reduce)(f,(binop)(xs,g,ys));
-            free(xs);
-            free(ys);
+
+    for (i=0; i<datasz; i++){
+        int idx[z->rank];
+        vector_index(i,z->dims,z->rank,idx);
+        int *xdex=idx;
+        int *ydex=idx+x->rank;
+        memmove(ydex,ydex-1,y->rank);
+        for (j=0; j<k; j++){
+            xdex[x->rank-1]=j;
+            xs->data[j] = *elema(x,xdex);
         }
+        for (j=0; j<k; j++){
+            ydex[y->rank-1]=j;
+            ys->data[j] = *elema(y,ydex);
+        }
+        z->data[i] = (reduce)(f,(binop)(xs,g,ys));
     }
 
     free(y);
@@ -312,7 +383,7 @@ arr iota(int n){
 
 int main(){
 
-#if 0
+#ifdef TEST_BASIC
     /* testing basic functionality and copies, transposes, and slices */
     int loop;
     for (loop = 0;
@@ -417,7 +488,7 @@ int main(){
     }
 #endif
 
-#if 1
+#ifdef TEST_MATMUL
     {   /* testing reduce() */
         int i,n=3;
         arr a=array(n);
@@ -448,22 +519,42 @@ int main(){
         for (i=0;i<n;i++)
             for (j=0;j<n;j++)
                 *elem(a,i,j) = ((i*n)+j)+1;
+        for (i=0;i<n;i++,printf("\n"))
+            for (j=0;j<n;j++,printf(" "))
+                printf("%3d",*elem(a,i,j));
+        printf("\n");
         b = matmul(a,+,*,a);
         for (i=0;i<n;i++,printf("\n"))
             for (j=0;j<n;j++,printf(" "))
-                printf("%2d",*elem(a,i,j));
-        printf("\n");
-        for (i=0;i<n;i++,printf("\n"))
-            for (j=0;j<n;j++,printf(" "))
-                printf("%2d",*elem(b,i,j));
+                printf("%3d",*elem(b,i,j));
         printf("\n");
 
         free(a);
         free(b);
     }
+
+    {
+        int i,j,k,l,n=2;
+        arr a=iota(n*n*n);
+        arr b=cast(a->data,3,n,n,n);
+        arr c=matmul(b,+,*,b);
+        printf("%d\n",c->rank);
+        for (i=0; i<c->rank; i++,printf(" "))
+            printf("%d",c->dims[i]);
+        printf("\n");
+        for (i=0; i<c->dims[0]; i++,printf("\n"))
+            for (j=0; j<c->dims[1]; j++,printf("\n"))
+                for (k=0; k<c->dims[2]; k++,printf("\n"))
+                    for (l=0; l<c->dims[3]; l++,printf(" "))
+                        printf("%3d", *elem(c,i,j,k,l));
+        printf("\n");
+        free(a);
+        free(b);
+        free(c);
+    }
 #endif
 
-#if 0
+#ifdef TEST_CAST
     {   /* testing cast() */
         int i,j,k,n=3;
         int q[n][n][n];
@@ -485,6 +576,27 @@ int main(){
         printf("\n");
 
         free(a);
+    }
+#endif
+
+#ifdef TEST_IOTA
+    {
+        arr a=iota(12);
+        arr b=catv(a,a);
+        int i;
+        for (i=0;i<b->dims[0];i++,printf(" "))
+            printf("%2d", *elem(b,i));
+
+        arr c=cast(b->data,3,2,3,4);
+        int j,k;
+        for (i=0; i<2; i++,printf("\n"))
+            for (j=0; j<3; j++,printf("\n"))
+                for (k=0; k<4; k++,printf(" "))
+                    printf("%2d", *elem(c,i,j,k));
+
+        free(a);
+        free(b);
+        free(c);
     }
 #endif
 
