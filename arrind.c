@@ -370,6 +370,10 @@ arr (matmul)(arr x, char f, char g, arr y){
     }
 
     free(y);
+    free(xs);
+    free(ys);
+    free(xdims);
+    free(ydims);
     return z;
 }
 
