@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ppnarg.h" //https://github.com/luser-dr00g/inca/ppnarg.h
+#include "ppnarg.h" //https://github.com/luser-dr00g/inca/blob/master/ppnarg.h
 
 typedef struct arr {
     int rank;
