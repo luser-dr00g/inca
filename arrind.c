@@ -353,7 +353,7 @@ arr (matmul)(arr x, char f, char g, arr y){
     transpose(1,y);
 
     for (i=0; i<datasz; i++){
-        int idx[z->rank];
+        int idx[z->rank+2];
         vector_index(i,z->dims,z->rank,idx);
         int *xdex=idx;
         int *ydex=idx+x->rank;
@@ -537,10 +537,15 @@ int main(){
         free(b);
     }
 
-    {
+    {   /* testing matmul with higher dimensional arrays */
         int i,j,k,l,n=2;
         arr a=iota(n*n*n);
         arr b=cast(a->data,3,n,n,n);
+        for (i=0; i<b->dims[0]; i++,printf("\n"))
+            for (j=0; j<b->dims[1]; j++,printf("\n"))
+                for (k=0; k<b->dims[2]; k++,printf(" "))
+                    printf("%3d", *elem(b,i,j,k));
+        printf("\n");
         arr c=matmul(b,+,*,b);
         printf("%d\n",c->rank);
         for (i=0; i<c->rank; i++,printf(" "))
