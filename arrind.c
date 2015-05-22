@@ -13,8 +13,20 @@ typedef struct arr {
     int *data;
 } *arr;
 
-/* multiply together rank integers in dims array
-   */
+int productdims(int rank, int *dims);                   /* multiply together rank integers in dims array */
+arr arraya(int rank, int *dims);                        /* create array given rank and int[] dims */
+void loaddimsv(int rank, int dims[], va_list ap);       /* load rank integers from va_list into int[] dims */
+#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__)    /* create a new array with specified dimensions */
+arr (array)(int rank, ...);             /* create a new array with specified rank and dimensions */
+arr cast(int *data, int rank, ...);     /* create an array header to access existing data in multidimensional layout */
+arr clone(arr a);           /* create a new array which shares the data of an existing array */
+void transpose2(arr a);     /* exchange the leftmost two dimensions (only two in 2D) */
+void transpose(int shift, arr a); /* rotate dims and weights according to sign and magnitude of shift
+                                       transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D */
+arr slice(arr a, int i);    /* take a (row) slice (in 2D) */
+
+
+/* multiply together rank integers in dims array */
 int productdims(int rank, int *dims){
     int i,z=1;
     for(i=0; i<rank; i++)
@@ -22,6 +34,7 @@ int productdims(int rank, int *dims){
     return z;
 }
 
+/* create array given rank and int[] dims */
 arr arraya(int rank, int *dims){
     int datasz;
     int i;
@@ -44,6 +57,7 @@ arr arraya(int rank, int *dims){
     return z;
 }
 
+/* load rank integers from va_list into int[] dims */
 void loaddimsv(int rank, int dims[], va_list ap){
     int i;
     for (i=0; i<rank; i++){
@@ -51,10 +65,7 @@ void loaddimsv(int rank, int dims[], va_list ap){
     }
 }
 
-/* create a new array with specified dimensions */
-#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
-/* create a new array with specified rank and dimensions
-   */
+/* create a new array with specified rank and dimensions */
 arr (array)(int rank, ...){
     va_list ap;
     //int *dims=calloc(rank,sizeof(int));
@@ -72,19 +83,9 @@ arr (array)(int rank, ...){
     return z;
 }
 
-/* create an array header to access existing data in multidimensional layout */
-arr cast(int *data, int rank, ...){
-    va_list ap;
-    int dims[rank];
-    int i;
-    int x;
-    arr z;
-
-    va_start(ap,rank);
-    loaddimsv(rank,dims,ap);
-    va_end(ap);
-
-    z=malloc(sizeof(struct arr)
+arr casta(int *data, int rank, int dims[]){
+    int i,x;
+    arr z=malloc(sizeof(struct arr)
             + (rank+rank)*sizeof(int));
 
     z->rank = rank;
@@ -100,8 +101,22 @@ arr cast(int *data, int rank, ...){
     return z;
 }
 
-/* create a new array which shares the data of an existing array
-   */
+/* create an array header to access existing data in multidimensional layout */
+arr cast(int *data, int rank, ...){
+    va_list ap;
+    int dims[rank];
+    int i;
+    int x;
+    arr z;
+
+    va_start(ap,rank);
+    loaddimsv(rank,dims,ap);
+    va_end(ap);
+
+    return casta(data, rank, dims);
+}
+
+/* create a new array which shares the data of an existing array */
 arr clone(arr a){
     arr z=malloc(sizeof(struct arr)
             + (a->rank+a->rank)*sizeof(int));
@@ -114,8 +129,7 @@ arr clone(arr a){
     return z;
 }
 
-/* exchange the leftmost two dimensions (only two in 2D)
-   */
+/* exchange the leftmost two dimensions (only two in 2D) */
 void transpose2(arr a){
     int t;
     //if (a->rank != 2) error();
@@ -124,8 +138,7 @@ void transpose2(arr a){
 }
 
 /* rotate dims and weights according to sign and magnitude of shift
-   transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D
- */
+   transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D */
 void transpose(int shift, arr a){
     int i;
     int t;
@@ -166,6 +179,44 @@ arr slice(arr a, int i){
     memmove(z->weight,a->weight+1,z->rank*sizeof(int));
     z->data = a->data + i*a->weight[0];
     return z;
+}
+
+/* take a computed slice of a following spec[] instructions
+   if spec[i] >= 0 and spec[i] < a->rank, then spec[i] selects
+      that index from dimension i.
+   if spec[i] == -1, then spec[i] selects the entire dimension i.
+ */
+arr slicea(arr a, int spec[]){
+    int i,j;
+    int rank;
+    for (i=0,rank=0; i<a->rank; i++)
+        rank+=spec[i]==-1;
+    int dims[rank];
+    int weight[rank];
+    for (i=0,j=0; i<rank; i++,j++){
+        while (spec[j]!=-1) j++;
+        if (j>=a->rank) break;
+        dims[i] = a->dims[j];
+        weight[i] = a->weight[j];
+    }
+    arr z = casta(a->data, rank, dims);
+    memcpy(z->weight,weight,rank*sizeof(int));
+    for (j=0; j<a->rank; j++){
+        if (spec[j]!=-1)
+            z->data += spec[j] * a->weight[j];
+    }
+    return z;
+}
+
+/* prepend extra unit dimensions to a */
+arr extend(arr a, int extra){
+    int rank = a->rank + extra;
+    int dims[rank];
+    int i;
+    for (i=0; i<extra; i++)
+        dims[i] = 1;
+    memmove(dims+extra, a->dims, a->rank*sizeof(int));
+    return casta(a->data, rank, dims);
 }
 
 /* access element of a indexed by int[] */
@@ -377,6 +428,7 @@ arr (matmul)(arr x, char f, char g, arr y){
     return z;
 }
 
+/* generate an index vector 0..n-1 */
 arr iota(int n){
     arr z = array(n);
     int i;
@@ -595,6 +647,7 @@ int main(){
         int i;
         for (i=0;i<b->dims[0];i++,printf(" "))
             printf("%2d", *elem(b,i));
+        printf("\n");
 
         arr c=cast(b->data,3,2,3,4);
         int j,k;
@@ -602,6 +655,73 @@ int main(){
             for (j=0; j<3; j++,printf("\n"))
                 for (k=0; k<4; k++,printf(" "))
                     printf("%2d", *elem(c,i,j,k));
+
+        free(a);
+        free(b);
+        free(c);
+    }
+#endif
+
+#ifdef TEST_SLICE
+    {
+        int n=4;
+        arr a=iota(n*n*n);
+        arr b=cast(a->data, 3, n,n,n);
+        arr c=NULL;
+        int i,j,k;
+
+#if 0
+        for (i=0; i<n; i++,printf("\n"))
+            for (j=0; j<n; j++,printf("\n"))
+                for (k=0; k<n; k++,printf(" "))
+                    printf("%2d", *elem(b,i,j,k));
+        printf("\n");
+#endif
+
+        for (k=0; k<n; k++){
+            free(c);
+            c=slicea(b,(int[]){k,-1,-1});
+            printf("%d;-1;-1\n",k);
+            for (i=0; i<n; i++,printf("\n"))
+                for (j=0; j<n; j++,printf(" "))
+                    printf("%2d", *elem(c,i,j));
+            printf("\n");
+        }
+
+        for (k=0; k<n; k++){
+            free(c);
+            c=slicea(b,(int[]){-1,0,k});
+            printf("-1;0;%d\n",k);
+            printf("d:%d w:%d\n", c->dims[0], c->weight[0]);
+            for (i=0; i<n; i++,printf(" "))
+                printf("%2d", *elem(c,i));
+            printf("\n");
+        }
+
+        for (k=0; k<n; k++){
+            free(c);
+            c=slicea(b,(int[]){-1,k,0});
+            printf("-1;%d;0\n",k);
+            for (i=0; i<n; i++,printf(" "))
+                printf("%2d", *elem(c,i));
+            printf("\n");
+        }
+
+        for (k=0; k<n; k++){
+            free(c);
+            c=slicea(b,(int[]){k,-1,k});
+            printf("%d;-1;%d\n",k,k);
+            for (i=0; i<n; i++,printf(" "))
+                printf("%2d", *elem(c,i));
+            printf("\n");
+        }
+        for (k=0; k<n; k++){
+            free(c);
+            c=slicea(b,(int[]){k,k,k});
+            printf("%d;%d;%d\n",k,k,k);
+            printf("%2d", *elem(c));
+            printf("\n");
+        }
 
         free(a);
         free(b);
