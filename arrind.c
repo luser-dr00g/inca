@@ -13,27 +13,32 @@ typedef struct arr {
     int *data;
 } *arr;
 
-int productdims(int rank, int *dims);                   /* multiply together rank integers in dims array */
-void loaddimsv(int rank, int dims[], va_list ap);       /* load rank integers from va_list into int[] dims */
-#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__)    /* create a new array with specified dimensions */
+int productdims(int rank, int *dims);               /* multiply together rank integers in dims array */
+void loaddimsv(int rank, int dims[], va_list ap);   /* load rank integers from va_list into int[] dims */
+
+#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__) /* create a new array with specified dimensions */
 arr (array)(int rank, ...);             /* create a new array with specified rank and dimensions */
-arr arraya(int rank, int *dims);        /* create array given rank and int[] dims */
-arr cast(int *data, int rank, ...);     /* create an array header to access existing data in multidimensional layout */
+arr arraya(int rank, int dims[]);        /* create array given rank and int[] dims */
+arr casta(int *data, int rank, int dims[]);
+arr cast(int *data, int rank, ...); /* create an array header to access existing data in multidimensional layout */
 arr clone(arr a);               /* create a new array which shares the data of an existing array */
+arr copy(arr a);                /* create a (contiguous) copy of a (not necessarily contiguous) existing array */
 
 void transpose2(arr a);         /* exchange the leftmost two dimensions (only two in 2D) */
 void transpose(int shift, arr a); /* rotate dims and weights according to sign and magnitude of shift
                                        transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D */
 arr slice(arr a, int i);        /* take a (row) slice (in 2D) */
-arr slicea(arr a, int spec[]);  /* take a computed slice of a following spec[] instructions
+arr slicea(arr a, int spec[]);  /* take a computed slice of a following spec[] instructions */
 arr extend(arr a, int extra);   /* prepend extra unit dimensions to a */
+
 int *elem(arr a, ...);          /* access element of a indexed by integer arguments */
 int *elema(arr a, int *ind);    /* access element of a indexed by int[] */
 int *elemv(arr a, va_list ap);  /* access element of a indexed by va_list */
+
 int *vector_index(int ind, int *dims, int n, int *vec); /* compute vector index list for ravel index ind */
 int ravel_index(int *vec, int *dims, int n);            /* compute ravel index for vector index list */
+
 arr catv(arr x, arr y);         /* create a vector of all elements of x followed by all elements of y */
-arr copy(arr a);                /* create a (contiguous) copy of a (not necessarily contiguous) existing array */
 arr iota(int n);                /* generate an index vector 0..n-1 */
 
 #define OPERATORS(_) \
@@ -65,7 +70,7 @@ int productdims(int rank, int *dims){
 }
 
 /* create array given rank and int[] dims */
-arr arraya(int rank, int *dims){
+arr arraya(int rank, int dims[]){
     int datasz;
     int i;
     int x;
@@ -113,6 +118,7 @@ arr (array)(int rank, ...){
     return z;
 }
 
+/* create an array header to access existing data in multidimensional layout */
 arr casta(int *data, int rank, int dims[]){
     int i,x;
     arr z=malloc(sizeof(struct arr)
@@ -339,15 +345,6 @@ arr copy(arr a){
     }
 
     for (i=0;i<datasz;i++){
-        int j;
-        
-#if 0
-        int idx = i;
-        for (j=z->rank-1; j>=0; j--) { //generate index
-            ind[j] = idx % z->dims[j];
-            idx /= z->dims[j];
-        }
-#endif
         vector_index(i,z->dims,z->rank,ind);
         z->data[i] = *elema(a,ind);
     }
@@ -406,7 +403,6 @@ int (reduce)(char f, arr a){
  */
 arr (matmul)(arr x, char f, char g, arr y){
     int i,j;
-    //arr z=array(x->dims[0],y->dims[y->rank-1]);
     arr xdims = cast(x->dims,1,x->rank);
     arr ydims = cast(y->dims,1,y->rank);
     xdims->dims[0]--;
@@ -415,30 +411,23 @@ arr (matmul)(arr x, char f, char g, arr y){
     arr z=arraya(x->rank+y->rank-2,catv(xdims,ydims)->data);
     int datasz = productdims(z->rank,z->dims);
     int k=y->dims[0];
-    arr xs = array(k);
-    arr ys = array(k);
-
-    y=clone(y);
-    transpose(1,y);
+    arr xs = NULL;
+    arr ys = NULL;
 
     for (i=0; i<datasz; i++){
-        int idx[z->rank+2];
+        int idx[x->rank+y->rank];
         vector_index(i,z->dims,z->rank,idx);
         int *xdex=idx;
-        int *ydex=idx+x->rank;
-        memmove(ydex,ydex-1,y->rank);
-        for (j=0; j<k; j++){
-            xdex[x->rank-1]=j;
-            xs->data[j] = *elema(x,xdex);
-        }
-        for (j=0; j<k; j++){
-            ydex[y->rank-1]=j;
-            ys->data[j] = *elema(y,ydex);
-        }
+        int *ydex=idx+x->rank-1;
+        memmove(ydex+1,ydex,y->rank);
+        xdex[x->rank-1] = -1;
+        free(xs);
+        free(ys);
+        xs = slicea(x,xdex);
+        ys = slicea(y,ydex);
         z->data[i] = (reduce)(f,(binop)(xs,g,ys));
     }
 
-    free(y);
     free(xs);
     free(ys);
     free(xdims);
