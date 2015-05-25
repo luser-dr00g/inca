@@ -444,6 +444,60 @@ arr iota(int n){
     return z;
 }
 
+int iscontiguous(arr a){
+    int i,x;
+    for (i=a->rank-1,x=1; i>=0; i--){
+        if (a->weight[i] != x)
+            return 0;
+        x *= a->dims[i];
+    }
+    return 1;
+}
+
+void print(arr a, int width){
+    int i;
+    int maxwidth;
+    int freecopy = 0;
+
+    if (width){
+        maxwidth=width;
+    } else {
+        int datasz = productdims(a->rank,a->dims);
+
+        if (!iscontiguous(a)) {
+            a = copy(a);
+            freecopy = 1;
+        }
+
+        maxwidth=0;
+        for (i=0; i<datasz; i++){
+            int size = snprintf(NULL,0,"%d",a->data[i]);
+            if (size > maxwidth)
+                maxwidth = size;
+        }
+    }
+
+    switch(a->rank){
+    case 0: printf("%*d\n", maxwidth, *a->data);
+            break;
+    case 1: for (i=0; i<a->dims[0]; i++)
+                printf("%*d ", maxwidth, *elem(a,i));
+            break;
+    default:
+            for (i=0; i<a->dims[0]; i++){
+                arr as = slice(a,i);
+                print(as,maxwidth);
+                printf("\n");
+                free(as);
+            }
+            break;
+    }
+    
+    if (freecopy)
+        free(a);
+}
+
+
 int main(){
 
 #ifdef TEST_BASIC
@@ -733,6 +787,24 @@ int main(){
         free(a);
         free(b);
         free(c);
+    }
+#endif
+
+#ifdef TEST_PRINT
+    {
+        arr a = iota(27);
+        arr b = casta(a->data, 3, (int[]){3,3,3});
+        print(b,0);
+
+        free(b);
+        free(a);
+
+        a = iota(64);
+        b = casta(a->data, 4, (int[]){2,2,2,2});
+        print(b,0);
+
+        free(b);
+        free(a);
     }
 #endif
 
