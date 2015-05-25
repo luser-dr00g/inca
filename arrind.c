@@ -482,6 +482,8 @@ void print(arr a, int width){
             break;
     case 1: for (i=0; i<a->dims[0]; i++)
                 printf("%*d ", maxwidth, *elem(a,i));
+            if (width==0) /* is this the top-level call? */
+                printf("\n");
             break;
     default:
             for (i=0; i<a->dims[0]; i++){
@@ -801,6 +803,14 @@ int main(){
 
         a = iota(64);
         b = casta(a->data, 4, (int[]){2,2,2,2});
+        print(b,0);
+
+        free(b);
+        free(a);
+
+        a = iota(12);
+        print(a,0);
+        b = casta(a->data, 2, (int[]){3,4});
         print(b,0);
 
         free(b);
