@@ -6,59 +6,126 @@
 #include <string.h>
 #include "ppnarg.h" //https://github.com/luser-dr00g/inca/blob/master/ppnarg.h
 
+
+/* the array header data structure */
 typedef struct arr {
-    int rank;
-    int *dims;
-    int *weight;
-    int *data;
+    int rank;       // number of dimensions
+    int *dims;      // size of each dimension
+    int *weight;    // corresponding coefficient in the indexing formula
+    int *data;      // address of first array element
 } *arr;
 
-int productdims(int rank, int *dims);               /* multiply together rank integers in dims array */
-void loaddimsv(int rank, int dims[], va_list ap);   /* load rank integers from va_list into int[] dims */
 
-#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__) /* create a new array with specified dimensions */
-arr (array)(int rank, ...);             /* create a new array with specified rank and dimensions */
-arr arraya(int rank, int dims[]);        /* create array given rank and int[] dims */
+/* helper functions */
+
+/* multiply together rank integers in dims array */
+int productdims(int rank, int *dims);
+
+/* load rank integers from va_list into int[] dims */
+void loaddimsv(int rank, int dims[], va_list ap);
+
+
+/* constructor functions */
+
+/* create a new array with specified dimensions */
+#define array(...) (array)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
+
+/* create a new self-contained array
+   with specified rank and dimensions */
+arr (array)(int rank, ...);
+
+/* create a new self-contained array
+   with specified rank and int[] dims */
+arr arraya(int rank, int dims[]);
+
+/* create an array header to access
+   existing data in multidimensional layout */
 arr casta(int *data, int rank, int dims[]);
-arr cast(int *data, int rank, ...); /* create an array header to access existing data in multidimensional layout */
-arr clone(arr a);               /* create a new array which shares the data of an existing array */
-arr copy(arr a);                /* create a (contiguous) copy of a (not necessarily contiguous) existing array */
+arr cast(int *data, int rank, ...);
 
-void transpose2(arr a);         /* exchange the leftmost two dimensions (only two in 2D) */
-void transpose(int shift, arr a); /* rotate dims and weights according to sign and magnitude of shift
-                                       transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D */
-arr slice(arr a, int i);        /* take a (row) slice (in 2D) */
-arr slicea(arr a, int spec[]);  /* take a computed slice of a following spec[] instructions */
-arr extend(arr a, int extra);   /* prepend extra unit dimensions to a */
+/* create a an array header which shares the data of an existing array */
+arr clone(arr a);
 
-int *elem(arr a, ...);          /* access element of a indexed by integer arguments */
-int *elema(arr a, int *ind);    /* access element of a indexed by int[] */
-int *elemv(arr a, va_list ap);  /* access element of a indexed by va_list */
+/* create a new self-contained (contiguous) copy
+   of a (not necessarily contiguous) existing array */
+arr copy(arr a);
 
-int *vector_index(int ind, int *dims, int n, int *vec); /* compute vector index list for ravel index ind */
-int ravel_index(int *vec, int *dims, int n);            /* compute ravel index for vector index list */
 
-arr catv(arr x, arr y);         /* create a vector of all elements of x followed by all elements of y */
-arr iota(int n);                /* generate an index vector 0..n-1 */
+/* manipulation */
 
+/* exchange the leftmost two dimensions (only two in 2D) */
+void transpose2(arr a);
+
+/* rotate dims and weights according to sign and magnitude of shift
+   transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D */
+void transpose(int shift, arr a);
+
+/* take a (row) slice (in 2D) */
+arr slice(arr a, int i);
+
+/* take a computed slice of a following spec[] instructions */
+arr slicea(arr a, int spec[]);
+
+/* prepend extra unit dimensions to a */
+arr extend(arr a, int extra);
+
+
+/* accessing */
+
+/* access element of a indexed by int[] */
+int *elema(arr a, int *ind);
+
+/* access element of a indexed by va_list */
+int *elemv(arr a, va_list ap);
+
+/* access element of a indexed by integer arguments */
+int *elem(arr a, ...);
+
+
+/* converting index formats */
+
+/* compute vector index list for ravel index ind */
+int *vector_index(int ind, int *dims, int n, int *vec);
+
+/* compute ravel index for vector index list */
+int ravel_index(int *vec, int *dims, int n);
+
+
+/* utility */
+
+/* create a vector of all elements of x followed by all elements of y */
+arr catv(arr x, arr y);
+
+/* generate an index vector 0..n-1 */
+arr iota(int n);
+
+
+/* math functions */
+
+/* operators defined for F and G arguments of binop, reduce, matmul */
 #define OPERATORS(_) \
     /* f  F id */ \
-    _('+',+,0) \
-    _('*',*,1) \
+    _('+',+, 0) \
+    _('*',*, 1) \
     _('=',==,1) \
     /**/
 
+/* perform binary operation F upon corresponding elements of vectors X and Y */
 #define binop(X,F,Y) (binop)(X,*#F,Y)
-arr (binop)(arr x, char f, arr y); /* perform binary operation F upon corresponding elements of vectors X and Y */
+arr (binop)(arr x, char f, arr y);
 
+/* perform binary operation F upon adjacent elements of vector X,
+   right to left, reducing vector to a single value */
 #define reduce(F,X) (reduce)(*#F,X)
-int (reduce)(char f, arr a); /* perform binary operation F upon adjacent elements of vector X, right to left,
-                                   reducing vector to a single value */
+int (reduce)(char f, arr a);
 
+/* perform a (2D) matrix multiplication upon rows of x
+   and columns of y using operations F and G.
+   more generally, perform an inner product
+   on arguments of compatible dimension.  */
 #define matmul(X,F,G,Y) (matmul)(X,*#F,*#G,Y)
 arr (matmul)(arr x, char f, char g, arr y);
-        /* perform a (2D) matrix multiplication upon rows of x and columns of y using operations F and G.
-           more generally, perform an inner product on arguments of compatible dimension.  */
+
 
 
 /* multiply together rank integers in dims array */
