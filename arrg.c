@@ -54,7 +54,12 @@ A xt(A a,I x){ I r=a->r+x; I d[r];
 A iot(I n){ A z=ar(n); DO(n,*el(z,i)=i) R z; } /* index generator */
 
 A xp(A a,I*j){
-} /* transpose */
+    I d[a->r]; I w[a->r];
+    DO(a->r, d[i]=a->d[j[i]];
+             w[i]=a->w[j[i]])
+    A z=ah(a->r,d,0);
+    memcpy(z->w,w,a->r*sizeof(I));
+    z->p=a->p; R z; } /* transpose */
 
 A sl0(A a,I x){ I r=a->r-1; A z=ah(r,a->d+1,0);
     memcpy(z->w,a->w+1,r*sizeof(I));
@@ -126,5 +131,7 @@ int main(){
     pr(b,0);
     A c=sl(b,(I[]){0,1,1},(I[]){0,2,3});
     pr(c,0);
+    A d=xp(c,(I[]){1,0});
+    pr(d,0);
     return 0;
 }
