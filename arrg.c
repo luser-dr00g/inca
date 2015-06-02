@@ -10,7 +10,7 @@ typedef struct a{I r,*d,*w,*p;}*A;
 I tr(I r,I*d){ I z=1; DO(r,z*=d[i]) R z; } /* productdims */
 dw(I r,I*d,I*w){ I x=1; DO(r,w[r-1-i]=x; x*=d[r-1-i]) } /* calculate weights */
 A ah(I r,I*d,I sz){ A z=malloc((sizeof*z)+(sizeof(I)*(r+r+sz))); /* array header + sz extra */
-    z->r=r; z->d=(I*)(((C*)z)+sizeof*z); z->w=z->d+r; z->p=NULL;
+    z->r=r; z->d=(I*)(z+1); z->w=z->d+r; z->p=NULL;
     memcpy(z->d,d,r*sizeof(I)); dw(r,d,z->w); R z; }
 A ara(I r,I*d){ I sz=tr(r,d); A z=ah(r,d,sz); z->p=z->w+r; R z; } /* arraya */
 dv(I r,I*d,va_list v){ DO(r,d[i]=va_arg(v,I)) } /* loaddimsv */
@@ -57,7 +57,7 @@ A xp(A a,I*j){
     I d[a->r]; I w[a->r];
     DO(a->r, d[i]=a->d[j[i]];
              w[i]=a->w[j[i]])
-    A z=caa(a->p,r,d);
+    A z=caa(a->p,a->r,d);
     memcpy(z->w,w,a->r*sizeof(I)); R z; } /* transpose */
 
 A sl0(A a,I x){ I r=a->r-1; A z=ah(r,a->d+1,0);
