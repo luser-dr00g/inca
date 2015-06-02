@@ -57,9 +57,8 @@ A xp(A a,I*j){
     I d[a->r]; I w[a->r];
     DO(a->r, d[i]=a->d[j[i]];
              w[i]=a->w[j[i]])
-    A z=ah(a->r,d,0);
-    memcpy(z->w,w,a->r*sizeof(I));
-    z->p=a->p; R z; } /* transpose */
+    A z=caa(a->p,r,d);
+    memcpy(z->w,w,a->r*sizeof(I)); R z; } /* transpose */
 
 A sl0(A a,I x){ I r=a->r-1; A z=ah(r,a->d+1,0);
     memcpy(z->w,a->w+1,r*sizeof(I));
