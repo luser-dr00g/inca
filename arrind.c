@@ -60,11 +60,17 @@ void transpose2(arr a);
    transpose(1,a)==transpose(-1,a)==transpose2(a) for 2D */
 void transpose(int shift, arr a);
 
+/* select new order of dimensions according to spec[] instructions */
+void transposea(arr a, int spec[]);
+
 /* take a (row) slice (in 2D) */
 arr slice(arr a, int i);
 
 /* take a computed slice of a following spec[] instructions */
 arr slicea(arr a, int spec[]);
+
+/* select one or more or all indices from dimensions from s[] to f[] */
+arr slices(arr a, int s[], int f[]);
 
 /* prepend extra unit dimensions to a */
 arr extend(arr a, int extra);
@@ -270,6 +276,19 @@ void transpose(int shift, arr a){
     }
 }
 
+/* select new order of dimensions according to spec[] instructions */
+void transposea(arr a, int spec[]){
+    int dims[a->rank];
+    int weight[a->rank];
+    int i;
+    for (i=0; i<a->rank; i++){
+        dims[i] = a->dims[spec[i]];
+        weight[i] = a->dims[spec[i]];
+    }
+    memcpy(a->dims,dims,a->rank*sizeof(int));
+    memcpy(a->weight,weight,a->rank*sizeof(int));
+}
+
 /* take a (row) slice (in 2D) */
 arr slice(arr a, int i){
     int rank = a->rank-1;
@@ -278,8 +297,8 @@ arr slice(arr a, int i){
     z->rank = rank;
     z->dims = (int*)(((char*)z) + sizeof(struct arr));
     z->weight = z->dims + z->rank;
-    memmove(z->dims,a->dims+1,z->rank*sizeof(int));
-    memmove(z->weight,a->weight+1,z->rank*sizeof(int));
+    memcpy(z->dims,a->dims+1,z->rank*sizeof(int));
+    memcpy(z->weight,a->weight+1,z->rank*sizeof(int));
     z->data = a->data + i*a->weight[0];
     return z;
 }
@@ -311,6 +330,30 @@ arr slicea(arr a, int spec[]){
     return z;
 }
 
+/* select one or more or all indices from dimensions from s[] to f[] */
+arr slices(arr a, int s[], int f[]){
+    int rank=0;
+    int i;
+    for (i=0; i<a->rank; i++){
+        rank += s[i] != f[i];
+    }
+    int dims[rank];
+    int weight[rank];
+    int j=0;
+    for (i=0; i<rank; i++){
+        while (s[j]==f[j]) ++j;
+        dims[i] = 1 + ( s[j]<f[j] ? f[j]-s[j] : s[j]-f[j] );
+        weight[i] =     s[j]<f[j] ? a->weight[j] : -a->weight[j];
+        ++j;
+    }
+    arr z = casta(a->data, rank, dims);
+    memcpy(z->weight, weight, rank*sizeof(int));
+    for (i=0; i<a->rank; i++){
+        z->data += s[i] * a->weight[i];
+    }
+    return z;
+}
+
 /* prepend extra unit dimensions to a */
 arr extend(arr a, int extra){
     int rank = a->rank + extra;
@@ -318,7 +361,7 @@ arr extend(arr a, int extra){
     int i;
     for (i=0; i<extra; i++)
         dims[i] = 1;
-    memmove(dims+extra, a->dims, a->rank*sizeof(int));
+    memcpy(dims+extra, a->dims, a->rank*sizeof(int));
     return casta(a->data, rank, dims);
 }
 
@@ -882,6 +925,21 @@ int main(){
 
         free(b);
         free(a);
+    }
+#endif
+
+#ifdef TEST_NEWFUNCS
+    {
+        arr a = iota(27);
+        print(a,0);
+        arr b = cast(a->data, 3, 3,3,3);
+        print(b,0);
+        arr c = slices(b, (int[]){1,1,1}, (int[]){1,2,0});
+        print(c,0);
+        arr d = clone(b);
+        transposea(d,(int[]){2,1,0});
+        print(d,0);
+
     }
 #endif
 
