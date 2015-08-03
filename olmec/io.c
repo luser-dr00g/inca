@@ -1,3 +1,4 @@
+//cf. https://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding
 //cf. http://www.ietf.org/rfc/rfc3629.txt p.3
 #include<stdlib.h>
 #include <stdio.h>

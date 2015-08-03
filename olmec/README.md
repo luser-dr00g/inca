@@ -3,6 +3,9 @@
 The problem I ran into with inca3 appears to be lack of overall design.
 So, starting over (yet again), inca4 will start with design. Simple,
 flexible pieces. The very start is UTF-8, the basis of the I/O module.
+It has been reviewed extensively
+(https://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding).
+
 In fact, these first pieces shall be part of a library from which the
 application will draw. Older than the Inca were the Olmec (according to the
 Belgian anime The Lost Cities of Gold).
