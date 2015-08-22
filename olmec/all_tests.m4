@@ -8,7 +8,6 @@ define(`_foreach', `ifelse(`$2', `()', `',
     `define(`$1', _arg1$2)$3`'$0(`$1', (shift$2), `$3')')')
 
 define(`UNITS', (patsubst(UNITS,`\W',`,')))
-define(`HASH', `#')dnl
 
 divert`'dnl
 `#' include <stdio.h>
@@ -31,5 +30,3 @@ int main(){
         0 foreach(`unit', UNITS, ` || unit`'_test() ') ;
 }
 
-undefine(`HASH')dnl
-undefine(`UNITS')dnl

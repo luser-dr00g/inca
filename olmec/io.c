@@ -12,13 +12,13 @@
  */
 
 enum errinfo {
-    no_error = 0,
-    invalid_encoding = 1,
-    invalid_extended_encoding = 2,
-    buffer_alloc_fail = 4,
-    bad_following_character = 8,
-    over_length_encoding = 16,
-    code_point_out_of_range = 32,
+no_error = 0,
+invalid_encoding = 1,
+invalid_extended_encoding = 2,
+buffer_alloc_fail = 4,
+bad_following_character = 8,
+over_length_encoding = 16,
+code_point_out_of_range = 32,
 };
 int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo);
 char *utf8(int32_t *ar, int n, int *an, enum errinfo *errinfo);
@@ -133,19 +133,18 @@ char *utf8(int32_t *ar, int n, int *an, enum errinfo *errinfo){
 #include "minunit.h"
 int tests_run = 0;
 
-#define test_case(c) if(c)return #c;
 static char *test_leading0s(){
     //int i;for(i=0;i<256;i++)printf("%d <%x>,nlz %d,nlo %d\n",i,i,leading0s(i),leading0s(i^0xFF));
-    test_case(leading0s(0)!=8)
-    test_case(leading0s(1)!=7)
-    test_case(leading0s(2)!=6)
-    test_case(leading0s(4)!=5)
-    test_case(leading0s(8)!=4)
-    test_case(leading0s(16)!=3)
-    test_case(leading0s(32)!=2)
-    test_case(leading0s(64)!=1)
-    test_case(leading0s(128)!=0)
-    //test_case(2!="baloney")
+    test_case(leading0s(0)!=8);
+    test_case(leading0s(1)!=7);
+    test_case(leading0s(2)!=6);
+    test_case(leading0s(4)!=5);
+    test_case(leading0s(8)!=4);
+    test_case(leading0s(16)!=3);
+    test_case(leading0s(32)!=2);
+    test_case(leading0s(64)!=1);
+    test_case(leading0s(128)!=0);
+    //test_case(2!="baloney");
     return 0;
 }
 
@@ -158,9 +157,9 @@ static char *test_leading0s(){
 static char *test_utf8(){
 #define UTF_TEST(str,ints,size) \
     test_case(strcmp(str, \
-                     utf8(ints,size,NULL,NULL)))
+                     utf8(ints,size,NULL,NULL)));
 /*  test_case(strcmp("abc",
-                     utf8((int[]){97,98,99},3,NULL,NULL))) */
+                     utf8((int[]){97,98,99},3,NULL,NULL))); */
     UNI_EQUS(UTF_TEST)
     return 0;
 }
@@ -170,10 +169,10 @@ static char *test_ucs4(){
 #define UCS_TEST(str,ints,size) \
     test_case(memcmp(ints, \
                      ucs4(str,size,NULL,NULL), \
-                     size*sizeof(int)))
+                     size*sizeof(int)));
 /*  test_case(memcmp((int[]){97,98,99},
                      ucs4("abc",3,NULL,NULL),
-                     3*sizeof(int))) */
+                     3*sizeof(int))); */
     UNI_EQUS(UCS_TEST)
     return 0;
 }
@@ -183,18 +182,18 @@ static char *test_ucs4(){
 static char *test_transit(){
 #define UTF_UCS_TEST(str,ints,size) \
     test_case(strcmp(str, \
-                     utf8(ucs4(str,size,NULL,NULL),size,NULL,NULL)))
+                     utf8(ucs4(str,size,NULL,NULL),size,NULL,NULL)));
 /*  test_case(strcmp("abc",
-                     utf8(ucs4("abc",3,NULL,NULL),3,NULL,NULL))) */
+                     utf8(ucs4("abc",3,NULL,NULL),3,NULL,NULL))); */
     UNI_EQUS(UTF_UCS_TEST)
 
 #define UCS_UTF_TEST(str,ints,size) \
     test_case(memcmp(ints, \
                      ucs4(utf8(ints,size,NULL,NULL),size,NULL,NULL), \
-                     size*sizeof(int)))
+                     size*sizeof(int)));
 /*  test_case(memcmp((int[]){97,98,99},
                      ucs4(utf8((int[]){97,98,99},3,NULL,NULL),3,NULL,NULL),
-                     3*sizeof(int))) */
+                     3*sizeof(int))); */
     UNI_EQUS(UCS_UTF_TEST)
     return 0;
 }
@@ -219,7 +218,6 @@ int main() {
     printf("Tests run: %d\n", tests_run);
     return result != 0;
 
-    return 0;
 }
 
 #endif //defined TESTMODULE
