@@ -13,7 +13,7 @@ int hash(int x){
 }
 
 #define RETURN_TAB_I_IF_EQ_K_OR_NULL \
-    if (st->tab[i]->key == k || st->tab[i]->key == 0) \
+    if (st->tab[i] == NULL || st->tab[i]->key == k) \
         return &st->tab[i];
 
 ST *hashlookup(ST st, int k){
@@ -77,14 +77,44 @@ ST findsymb(ST st, int **sp, int *n, int mode){
 }
 
 #ifdef TESTMODULE
+#include "minunit.h"
+int tests_run = 0;
+
 struct st st = { .key = 0, .val = 0, .n = 10, .tab=(struct st *[10]){0} };
-int main() {
+
+static char *test_put_get(){
     int array[] = {48,49,50};
-    int *symb = array;
+    int *symb;
     int n = 3;
     ST t;
+
+    symb = array;
     t = findsymb(&st,&symb,&n,1);
+    t->key = 42;
+
+    symb = array;
     t = findsymb(&st,&symb,&n,0);
+    test_case(t->key != 42);
+
+    return 0;
 }
-#endif
+
+static char *all_tests(){
+    mu_run_test(test_put_get);
+    return 0;
+}
+
+int main() {
+
+    char *result=all_tests();
+    if (result != 0) {
+        printf("%s\n",result);
+    } else {
+        printf("ALL TESTS PASSED\n");
+    }
+    printf("Tests run: %d\n", tests_run);
+    return result != 0;
+
+}
+#endif //defined TESTMODULE
 
