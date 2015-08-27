@@ -8,7 +8,7 @@ typedef struct st {
 } *ST;
 
 int hash(int x){
-    //return 0;
+    return 0;
     return x^(x<<4)^(x<<15);
 }
 
@@ -36,49 +36,53 @@ void rehash(ST st){
     //TODO
 }
 
-ST findsymb(ST st, int **sp, int *n, int mode){
+ST findsymb(ST st, int **spp, int *n, int mode){
     ST last = st;
-    int *lasp = *sp;
+#define sp (*spp)
+    int *lasp = sp;
     ST *t = NULL;
     int nn = *n;
     int lasn = nn;
 
     while(nn--){
-        t = hashlookup(st, **sp);
-        if (!t) {
+        t = hashlookup(st, *sp);
+        if (!t) { // received NULL: table full
             rehash(st);
-            t = hashlookup(st, **sp);
+            t = hashlookup(st, *sp);
         }
         // t is now a pointer to a slot
         if (*t) { // slot not empty
             st = *t;
-            (*sp)++;
-            if ((*t)->key==**sp){ // match
+            sp++;
+            if ((*t)->key==*sp){ // match
                 last = st;
-                lasp = *sp;
+                lasp = sp;
                 lasn = nn;
             }
         }
         else switch(mode){ // slot empty
         case 0: // prefix search : return last match
-            *sp = lasp;
+            sp = lasp;
             *n = lasn;
             return last;
         case 1: // defining search
             *t = calloc(1, sizeof(struct st));
             (*t)->tab = calloc((*t)->n = 11, sizeof(struct st));
             st = *t;
-            (*sp)++;
+            st->key=*sp++;
             break;
         }
     }
 
-    return st;
+    return last;
 }
+#undef sp
 
 #ifdef TESTMODULE
 #include "minunit.h"
 int tests_run = 0;
+
+#include <stdio.h>
 
 struct st st = { .key = 0, .val = 0, .n = 10, .tab=(struct st *[10]){0} };
 
@@ -90,16 +94,26 @@ static char *test_put_get(){
 
     symb = array;
     t = findsymb(&st,&symb,&n,1);
-    t->key = 42;
+    //printf("%p\n",(void*)t);
+    t->val = 42;
 
     symb = array;
     t = findsymb(&st,&symb,&n,0);
-    test_case(t->key != 42);
+    //printf("%p\n",(void*)t);
+    test_case(t->val != 42);
 
     return 0;
 }
 
+static char *test_null_all_bits_zero(){
+    char **calloc_ed_pointer = calloc(1,sizeof*calloc_ed_pointer);
+    test_case(*calloc_ed_pointer!=NULL);
+    free(calloc_ed_pointer);
+    return 0;
+}
+
 static char *all_tests(){
+    mu_run_test(test_null_all_bits_zero);
     mu_run_test(test_put_get);
     return 0;
 }

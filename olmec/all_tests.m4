@@ -20,6 +20,7 @@ foreach(`unit', UNITS, `
 `#' undef tests_run
 `#' undef all_tests
 int unit`'_test(){
+    printf("---------------\n");
     printf("running unit`'_test\n");
     return unit`'_main();
 }
