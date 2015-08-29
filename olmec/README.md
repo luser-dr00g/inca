@@ -73,3 +73,11 @@ a repeated state of the computation.
 Possible thought toward adding integer and boolean as separate datatypes. They're described
 in the 1962 APL book.
 
+The unit-tesing framework is described in this thread: 
+https://groups.google.com/d/topic/comp.lang.c/ih2bq_w10Gw/discussion
+and this SO Q/A pair:
+http://stackoverflow.com/questions/32163935/compose-a-combined-test-suite-program-from-a-collection-of-unit-tests
+
+I also have a thread about implementing the rational arithmetic functions:
+https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion
+
