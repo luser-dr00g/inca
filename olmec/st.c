@@ -7,9 +7,22 @@ typedef struct st {
     struct st **tab /*[n]*/ ;
 } *ST;
 
+ST findsymb(ST st, int **spp, int *n, int mode);
+
+ST makesymbtab(int n){
+    ST z = malloc(sizeof *z);
+    if (z){
+        z->key = 0;
+        z->val = 0;
+        z->n = n;
+        z->tab = calloc(n, sizeof *z->tab);
+    }
+    return z;
+}
+
 int hash(int x){
+    return x^(x<<5)^(x<<14);
     return 0;
-    return x^(x<<4)^(x<<15);
 }
 
 #define RETURN_TAB_I_IF_EQ_K_OR_NULL \
@@ -32,8 +45,21 @@ ST *hashlookup(ST st, int k){
 }
 
 void rehash(ST st){
-    int n = st->n;
-    //TODO
+    int n = st->n * 7 + 11;
+    ST z=makesymbtab(n);
+    ST *t = NULL;
+    for (i=0; i<st->n; i++){
+        if (st->tab[i]){
+            t = hashlookup(z, st->tab[i]->key);
+            *t = st->tab[i];
+        }
+    }
+
+    t = st->tab;
+    st->tab = z->tab;
+    st->n = n;
+    free(t);
+    free(z);
 }
 
 ST findsymb(ST st, int **spp, int *n, int mode){
