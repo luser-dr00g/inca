@@ -46,6 +46,7 @@ ST *hashlookup(ST st, int k){
 
 void rehash(ST st){
     int n = st->n * 7 + 11;
+    int i;
     ST z=makesymbtab(n);
     ST *t = NULL;
     for (i=0; i<st->n; i++){
