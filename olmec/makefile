@@ -1,7 +1,7 @@
 
 testprogs= $(notdir $(wildcard ./*_test.c))
-tests=$(basename $(testprogs))
 unitprogs= $(subst _test,,$(testprogs))
+tests= $(basename $(testprogs))
 units= $(basename $(unitprogs))
 
 test:all_tests $(tests)

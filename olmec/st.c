@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 
 typedef struct st {
@@ -101,6 +102,7 @@ ST findsymb(ST st, int **spp, int *n, int mode){
         }
     }
 
+    *n = nn+1;
     return last;
 }
 #undef sp
@@ -116,18 +118,21 @@ struct st st = { .key = 0, .val = 0, .n = 10, .tab=(struct st *[10]){0} };
 static char *test_put_get(){
     int array[] = {48,49,50};
     int *symb;
-    int n = 3;
+    int n;
     ST t;
 
     symb = array;
+    n = 3;
     t = findsymb(&st,&symb,&n,1);
     //printf("%p\n",(void*)t);
     t->val = 42;
 
     symb = array;
+    n = 3;
     t = findsymb(&st,&symb,&n,0);
     //printf("%p\n",(void*)t);
     test_case(t->val != 42);
+    test_case(n != 0);
 
     return 0;
 }

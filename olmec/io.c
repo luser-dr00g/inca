@@ -1,9 +1,10 @@
 //cf. https://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding
 //cf. http://www.ietf.org/rfc/rfc3629.txt p.3
-#include<stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
-//#include <sys/bitops.h> // ilog2
+#include <stdlib.h>
 #include <math.h> // log2
+//#include <sys/bitops.h> // ilog2
 
 /*
    <--------  adapters ("apps-"hungarian naming)
@@ -130,6 +131,8 @@ char *utf8(int32_t *ar, int n, int *an, enum errinfo *errinfo){
 }
 
 #ifdef TESTMODULE
+#include "stdlib.h"
+#include "string.h"
 #include "minunit.h"
 int tests_run = 0;
 
