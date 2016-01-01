@@ -287,8 +287,9 @@ enum {
     IMM_MASK = (1<<IMM_BIT)-1,
     IMM_SIGN = 1<<(IMM_BIT-1),
     BANK_BIT = sizeof(I)*CHAR_BIT - IMM_BIT,
-    BANK_MASK = ((1<<BANK_BIT)-1) << IMM_BIT,
+    //BANK_MASK = ((1<<BANK_BIT)-1) << IMM_BIT,
 };
+#define BANK_MASK (((1<<BANK_BIT)-1) << IMM_BIT)
 #define encodenum(bnk,idx) ((bnk<<IMM_BIT)|idx)
 
 A bank; /* the top-level number bank */
