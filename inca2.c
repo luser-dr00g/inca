@@ -61,6 +61,7 @@ I nommv(I f, I o);                  /*new operator monadic (, yielding) monadic 
 I noddv(I f, I o, I g);             /*new operator dyadic  (, yielding) dyadic verb */
 ARC ex(I *e);
 I *wd(C *s);
+I pr(ARC w, FILE *f);
 
 V2(transposed);
 ARC jotdot(ARC a, I f, ARC w);
