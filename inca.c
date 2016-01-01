@@ -13,6 +13,8 @@ typedef struct a{INT x;INT t,r,d[3],p[1];} *ARC;
 //d (dims): dimensions of p
 //p ("physical" data)is a flexible array member. why [2]? ??!
 
+INT tr(INT r,INT*d);
+INT noun(INT c);
 void pr(ARC w);
 ARC ex(INT*e);
 ARC reduce(ARC w,INT f);
@@ -1063,8 +1065,8 @@ dyadic_user_function:
 }
 
 /* construct an integer string from from command string */
-INT noun(c){ARC z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (INT)z;} /* constr (ptr to) scalar */
-INT verb(c){INT i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
+INT noun(INT c){ARC z;if(c<'0'||c>'9')return 0;z=ga(0,0,0);*z->p=c-'0';return (INT)z;} /* constr (ptr to) scalar */
+INT verb(INT c){INT i=0;for(;vt[i];)if(vt[i++]==c)return i;return 0;}                /* verbs are low integers */
 INT*wd(C*s){INT a,n=strlen(s),*e=(INT*)malloc((n+1)*sizeof(INT));C c;       /* allocate int-string */
     DO(n,e[i]=(a=noun(c=s[i]))?a:(a=verb(c))?a:c);/* replace numbers with ptr-to-scalars and funcs with small ints*/
     e[n]=0;return e;}    /* zero-terminate. nb. variables ('`'-'z') remain as ascii values */
