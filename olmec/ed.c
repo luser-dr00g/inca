@@ -1,3 +1,4 @@
+#include<errno.h>
 #include<limits.h>
 #include<math.h>
 #include<stdint.h>
@@ -14,7 +15,7 @@
 #define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
-
+#define MODE1(x) x
 
 
 
@@ -316,10 +317,28 @@
     /* ALPHA_NAME base      ext input output */ \
     _( NULLCHAR, 0, 0, 0, 0 )
 #define ALPHATAB_ENT(a,...) {__VA_ARGS__},
-struct alpha{int base;int ext;char*input;char*output;}alphatab[]={ALPHATAB(ALPHATAB_ENT)};
+struct alpha{
+    int base;int ext;char*input;char*output;
+}alphatab[]={ALPHATAB(ALPHATAB_ENT)};
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
 enum alphaname { ALPHATAB(ALPHATAB_NAME) }; /* NB. ALPHA_NAME!=alphatab[ALPHA_NAME].base */
 
+
+int inputtobase(int c, int mode){
+    int i;
+    for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
+        if (c==*alphatab[i].input && mode==alphatab[i].ext)
+            return alphatab[i].base;
+    return mode? MODE1(c): c;
+}
+
+char *basetooutput(int c){
+    int i;
+    for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
+        if (c==alphatab[i].base)
+            return alphatab[i].output;
+    return "";
+}
 
 struct termios tm;
 
@@ -327,15 +346,102 @@ void specialtty(){
     tcgetattr(0,&tm);
 
     struct termios tt=tm;
-    tt.c_iflag &= ~(IGNBRK | PARMRK | ISTRIP | IXON);
-    tt.c_lflag &= ~(ECHO | ICANON);
-    tt.c_cflag &= ~(CSIZE | PARENB);
-    tt.c_cflag |= CS8;
-    tcsetattr(0,TCSANOW,&tt);
+    tt.c_iflag |= IGNPAR; //ignore parity errors
+    tt.c_iflag &= ~(IGNBRK | PARMRK | ISTRIP | ICRNL | IXON | IXANY | IXOFF); //ignore special characters
+    tt.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON /*| ISIG*/ ); // non-canonical mode, no echo, no kill
+    tt.c_lflag &= ~IEXTEN;
+    //tt.c_cflag &= ~(CSIZE | PARENB);
+    //tt.c_cflag |= CS8;
+    tt.c_oflag &= ~OPOST; // disable special output processing
+    tt.c_cc[VMIN] = 1; // min chars to read
+    tt.c_cc[VTIME] = 0; // timeout
+    //cfmakeraw(&tt);
+    if (tcsetattr(0,TCSANOW,&tt) == -1)
+        perror("tcsetattr");
 }
 
 void restoretty(){
     tcsetattr(0,TCSANOW,&tm);
 }
 
+char *get_line(char *prompt, char **bufref, int *len){
+    int mode = 0;
+    int tmpmode = 0;
+    char *p;
+
+    if (prompt) fputs(prompt,stdout);
+    if (!*bufref) *bufref = malloc(*len=256);
+    p = *bufref;
+
+    while(1){
+        int c;
+        if (p-*bufref>*len){
+            char *t = realloc(*bufref,*len*=2);
+            if (t) *bufref = t;
+            else { *len/=2; return NULL; }
+        }
+        //puts(">");
+        while(1){
+            c = fgetc(stdin);
+            if (c==EOF){
+                if (ferror(stdin)){
+                    perror("fgetc");
+                    clearerr(stdin);
+                    continue;
+                } else
+                    break;
+            }
+            break;
+        }
+
+        //printf("%d\n", c);
+        switch(c){
+        case EOF:
+        case EOT: if (p==*bufref) goto err;
+                  break;
+        case ESCCHR:
+                c = fgetc(stdin);
+                switch(c){
+                default:
+                    tmpmode = 1;
+                    goto storechar;
+                    break;
+                }
+                break;
+        case '\r':
+        case '\n':
+                fputc('\r', stdout);
+                fputc('\n', stdout);
+                *p++ = c;
+                goto breakwhile;
+        case CTL('N'):
+                mode = !mode;
+                tmpmode = 0;
+                break;
+        case CTL('U'):
+                while(p>*bufref){
+                    fputs("\b \b", stdout);
+                    --p;
+                }
+                tmpmode = 0;
+                break;
+        case '\b':
+        case DEL:
+                fputs("\b \b", stdout);
+                if (p!=*bufref) --p;
+                break;
+        default:
+storechar:
+                c = inputtobase(c,mode|tmpmode);
+                *p++ = c;
+                tmpmode = 0;
+                fputs(basetooutput(c), stdout);
+                break;
+        }
+    }
+breakwhile:
+    *p++ = 0;
+err:
+    return p==*bufref?NULL:*bufref;
+}
 
