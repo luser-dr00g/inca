@@ -11,6 +11,6 @@ test:all_tests $(tests)
 all_tests.c:all_tests.m4 makefile $(unitprogs)
 	m4 -D UNITS="$(units)" $< >$@
 
-olmec:main.o $(unitobjs) ed.o
+olmec:main.o ed.o $(unitobjs)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
