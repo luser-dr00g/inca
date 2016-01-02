@@ -2,7 +2,7 @@
 
 typedef struct st {
     int key;
-    int val;
+    void *val;
     int n;
     struct st **tab /*[n]*/ ;
 } *symtab;

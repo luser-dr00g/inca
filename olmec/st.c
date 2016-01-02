@@ -118,13 +118,13 @@ static char *test_put_get(){
     n = 3;
     t = findsym(&st,&sym,&n,1);
     //printf("%p\n",(void*)t);
-    t->val = 42;
+    t->val = (int[]){42};
 
     sym = array;
     n = 3;
     t = findsym(&st,&sym,&n,0);
     //printf("%p\n",(void*)t);
-    test_case(t->val != 42);
+    test_case(*((int*)t->val) != 42);
     test_case(n != 0);
 
     return 0;
