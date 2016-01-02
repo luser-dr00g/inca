@@ -81,3 +81,8 @@ http://stackoverflow.com/questions/32163935/compose-a-combined-test-suite-progra
 I also have a thread about implementing the rational arithmetic functions:
 https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion
 
+--
+
+Update. Got the editor working. You can type APL chars by holding the ALT key.
+
+
