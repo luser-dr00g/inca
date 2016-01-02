@@ -1,17 +1,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef struct st {
-    int key;
-    int val;
-    int n;
-    struct st **tab /*[n]*/ ;
-} *ST;
+#include "st.h"
 
-ST findsymb(ST st, int **spp, int *n, int mode);
-
-ST makesymbtab(int n){
-    ST z = malloc(sizeof *z);
+symtab makesymtab(int n){
+    symtab z = malloc(sizeof *z);
     if (z){
         z->key = 0;
         z->val = 0;
@@ -22,7 +15,7 @@ ST makesymbtab(int n){
 }
 
 int hash(int x){
-    return x^(x<<5)^(x<<14);
+    return x^(x<<5)^(x<<14); // fill UCS 21bit space with 7bit ascii
     return 0;
 }
 
@@ -30,7 +23,7 @@ int hash(int x){
     if (st->tab[i] == NULL || st->tab[i]->key == k) \
         return &st->tab[i];
 
-ST *hashlookup(ST st, int k){
+symtab *hashlookup(symtab st, int k){
     int i;
     int h;
     unsigned int sz = st->n;
@@ -45,11 +38,11 @@ ST *hashlookup(ST st, int k){
     return NULL;
 }
 
-void rehash(ST st){
-    int n = st->n * 7 + 11;
+void rehash(symtab st){
+    int n = st->n * 7 + 11; // large growth to avoid thrashing
     int i;
-    ST z=makesymbtab(n);
-    ST *t = NULL;
+    symtab z=makesymtab(n);
+    symtab *t = NULL;
     for (i=0; i<st->n; i++){
         if (st->tab[i]){
             t = hashlookup(z, st->tab[i]->key);
@@ -64,11 +57,11 @@ void rehash(ST st){
     free(z);
 }
 
-ST findsymb(ST st, int **spp, int *n, int mode){
-    ST last = st;
+symtab findsym(symtab st, int **spp, int *n, int mode){
+    symtab last = st;
 #define sp (*spp)
     int *lasp = sp;
-    ST *t = NULL;
+    symtab *t = NULL;
     int nn = *n;
     int lasn = nn;
 
@@ -117,19 +110,19 @@ struct st st = { .key = 0, .val = 0, .n = 10, .tab=(struct st *[10]){0} };
 
 static char *test_put_get(){
     int array[] = {48,49,50};
-    int *symb;
+    int *sym;
     int n;
-    ST t;
+    symtab t;
 
-    symb = array;
+    sym = array;
     n = 3;
-    t = findsymb(&st,&symb,&n,1);
+    t = findsym(&st,&sym,&n,1);
     //printf("%p\n",(void*)t);
     t->val = 42;
 
-    symb = array;
+    sym = array;
     n = 3;
-    t = findsymb(&st,&symb,&n,0);
+    t = findsym(&st,&sym,&n,0);
     //printf("%p\n",(void*)t);
     test_case(t->val != 42);
     test_case(n != 0);

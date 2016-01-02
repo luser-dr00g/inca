@@ -6,23 +6,7 @@
 #include <math.h> // log2
 //#include <sys/bitops.h> // ilog2
 
-/*
-   <--------  adapters ("apps-"hungarian naming)
-   utf8 utf8(ucs4...)
-   ucs4 ucs4(utf8...)
- */
-
-enum errinfo {
-no_error = 0,
-invalid_encoding = 1,
-invalid_extended_encoding = 2,
-buffer_alloc_fail = 4,
-bad_following_character = 8,
-over_length_encoding = 16,
-code_point_out_of_range = 32,
-};
-int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo);
-char *utf8(int32_t *ar, int n, int *an, enum errinfo *errinfo);
+#include "io.h"
 
 /* number of leading zeros of byte-sized value */
 static int leading0s(uint_least32_t x){ return 7 - (x? floor(log2(x)): -1); }
@@ -35,8 +19,6 @@ static int leading0s(uint_least32_t x){ return 7 - (x? floor(log2(x)): -1); }
 
 /* generate byte mask of x ones in the most-significant position */
 #define himask(x) (0xFF^lomask(8-(x)))
-
-#define REPLACEMENT 0xFFFD
 
 int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
     unsigned char *p=str;

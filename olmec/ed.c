@@ -321,7 +321,8 @@ struct alpha{
     int base;int ext;char*input;char*output;
 }alphatab[]={ALPHATAB(ALPHATAB_ENT)};
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
-enum alphaname { ALPHATAB(ALPHATAB_NAME) }; /* NB. ALPHA_NAME!=alphatab[ALPHA_NAME].base */
+enum alphaname { ALPHATAB(ALPHATAB_NAME) };
+    /* NB. ALPHA_NAME!=alphatab[ALPHA_NAME].base */
 
 
 int inputtobase(int c, int mode){

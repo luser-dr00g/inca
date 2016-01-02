@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "ed.h"
+#include "io.h"
 
 int main() {
     char *buf = NULL;
