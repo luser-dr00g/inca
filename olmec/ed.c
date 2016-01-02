@@ -134,9 +134,9 @@
     /* ALPHA_NAME base      ext input output */ \
     /*_( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) */\
     /* xterm alt graphics chars */ \
-    _( TWODOTS,   MODE1('!'), 1, "!", ESC(o)"(""\xE" ) \
+    _( TWODOTS,   0x00a8, 1, "!", ESC(o)"(""\xE" ) \
     _( DIAERESIS, MODE1('!'), 1, "!", /*U+00a8*/ /*"\xc2"*/"\xa8" ) \
-    _( HIMINUS,   MODE1('@'), 1, "@", ESC(o)"/""\xE" ) \
+    _( HIMINUS,   0x00af, 1, "@", ESC(o)"/""\xE" ) \
     _( MACRON,    MODE1('@'), 1, "@", /*U+00af*/ /*"\xc2"*/"\xaf" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
     _( LESS,            '<',  1, "#", "<" ) \
