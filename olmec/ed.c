@@ -15,7 +15,7 @@
 #define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
-#define MODE1(x) x
+#define MODE1(x) (x|1<<7)
 
 
 
@@ -132,7 +132,8 @@
     _( LPAREN,          '(',  0, "(", "(" ) \
     _( RPAREN,          ')',  0, ")", ")" ) \
     /* ALPHA_NAME base      ext input output */ \
-    _( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) /* xterm alt graphics chars */ \
+    /*_( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) */\
+    /* xterm alt graphics chars */ \
     _( TWODOTS,   MODE1('!'), 1, "!", ESC(o)"(""\xE" ) \
     _( DIAERESIS, MODE1('!'), 1, "!", /*U+00a8*/ /*"\xc2"*/"\xa8" ) \
     _( HIMINUS,   MODE1('@'), 1, "@", ESC(o)"/""\xE" ) \
@@ -147,33 +148,33 @@
     _( MORE,            '>',  1, "&", ">" ) \
     _( EQSLASH,   MODE1('*'), 1, "*", ESC(n)"|""\xE" ) \
     _( QUEST,           '?',  1, "q", "?" ) \
-    _( OMEGA,     MODE1('w'), 1, "w", /*U+2375*/ "\xe2\x8d\xb5" ) \
-    _( EPSILON,   MODE1('e'), 1, "e", /*U+2208*/ "\xe2\x88\x88" ) \
-    _( RHO,       MODE1('r'), 1, "r", /*U+2374*/ "\xe2\x8d\xb4" ) \
-    _( TILDEOP,   MODE1('t'), 1, "t", /*U+223c*/ "\xe2\x88\xbe" ) \
-    _( UPARROW,   MODE1('y'), 1, "y", /*U+2191*/ "\xe2\x86\x91" ) \
-    _( DNARROW,   MODE1('u'), 1, "u", /*U+2193*/ "\xe2\x86\x93" ) \
-    _( IOTA,      MODE1('i'), 1, "i", /*U+2373*/ "\xe2\x8d\xb3" ) \
-    _( CIRCLE,    MODE1('o'), 1, "o", /*U+25cb*/ "\xe2\x97\x8b" ) \
-    _( STAROP,    MODE1('p'), 1, "p", /*U+22c6*/ "\xe2\x8b\x86" ) \
-    _( LTARROW,   MODE1('['), 1, "[", /*U+2190*/ "\xe2\x86\x90" ) \
-    _( RTARROW,   MODE1('{'), 1, "{", /*U+2192*/ "\xe2\x86\x92" ) \
-    _( ALPHA,     MODE1('a'), 1, "a", /*U+237a*/ "\xe2\x8d\xba" ) \
-    _( LEFTCEIL,  MODE1('s'), 1, "s", /*U+2308*/ "\xe2\x8c\x88" ) \
-    _( LEFTFLOOR, MODE1('d'), 1, "d", /*U+230a*/ "\xe2\x8c\x8a" ) \
+    _( OMEGA,     0x2375, 1, "w", /*U+2375*/ "\xe2\x8d\xb5" ) \
+    _( EPSILON,   0x2208, 1, "e", /*U+2208*/ "\xe2\x88\x88" ) \
+    _( RHO,       0x2374, 1, "r", /*U+2374*/ "\xe2\x8d\xb4" ) \
+    _( TILDEOP,   0x223c, 1, "t", /*U+223c*/ "\xe2\x88\xbe" ) \
+    _( UPARROW,   0x2191, 1, "y", /*U+2191*/ "\xe2\x86\x91" ) \
+    _( DNARROW,   0x2193, 1, "u", /*U+2193*/ "\xe2\x86\x93" ) \
+    _( IOTA,      0x2373, 1, "i", /*U+2373*/ "\xe2\x8d\xb3" ) \
+    _( CIRCLE,    0x25cb, 1, "o", /*U+25cb*/ "\xe2\x97\x8b" ) \
+    _( STAROP,    0x22c6, 1, "p", /*U+22c6*/ "\xe2\x8b\x86" ) \
+    _( LTARROW,   0x2190, 1, "[", /*U+2190*/ "\xe2\x86\x90" ) \
+    _( RTARROW,   0x2192, 1, "{", /*U+2192*/ "\xe2\x86\x92" ) \
+    _( ALPHA,     0x237a, 1, "a", /*U+237a*/ "\xe2\x8d\xba" ) \
+    _( LEFTCEIL,  0x2308, 1, "s", /*U+2308*/ "\xe2\x8c\x88" ) \
+    _( LEFTFLOOR, 0x230a, 1, "d", /*U+230a*/ "\xe2\x8c\x8a" ) \
     _( UNDBAR2,         '_',  1, "f", "_" ) \
-    _( NABLA,     MODE1('g'), 1, "g", /*U+2207*/ "\xe2\x88\x87" ) \
-    _( INCREMENT, MODE1('h'), 1, "h", /*U+2206*/ "\xe2\x88\x86" ) \
-    _( RING,      MODE1('j'), 1, "j", /*U+2218*/ "\xe2\x88\x98" ) \
+    _( NABLA,     0x2207, 1, "g", /*U+2207*/ "\xe2\x88\x87" ) \
+    _( INCREMENT, 0x2206, 1, "h", /*U+2206*/ "\xe2\x88\x86" ) \
+    _( RING,      0x2218, 1, "j", /*U+2218*/ "\xe2\x88\x98" ) \
     _( KWOTE,          '\'',  1, "k", "'" ) \
-    _( QUAD,      MODE1('l'), 1, "l", /*U+2395*/ "\xe2\x8e\x95" ) \
-    _( SUBSET,    MODE1('z'), 1, "z", /*U+2282*/ "\xe2\x8a\x82" ) \
-    _( SUPERSET,  MODE1('x'), 1, "x", /*U+2283*/ "\xe2\x8a\x83" ) \
-    _( CAP,       MODE1('c'), 1, "c", /*U+2229*/ "\xe2\x88\xa9" ) \
-    _( CUP,       MODE1('v'), 1, "v", /*U+222a*/ "\xe2\x88\xaa" ) \
-    _( UPTACK,    MODE1('b'), 1, "b", /*U+22a5*/ "\xe2\x8a\xa5" ) \
-    _( DNTACK,    MODE1('n'), 1, "n", /*U+22a4*/ "\xe2\x8a\xa4" ) \
-    _( DIVIDES,   MODE1('m'), 1, "m", /*U+2223*/ "\xe2\x88\xa3" ) \
+    _( QUAD,      0x2395, 1, "l", /*U+2395*/ "\xe2\x8e\x95" ) \
+    _( SUBSET,    0x2282, 1, "z", /*U+2282*/ "\xe2\x8a\x82" ) \
+    _( SUPERSET,  0x2283, 1, "x", /*U+2283*/ "\xe2\x8a\x83" ) \
+    _( CAP,       0x2229, 1, "c", /*U+2229*/ "\xe2\x88\xa9" ) \
+    _( CUP,       0x222a, 1, "v", /*U+222a*/ "\xe2\x88\xaa" ) \
+    _( UPTACK,    0x22a5, 1, "b", /*U+22a5*/ "\xe2\x8a\xa5" ) \
+    _( DNTACK,    0x22a4, 1, "n", /*U+22a4*/ "\xe2\x8a\xa4" ) \
+    _( DIVIDES,   0x2223, 1, "m", /*U+2223*/ "\xe2\x88\xa3" ) \
     _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
     _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
     _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
@@ -344,40 +345,50 @@ char *basetooutput(int c){
 struct termios tm;
 
 void specialtty(){
+
+    fputs(ESC()")B",stdout); // set G1 charset to B:usascii
+    fputs(ESC(*0),stdout); // set G2 to 0:line drawing ESC(n)
+    fputs(ESC(+A),stdout); // set G3 to A:"uk" accented ESC(o)
+    fputc(CTL('N'),stdout); // select G1 charset
+                            // ESC(n): select G2
+                            // ESC(o): select G3
+
     tcgetattr(0,&tm);
 
     struct termios tt=tm;
     tt.c_iflag |= IGNPAR; //ignore parity errors
     tt.c_iflag &= ~(IGNBRK | PARMRK | ISTRIP | ICRNL | IXON | IXANY | IXOFF); //ignore special characters
     tt.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON /*| ISIG*/ ); // non-canonical mode, no echo, no kill
-    tt.c_lflag &= ~IEXTEN;
-    //tt.c_cflag &= ~(CSIZE | PARENB);
-    //tt.c_cflag |= CS8;
-    tt.c_oflag &= ~OPOST; // disable special output processing
+    //tt.c_lflag &= ~IEXTEN;
+    tt.c_cflag &= ~(CSIZE | PARENB);
+    tt.c_cflag |= CS8;
+    //tt.c_oflag &= ~OPOST; // disable special output processing
+    tt.c_oflag |= OPOST;
     tt.c_cc[VMIN] = 1; // min chars to read
     tt.c_cc[VTIME] = 0; // timeout
     //cfmakeraw(&tt);
     if (tcsetattr(0,TCSANOW,&tt) == -1)
         perror("tcsetattr");
+
 }
 
 void restoretty(){
     tcsetattr(0,TCSANOW,&tm);
 }
 
-char *get_line(char *prompt, char **bufref, int *len){
+int *get_line(char *prompt, int **bufref, int *len){
     int mode = 0;
     int tmpmode = 0;
-    char *p;
+    int *p;
 
     if (prompt) fputs(prompt,stdout);
-    if (!*bufref) *bufref = malloc(*len=256);
+    if (!*bufref) *bufref = malloc((sizeof**bufref) * (*len=256));
     p = *bufref;
 
     while(1){
         int c;
         if (p-*bufref>*len){
-            char *t = realloc(*bufref,*len*=2);
+            int *t = realloc(*bufref,(sizeof**bufref) * (*len*=2));
             if (t) *bufref = t;
             else { *len/=2; return NULL; }
         }
@@ -442,6 +453,7 @@ storechar:
     }
 breakwhile:
     *p++ = 0;
+    *len = p-*bufref;
 err:
     return p==*bufref?NULL:*bufref;
 }

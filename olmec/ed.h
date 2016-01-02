@@ -2,5 +2,5 @@
 
 void specialtty();
 void restoretty();
-char *get_line(char *prompt, char **bufref, int *len);
+int *get_line(char *prompt, int **bufref, int *len);
 

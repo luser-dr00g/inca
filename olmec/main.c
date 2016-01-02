@@ -5,14 +5,17 @@
 #include "io.h"
 
 int main() {
-    char *buf = NULL;
+    int *buf = NULL;
     char *prompt = "\t";
     int n;
 
     if (isatty(fileno(stdin))) specialtty();
 
     while(get_line(prompt, &buf, &n)){
-        puts(buf);
+        int i;
+        //puts(buf);
+        for (i=0;i<n;i++)
+            printf("%02x ", buf[i]);
     }
 
     if (isatty(fileno(stdin))) restoretty();
