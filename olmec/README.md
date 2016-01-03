@@ -1,3 +1,15 @@
+## TOC
+
+* io - utf8<->ucs4 translators
+
+* st - symbol-table
+
+* ed - line editor
+
+* qn - rational numbers
+
+* main - repl
+
 ## Design
 
 The problem I ran into with inca3 appears to be lack of overall design.
