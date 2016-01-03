@@ -23,7 +23,15 @@
    The Alphabet table defines the input and output of character data
    (including non-ascii APL symbols).
  */
-/* ALPHA_##NAME  base  ext input  output   (ext corresponds to 'mode' in getln)*/
+/* ALPHA_##NAME  base  ext input  output
+   ALPHA_##NAME indexes the table
+   base is the internal representation, ideally the UCS4 code
+   ext corresponds to 'mode' in get_line 0==normal_keyboard 1==alt_keyboard
+   input and output are defined as strings so they can extend to multichar
+   input- and output- translations.
+   currently only output uses strings. only the first char of *input
+   is currently matched.
+ */
 #define ALPHATAB(_) \
     _( SPACE, ' ', 0, " ", " " ) \
     _( a, 'a', 0, "a", "a" ) /* basic latin alphabet */ \
