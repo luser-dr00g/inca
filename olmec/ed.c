@@ -148,10 +148,10 @@
     _( MACRON,    MODE1('@'), 1, "@", /*U+00af*/ /*"\xc2"*/"\xaf" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
     _( LESS,            '<',  1, "#", "<" ) \
-    _( LESSEQ,    MODE1('$'), 1, "$", /*U+2264*/ "\xe2\x89\xa4") \
+    _( LESSEQ,    0x2264, 1, "$", /*U+2264*/ "\xe2\x89\xa4") \
     _( LESSEQUAL, MODE1('$'), 1, "$", ESC(n)"y""\xE" ) \
     _( EQALT,           '=',  1, "%", "=" ) \
-    _( MOREEQ,    MODE1('^'), 1, "^", /*U+2265*/ "\xe2\x89\xa5") \
+    _( MOREEQ,    0x2265, 1, "^", /*U+2265*/ "\xe2\x89\xa5") \
     _( MOREEQUAL, MODE1('^'), 1, "^", ESC(n)"z""\xE" ) \
     _( MORE,            '>',  1, "&", ">" ) \
     _( EQSLASH,   MODE1('*'), 1, "*", ESC(n)"|""\xE" ) \
