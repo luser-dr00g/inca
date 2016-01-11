@@ -34,6 +34,9 @@ array slicea(array a, int spec[]);
 array slices(array a, int s[], int f[]);
 array extend(array a, int extra);
 
+array cat(array x, array y);
+array iota(int n);
+
 
 int productdims(int rank, int dims[]){
     int i,z=1;
@@ -327,7 +330,6 @@ array slices(array a, int s[], int f[]){
     return z;
 }
 
-
 array extend(array a, int extra){
     int rank = a->rank + extra;
     int dims[rank];
@@ -336,5 +338,28 @@ array extend(array a, int extra){
         dims[i] = 1;
     memcpy(dims+extra, a->dims, a->rank*sizeof(int));
     return casta(a->data, rank, dims);
+}
+
+
+array cat(array x, array y){
+    int xsz = productdims(x->rank,x->dims);
+    int ysz = productdims(y->rank,y->dims);
+    int datasz = xsz + ysz;
+    array z=array_new(datasz);
+    int scratch[x->rank+y->rank];
+    int i;
+    for (i=0; i<xsz; i++)
+        *elem(z,i) = *elema(x,vector_index(i,x->dims,x->rank,scratch));
+    for (i=0; i<ysz; i++)
+        *elem(z,xsz+i) = *elema(y,vector_index(i,y->dims,y->rank,scratch));
+    return z;
+}
+
+array iota(int n){
+    array z = array_new(n);
+    int i;
+    for (i=0; i<n; i++)
+        *elem(z,i) = i;
+    return z;
 }
 
