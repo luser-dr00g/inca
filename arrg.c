@@ -6,9 +6,9 @@
 typedef char C; typedef int I;
 typedef struct a{I r,*d,*w,*p;}*A;
 #define R return
-#define DO(n,x){I i=0,N=(n);for(;i<N;++i){x;}}/*loop i=[0..n)*/
-I tr(I r,I*d){ I z=1; DO(r,z*=d[i]) R z; } /* productdims */
-dw(I r,I*d,I*w){ I x=1; DO(r,w[r-1-i]=x; x*=d[r-1-i]) } /* calculate weights */
+#define DO(n,x){I i=0,N=(n);for(;i<N;++i){x;}}                   /*loop i=[0..n)*/
+I tr(I r,I*d){ I z=1; DO(r,z*=d[i]) R z; }                       /* productdims */
+dw(I r,I*d,I*w){ I x=1; DO(r,w[r-1-i]=x; x*=d[r-1-i]) }          /* calculate weights */
 A ah(I r,I*d,I sz){ A z=malloc((sizeof*z)+(sizeof(I)*(r+r+sz))); /* array header + sz extra */
     z->r=r; z->d=(I*)(z+1); z->w=z->d+r; z->p=NULL;
     memcpy(z->d,d,r*sizeof(I)); dw(r,d,z->w); R z; }
@@ -16,19 +16,19 @@ A ara(I r,I*d){ I sz=tr(r,d); A z=ah(r,d,sz); z->p=z->w+r; R z; } /* arraya */
 dv(I r,I*d,va_list v){ DO(r,d[i]=va_arg(v,I)) } /* loaddimsv */
 A ar(I r,...){ va_list v; I d[r]; va_start(v,r); dv(r,d,v); va_end(v); R ara(r,d); } /* array rm */
 #define ar(...)ar(PP_NARG(__VA_ARGS__),__VA_ARGS__)
-A caa(I*p,I r,I*d){ A z=ah(r,d,0); z->p=p; R z; } /* casta rm */
+A caa(I*p,I r,I*d){ A z=ah(r,d,0); z->p=p; R z; }                /* casta rm */
 A ca(I*p,I r,...){ va_list v; I d[r]; va_start(v,r); dv(r,d,v); va_end(v); R caa((I*)p,r,d); }
 #define ca(p,...)ca((I*)p,PP_NARG(__VA_ARGS__),__VA_ARGS__)
 A cl(A a){ A z=ah(a->r,a->d,0);
     memcpy(z->d,a->d,z->r*sizeof(I));
-    memcpy(z->w,a->w,z->r*sizeof(I)); z->p=a->p; R z; } /* clone */
-I*ela(A a,I*j){ I x=0; DO(a->r, x+=j[i]*a->w[i]) R a->p+x; } /* elema */
-I*elv(A a,va_list v){ I j[a->r]; dv(a->r,j,v); R ela(a,j); } /* elemv */
+    memcpy(z->w,a->w,z->r*sizeof(I)); z->p=a->p; R z; }          /* clone */
+I*ela(A a,I*j){ I x=0; DO(a->r, x+=j[i]*a->w[i]) R a->p+x; }     /* elema */
+I*elv(A a,va_list v){ I j[a->r]; dv(a->r,j,v); R ela(a,j); }     /* elemv */
 I*el(A a,...){ I*z; va_list v; va_start(v,a); z=elv(a,v); va_end(v); R z; } /* elem */
-int *vx(I x,I*d,I r,I*v){ DO(r, v[r-1-i]=x%d[r-1-i]; x/=d[r-1-i]) R v; } /* vector_index */
-int rx(I*v,I*d,I r){ I z=*v; DO(r-1, z*=d[i+1]; z+=v[i+1]) R z; } /* ravel_index */
+int *vx(I x,I*d,I r,I*v){ DO(r, v[r-1-i]=x%d[r-1-i]; x/=d[r-1-i]) R v; }    /* vector_index */
+int rx(I*v,I*d,I r){ I z=*v; DO(r-1, z*=d[i+1]; z+=v[i+1]) R z; }           /* ravel_index */
 A cp(A a){ I sz=tr(a->r,a->d); A z=ah(a->r,a->d,sz); z->p=z->w+z->r;
-    I j[z->r]; DO(sz, vx(i,z->d,z->r,j); z->p[i]=*ela(a,j)) R z; } /* copy rm */
+    I j[z->r]; DO(sz, vx(i,z->d,z->r,j); z->p[i]=*ela(a,j)) R z; }          /* copy rm */
 #define CASE ;break;case
 
 #define OP(x,y)((((x))*256)+((y)))
