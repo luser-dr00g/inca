@@ -4,7 +4,7 @@ tests= $(basename $(testprogs))
 units= $(basename $(unitprogs))
 unitobjs= $(patsubst %,%.o,$(units))
 
-all:test olmec
+all:olmec test
 
 test:all_tests $(tests)
 	./all_tests
