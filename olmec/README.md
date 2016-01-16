@@ -1,14 +1,13 @@
 ## TOC
 
-* io - utf8<->ucs4 translators
-
-* st - symbol-table
-
+* ar - array functions
 * ed - line editor
-
-* qn - rational numbers
-
+* en - integer encoding of various types
+* io - utf8<->ucs4 translators
 * main - repl
+* qn - rational numbers
+* st - symbol-table
+* wd - scanner
 
 ## Design
 
