@@ -1,42 +1,9 @@
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include "../ppnarg.h"
 
-typedef struct ar {
-    int rank;    // number of dimensions
-    int *dims;   // size of each dimension
-    int *weight; // corresponding coefficient in the indexing formula
-    int *data;   // address of first array element
-} *array;
-
-int productdims(int rank, int dims[]);
-array array_new_dims(int rank, int dims[]);
-void loaddimsv(int rank, int dims[], va_list ap);
-array (array_new)(int rank, ...);
-#define array_new(...) (array_new)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
-array cast_dims(int data[], int rank, int dims[]);
-array cast(int data[], int rank, ...);
-array clone(array a);
-array copy(array a);
-
-int *elema(array a, int ind[]);
-int *elemv(array a, va_list ap);
-int *elem(array a, ...);
-
-int *vector_index(int ind, int dims[], int n, int vec[]);
-int ravel_index(int vec[], int dims[], int n);
-
-void transpose2(array a);
-void transpose(array a, int shift);
-void transposea(array a, int spec[]);
-array slice(array a, int i);
-array slicea(array a, int spec[]);
-array slices(array a, int s[], int f[]);
-array extend(array a, int extra);
-
-array cat(array x, array y);
-array iota(int n);
-
+#include "ar.h"
 
 int productdims(int rank, int dims[]){
     int i,z=1;
@@ -105,7 +72,7 @@ array cast_dims(int data[], int rank, int dims[]){
     return z;
 }
 
-array cast(int data[], int rank, ...){
+array (cast)(int data[], int rank, ...){
     va_list ap;
     int dims[rank];
     int i;
@@ -130,8 +97,8 @@ array clone(array a){
     return z;
 }
 
-int *vector_index(int ind, int dims[], int n, int *vec){
-    int i,t=int, *z=vec;
+int *vector_index(int ind, int dims[], int n, int vec[]){
+    int i,t=ind, *z=vec;
     for (i=0; i<n; i++){
         z[n-1-i] = t % dims[n-1-i];
         t /= dims[n-1-i];
@@ -139,7 +106,7 @@ int *vector_index(int ind, int dims[], int n, int *vec){
     return z;
 }
 
-int ravel_index(int *vec, int dims[], int n){
+int ravel_index(int vec[], int dims[], int n){
     int i,z=*vec;
     for (i=0; i<n-1; i++){
         z *= dims[i];
@@ -200,28 +167,9 @@ int *elem(array a, ...){
     int *z;
 
     va_start(ap,a);
-    z = elem(a,ap);
+    z = elemv(a,ap);
     va_end(ap);
 
-    return z;
-}
-
-
-int *vector_index(int ind, int dims[], int n, int vec[]){
-    int i,t=ind, *z=vec;
-    for (i=0; i<n; i++){
-        z[n-1-i] = t % dims[n-1-i];
-        t /= dims[n-1-i];
-    }
-    return z;
-}
-
-int ravel_index(int vec[], int dims[], int n){
-    int i,z=*vec;
-    for (i=0; i<n-1; i++){
-        z *= dims[i+1];
-        z += vec[i+1];
-    }
     return z;
 }
 
@@ -298,7 +246,7 @@ array slicea(array a, int spec[]){
         dims[i] = a->dims[i];
         weight[i] = a->weight[j];
     }
-    array z = casta(a->data, rank, dims);
+    array z = cast_dims(a->data, rank, dims);
     memcpy(z->weight,weight,rank*sizeof(int));
     for (j=0; j<a->rank; j++){
         if (spec[j]!=-1)
@@ -322,7 +270,7 @@ array slices(array a, int s[], int f[]){
         weight[i] =    s[j]<f[j] ? a->weight[j] : -a->weight[j];
         ++j;
     }
-    array z = casta(a->data, rank, dims);
+    array z = cast_dims(a->data, rank, dims);
     memcpy(z->weight, weight, rank*sizeof(int));
     for (i=0; i<a->rank; i++){
         z->data += s[i] * a->weight[i];
@@ -337,7 +285,7 @@ array extend(array a, int extra){
     for (i=0; i<extra; i++)
         dims[i] = 1;
     memcpy(dims+extra, a->dims, a->rank*sizeof(int));
-    return casta(a->data, rank, dims);
+    return cast_dims(a->data, rank, dims);
 }
 
 
@@ -363,3 +311,51 @@ array iota(int n){
     return z;
 }
 
+
+#ifdef TESTMODULE
+#include <stdlib.h>
+#include <string.h>
+#include "minunit.h"
+int tests_run = 0;
+
+static char *test_basic(){
+    array a = array_new_dims(1, (int[]){4});
+    *elem(a,3) = 12;
+    test_case(*elem(a,3)!=12);
+
+    array b = array_new(4,5);
+    *elem(b,3,4) = 5;
+    test_case(*elem(b,3,4)!=5);
+
+    array c = iota(4);
+    test_case(*elem(c,3)!=3);
+
+    array d = iota(64);
+    array e = cast(d->data, 2,2,2,2,2,2);
+    test_case(*elem(e, 1,1,1,1,1,1) != 63);
+
+    array f = cast(d->data, 4,4,4);
+    test_case(*elem(f, 3,3,3) != 63);
+
+    return 0;
+}
+
+static char *all_tests(){
+    mu_run_test(test_basic);
+    return 0;
+}
+
+int main(){
+
+    char *result=all_tests();
+    if (result != 0) {
+        printf("%s\n",result);
+    } else {
+        printf("ALL TESTS PASSED\n");
+    }
+    printf("Tests run: %d\n", tests_run);
+    return result != 0;
+
+}
+
+#endif //defined TESTMODULE
