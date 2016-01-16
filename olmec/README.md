@@ -97,3 +97,9 @@ https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion
 Update. Got the editor working. You can type APL chars by holding the ALT key.
 
 
+Code Reviews:  
+http://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding  
+http://codereview.stackexchange.com/questions/114243/unicode-capable-symbol-table-n-way-search-tree-with-hash-buckets  
+http://codereview.stackexchange.com/questions/115748/termios-xterm-line-editor-for-apl-interpreter  
+
+
