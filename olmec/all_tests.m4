@@ -10,6 +10,8 @@ define(`_foreach', `ifelse(`$2', `()', `',
 define(`UNITS', (patsubst(UNITS,`\W',`,')))
 
 divert`'dnl
+int tests_run;
+
 `#' include <stdio.h>
 foreach(`unit', UNITS, `
 `#' define main unit`'_main
@@ -20,14 +22,19 @@ foreach(`unit', UNITS, `
 `#' undef tests_run
 `#' undef all_tests
 int unit`'_test(){
+    int ret;
     printf("---------------\n");
     printf("running unit`'_test\n");
-    return unit`'_main();
+    ret = unit`'_main();
+    tests_run += unit`'_tests_run;
+    return ret;
 }
 ')dnl
 
 int main(){
-    return
-        0 foreach(`unit', UNITS, ` || unit`'_test() ') ;
+    int ret;
+    ret = 0 foreach(`unit', UNITS, ` || unit`'_test() ') ;
+    printf("Grand Total tests run: %d\n", tests_run);
+    return ret;
 }
 
