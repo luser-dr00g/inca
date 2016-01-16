@@ -3,26 +3,29 @@
 
 #include "st.h"
 
+/* construct a new symbol table with n slots */
 symtab makesymtab(int n){
     symtab z = malloc(sizeof *z);
     if (z){
-        z->key = 0;
-        z->val = 0;
-        z->n = n;
-        z->tab = calloc(n, sizeof *z->tab);
+        z->key = 0;  // key int transitioning into this node
+        z->val = 0;  // associated value (pointer to struct symtab)
+        z->n = n;    // num slots in table
+        z->tab = calloc(n, sizeof *z->tab);  // hashtable of child nodes
     }
     return z;
 }
 
 int hash(int x){
     return x^(x<<5)^(x<<14); // fill UCS 21bit space with 7bit ascii
-    return 0;
 }
 
+/* common test clause in hashlookup */
 #define RETURN_TAB_I_IF_EQ_K_OR_NULL \
     if (st->tab[i] == NULL || st->tab[i]->key == k) \
-        return &st->tab[i];
+        return &st->tab[i]
 
+/* compute hash,
+   scan table */
 symtab *hashlookup(symtab st, int k){
     int i;
     int h;
@@ -30,19 +33,26 @@ symtab *hashlookup(symtab st, int k){
 
     h = hash(k) % sz;
     i = h;
-    RETURN_TAB_I_IF_EQ_K_OR_NULL
+    RETURN_TAB_I_IF_EQ_K_OR_NULL;    // test slot h
     for (++i; i < sz; i++)
-        RETURN_TAB_I_IF_EQ_K_OR_NULL
+        RETURN_TAB_I_IF_EQ_K_OR_NULL; // test slots [h+1..sz)
     for (i=0; i < h; i++)
-        RETURN_TAB_I_IF_EQ_K_OR_NULL
-    return NULL;
+        RETURN_TAB_I_IF_EQ_K_OR_NULL; // test slots [0..h-1]
+    return NULL; // :not found
 }
 
+/* to rehash, we make a new table of the appropriate size,
+   copy all non-null entries to new table
+   steal the new table and update n */
 void rehash(symtab st){
-    int n = st->n * 7 + 11; // large growth to avoid thrashing
+    int n = st->n * 7 + 11; // large growth to avoid thrashing,
+                            // primes to avoid power-of-2 sizes
+                            // for better distribution under modulus
+                            // (maybe) (that's the idea, anyway)
     int i;
-    symtab z=makesymtab(n);
-    symtab *t = NULL;
+    symtab z=makesymtab(n); // allocate new table z->tab
+    symtab *t = NULL;       // temp pointer
+
     for (i=0; i<st->n; i++){
         if (st->tab[i]){
             t = hashlookup(z, st->tab[i]->key);
@@ -50,20 +60,24 @@ void rehash(symtab st){
         }
     }
 
-    t = st->tab;
-    st->tab = z->tab;
-    st->n = n;
-    free(t);
-    free(z);
+    free(st->tab);    // free original table
+    st->tab = z->tab; // steal new table
+    st->n = n;        // update n
+    free(z);          // free new block
 }
 
+/* find the associated node for a(n integer) string.
+   string is passed by reference in case a prefix match,
+   in which case the original string is updated to pointer
+   to the unmatched remainder.
+   */
 symtab findsym(symtab st, int **spp, int *n, int mode){
-    symtab last = st;
-#define sp (*spp)
-    int *lasp = sp;
-    symtab *t = NULL;
-    int nn = *n;
-    int lasn = nn;
+    symtab last = st; // saved last-match value of st
+#define sp (*spp)     // sp is an (int*) "by reference"
+    int *lasp = sp;   // saved last-match pointer
+    symtab *t = NULL; // temp pointer
+    int nn = *n;      // working copy of n
+    int lasn = nn;    // saved last-match value of n
 
     while(nn--){
         t = hashlookup(st, *sp);
@@ -75,28 +89,30 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
         if (*t) { // slot not empty
             st = *t;
             sp++;
-            if ((*t)->key==*sp){ // match
+            if ((*t)->key == *sp){ // match
                 last = st;
                 lasp = sp;
                 lasn = nn;
             }
-        }
-        else switch(mode){ // slot empty
-        case 0: // prefix search : return last match
-            sp = lasp;
-            *n = lasn;
-            return last;
-        case 1: // defining search
-            *t = calloc(1, sizeof(struct st));
-            (*t)->tab = calloc((*t)->n = 11, sizeof(struct st));
-            st = *t;
-            st->key=*sp++;
-            break;
+        } else {
+            switch(mode){ // slot empty
+            case 0: // prefix search : return last match
+                sp = lasp;
+                *n = lasn;
+                return last;
+            case 1: // defining search
+                *t = calloc(1, sizeof(struct st));
+                (*t)->tab = calloc((*t)->n = 11, sizeof(struct st));
+                st = *t;
+                st->key = *sp++;
+                break;
+            }
         }
     }
 
-    *n = nn+1;
-    return last;
+    *n = nn+1; // undo nn-- and update n
+    sp = lasp;
+    return last;  // return last-matched node
 }
 #undef sp
 
