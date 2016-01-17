@@ -92,6 +92,7 @@ http://stackoverflow.com/questions/32163935/compose-a-combined-test-suite-progra
 I also have a thread about implementing the rational arithmetic functions:
 https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion  
 And a SO question: http://stackoverflow.com/questions/32529118/incorporate-repetition-detection-in-my-p-adic-arithmetic-loops
+And a Math question: http://math.stackexchange.com/questions/1615290/is-there-a-better-representation-than-p-adics-for-exact-computer-arithmetic
 
 --
 
@@ -104,3 +105,15 @@ http://codereview.stackexchange.com/questions/114243/unicode-capable-symbol-tabl
 http://codereview.stackexchange.com/questions/115748/termios-xterm-line-editor-for-apl-interpreter  
 
 
+--
+
+With the addition of the array and encoding modules, the design has 
+deviated somewhat from the goal stated above. There are multiple types.
+Also, all array elements have a homogeneous fixed-size representation.
+This is done by treating a 32bit integer "token" as an 8bit tag
+followed by a 24bit payload. An all-bits-zero or all-bits-one tag 
+indicates an immediate 24bit integer so common integer values simply
+encode to themselves.
+
+So all arrays can be "mixed" arrays and we will be targeting 
+"Generalized APL". 
