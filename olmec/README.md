@@ -90,7 +90,8 @@ and this SO Q/A pair:
 http://stackoverflow.com/questions/32163935/compose-a-combined-test-suite-program-from-a-collection-of-unit-tests
 
 I also have a thread about implementing the rational arithmetic functions:
-https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion
+https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion  
+And a SO question: http://stackoverflow.com/questions/32529118/incorporate-repetition-detection-in-my-p-adic-arithmetic-loops
 
 --
 
