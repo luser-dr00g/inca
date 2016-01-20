@@ -324,7 +324,7 @@
     _( LPAREN1,          '(',  1, "(", "(" ) \
     _( RPAREN1,          ')',  1, ")", ")" ) \
     /* ALPHA_NAME base      ext input output */ \
-    _( NULLCHAR, 0, 0, 0, 0 )
+    _( NULLCHAR, 0, 0, 0, "" )
 #define ALPHATAB_ENT(a,...) {__VA_ARGS__},
 struct alpha{
     int base;int ext;char*input;char*output;
@@ -372,8 +372,8 @@ void specialtty(){
     tt.c_cflag |= CS8;
     //tt.c_oflag &= ~OPOST; // disable special output processing
     tt.c_oflag |= OPOST;
-    tt.c_cc[VMIN] = 1; // min chars to read
-    tt.c_cc[VTIME] = 0; // timeout
+    tt.c_cc[VMIN] = 3; // min chars to read
+    tt.c_cc[VTIME] = 1; // timeout
     //cfmakeraw(&tt);
     if (tcsetattr(0,TCSANOW,&tt) == -1)
         perror("tcsetattr");
@@ -390,6 +390,7 @@ int *get_line(char *prompt, int **bufref, int *len){
     int *p;
 
     if (prompt) fputs(prompt,stdout);
+    fflush(stdout);
     if (!*bufref) *bufref = malloc((sizeof**bufref) * (*len=256));
     p = *bufref;
 
@@ -400,18 +401,13 @@ int *get_line(char *prompt, int **bufref, int *len){
             if (t) *bufref = t;
             else { *len/=2; return NULL; }
         }
-        //puts(">");
-        while(1){
-            c = fgetc(stdin);
-            if (c==EOF){
-                if (ferror(stdin)){
-                    perror("fgetc");
-                    clearerr(stdin);
-                    continue;
-                } else
-                    break;
-            }
-            break;
+
+        char key[3];
+        int n;
+        n = -1;
+        while(n==-1){
+            n = read(0, key, 3);
+            c = key[0];
         }
 
         //printf("%d\n", c);
@@ -420,11 +416,22 @@ int *get_line(char *prompt, int **bufref, int *len){
         case EOT: if (p==*bufref) goto err;
                   break;
         case ESCCHR:
-                c = fgetc(stdin);
-                switch(c){
-                default:
+                switch(n){
+                case 1:
                     tmpmode = 1;
-                    goto storechar;
+                    break;
+                case 2:
+                    c = key[1];
+                    switch(c){
+                    default:
+                        tmpmode = 1;
+                        goto storechar;
+                        break;
+                    }
+                case 3:
+                    c = key[1];
+                    printf("%02x%c%c",key[0],key[1],key[2]);
+                    fflush(stdout);
                     break;
                 }
                 break;
@@ -441,6 +448,7 @@ int *get_line(char *prompt, int **bufref, int *len){
         case CTL('U'):
                 while(p>*bufref){
                     fputs("\b \b", stdout);
+                    fflush(stdout);
                     --p;
                 }
                 tmpmode = 0;
@@ -448,6 +456,7 @@ int *get_line(char *prompt, int **bufref, int *len){
         case '\b':
         case DEL:
                 fputs("\b \b", stdout);
+                fflush(stdout);
                 if (p!=*bufref) --p;
                 break;
         default:
@@ -456,6 +465,7 @@ storechar:
                 *p++ = c;
                 tmpmode = 0;
                 fputs(basetooutput(c), stdout);
+                fflush(stdout);
                 break;
         }
     }
