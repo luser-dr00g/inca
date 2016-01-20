@@ -5,8 +5,15 @@
    */
 
 #include <stdint.h>
+#include <stdlib.h>
+
+#include "ar.h"
+#include "qn.h"
 
 #include "en.h"
+
+q numbertab;
+array arraytab;
 
 int gettag(int d){
     if (d<0) return 0; /* negatives are literals */
@@ -28,5 +35,22 @@ int newdata(int tag, int val){
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
     return int32.int32;
+}
+
+int cache(int tag, void *ptr){
+}
+
+void *getptr(int d){
+    if (d<0) return NULL;
+    switch(gettag(d)){
+        case LITERAL: return NULL;
+        case CHAR: return NULL;
+        case NUMBER:
+        case PROG:
+        case ARRAY:
+        case SYMTAB:
+        case NULLOBJ:
+            ;
+    }
 }
 
