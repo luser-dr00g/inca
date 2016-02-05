@@ -89,7 +89,7 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
         if (*t) { // slot not empty
             st = *t;
             sp++;
-            if ((*t)->key == *sp){ // match
+            if ((*t)->val != 0){ // match
                 last = st;
                 lasp = sp;
                 lasn = nn;
