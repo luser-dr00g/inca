@@ -6,27 +6,7 @@
 #include "ar.h"
 #include "en.h"
 
-int newobj(int *s, int n, int state){
-    int t;
-    switch(state){
-        case 1: //number
-            {
-                char buf[n+1];
-                for (int i=0; i<n; i++)
-                    buf[i] = s[i];
-                buf[n] = 0;
-                return newdata(LITERAL,strtol(buf,NULL,10));
-            }
-        case 2: //string
-            {
-                array t=copy(cast(s,n));
-                return cache(ARRAY, t);
-            }
-        case 3: //other
-            return newdata(CHAR,*s);
-    }
-    return newdata(NULLOBJ,0);
-}
+#include "wd.h"
 
 #define DIGIT (int[]){'0','1','2','3','4','5','6','7','8','9', 0}
 #define DOT (int[]){'.', 0}
@@ -34,6 +14,7 @@ int newobj(int *s, int n, int state){
 #define RPAR (int[]){')', 0}
 #define QUOTE (int[]){'\'', 0}
 #define SPACE (int[]){' ','\t', 0}
+#define CR (int[]){0x0D, 0}
 
 /* strchr for int strings */
 int *classint(int *class, int el){
@@ -43,7 +24,7 @@ int *classint(int *class, int el){
     return NULL;
 }
 
-int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE};
+int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE, CR};
 enum state {
     init=0,
     number=10, //numbers and vectors of numbers
@@ -53,18 +34,51 @@ enum state {
     other=50,  //identifier or other symbol
 };
 
+int newobj(int *s, int n, int state){
+    int t;
+    switch(state){
+        case number:
+            printf("number\n");
+            {
+                char buf[n+1];
+                for (int i=0; i<n; i++)
+                    buf[i] = s[i];
+                buf[n] = 0;
+                return newdata(LITERAL,strtol(buf,NULL,10));
+            }
+        case quote:
+        case string:
+            printf("string\n");
+            {
+                array t=copy(cast(s,n));
+                return cache(ARRAY, t);
+            }
+        case init:
+        case dot:
+        case other:
+            printf("other\n");
+            if (n==1){
+                return newdata(CHAR, *s);
+            } else {
+                array t=copy(cast(s,n));
+                return cache(PROG, t);
+            }
+    }
+    return newdata(NULLOBJ,0);
+}
+
 int wdtab[][sizeof cclass/sizeof*cclass] = {
     /*char-class*/
-    /*none      0-9       .         '         (         )         sp       */
-    { other+2,  number+2, dot+2,    string+2, other+2,  other+2,  init+0   },
-    { other+1,  number+0, number+0, string+1, other+1,  other+1,  number+0 },
-    { otker+0,  number+0, other+0,  string+1, init+1,   init+1,   init+1   },
-    { string+0, string+0, string+0, quote+0,  string+0, string+0, string+0 },
-    { other+1,  number+1, dot+1,    string+0, other+1,  other+1,  init+1   },
-    { other+0,  number+1, other+1,  string+1, string+1, string+1, init+1   },
+    /*none      0-9       .         '         (         )         sp       \r   */
+    { other+2,  number+2, dot+2,    string+2, other+2,  other+2,  init+0,   init+0 },
+    { other+1,  number+0, number+0, string+1, other+1,  other+1,  number+0, init+1 },
+    { other+0,  number+0, other+0,  string+1, init+1,   init+1,   init+1,   init+1 },
+    { string+0, string+0, string+0, quote+0,  string+0, string+0, string+0, init+1 },
+    { other+1,  number+1, dot+1,    string+0, other+1,  other+1,  init+1,   init+1 },
+    { other+0,  number+1, other+1,  string+1, other+1,  other+1,  init+1,   init+1 },
 };
 
-#define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c))
+#define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c*10))
 
 array wd(int *s, int n){
     int a,b;
@@ -93,7 +107,9 @@ array wd(int *s, int n){
             case 2: j=i; break;          // reset start index
         }
     }
-    *p++=0;
+    //emit(j,i,oldstate);
+    //*p++=0;
+    z->dims[0] = p-z->data;
     return z;
 }
 
