@@ -1,6 +1,6 @@
 typedef struct datum {
-    unsigned int tag:8;
     unsigned int val:24;
+    unsigned int tag:8;
 } datum;
 
 typedef union integer {
