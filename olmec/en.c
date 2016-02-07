@@ -61,7 +61,7 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
         if (!tmp) return null;
         *data = tmp;
     }
-    int z = *used++;
+    int z = (*used)++;
     (*data)[z] = ptr;
     return z;
 }
