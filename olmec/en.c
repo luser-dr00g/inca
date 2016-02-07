@@ -4,6 +4,7 @@
    this file defines the sub-typing of data items.
    */
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -11,9 +12,6 @@
 #include "qn.h"
 
 #include "en.h"
-
-q numbertab;
-array arraytab;
 
 int gettag(int d){
     if (d<0) return 0; /* negatives are literals */
@@ -27,7 +25,7 @@ int getval(int d){
     if (d<0) return d;
     integer int32;
     int32.int32 = d;
-    data dat = int32.data;
+    datum dat = int32.data;
     return dat.val;
 }
 
@@ -37,7 +35,51 @@ int newdata(int tag, int val){
     return int32.int32;
 }
 
+integer nulldata = { .data = { .tag = NULLOBJ, .val = 0 } };
+int null /* = nulldata.int32 */;
+
+void init_en(){
+    null = nulldata.int32;
+}
+
+size_t numused, nummax;
+void **numtab;
+
+size_t progused, progmax;
+void **progtab;
+
+size_t arrused, arrmax;
+void **arrtab;
+
+size_t symused, symmax;
+void **symtabtab;
+
+int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
+    if (*used == *max){
+        *max = *max * 7 + 11;
+        void *tmp = realloc(*data, *max * sizeof(void*));
+        if (!tmp) return null;
+        *data = tmp;
+    }
+    int z = *used++;
+    (*data)[z] = ptr;
+    return z;
+}
+
 int cache(int tag, void *ptr){
+    switch(tag){
+        case LITERAL: return null;
+        case CHAR: return null;
+        case NUMBER:
+            return newdata(tag, addnewtocache(&numused, &nummax, &numtab, ptr));
+        case PROG:
+            return newdata(tag, addnewtocache(&progused, &progmax, &progtab, ptr));
+        case ARRAY:
+            return newdata(tag, addnewtocache(&arrused, &arrmax, &arrtab, ptr));
+        case SYMTAB:
+            return newdata(tag, addnewtocache(&symused, &symmax, &symtabtab, ptr));
+        case NULLOBJ: return null;
+    }
 }
 
 void *getptr(int d){
@@ -45,12 +87,11 @@ void *getptr(int d){
     switch(gettag(d)){
         case LITERAL: return NULL;
         case CHAR: return NULL;
-        case NUMBER:
-        case PROG:
-        case ARRAY:
-        case SYMTAB:
-        case NULLOBJ:
-            ;
+        case NUMBER: return &numtab[getval(d)];
+        case PROG: return &progtab[getval(d)];
+        case ARRAY: return &arrtab[getval(d)];
+        case SYMTAB: return &symtabtab[getval(d)];
+        case NULLOBJ: return NULL;
     }
 }
 

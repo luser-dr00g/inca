@@ -18,8 +18,12 @@ enum tag {
     NULLOBJ, /* val is irrelevant (s.b. 0) */
 };
 
+void init_en();
+
 int gettag(int d);
 int getval(int d);
 int newdata(int tag, int val);
 
+int cache(int tag, void *ptr);
+void *getptr(int d);
 
