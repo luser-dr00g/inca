@@ -16,7 +16,13 @@ enum tag {
     ARRAY, /* val is a(n index to a) boxed array */
     SYMTAB, /* val is a(n index to a) symbol table */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
+    VERB,
+    ADV,
+    MARK, /* val is irrelevant (s.b. 0) */
 };
+
+extern int null;
+extern int mark;
 
 void init_en();
 
