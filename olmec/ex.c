@@ -4,9 +4,12 @@
 #include "ar.h"
 #include "en.h"
 #include "st.h"
+#include "wd.h"
 
-int qp(int x){ return gettag(x)==PROG; }
-int qc(int x){ return gettag(x)==CHAR && getval(x) == 0x2190; }
+typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
+#define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
+#define stackpop(stkp) ((stkp)->a[--(stkp)->top])
+#define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
 
 #define PREDTAB(_) \
     _( ANY = 1, qa, 1 ) \
@@ -15,9 +18,8 @@ int qc(int x){ return gettag(x)==CHAR && getval(x) == 0x2190; }
     _( VERB = 8, qv, 1 ) \
     _( ADV = 16, qo, 1 ) \
     _( CONJ = 32, qj, 1 ) \
-    _( ASSN = 64, qc, 1 ) \
+    _( ASSN = 64, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
     /**/
-
 #define PRED_FUNC(X,Y,...) int Y(int x){ return __VA_ARGS__; }
 PREDTAB(PRED_FUNC)
 #define PRED_ENT(X,Y,...) Y,
@@ -26,7 +28,7 @@ int (*q[])(int) = { PREDTAB(PRED_ENT) };
 enum predicate { PREDTAB(PRED_ENUM) 
                  EDGE = MARK+ASSN+LPAR,
                  AVN = VERB+NOUN+ADV };
-
+/* encode predicate applications into a binary number */
 int classify(int x){
     int i,v,r;
     for (i=0, v=1, r=0; i<sizeof q/sizeof*q; i++, v*=2)
@@ -35,9 +37,22 @@ int classify(int x){
     return r;
 }
 
-typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
-#define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
-#define stackpop(stkp) ((stkp)->a[--(stkp)->top])
+#define PARSETAB(_) \
+    _(L0, EDGE,     VERB,      NOUN, ANY,  ) /*monadic func*/\
+    _(L1, EDGE+AVN, VERB,      VERB, NOUN, ) /*monadic func*/\
+    _(L2, EDGE+AVN, NOUN,      VERB, NOUN, ) /*dyadic func*/\
+    _(L3, EDGE+AVN, NOUN+VERB, ADV,  ANY, ) /*adverb*/\
+    _(L4, EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, ) /*conjunction*/\
+    _(L5, VAR,      ASSN,      AVN,  ANY, ) /*specification*/\
+    _(L6, LPAR,     ANY,       RPAR, ANY, ) /*punctuation*/\
+    /**/
+#define PARSETAB_PAT(label, pat1, pat2, pat3, pat4, ...) \
+    {pat1, pat2, pat3, pat4},
+struct parsetab { int c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
+#define PARSETAB_INDEX(label, ...) label,
+enum { PARSETAB(PARSETAB_INDEX) };
+#define PARSETAB_ACTION(label, pat1, pat2, pat3, pat4, ...) \
+    case label: {__VA_ARGS__;} break;
 
 array ex(array e){
     int n = e->dims[0];
@@ -64,7 +79,7 @@ array ex(array e){
         x=stackpop(lstk);
 
         if (qp(x)){ //parse and lookup name
-            if (rstk->top && qc(rstk->a[rstk->top-1])){
+            if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
                 stackpush(rstk,x);
             } else {
                 array a = getptr(x);
@@ -84,9 +99,8 @@ array ex(array e){
             }
         } else { stackpush(rstk,x); }
 
-        //check rstk with patterns and reduce
         docheck = 1;
-        while (docheck){
+        while (docheck){ //check rstk with patterns and reduce
             docheck = 0;
             if (rstk->top>=4){ //enough elements to check?
                 int c[4];
@@ -104,7 +118,7 @@ array ex(array e){
                         switch(i){
                             PARSETAB(PARSETAB_ACTION)
                         }
-                        docheck = 1;
+                        docheck = 1; //stack changed: check again
                         break;
                     }
                 }
