@@ -14,6 +14,7 @@
 #define RPAR (int[]){')', 0}
 #define QUOTE (int[]){'\'', 0}
 #define SPACE (int[]){' ','\t', 0}
+#define LEFT (int[]){0x2190, 0}
 #define CR (int[]){0x0D, 0}
 
 /* strchr for int strings */
@@ -24,58 +25,27 @@ int *classint(int *class, int el){
     return NULL;
 }
 
-int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE, CR};
+int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE, LEFT, CR};
 enum state {
-    init=0,
+    init=0,    //indeterminate
     number=10, //numbers and vectors of numbers
     dot=20,    //initial dot
     string=30, //initial quote
     quote=40,  //end or escape quote
     other=50,  //identifier or other symbol
+    single=60, //copula
 };
-
-int newobj(int *s, int n, int state){
-    int t;
-    switch(state){
-        case number:
-            printf("number\n");
-            {
-                char buf[n+1];
-                for (int i=0; i<n; i++)
-                    buf[i] = s[i];
-                buf[n] = 0;
-                return newdata(LITERAL,strtol(buf,NULL,10));
-            }
-        case quote:
-        case string:
-            printf("string\n");
-            {
-                array t=copy(cast(s,n));
-                return cache(ARRAY, t);
-            }
-        case init:
-        case dot:
-        case other:
-            printf("other\n");
-            if (n==1){
-                return newdata(CHAR, *s);
-            } else {
-                array t=copy(cast(s,n));
-                return cache(PROG, t);
-            }
-    }
-    return newdata(NULLOBJ,0);
-}
 
 int wdtab[][sizeof cclass/sizeof*cclass] = {
     /*char-class*/
-    /*none      0-9       .         '         (         )         sp       \r   */
-    { other+2,  number+2, dot+2,    string+2, other+2,  other+2,  init+0,   init+0 },
-    { other+1,  number+0, number+0, string+1, other+1,  other+1,  number+0, init+1 },
-    { other+0,  number+0, other+0,  string+1, init+1,   init+1,   init+1,   init+1 },
-    { string+0, string+0, string+0, quote+0,  string+0, string+0, string+0, init+1 },
-    { other+1,  number+1, dot+1,    string+0, other+1,  other+1,  init+1,   init+1 },
-    { other+0,  number+1, other+1,  string+1, other+1,  other+1,  init+1,   init+1 },
+    /*none      0-9       .         '         (         )         sp        <-       \r   */
+    { other+2,  number+2, dot+2,    string+2, other+2,  other+2,  init+0,   single+2, init+0 },
+    { other+1,  number+0, number+0, string+1, other+1,  other+1,  number+0, single+1, init+1 },
+    { other+0,  number+0, other+0,  string+1, init+1,   init+1,   init+1,   single+1, init+1 },
+    { string+0, string+0, string+0, quote+0,  string+0, string+0, string+0, string+0, init+1 },
+    { other+1,  number+1, dot+1,    string+0, other+1,  other+1,  init+1,   single+1, init+1 },
+    { other+0,  number+1, other+1,  string+1, other+1,  other+1,  init+1,   single+1, init+1 },
+    { other+1,  number+1, dot+1,    string+1, other+1,  other+1,  init+1,   single+1, init+1 },
 };
 
 #define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c*10))
@@ -112,4 +82,41 @@ array wd(int *s, int n){
     z->dims[0] = p-z->data;
     return z;
 }
+
+int newobj(int *s, int n, int state){
+    int t;
+    switch(state){
+        case number:
+            printf("number\n");
+            { //TODO create number vectors
+                char buf[n+1];
+                for (int i=0; i<n; i++)
+                    buf[i] = s[i];
+                buf[n] = 0;
+                return newdata(LITERAL,strtol(buf,NULL,10));
+            }
+        case quote:
+        case string:
+            printf("string\n");
+            {
+                array t=copy(cast(s,n));
+                return cache(ARRAY, t);
+            }
+        case init:
+        case dot:
+        case other:
+            printf("other\n");
+            if (n==1){
+                return newdata(CHAR, *s);
+            } else {
+                array t=copy(cast(s,n));
+                int i;
+                for (i=0; i<n; i++)
+                    t->data[i] = newdata(CHAR, t->data[i]);
+                return cache(PROG, t);
+            }
+    }
+    return newdata(NULLOBJ,0);
+}
+
 
