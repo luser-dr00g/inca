@@ -12,12 +12,12 @@ enum tag {
     LITERAL, /* val is a 24-bit 2's comp integer */
     CHAR, /* val is a 21-bit Unicode code point padded with zeros */
     NUMBER, /* val is an index in the number table */
-    PROG, /* val is an executable code fragment */
+    PROG, /* val is an (index to an) executable code fragment (ARRAY of CHAR)*/
     ARRAY, /* val is a(n index to a) boxed array */
     SYMTAB, /* val is a(n index to a) symbol table */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
-    VERB,
-    ADV,
+    VERB, /* val is a(n index to a) verb object */
+    ADV, /* val is a(n index to a) verb object */
     MARK, /* val is irrelevant (s.b. 0) */
 };
 
