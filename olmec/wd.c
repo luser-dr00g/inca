@@ -34,7 +34,7 @@ enum state {
     str=30, //initial quote
     quo=40, //end or escape quote
     oth=50, //identifier or other symbol
-    sng=60, //copula
+    sng=60, //copula or other self-delimiting symbol
 };
 
 int wdtab[][sizeof cclass/sizeof*cclass] = {
@@ -80,8 +80,6 @@ array wd(int *s, int n){
             case 2: j=i; break;          // reset start index
         }
     }
-    //emit(j,i,oldstate);
-    //*p++=0;
     z->dims[0] = p-z->data;
 
     //printf("wd %p\n", getptr(z->data[0]));
