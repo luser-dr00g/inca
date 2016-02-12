@@ -40,13 +40,13 @@ enum state {
 int wdtab[][sizeof cclass/sizeof*cclass] = {
 /*char-class*/
 /*none   0-9    .      '      (      )      sp     <-     \r  */
-{ oth+2, num+2, dot+2, str+2, oth+2, oth+2, ini+0, sng+2, ini+0 },
+{ oth+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
 { oth+1, num+0, num+0, str+1, oth+1, oth+1, num+0, sng+1, ini+1 },
 { oth+0, num+0, oth+0, str+1, ini+1, ini+1, ini+1, sng+1, ini+1 },
 { str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
 { oth+1, num+1, dot+1, str+0, oth+1, oth+1, ini+1, sng+1, ini+1 },
-{ oth+0, num+1, oth+1, str+1, oth+1, oth+1, ini+1, sng+1, ini+1 },
-{ oth+1, num+1, dot+1, str+1, oth+1, oth+1, ini+1, sng+1, ini+1 },
+{ oth+0, num+1, oth+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+{ oth+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 };
 
 #define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c*10))
@@ -57,7 +57,7 @@ array wd(int *s, int n){
     int c;
     array z = array_new(n+1);
     int *p=z->data;
-    printf("n=%d\n",n);
+    //printf("n=%d\n",n);
 
     state=0;
     for (i=0; i<n; i++){
@@ -76,15 +76,15 @@ array wd(int *s, int n){
             case 0: break;               // do nothing
             case 1: emit(j,i,oldstate);  // generate a token (and)
                     /*fallthrough*/
-                    printf("wd %p\n", (void*)getptr(p[-1]));
+                    //printf("wd %p\n", (void*)getptr(p[-1]));
             case 2: j=i; break;          // reset start index
         }
     }
     //emit(j,i,oldstate);
-    *p++=0;
+    //*p++=0;
     z->dims[0] = p-z->data;
 
-    printf("wd %p\n", getptr(z->data[0]));
+    //printf("wd %p\n", getptr(z->data[0]));
     return z;
 }
 
@@ -119,12 +119,12 @@ int newobj(int *s, int n, int state){
                 return newdata(CHAR, *s);
             } else {
                 array t=copy(cast(s,n));
-                printf("newobj %p\n", (void*)t);
+                //printf("newobj %p\n", (void*)t);
                 int i;
                 for (i=0; i<n; i++)
                     t->data[i] = newdata(CHAR, t->data[i]);
                 int x = cache(PROG, t);
-                printf("newobj %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
+                //printf("newobj %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
                 return x;
             }
     }

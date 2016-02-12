@@ -16,7 +16,8 @@ typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define PREDTAB(_) \
 _( ANY = 1, qa, 1 ) \
 _( VAR = 2, qp, gettag(x)==PROG \
-                || (gettag(x)==CHAR && getval(x)!=0x2190) ) \
+                || (gettag(x)==CHAR && getval(x)!=0x2190 \
+                    && getval(x)!='(' && getval(x)!=')' ) ) \
 _( NOUN = 4, qn, gettag(x)==LITERAL \
                  || gettag(x)==CHAR \
                  || gettag(x)==ARRAY ) \
@@ -107,7 +108,7 @@ int ex(array e, symtab st){
 
     for (i=0; i<n; i++) { // sum symbol lengths 
         if (gettag(e->data[i])==PROG) {
-            printf("%p\n", getptr(e->data[i]));
+            //printf("%p\n", getptr(e->data[i]));
             j+=((array)getptr(e->data[i]))->dims[0];
         }
     }
@@ -166,23 +167,25 @@ int ex(array e, symtab st){
         while (docheck){ //check rstk with patterns and reduce
             docheck = 0;
             if (rstk->top>=4){ //enough elements to check?
-                printf("check\n");
+                //printf("check\n");
                 int c[4];
                 for (j=0; j<4; j++)
                     c[j] = classify(rstk->a[rstk->top-1-j]);
                 printf("%d %d %d %d\n", c[0], c[1], c[2], c[3]);
                 for (i=0; i<sizeof parsetab/sizeof*parsetab; i++){
+                    /*
                     printf("%d %d %d %d\n",
                             parsetab[i].c[0], parsetab[i].c[1],
                             parsetab[i].c[2], parsetab[i].c[3]);
                     printf("%d %d %d %d\n",
                             c[0]&parsetab[i].c[0], c[1]&parsetab[i].c[1],
                             c[2]&parsetab[i].c[2], c[3]&parsetab[i].c[3]);
+                            */
                     if ( c[0] & parsetab[i].c[0]
                       && c[1] & parsetab[i].c[1]
                       && c[2] & parsetab[i].c[2]
                       && c[3] & parsetab[i].c[3] ) {
-                        printf("match\n");
+                        //printf("match\n");
                         int t[4];
                         t[0] = stackpop(rstk);
                         t[1] = stackpop(rstk);

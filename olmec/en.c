@@ -31,7 +31,7 @@ int newdata(int tag, int val){
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
     int x = int32.int32;
-    printf("newdata %d %d %d\n", tag, val, x);
+    //printf("newdata %d %d %d\n", tag, val, x);
     return x;
 }
 
@@ -66,24 +66,25 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     }
     int z = (*used)++;
     (*data)[z] = ptr;
-    printf("addnew %d %p %p\n", z, ptr, (*data)[z]);
+    //printf("addnew %d %p %p\n", z, ptr, (*data)[z]);
     return z;
 }
 
 int cache(int tag, void *ptr){
-    printf("cache %p\n", ptr);
+    //printf("cache %p\n", ptr);
     switch(tag){
         case LITERAL: return null;
         case CHAR: return null;
         case NUMBER:
             return newdata(tag, addnewtocache(&numused, &nummax, &numtab, ptr));
-        case PROG:
-            printf("cache prog\n");
+        case PROG: {
+            //printf("cache prog\n");
             int x = newdata(tag, addnewtocache(&progused, &progmax, &progtab, ptr));
-            printf("cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
+            //printf("cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
             return x;
+        }
         case ARRAY:
-            printf("cache array\n");
+            //printf("cache array\n");
             return newdata(tag, addnewtocache(&arrused, &arrmax, &arrtab, ptr));
         case SYMTAB:
             return newdata(tag, addnewtocache(&symused, &symmax, &symtabtab, ptr));
