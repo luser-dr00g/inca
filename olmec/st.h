@@ -8,5 +8,7 @@ typedef struct st {
 } *symtab;
 
 symtab makesymtab(int n);
+/*  mode=0: prefix match
+    mode=1: defining search */
 symtab findsym(symtab st, int **spp, int *n, int mode);
 

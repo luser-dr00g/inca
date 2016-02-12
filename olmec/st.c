@@ -70,6 +70,8 @@ void rehash(symtab st){
    string is passed by reference in case a prefix match,
    in which case the original string is updated to pointer
    to the unmatched remainder.
+    mode=0: prefix match
+    mode=1: defining search
    */
 symtab findsym(symtab st, int **spp, int *n, int mode){
     symtab last = st; // saved last-match value of st
