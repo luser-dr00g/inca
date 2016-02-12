@@ -28,25 +28,25 @@ int *classint(int *class, int el){
 
 int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE, LEFT, CR};
 enum state {
-    init=0,    //indeterminate
-    number=10, //numbers and vectors of numbers
-    dot=20,    //initial dot
-    string=30, //initial quote
-    quote=40,  //end or escape quote
-    other=50,  //identifier or other symbol
-    single=60, //copula
+    ini=0,  //indeterminate
+    num=10, //numbers and vectors of numbers
+    dot=20, //initial dot
+    str=30, //initial quote
+    quo=40, //end or escape quote
+    oth=50, //identifier or other symbol
+    sng=60, //copula
 };
 
 int wdtab[][sizeof cclass/sizeof*cclass] = {
-    /*char-class*/
-    /*none      0-9       .         '         (         )         sp        <-       \r   */
-    { other+2,  number+2, dot+2,    string+2, other+2,  other+2,  init+0,   single+2, init+0 },
-    { other+1,  number+0, number+0, string+1, other+1,  other+1,  number+0, single+1, init+1 },
-    { other+0,  number+0, other+0,  string+1, init+1,   init+1,   init+1,   single+1, init+1 },
-    { string+0, string+0, string+0, quote+0,  string+0, string+0, string+0, string+0, init+1 },
-    { other+1,  number+1, dot+1,    string+0, other+1,  other+1,  init+1,   single+1, init+1 },
-    { other+0,  number+1, other+1,  string+1, other+1,  other+1,  init+1,   single+1, init+1 },
-    { other+1,  number+1, dot+1,    string+1, other+1,  other+1,  init+1,   single+1, init+1 },
+/*char-class*/
+/*none   0-9    .      '      (      )      sp     <-     \r  */
+{ oth+2, num+2, dot+2, str+2, oth+2, oth+2, ini+0, sng+2, ini+0 },
+{ oth+1, num+0, num+0, str+1, oth+1, oth+1, num+0, sng+1, ini+1 },
+{ oth+0, num+0, oth+0, str+1, ini+1, ini+1, ini+1, sng+1, ini+1 },
+{ str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
+{ oth+1, num+1, dot+1, str+0, oth+1, oth+1, ini+1, sng+1, ini+1 },
+{ oth+0, num+1, oth+1, str+1, oth+1, oth+1, ini+1, sng+1, ini+1 },
+{ oth+1, num+1, dot+1, str+1, oth+1, oth+1, ini+1, sng+1, ini+1 },
 };
 
 #define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c*10))
@@ -87,7 +87,7 @@ array wd(int *s, int n){
 int newobj(int *s, int n, int state){
     int t;
     switch(state){
-        case number:
+        case num:
             printf("number\n");
             { //TODO create number vectors
                 char buf[n+1];
@@ -96,16 +96,17 @@ int newobj(int *s, int n, int state){
                 buf[n] = 0;
                 return newdata(LITERAL,strtol(buf,NULL,10));
             }
-        case quote:
-        case string:
+        case quo:
+        case str:
             printf("string\n");
             {
                 array t=copy(cast(s,n));
                 return cache(ARRAY, t);
             }
-        case init:
+        case ini:
         case dot:
-        case other:
+        case oth:
+        case sng:
             printf("other\n");
             if (n==1){
                 return newdata(CHAR, *s);
