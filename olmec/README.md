@@ -119,3 +119,11 @@ encode to themselves.
 
 So all arrays can be "mixed" arrays and we will be targeting 
 "Generalized APL". 
+
+
+--
+
+Scanner and Parser both written and working. REPL is able to assign variables,
+lookup variables, and resolve parentheses. Next up: verbs!
+
+
