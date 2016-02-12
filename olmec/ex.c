@@ -12,14 +12,17 @@ typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
 
 #define PREDTAB(_) \
-    _( ANY = 1, qa, 1 ) \
-    _( VAR = 2, qp, gettag(x)==PROG ) \
-    _( NOUN = 4, qn, 1 ) \
-    _( VERB = 8, qv, 1 ) \
-    _( ADV = 16, qo, 1 ) \
-    _( CONJ = 32, qj, 1 ) \
-    _( ASSN = 64, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
-    /**/
+_( ANY = 1, qa, 1 ) \
+_( VAR = 2, qp, gettag(x)==PROG ) \
+_( NOUN = 4, qn, gettag(x)==LITERAL \
+                 || gettag(x)==CHAR \
+                 || gettag(x)==ARRAY ) \
+_( VERB = 8, qv, gettag(x)==VERB ) \
+_( ADV = 16, qo, gettag(x)==ADV ) \
+_( CONJ = 32, qj, 0 ) \
+_( ASSN = 64, qc, gettag(x)==CHAR \
+                  && getval(x) == 0x2190 ) \
+/**/
 #define PRED_FUNC(X,Y,...) int Y(int x){ return __VA_ARGS__; }
 PREDTAB(PRED_FUNC)
 #define PRED_ENT(X,Y,...) Y,
@@ -37,22 +40,41 @@ int classify(int x){
     return r;
 }
 
+int monad(int f, int y, int dummy){
+}
+int dyad(int x, int f, int y){
+}
+int adv(int f, int g, int dummy){
+}
+int conj(int f, int g, int h){
+}
+int spec(int n, int v, int dummy){
+}
+int punc(int x, int dummy, int dummy2){
+    return x;
+}
+
 #define PARSETAB(_) \
-    _(L0, EDGE,     VERB,      NOUN, ANY,  ) /*monadic func*/\
-    _(L1, EDGE+AVN, VERB,      VERB, NOUN, ) /*monadic func*/\
-    _(L2, EDGE+AVN, NOUN,      VERB, NOUN, ) /*dyadic func*/\
-    _(L3, EDGE+AVN, NOUN+VERB, ADV,  ANY, ) /*adverb*/\
-    _(L4, EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, ) /*conjunction*/\
-    _(L5, VAR,      ASSN,      AVN,  ANY, ) /*specification*/\
-    _(L6, LPAR,     ANY,       RPAR, ANY, ) /*punctuation*/\
-    /**/
+/*                                                 pre x y z  post1,2*/\
+_(L0, EDGE,     VERB,      NOUN, ANY,       monad,  3, 1,2,-1, 0,-1) \
+_(L1, EDGE+AVN, VERB,      VERB, NOUN,      monad, -1, 2,3,-1, 1, 0) \
+_(L2, EDGE+AVN, NOUN,      VERB, NOUN,      dyad,  -1, 1,2,3,  0,-1) \
+_(L3, EDGE+AVN, NOUN+VERB, ADV,  ANY,       adv,    3, 1,2,-1, 0,-1) \
+_(L4, EDGE+AVN, NOUN+VERB, CONJ, NOUN+VERB, conj,  -1, 1,2,3,  0,-1) \
+_(L5, VAR,      ASSN,      AVN,  ANY,       spec,   3, 0,2,-1, -1,-1) \
+_(L6, LPAR,     ANY,       RPAR, ANY,       punc,   3, 1,-1,-1,-1.-1) \
+/**/
 #define PARSETAB_PAT(label, pat1, pat2, pat3, pat4, ...) \
     {pat1, pat2, pat3, pat4},
 struct parsetab { int c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
 #define PARSETAB_INDEX(label, ...) label,
 enum { PARSETAB(PARSETAB_INDEX) };
-#define PARSETAB_ACTION(label, pat1, pat2, pat3, pat4, ...) \
-    case label: {__VA_ARGS__;} break;
+#define PARSETAB_ACTION(label,p1,p2,p3,p4, func, pre,x,y,z,post,post2) \
+    case label: {   if (pre>=0) stackpush(rstk,t[pre]); \
+                    stackpush(rstk,func(x>=0?t[x]:0,y>=0?t[y]:0,z>=0?t[z]:0)); \
+                    if (post>=0) stackpush(rstk,t[post]); \
+                    if (post2>=0) stackpush(rstk,t[post2]); \
+                } break;
 
 array ex(array e){
     int n = e->dims[0];
@@ -65,7 +87,7 @@ array ex(array e){
         if (gettag(e->data[i])==PROG)
             j+=((array*)getptr(e->data[i]))->dims[0];
 
-    // prepare stacks
+    // allocate and prepare stacks
     lstk=malloc(sizeof*lstk + (n+j+1) * sizeof*lstk->a);
     lstk->top=0;
     stackpush(lstk,mark);
@@ -75,7 +97,7 @@ array ex(array e){
     rstk->top=0;
     stackpush(rstk,null);    
 
-    while(lstk->top){
+    while(lstk->top){ //left stack not empty
         x=stackpop(lstk);
 
         if (qp(x)){ //parse and lookup name
@@ -126,5 +148,9 @@ array ex(array e){
         }
     }
     //assemble results and return
+    //TODO check/handle extra elements on stack
+    //(interpolate?, enclose and cat?)
+    stackpop(rstk); // mark
+    return stackpop(rstk);
 }
 
