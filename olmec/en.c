@@ -8,9 +8,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "ar.h"
-#include "qn.h"
-
 #include "en.h"
 
 int gettag(int d){
