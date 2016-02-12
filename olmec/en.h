@@ -17,7 +17,7 @@ enum tag {
     SYMTAB, /* val is a(n index to a) symbol table */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     VERB, /* val is a(n index to a) verb object */
-    ADV, /* val is a(n index to a) verb object */
+    ADVERB, /* val is a(n index to a) verb object */
     MARK, /* val is irrelevant (s.b. 0) */
 };
 
