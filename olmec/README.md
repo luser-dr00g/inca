@@ -3,11 +3,12 @@
 * ar - array functions
 * ed - line editor
 * en - integer encoding of various types
+* ex - parsing and execution
 * io - utf8<->ucs4 translators
 * main - repl
 * qn - rational numbers
 * st - symbol-table
-* wd - scanner
+* wd - scanner, word-formation
 
 ## Design
 
@@ -92,7 +93,6 @@ http://stackoverflow.com/questions/32163935/compose-a-combined-test-suite-progra
 I also have a thread about implementing the rational arithmetic functions:
 https://groups.google.com/d/topic/comp.lang.c/GVCXmz_3KOA/discussion  
 And a SO question: http://stackoverflow.com/questions/32529118/incorporate-repetition-detection-in-my-p-adic-arithmetic-loops
-And a Math question: http://math.stackexchange.com/questions/1615290/is-there-a-better-representation-than-p-adics-for-exact-computer-arithmetic
 
 --
 
