@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "en.h"
@@ -29,7 +30,9 @@ int getval(int d){
 int newdata(int tag, int val){
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
-    return int32.int32;
+    int x = int32.int32;
+    printf("newdata %d %d %d\n", tag, val, x);
+    return x;
 }
 
 integer nulldata = { .data = { .tag = NULLOBJ, .val = 0 } };
@@ -63,18 +66,24 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     }
     int z = (*used)++;
     (*data)[z] = ptr;
+    printf("addnew %d %p %p\n", z, ptr, (*data)[z]);
     return z;
 }
 
 int cache(int tag, void *ptr){
+    printf("cache %p\n", ptr);
     switch(tag){
         case LITERAL: return null;
         case CHAR: return null;
         case NUMBER:
             return newdata(tag, addnewtocache(&numused, &nummax, &numtab, ptr));
         case PROG:
-            return newdata(tag, addnewtocache(&progused, &progmax, &progtab, ptr));
+            printf("cache prog\n");
+            int x = newdata(tag, addnewtocache(&progused, &progmax, &progtab, ptr));
+            printf("cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
+            return x;
         case ARRAY:
+            printf("cache array\n");
             return newdata(tag, addnewtocache(&arrused, &arrmax, &arrtab, ptr));
         case SYMTAB:
             return newdata(tag, addnewtocache(&symused, &symmax, &symtabtab, ptr));
@@ -87,10 +96,10 @@ void *getptr(int d){
     switch(gettag(d)){
         case LITERAL: return NULL;
         case CHAR: return NULL;
-        case NUMBER: return &numtab[getval(d)];
-        case PROG: return &progtab[getval(d)];
-        case ARRAY: return &arrtab[getval(d)];
-        case SYMTAB: return &symtabtab[getval(d)];
+        case NUMBER: return numtab[getval(d)];
+        case PROG: return progtab[getval(d)];
+        case ARRAY: return arrtab[getval(d)];
+        case SYMTAB: return symtabtab[getval(d)];
         case NULLOBJ: return NULL;
     }
 }

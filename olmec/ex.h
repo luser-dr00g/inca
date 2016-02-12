@@ -1,3 +1,3 @@
 
-array ex(array e, symtab st);
+int ex(array e, symtab st);
 

@@ -57,6 +57,7 @@ array wd(int *s, int n){
     int c;
     array z = array_new(n+1);
     int *p=z->data;
+    printf("n=%d\n",n);
 
     state=0;
     for (i=0; i<n; i++){
@@ -75,12 +76,15 @@ array wd(int *s, int n){
             case 0: break;               // do nothing
             case 1: emit(j,i,oldstate);  // generate a token (and)
                     /*fallthrough*/
+                    printf("wd %p\n", (void*)getptr(p[-1]));
             case 2: j=i; break;          // reset start index
         }
     }
     //emit(j,i,oldstate);
-    //*p++=0;
+    *p++=0;
     z->dims[0] = p-z->data;
+
+    printf("wd %p\n", getptr(z->data[0]));
     return z;
 }
 
@@ -101,6 +105,9 @@ int newobj(int *s, int n, int state){
             printf("string\n");
             {
                 array t=copy(cast(s,n));
+                int i;
+                for (i=0; i<n; i++)
+                    t->data[i] = newdata(CHAR, t->data[i]);
                 return cache(ARRAY, t);
             }
         case ini:
@@ -112,10 +119,13 @@ int newobj(int *s, int n, int state){
                 return newdata(CHAR, *s);
             } else {
                 array t=copy(cast(s,n));
+                printf("newobj %p\n", (void*)t);
                 int i;
                 for (i=0; i<n; i++)
                     t->data[i] = newdata(CHAR, t->data[i]);
-                return cache(PROG, t);
+                int x = cache(PROG, t);
+                printf("newobj %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
+                return x;
             }
     }
     return newdata(NULLOBJ,0);
