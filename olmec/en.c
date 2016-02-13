@@ -45,18 +45,6 @@ void init_en(){
     mark = markdata.int32;
 }
 
-size_t numused, nummax;
-void **numtab;
-
-size_t progused, progmax;
-void **progtab;
-
-size_t arrused, arrmax;
-void **arrtab;
-
-size_t symused, symmax;
-void **symtabtab;
-
 int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     if (*used == *max){
         *max = *max * 7 + 11;
@@ -70,10 +58,29 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     return z;
 }
 
+size_t numused, nummax;
+void **numtab;
+
+size_t progused, progmax;
+void **progtab;
+
+size_t arrused, arrmax;
+void **arrtab;
+
+size_t symused, symmax;
+void **symtabtab;
+
+size_t verbused, verbmax;
+void **verbtab;
+
+size_t advused, advmax;
+void **advtab;
+
 int cache(int tag, void *ptr){
     //printf("cache %p\n", ptr);
     switch(tag){
-        case LITERAL: return null;
+        default:
+        case LITERAL: 
         case CHAR: return null;
         case NUMBER:
             return newdata(tag, addnewtocache(&numused, &nummax, &numtab, ptr));
@@ -88,6 +95,10 @@ int cache(int tag, void *ptr){
             return newdata(tag, addnewtocache(&arrused, &arrmax, &arrtab, ptr));
         case SYMTAB:
             return newdata(tag, addnewtocache(&symused, &symmax, &symtabtab, ptr));
+        case VERB:
+            return newdata(tag, addnewtocache(&verbused, &verbmax, &verbtab, ptr));
+        case ADVERB:
+            return newdata(tag, addnewtocache(&advused, &advmax, &advtab, ptr));
         case NULLOBJ: return null;
     }
 }
@@ -95,12 +106,15 @@ int cache(int tag, void *ptr){
 void *getptr(int d){
     if (d<0) return NULL;
     switch(gettag(d)){
-        case LITERAL: return NULL;
+        default:
+        case LITERAL:
         case CHAR: return NULL;
         case NUMBER: return numtab[getval(d)];
         case PROG: return progtab[getval(d)];
         case ARRAY: return arrtab[getval(d)];
         case SYMTAB: return symtabtab[getval(d)];
+        case VERB: return verbtab[getval(d)];
+        case ADVERB: return advtab[getval(d)];
         case NULLOBJ: return NULL;
     }
 }

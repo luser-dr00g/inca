@@ -7,6 +7,7 @@
 #include "en.h"
 #include "st.h"
 #include "wd.h"
+#include "vb.h"
 
 typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
@@ -22,11 +23,14 @@ _( NOUN = 4, qn, gettag(x)==LITERAL \
                  || gettag(x)==CHAR \
                  || gettag(x)==ARRAY ) \
 _( VRB = 8, qv, gettag(x)==VERB ) \
-_( ADV = 16, qo, gettag(x)==ADVERB ) \
-_( CONJ = 32, qj, 0 ) \
-_( ASSN = 64, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
-_( LPAR = 128, ql, gettag(x)==CHAR && getval(x) == '(' ) \
-_( RPAR = 256, qr, gettag(x)==CHAR && getval(x) == ')' ) \
+_( DEX = 16, qx, 0 ) \
+_( ADV = 32, qo, gettag(x)==ADVERB ) \
+_( LEV = 64, qe, 0 ) \
+_( CONJ = 128, qj, 0 ) \
+_( MARK = 256, qm, gettag(x)==MARKOBJ ) \
+_( ASSN = 512, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
+_( LPAR = 1024, ql, gettag(x)==CHAR && getval(x) == '(' ) \
+_( RPAR = 2048, qr, gettag(x)==CHAR && getval(x) == ')' ) \
 /**/
 #define PRED_FUNC(X,Y,...) int Y(int x){ return __VA_ARGS__; }
 PREDTAB(PRED_FUNC)
@@ -46,45 +50,40 @@ int classify(int x){
 }
 
 int monad(int f, int y, int dummy, symtab st){
+    printf("monad\n");
+    verb v = getptr(f);
+    return v->monad(y);
 }
 int dyad(int x, int f, int y, symtab st){
+    printf("dyad\n");
+    verb v = getptr(f);
+    return v->dyad(x,y);
 }
 int adv(int f, int g, int dummy, symtab st){
 }
 int conj_(int f, int g, int h, symtab st){
 }
+
 int spec(int name, int v, int dummy, symtab st){
-    printf("spec\n");
-    switch(gettag(name)){
-    case CHAR:{
-        int n = 1;
-        int *p = &name;
-        symtab tab =findsym(st,&p,&n,1);
-        tab->val = v;
-        } break;
-    case PROG: {
-        array na = getptr(name);
-        int n = na->dims[0];
-        int *p = na->data;
-        symtab tab = findsym(st,&p,&n,1);
-        tab->val = v;
-        } break;
-    }
+    def(st, name, v);
     return v;
 }
+
 int punc(int x, int dummy, int dummy2, symtab st){
     return x;
 }
 
 #define PARSETAB(_) \
-/*                                               pre x y z   post,2*/\
-_(L0, EDGE,     VRB,      NOUN, ANY,      monad,  3, 1,2,-1,   0,-1) \
-_(L1, EDGE+AVN, VRB,      VRB,  NOUN,     monad, -1, 2,3,-1,   1, 0) \
-_(L2, EDGE+AVN, NOUN,     VRB,  NOUN,     dyad,  -1, 1,2,3,    0,-1) \
-_(L3, EDGE+AVN, NOUN+VRB, ADV,  ANY,      adv,    3, 1,2,-1,   0,-1) \
-_(L4, EDGE+AVN, NOUN+VRB, CONJ, NOUN+VRB, conj_, -1, 1,2,3,    0,-1) \
-_(L5, VAR,      ASSN,     AVN,  ANY,      spec,   3, 0,2,-1,  -1,-1) \
-_(L6, LPAR,     ANY,      RPAR, ANY,      punc,   3, 1,-1,-1, -1,-1) \
+/*                                                   pre x y z   post,2*/\
+_(L0, EDGE,     VRB,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \
+_(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
+_(L2, ANY,      NOUN,     DEX,      ANY,      monad,  3, 2,1,-1,   0,-1) \
+_(L3, EDGE+AVN, NOUN,     VRB,      NOUN,     dyad,  -1, 1,2,3,    0,-1) \
+_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,    3, 1,2,-1,   0,-1) \
+_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,    3, 2,1,-1,   0,-1) \
+_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_, -1, 1,2,3,    0,-1) \
+_(L7, VAR,      ASSN,     AVN,      ANY,      spec,   3, 0,2,-1,  -1,-1) \
+_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,   3, 1,-1,-1, -1,-1) \
 /**/
 #define PARSETAB_PAT(label, pat1, pat2, pat3, pat4, ...) \
     {pat1, pat2, pat3, pat4},
@@ -125,11 +124,13 @@ int ex(array e, symtab st){
 
     while(lstk->top){ //left stack not empty
         x=stackpop(lstk);
+        printf("->%d(%d,%x)\n", x, gettag(x), getval(x));
 
         if (qp(x)){ //parse and lookup name
             if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
                 stackpush(rstk,x);
             } else {
+                printf("lookup\n");
                 int *s;
                 int n;
                 switch(gettag(x)){
@@ -159,6 +160,7 @@ int ex(array e, symtab st){
                     }
                 }
                 //replace name with defined value
+                printf("==%d(%d,%x)\n", tab->val, gettag(tab->val), getval(tab->val));
                 stackpush(rstk,tab->val);
             }
         } else { stackpush(rstk,x); }
@@ -167,25 +169,16 @@ int ex(array e, symtab st){
         while (docheck){ //check rstk with patterns and reduce
             docheck = 0;
             if (rstk->top>=4){ //enough elements to check?
-                //printf("check\n");
                 int c[4];
                 for (j=0; j<4; j++)
                     c[j] = classify(rstk->a[rstk->top-1-j]);
-                printf("%d %d %d %d\n", c[0], c[1], c[2], c[3]);
+                //printf("%d %d %d %d\n", c[0], c[1], c[2], c[3]);
                 for (i=0; i<sizeof parsetab/sizeof*parsetab; i++){
-                    /*
-                    printf("%d %d %d %d\n",
-                            parsetab[i].c[0], parsetab[i].c[1],
-                            parsetab[i].c[2], parsetab[i].c[3]);
-                    printf("%d %d %d %d\n",
-                            c[0]&parsetab[i].c[0], c[1]&parsetab[i].c[1],
-                            c[2]&parsetab[i].c[2], c[3]&parsetab[i].c[3]);
-                            */
                     if ( c[0] & parsetab[i].c[0]
                       && c[1] & parsetab[i].c[1]
                       && c[2] & parsetab[i].c[2]
                       && c[3] & parsetab[i].c[3] ) {
-                        //printf("match\n");
+                        printf("match %d\n", i);
                         int t[4];
                         t[0] = stackpop(rstk);
                         t[1] = stackpop(rstk);

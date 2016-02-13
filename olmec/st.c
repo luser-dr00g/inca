@@ -1,5 +1,9 @@
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+#include "ar.h"
+#include "en.h"
 
 #include "st.h"
 
@@ -117,6 +121,26 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
     return last;  // return last-matched node
 }
 #undef sp
+
+
+void def(symtab st, int name, int v){
+    switch(gettag(name)){
+    case CHAR:{
+        int n = 1;
+        int *p = &name;
+        symtab tab =findsym(st,&p,&n,1);
+        tab->val = v;
+        } break;
+    case PROG: {
+        array na = getptr(name);
+        int n = na->dims[0];
+        int *p = na->data;
+        symtab tab = findsym(st,&p,&n,1);
+        tab->val = v;
+        } break;
+    }
+}
+
 
 #ifdef TESTMODULE
 #include "minunit.h"

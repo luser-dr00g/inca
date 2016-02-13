@@ -9,6 +9,7 @@
 #include "st.h"
 #include "ex.h"
 #include "wd.h"
+#include "vb.h"
 
 symtab env;
 
@@ -20,6 +21,7 @@ int main() {
     init_en();
     env = makesymtab(10);
     env->val = null;
+    init_vb(env);
 
     if (isatty(fileno(stdin))) specialtty();
 

@@ -1,3 +1,5 @@
+#ifndef AR_H_
+#define AR_H_
 #include "../ppnarg.h"
 
 typedef struct ar {
@@ -36,3 +38,4 @@ array extend(array a, int extra);
 array cat(array x, array y);
 array iota(int n);
 
+#endif

@@ -1,24 +1,19 @@
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "en.h"
+#include "st.h"
 
-#define VERBTAB(_) \
-/*base, monad, dyad, f, g, h, mr,lr,rr*/ \
-_('+',  id,    plus, 0, 0, 0, 0, 0, 0 ) \
-/**/
-typedef struct verb {
-    int id;
-    int (*monad)(int);
-    int (*dyad)(int,int);
-    int f,g,h; /* operator arguments */
-    int mr,lr,rr; /* monadic,left,right rank*/
-} *verb;
+#include "vb.h"
 
 void common(int *ap, int *wp){
+    //promote smaller object to matching type
 }
 
 int id (int w){ return w; }
 int plus (int a, int w){
     common(&a,&w);
+    return newdata(LITERAL, getval(a)+getval(w));
 }
 
 #define VERBTAB_DEF(id,...) \
