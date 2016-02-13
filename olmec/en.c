@@ -37,7 +37,7 @@ int newdata(int tag, int val){
 
 integer nulldata = { .data = { .tag = NULLOBJ, .val = 0 } };
 int null /* = nulldata.int32 */;
-integer markdata = { .data = { .tag = MARK, .val = 0 } };
+integer markdata = { .data = { .tag = MARKOBJ, .val = 0 } };
 int mark /* = markdata.int32 */;
 
 void init_en(){

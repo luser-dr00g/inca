@@ -20,7 +20,8 @@ symtab makesymtab(int n){
 }
 
 int hash(int x){
-    return x^(x<<5)^(x<<14); // fill UCS 21bit space with 7bit ascii
+    return x<<2;
+    //return x^(x<<5)^(x<<14); // fill UCS 21bit space with 7bit ascii
 }
 
 /* common test clause in hashlookup */
@@ -95,7 +96,7 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
         if (*t) { // slot not empty
             st = *t;
             sp++;
-            if ((*t)->val != 0){ // partial match
+            if ((*t)->val != null){ // partial match
                 last = st;
                 lasp = sp;
                 lasn = nn;
@@ -110,13 +111,18 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
                 *t = calloc(1, sizeof(struct st));
                 (*t)->tab = calloc((*t)->n = 11, sizeof(struct st));
                 st = *t;
+                lasn = nn;
+                lasp = sp;
+                last = st;
                 st->key = *sp++;
+                st->val = null;
                 break;
             }
         }
     }
 
-    *n = nn+1; // undo nn-- and update n
+    //*n = nn+1; // undo nn-- and update n
+    *n = lasn;
     sp = lasp;
     return last;  // return last-matched node
 }
@@ -167,6 +173,7 @@ static char *test_put_get(){
     t = findsym(&st,&sym,&n,0);
     //printf("%p\n",(void*)t);
     test_case(t->val != 42);
+    printf("%d\n", n);
     test_case(n != 0);
 
     return 0;
