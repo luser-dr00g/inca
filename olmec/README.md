@@ -9,6 +9,7 @@
 * qn - rational numbers
 * st - symbol-table
 * wd - scanner, word-formation
+* vb = verbs
 
 ## Design
 
