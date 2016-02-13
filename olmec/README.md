@@ -127,3 +127,30 @@ Scanner and Parser both written and working. REPL is able to assign variables,
 lookup variables, and resolve parentheses. Next up: verbs!
 
 
+--
+
+Added the `plus` verb (for immediate literals only: no overflow checking) 
+and enough support to execute it. Current debugging output from the REPL 
+(with `<- annotations`):
+
+    $ ./olmec
+            2+2                      <- user input
+    0032 002b 0032 000d 0000         <- input bytes
+    number                           <- scanner analysis
+    other
+    number
+
+    1                                <- rank of resulting array
+    3                                <- length of dim[0]
+    2(0,2) 16777259(1,2b) 2(0,2)     <- encoded values
+    0x0                              <- a hex zero for some reason
+    ->2(0,2)                         <- push 2 to right stack
+    ->16777259(1,2b)                 <- push + to right stack
+    lookup
+    ==117440512(7,0)                 <- lookup + yielding verb plus
+    ->2(0,2)                         <- push 2 to right stack
+    ->150994944(9,0)                 <- push start marker
+    match 3                          <- grammar production matched
+    dyad                             <- handler function
+    4(0,4)                           <- result
+
