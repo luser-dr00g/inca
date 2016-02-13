@@ -23,9 +23,9 @@ _( NOUN = 4, qn, gettag(x)==LITERAL \
                  || gettag(x)==CHAR \
                  || gettag(x)==ARRAY ) \
 _( VRB = 8, qv, gettag(x)==VERB ) \
-_( DEX = 16, qx, 0 ) \
+_( DEX = 16, qx, 0 ) /*dextri-monadic verb*/\
 _( ADV = 32, qo, gettag(x)==ADVERB ) \
-_( LEV = 64, qe, 0 ) \
+_( LEV = 64, qe, 0 ) /*sinister adverb*/\
 _( CONJ = 128, qj, 0 ) \
 _( MARK = 256, qm, gettag(x)==MARKOBJ ) \
 _( ASSN = 512, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
@@ -49,19 +49,31 @@ int classify(int x){
     return r;
 }
 
+/* Parser Actions,
+   each functions is called with x y z parameters defined in PARSETAB 
+ */
 int monad(int f, int y, int dummy, symtab st){
     printf("monad\n");
     verb v = getptr(f);
     return v->monad(y);
 }
+
 int dyad(int x, int f, int y, symtab st){
     printf("dyad\n");
     verb v = getptr(f);
     return v->dyad(x,y);
 }
+
 int adv(int f, int g, int dummy, symtab st){
+    printf("adverb\n");
+    verb v = getptr(g);
+    return v->monad(f);
 }
+
 int conj_(int f, int g, int h, symtab st){
+    printf("conj\n");
+    verb v = getptr(g);
+    return v->dyad(f,h);
 }
 
 int spec(int name, int v, int dummy, symtab st){
