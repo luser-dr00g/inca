@@ -37,5 +37,6 @@ array extend(array a, int extra);
 
 array cat(array x, array y);
 array iota(int n);
+array scalar(int n);
 
 #endif

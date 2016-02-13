@@ -87,16 +87,25 @@ array wd(int *s, int n){
 }
 
 int newobj(int *s, int n, int state){
-    int t;
     switch(state){
         case num:
             printf("number\n");
             { //TODO create number vectors
                 char buf[n+1];
+                char *p;
                 for (int i=0; i<n; i++)
                     buf[i] = s[i];
                 buf[n] = 0;
-                return newdata(LITERAL,strtol(buf,NULL,10));
+                int t = newdata(LITERAL, strtol(buf,&p,10));
+                if (*p) {
+                    array z = scalar(t);
+                    while(*p) {
+                        int u = newdata(LITERAL, strtol(p,&p,10));
+                        z = cat(z, scalar(u));
+                    }
+                    t = cache(ARRAY, z);
+                }
+                return t;
             }
         case quo:
         case str:

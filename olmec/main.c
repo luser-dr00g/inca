@@ -49,6 +49,14 @@ int main() {
 
         int x = ex(a,env);
         printf("%d(%d,%x)\n", x, gettag(x), getval(x));
+        switch(gettag(x)){
+            case ARRAY: {
+                array t = getptr(x);
+                for (i=0; i<t->dims[0]; i++)
+                    printf("%d: %d(%d,%d)\n", i, t->data[i], 
+                            gettag(t->data[i]), getval(t->data[i]));
+            } break;
+        }
     }
 
     if (isatty(fileno(stdin))) restoretty();

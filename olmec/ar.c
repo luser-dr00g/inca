@@ -312,6 +312,12 @@ array iota(int n){
     return z;
 }
 
+array scalar(int n){
+    array z = array_new(1);
+    *elem(z,0) = n;
+    return z;
+}
+
 
 #ifdef TESTMODULE
 #include <stdlib.h>
