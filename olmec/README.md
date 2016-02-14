@@ -1,6 +1,8 @@
 ## TOC
 
+* alpha.h - input/internal/output character code table
 * ar - array functions
+* av - adverbs and conjunctions
 * ed - line editor
 * en - integer encoding of various types
 * ex - parsing and execution
