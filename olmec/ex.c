@@ -8,38 +8,18 @@
 #include "st.h"
 #include "wd.h"
 #include "vb.h"
+#include "ex.h"
 
 typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--((stkp)->top)])
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
 
-#define PREDTAB(_) \
-_( ANY = 1, qa, 1 ) \
-_( VAR = 2, qp, gettag(x)==PROG \
-                || (gettag(x)==CHAR && getval(x)!=0x2190 \
-                    && getval(x)!='(' && getval(x)!=')' ) ) \
-_( NOUN = 4, qn, gettag(x)==LITERAL \
-                 || gettag(x)==CHAR \
-                 || gettag(x)==ARRAY ) \
-_( VRB = 8, qv, gettag(x)==VERB ) \
-_( DEX = 16, qx, 0 ) /*dextri-monadic verb*/\
-_( ADV = 32, qo, gettag(x)==ADVERB ) \
-_( LEV = 64, qe, 0 ) /*sinister adverb*/\
-_( CONJ = 128, qj, 0 ) \
-_( MARK = 256, qm, gettag(x)==MARKOBJ ) \
-_( ASSN = 512, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
-_( LPAR = 1024, ql, gettag(x)==CHAR && getval(x) == '(' ) \
-_( RPAR = 2048, qr, gettag(x)==CHAR && getval(x) == ')' ) \
-/**/
 #define PRED_FUNC(X,Y,...) int Y(int x){ return __VA_ARGS__; }
 PREDTAB(PRED_FUNC)
 #define PRED_ENT(X,Y,...) Y,
 int (*q[])(int) = { PREDTAB(PRED_ENT) };
-#define PRED_ENUM(X,...) X,
-enum predicate { PREDTAB(PRED_ENUM) 
-                 EDGE = MARK+ASSN+LPAR,
-                 AVN = VRB+NOUN+ADV };
+
 /* encode predicate applications into a binary number */
 int classify(int x){
     int i,v,r;
@@ -55,25 +35,25 @@ int classify(int x){
 int monad(int f, int y, int dummy, symtab st){
     printf("monad\n");
     verb v = getptr(f);
-    return v->monad(y);
+    return v->monad(y,v);
 }
 
 int dyad(int x, int f, int y, symtab st){
     printf("dyad\n");
     verb v = getptr(f);
-    return v->dyad(x,y);
+    return v->dyad(x,y,v);
 }
 
 int adv(int f, int g, int dummy, symtab st){
     printf("adverb\n");
     verb v = getptr(g);
-    return v->monad(f);
+    return v->monad(f,v);
 }
 
 int conj_(int f, int g, int h, symtab st){
     printf("conj\n");
     verb v = getptr(g);
-    return v->dyad(f,h);
+    return v->dyad(f,h,v);
 }
 
 int spec(int name, int v, int dummy, symtab st){

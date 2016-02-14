@@ -10,8 +10,8 @@ void common(int *ap, int *wp){
     //promote smaller object to matching type
 }
 
-int id (int w){ return w; }
-int plus (int a, int w){
+int id (int w, verb v){ return w; }
+int plus (int a, int w, verb v){
     common(&a,&w);
     return newdata(LITERAL, getval(a)+getval(w));
 }

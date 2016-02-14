@@ -15,6 +15,6 @@ all_tests:all_tests.c
 st_test:st_test.c
 	$(CC) $(CFLAGS) -o $@ $^ en.o $(LDLIBS)
 
-olmec:main.o ed.o en.o wd.o ex.o vb.o $(unitobjs)
+olmec:main.o ed.o en.o wd.o ex.o vb.o av.o $(unitobjs)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 

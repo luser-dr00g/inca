@@ -5,8 +5,8 @@ _('+',  id,    plus, 0, 0, 0, 0, 0, 0 ) \
 /**/
 typedef struct verb {
     int id;
-    int (*monad)(int);
-    int (*dyad)(int,int);
+    int (*monad)(int,struct verb*);
+    int (*dyad)(int,int,struct verb*);
     int f,g,h; /* operator arguments */
     int mr,lr,rr; /* monadic,left,right rank*/
 } *verb;

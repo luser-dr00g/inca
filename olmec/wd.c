@@ -123,6 +123,8 @@ int newobj(int *s, int n, int state){
         case sng:
             printf("other\n");
             if (n==1){
+                if (*s == '(') return newdata(LPAROBJ, 0);
+                if (*s == ')') return newdata(RPAROBJ, 0);
                 return newdata(CHAR, *s);
             } else {
                 array t=copy(cast(s,n));

@@ -19,6 +19,8 @@ enum tag {
     VERB, /* val is a(n index to a) verb object */
     ADVERB, /* val is a(n index to a) verb object */
     MARKOBJ, /* val is irrelevant (s.b. 0) */
+    LPAROBJ,
+    RPAROBJ,
 };
 
 extern int null;
