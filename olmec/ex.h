@@ -16,6 +16,7 @@ _( MARK = 256, qm, gettag(x)==MARKOBJ ) \
 _( ASSN = 512, qc, gettag(x)==CHAR && getval(x) == 0x2190 ) \
 _( LPAR = 1024, ql, gettag(x)==LPAROBJ ) \
 _( RPAR = 2048, qr, gettag(x)==RPAROBJ ) \
+_( NUL = 4096, qu, gettag(x)==NULLOBJ ) \
 /**/
 #define PRED_DECL(X,Y,...) int Y(int);
 PREDTAB(PRED_DECL)
