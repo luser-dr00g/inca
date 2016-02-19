@@ -13,6 +13,7 @@
 #define ADVERBTAB(_) \
 /*base, monad, dyad, f, g, h, mr,lr,rr*/ \
 _('&',  0,     amp,  0, 0, 0, 0, 0, 0 ) \
+_('@',  0,     atop, 0, 0, 0, 0, 0, 0 ) \
 /**/
 
 #define ADVERBTAB_DEF(id,...) \
@@ -42,17 +43,9 @@ int domerr(int w, verb v){
     return null;
 }
 
-int withl(int w, verb v){
-    printf("%p\n", v);
-    printf("%d %d\n", v->f, v->g);
-    DECLFG;
-    printf("%p\n", (void*)g2);
-    return g2(v->f, w, gv); }
-
+int withl(int w, verb v){ DECLFG; return g2(v->f, w, gv); }
 int withr(int w, verb v){ DECLFG; return f2(w, v->g, fv); }
-
 int on1(int w, verb v){ DECLFG; return f1(g1(w,gv),fv); }
-
 int on2(int a, int w, verb v){ DECLFG; return f2(g1(a,gv),g1(w,gv),fv); }
 
 int amp(int a, int w, verb v){
@@ -64,9 +57,23 @@ int amp(int a, int w, verb v){
     }
 }
 
+
+int atop2(int a, int w, verb v){ DECLFG; return f1(g2(a,w,gv),fv); }
+
+int atop(int a, int w, verb v){
+    switch(CONJCASE(a,w)){
+        case NN: return domerr(0,v);
+        case NV: return domerr(0,v);
+        case VN: return domerr(0,v);
+        case VV: {
+            v = getptr(w);
+            return DERIV('@', on1, atop2, a, w, 0, v->mr, v->lr, v->rr);
+        } 
+    }
+}
+
 void init_av(symtab st){
     verb v;
     ADVERBTAB(ADVERBTAB_DEF)
 }
-
 
