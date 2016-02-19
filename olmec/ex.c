@@ -10,6 +10,12 @@
 #include "vb.h"
 #include "ex.h"
 
+/* stack types
+   the size is generously pre-calculated
+   and so we can skip all bounds checking.
+   stkp->top is the size
+   stkp->top-1 is the topmost element
+ */
 typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--((stkp)->top)])
@@ -20,7 +26,8 @@ PREDTAB(PRED_FUNC)
 #define PRED_ENT(X,Y,...) Y,
 int (*q[])(int) = { PREDTAB(PRED_ENT) };
 
-/* encode predicate applications into a binary number */
+/* encode predicate applications into a binary number
+   which can be compared to a pattern with a mask */
 int classify(int x){
     int i,v,r;
     for (i=0, v=1, r=0; i<sizeof q/sizeof*q; i++, v*=2)
@@ -30,7 +37,7 @@ int classify(int x){
 }
 
 /* Parser Actions,
-   each functions is called with x y z parameters defined in PARSETAB 
+   each function is called with x y z parameters defined in PARSETAB 
  */
 int monad(int f, int y, int dummy, symtab st){
     printf("monad\n");
