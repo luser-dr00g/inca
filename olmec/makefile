@@ -7,7 +7,7 @@ unitobjs= $(patsubst %,%.o,$(units))
 all:olmec test
 
 test:all_tests $(tests)
-	./all_tests
+	@./all_tests
 all_tests.c:all_tests.m4 makefile $(unitprogs)
 	m4 -D UNITS="$(units)" $< >$@
 all_tests:all_tests.c
