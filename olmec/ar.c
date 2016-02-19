@@ -177,8 +177,12 @@ int *elem(array a, ...){
 
 void transpose2(array a){
     int t;
-    t = a->dims[0]; a->dims[0] = a->dims[1]; a->dims[1] = t;
-    t = a->weight[0]; a->weight[0] = a->weight[1]; a->weight[1] = t;
+    t = a->dims[0],
+        a->dims[0] = a->dims[1],
+                     a->dims[1] = t;
+    t = a->weight[0],
+        a->weight[0] = a->weight[1],
+                       a->weight[1] = t;
 }
 
 void transpose(array a, int shift){
@@ -315,6 +319,18 @@ array iota(int n){
 array scalar(int n){
     array z = array_new(1);
     *elem(z,0) = n;
+    return z;
+}
+
+array (vector)(int n, ...){
+    va_list ap;
+    array z = array_new(n);
+    int i;
+
+    va_start(ap,n);
+    for (i=0; i<n; i++)
+        *elem(z,i) = va_arg(ap, int);
+    va_end(ap);
     return z;
 }
 

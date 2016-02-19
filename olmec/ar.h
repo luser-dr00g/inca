@@ -38,5 +38,7 @@ array extend(array a, int extra);
 array cat(array x, array y);
 array iota(int n);
 array scalar(int n);
+array (vector)(int n, ...);
+#define vector(...) (vector)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
 
 #endif
