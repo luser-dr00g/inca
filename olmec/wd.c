@@ -29,24 +29,28 @@ int *classint(int *class, int el){
 int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE, LEFT, CR};
 enum state {
     ini=0,  //indeterminate
-    num=10, //numbers and vectors of numbers
-    dot=20, //initial dot
-    str=30, //initial quote
-    quo=40, //end or escape quote
-    oth=50, //identifier or other symbol
-    sng=60, //copula or other self-delimiting symbol
+    dot=10, //initial dot  . 
+    num=20, //number 0
+    dit=30, //medial dot  0.
+    str=40, //initial quote '
+    quo=50, //end or escape quote '...''?
+    oth=60, //identifier or other symbol a+
+    dut=70, //trailing dot +.
+    sng=80, //copula or other self-delimiting symbol
 };
 
 int wdtab[][sizeof cclass/sizeof*cclass] = {
-/*char-class*/
-/*none   0-9    .      '      (      )      sp     <-     \r  */
-{ oth+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
-{ oth+1, num+0, num+0, str+1, oth+1, oth+1, num+0, sng+1, ini+1 },
-{ oth+0, num+0, oth+0, str+1, ini+1, ini+1, ini+1, sng+1, ini+1 },
-{ str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
-{ oth+1, num+1, dot+1, str+0, oth+1, oth+1, ini+1, sng+1, ini+1 },
-{ oth+0, num+1, oth+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-{ oth+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+       /*char-class*/
+/*state  none   0-9    .      '      (      )      sp     <-     \r  */
+/*0*/ { oth+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
+/*10*/{ oth+0, num+0, oth+0, str+1, ini+1, ini+1, ini+1, sng+1, ini+1 },
+/*20*/{ oth+1, num+0, dit+0, str+1, oth+1, oth+1, ini+1, sng+1, ini+1 },
+/*30*/{ oth+0, num+1, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*40*/{ str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
+/*50*/{ oth+1, num+1, dot+1, str+0, oth+1, oth+1, ini+1, sng+1, ini+1 },
+/*60*/{ oth+0, num+1, oth+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*70*/{ oth+0, num+1, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*80*/{ oth+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 };
 
 #define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c*10))
@@ -78,6 +82,12 @@ array wd(int *s, int n){
                     /*fallthrough*/
                     //printf("wd %p\n", (void*)getptr(p[-1]));
             case 2: j=i; break;          // reset start index
+        }
+        if (i>1){
+            if(gettag(p[-1])==LITERAL && gettag(p[-2])==LITERAL)
+                (--p)[-1] = cache(ARRAY, vector(p[-1],p[0]));
+            if(gettag(p[-1])==LITERAL && gettag(p[-2])==ARRAY)
+                (--p)[-1] = cache(ARRAY, cat(getptr(p[-1]), vector(p[0])));
         }
     }
     z->dims[0] = p-z->data;
@@ -119,6 +129,8 @@ int newobj(int *s, int n, int state){
             }
         case ini:
         case dot:
+        case dit:
+        case dut:
         case oth:
         case sng:
             printf("other\n");
