@@ -10,10 +10,10 @@
 #include "vb.h"
 #include "ex.h"
 
-/* stack types
+/* stack type
    the size is generously pre-calculated
    and so we can skip all bounds checking.
-   stkp->top is the size
+   stkp->top is the size (index of next empty slot for next push)
    stkp->top-1 is the topmost element
  */
 typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
@@ -21,6 +21,13 @@ typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stackpop(stkp) ((stkp)->a[--((stkp)->top)])
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
 
+/* predicate functions are instantiated accorind to the table
+   defined in the header.
+   the q[] function array is used by classify to apply all 
+   predicate functions yielding a sum of all applicable codes
+   defined in the table. Specific qualities or combinations 
+   may then be determined easily by masking.
+ */
 #define PRED_FUNC(X,Y,...) int Y(int x){ return __VA_ARGS__; }
 PREDTAB(PRED_FUNC)
 #define PRED_ENT(X,Y,...) Y,
@@ -135,7 +142,7 @@ int ex(array e, symtab st){
                 int *s;
                 int n;
                 switch(gettag(x)){
-                    case CHAR: {
+                    case PCHAR: {
                         s = &x;
                         n = 1;
                         } break;
