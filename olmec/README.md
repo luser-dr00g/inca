@@ -157,3 +157,18 @@ and enough support to execute it. Current debugging output from the REPL
     dyad                             <- handler function
     4(0,4)                           <- result
 
+
+-- 
+
+Adverb and conjunction support is implemented. So now I'm exploring the
+implementation of verb rank for all verbs.
+[An Implementation of J](http://sblom.github.io/openj-core/iojVerb.htm)
+describes the behavior in terms of a "model" in J code. So, I merely
+have to implement the functions and operators (verbs and adverbs) described
+there and detailed
+[in the dictionary](http://www.jsoftware.com/help/dictionary/vocabul.htm),
+and rank can be implemented meta-circularly, by calling other 
+implemented verbs. Of course these supplementary uses of verbs must
+be for simpler cases than *normal* usage of verbs, to avoid an infinite
+recursion. 
+
