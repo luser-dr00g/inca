@@ -10,9 +10,10 @@ typedef union integer {
 
 enum tag {
     LITERAL, /* val is a 24-bit 2's comp integer */
-    CHAR, /* val is a 21-bit Unicode code point padded with zeros */
     NUMBER, /* val is an index in the number table */
-    PROG, /* val is an (index to an) executable code fragment (ARRAY of CHAR)*/
+    CHAR, /* val is a 21-bit Unicode code point padded with zeros */
+    PCHAR, /* val is a an executable char */
+    PROG, /* val is an (index to an) executable code fragment (ARRAY of PCHAR)*/
     ARRAY, /* val is a(n index to a) boxed array */
     SYMTAB, /* val is a(n index to a) symbol table */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
