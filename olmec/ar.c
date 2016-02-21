@@ -25,6 +25,7 @@ array array_new_dims(int rank, int dims[]){
     z->type = normal;
     z->rank = rank;
     z->dims = (int*)(z+1);
+    z->cons = 0;
     z->weight = z->dims + rank;
     z->data = z->weight + rank;
     memmove(z->dims,dims,rank*sizeof(int));
@@ -55,6 +56,7 @@ array array_new_function(int rank, int dims[],
     z->type = function;
     z->rank = rank;
     z->dims = (int*)(z+1);
+    z->cons = 0;
     z->weight = z->dims + rank;
     z->data = z->weight + rank;
     memmove(z->data, data, datan+sizeof(int));
@@ -96,6 +98,7 @@ array cast_dims(int data[], int rank, int dims[]){
     z->type = indirect;
     z->rank = rank;
     z->dims = (int*)(z+1);
+    z->cons = 0;
     z->weight = z->dims + rank;
     z->data = data;
     memmove(z->dims,dims,rank*sizeof(int));
@@ -127,6 +130,7 @@ array clone(array a){
     z->type = indirect;
     z->rank = a->rank;
     z->dims = (int*)(z+1);
+    z->cons = 0;
     z->weight = z->dims + z->rank;
     z->data = a->data;
     memmove(z->dims,a->dims,z->rank*sizeof(int));
@@ -163,6 +167,7 @@ array copy(array a){
     z->type = normal;
     z->rank = a->rank;
     z->dims = (int*)(z+1);
+    z->cons = 0;
     z->weight = z->dims + z->rank;
     z->data = z->weight + z->rank;
     memmove(z->dims,a->dims,z->rank*sizeof(int));
@@ -186,6 +191,7 @@ int *elema(array a, int ind[]){
     for (i=0; i<a->rank; i++){
         idx += ind[i] * a->weight[i];
     }
+    idx += a->cons;
     return a->type==function? a->func(a,idx): a->data+idx;
 }
 
@@ -197,6 +203,7 @@ int *elemv(array a, va_list ap){
         ind = va_arg(ap, int);
         idx += ind * a->weight[i];
     }
+    idx += a->cons;
     return a->type==function? a->func(a,idx): a->data+idx;
 }
 
@@ -271,7 +278,8 @@ array slice(array a, int i){
     z->weight = z->dims + z->rank;
     memcpy(z->dims, a->dims+1, z->rank*sizeof(int));
     memcpy(z->weight, a->weight+1, z->rank*sizeof(int));
-    z->data = a->data + i*a->weight[0];
+    z->cons = i*a->weight[0];
+    z->data = a->data;
     return z;
 }
 
@@ -292,7 +300,7 @@ array slicea(array a, int spec[]){
     memcpy(z->weight,weight,rank*sizeof(int));
     for (j=0; j<a->rank; j++){
         if (spec[j]!=-1)
-            z->data += spec[j] * a->weight[j];
+            z->cons += spec[j] * a->weight[j];
     }
     return z;
 }
@@ -315,7 +323,7 @@ array slices(array a, int s[], int f[]){
     array z = cast_dims(a->data, rank, dims);
     memcpy(z->weight, weight, rank*sizeof(int));
     for (i=0; i<a->rank; i++){
-        z->data += s[i] * a->weight[i];
+        z->cons += s[i] * a->weight[i];
     }
     return z;
 }
@@ -345,6 +353,7 @@ array cat(array x, array y){
     return z;
 }
 
+/* use ret_index instead */
 array iota(int n){
     array z = array_new(n);
     int i;

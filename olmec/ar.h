@@ -6,6 +6,7 @@ typedef struct ar {
     int type;
     int rank;    // number of dimensions
     int *dims;   // size of each dimension
+    int cons;    // constant term of the indexing formula
     int *weight; // corresponding coefficient in the indexing formula
     int *data;   // address of first array element
     int *(*func)(struct ar *,int); // data function (if function type)

@@ -68,7 +68,9 @@ int vreshape (int a, int w, verb v){
                     array W=getptr(w);
                     int wn=productdims(W->rank,W->dims);
                     array z=array_new(n);
-                    mcopy(z->data, W->data, wn=n>wn?wn:n);
+                    int i;
+                    wn=n>wn?wn:n;
+                    for (i=0; i<wn; i++) z->data[i] = *elem(W,i);
                     if((n-=wn)>0) mcopy(z->data+wn,z->data,n);
                     return cache(ARRAY, z);
                 }
@@ -81,6 +83,8 @@ int vreshape (int a, int w, verb v){
                     return cache(ARRAY, z);
                 }
                 case ARRAY: {
+                    array A=getptr(a);
+                    array W=getptr(w);
                 }
             }
     }
