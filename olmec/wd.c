@@ -4,11 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ar.h"
-#include "en.h"
+#include "ar.h" // array type
+#include "en.h" // atomic encoding
 
 #include "wd.h"
 
+// character classes
 #define DIGIT (int[]){'0','1','2','3','4','5','6','7','8','9', 0}
 #define DOT (int[]){'.', 0}
 #define LPAR (int[]){'(', 0}
@@ -26,6 +27,15 @@ int *classint(int *class, int el){
     return NULL;
 }
 
+
+// state-machine table
+// input char is compared against classes 1..N-1 and no match
+// selects column 0 (marked none in wdtab)
+//   wdtab[state][class] contains a new state and action code
+// action=0 :: do nothing
+//        1 :: emit previous token and reset start position
+//        2 :: (re)set start position
+//        3 :: emit previous token without prev char and set start to prev char
 int *cclass[] = {0, DIGIT, DOT, QUOTE, LPAR, RPAR, SPACE, LEFT, CR};
 enum state {
     ini=0,  //indeterminate
@@ -55,20 +65,22 @@ int wdtab[][sizeof cclass/sizeof*cclass] = {
 /*90*/{ oth+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 };
 
-#define emit(a,b,c) (*p++=newobj(s+(a),(b)-a,c*10))
+#define emit(start,end,state) (*p++=newobj(s+(start),(end)-(start),(state)*10))
 
+// scan up to n chars from s and produce 1D array of encoded expression
 array wd(int *s, int n){
     int a,b;
     int i,j,i_,state=0,oldstate=0,oldoldstate=0;
     int c;
-    array z = array_new(n+1);
-    int *p=z->data;
+    array z = array_new(n+1);  // create an array of maximum possible size
+    int *p=z->data;            // p pointer appends data to array
     //printf("n=%d\n",n);
 
     state=0;
     for (i=0; i<n; i++){
         printf("i= %d, state = %d, p-s = %d\n", i, state*10, (int)(p-z->data));
-        c=s[i];
+
+        c=s[i];    // classify c according to cclass table
         a=0;
         for (i_=1; i_<sizeof cclass/sizeof*cclass; i_++){
             if (classint(cclass[i_],c)){
@@ -76,11 +88,13 @@ array wd(int *s, int n){
                 break;
             }
         }
-        b=wdtab[state][a];
+
+        b=wdtab[state][a];    // lookup new state from wdtab
         oldoldstate=oldstate;
         oldstate=state;
         state=b/10;
-        switch(b%10){  //encoded actions
+
+        switch(b%10){         // perform encoded actions
             case 0: break;               // do nothing
             case 1: emit(j,i,oldstate);  // generate a token
                     j=i;
@@ -91,29 +105,33 @@ array wd(int *s, int n){
                     j=i-1;
                     break;
         }
-        if (p-z->data>1){
+        if (p-z->data>1){   // collapse adjacent numbers into number vectors
             if(gettag(p[-1])==LITERAL && gettag(p[-2])==LITERAL)
                 (--p)[-1] = cache(ARRAY, vector(p[-1],p[0]));
             if(gettag(p[-1])==LITERAL && gettag(p[-2])==ARRAY)
                 (--p)[-1] = cache(ARRAY, cat(getptr(p[-1]), vector(p[0])));
         }
     }
-    z->dims[0] = p-z->data;
+    z->dims[0] = p-z->data;  // set actual encoded length
 
     //printf("wd %p\n", getptr(z->data[0]));
     return z;
 }
 
+// construct a new object fron n chars starting at s
+// select type according to state argument which should be the
+// final state the machine was in before the start of the next
+// token was discovered.
 int newobj(int *s, int n, int state){
     switch(state){
-        case num:
+        case num:   // interpret a numeric string
         case dit:
         /*case fra:*/
             printf("number n=%d\n", n);
-            { //TODO create number vectors
+            {
                 char buf[n+1];
                 char *p;
-                for (int i=0; i<n; i++)
+                for (int i=0; i<n; i++)  // make nul-terminated copy
                     buf[i] = s[i];
                 buf[n] = 0;
                 int t = newdata(LITERAL, strtol(buf,&p,10));
@@ -127,7 +145,7 @@ int newobj(int *s, int n, int state){
                 }
                 return t;
             }
-        case quo:
+        case quo:    // interpret a character string TODO elim escape quotes
         case str:
             printf("string n=%d\n", n);
             {
@@ -137,14 +155,14 @@ int newobj(int *s, int n, int state){
                     t->data[i] = newdata(CHAR, t->data[i]);
                 return cache(ARRAY, t);
             }
-        case ini:
+        case ini:    // anything else is an executable character or string
         case dot:
         case dut:
         case oth:
         case sng:
             printf("other n=%d\n", n);
             if (n==1){
-                if (*s == '(') return newdata(LPAROBJ, 0);
+                if (*s == '(') return newdata(LPAROBJ, 0);  // special paren objects
                 if (*s == ')') return newdata(RPAROBJ, 0);
                 return newdata(PCHAR, *s);
             } else {
