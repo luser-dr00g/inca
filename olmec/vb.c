@@ -43,7 +43,7 @@ int vshapeof (int w, verb v){
             return cache(ARRAY, copy(cast(a->dims,a->rank)));
         }
     }
-    return null;
+    return newdata(LITERAL, 1);
 }
 int vreshape (int a, int w, verb v){
 }
@@ -66,10 +66,55 @@ int viota (int w, verb v){
     return null;
 }
 
+
+int vravel (int w, verb v){
+    switch(gettag(w)){
+        case ARRAY: {
+            array a = getptr(w);
+            array z = copy(a);
+            z->rank = 1; 
+            z->dims[0] = productdims(a->rank, a->dims);
+            return cache(ARRAY, z);
+        }
+    }
+    return w;
+}
+
+int vcat (int a, int w, verb v){
+    switch(gettag(a)){
+        case ARRAY: 
+            switch(gettag(w)){
+                case ARRAY: return cache(ARRAY, cat(getptr(a),getptr(w)));
+            }
+    }
+    return cache(ARRAY, vector(a,w));
+}
+
+
+int vraze (int w, verb v){
+}
+
+int vlink (int a, int w, verb v){
+}
+
+int vhead (int w, verb v){
+    switch(gettag(w)){
+        case ARRAY: {
+            array a = getptr(w);
+            if (a->rank == 0) return getfill(w);
+            return  cache(ARRAY, slice(a, 0));
+        }
+    }
+    return null;
+}
+
+int vtake (int a, int w, verb v){
+}
+
 #define VERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){id,__VA_ARGS__}; \
-    def(st, newdata(CHAR, id), cache(VERB, v));
+    def(st, newdata(PCHAR, id), cache(VERB, v));
 
 void init_vb(symtab st){
     verb v;
