@@ -22,10 +22,43 @@ array array_new_dims(int rank, int dims[]){
     z=malloc(sizeof*z
             + (rank+rank+datasz)*sizeof(int));
 
+    z->type = normal;
     z->rank = rank;
     z->dims = (int*)(z+1);
     z->weight = z->dims + rank;
     z->data = z->weight + rank;
+    memmove(z->dims,dims,rank*sizeof(int));
+    for(x=1, i=rank-1; i>=0; i--){
+        z->weight[i] = x;
+        x *= z->dims[i];
+    }
+
+    return z;
+}
+
+int *constant(array a,int idx){
+    return a->data;
+}
+
+int *ret_index(array a,int idx){
+    *a->data = idx;
+    return a->data;
+}
+
+array array_new_function(int rank, int dims[],
+        int *data, int datan, int *(*func)(array,int)){
+    int i,x;
+    array z;
+    z=malloc(sizeof*z
+            + (rank+rank+datan)*sizeof(int));
+
+    z->type = function;
+    z->rank = rank;
+    z->dims = (int*)(z+1);
+    z->weight = z->dims + rank;
+    z->data = z->weight + rank;
+    memmove(z->data, data, datan+sizeof(int));
+    z->func = func;
     memmove(z->dims,dims,rank*sizeof(int));
     for(x=1, i=rank-1; i>=0; i--){
         z->weight[i] = x;
@@ -60,6 +93,7 @@ array cast_dims(int data[], int rank, int dims[]){
     array z=malloc(sizeof*z
             + (rank+rank)*sizeof(int));
 
+    z->type = indirect;
     z->rank = rank;
     z->dims = (int*)(z+1);
     z->weight = z->dims + rank;
@@ -89,6 +123,8 @@ array (cast)(int data[], int rank, ...){
 array clone(array a){
     array z=malloc(sizeof*z
             + (a->rank+a->rank)*sizeof(int));
+
+    z->type = indirect;
     z->rank = a->rank;
     z->dims = (int*)(z+1);
     z->weight = z->dims + z->rank;
@@ -124,6 +160,7 @@ array copy(array a){
     int x;
     int ind[a->rank];
 
+    z->type = normal;
     z->rank = a->rank;
     z->dims = (int*)(z+1);
     z->weight = z->dims + z->rank;
@@ -149,7 +186,7 @@ int *elema(array a, int ind[]){
     for (i=0; i<a->rank; i++){
         idx += ind[i] * a->weight[i];
     }
-    return a->data + idx;
+    return a->type==function? a->func(a,idx): a->data+idx;
 }
 
 int *elemv(array a, va_list ap){
@@ -160,7 +197,7 @@ int *elemv(array a, va_list ap){
         ind = va_arg(ap, int);
         idx += ind * a->weight[i];
     }
-    return a->data + idx;
+    return a->type==function? a->func(a,idx): a->data+idx;
 }
 
 int *elem(array a, ...){

@@ -54,9 +54,14 @@ int main() {
         switch(gettag(x)){
             case ARRAY: {
                 array t = getptr(x);
-                for (i=0; i<t->dims[0]; i++)
-                    printf("%d: %d(%d,%d)\n", i, t->data[i], 
-                            gettag(t->data[i]), getval(t->data[i]));
+                printf("%d\n",t->rank);
+                for (i=0; i<t->rank; i++)
+                    printf("%d ", t->dims[i]);
+                printf("\n");
+                for (i=0; i<t->dims[0]; i++){
+                    int xx = *elem(t,i);
+                    printf("%d: %d(%d,%d)\n", i, xx, gettag(xx), getval(xx));
+                }
             } break;
         }
     }

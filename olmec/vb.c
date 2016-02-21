@@ -60,9 +60,7 @@ int vreshape (int a, int w, verb v){
                 return newdata(LITERAL, gettag(w));
             switch(gettag(w)){
                 case LITERAL: {
-                    array z=array_new(getval(a));
-                    z->data[0]=w;
-                    mcopy(z->data+1,z->data,getval(a)*sizeof*z->data);
+                    array z=array_new_function(1,&a,&w,1,constant);
                     return cache(ARRAY, z);
                 }
                 case ARRAY: {
@@ -76,7 +74,15 @@ int vreshape (int a, int w, verb v){
                 }
             }
         case ARRAY:
-            ;
+            switch(gettag(w)){
+                case LITERAL: {
+                    array A=getptr(a);
+                    array z=array_new_function(A->dims[0],A->data,&w,1,constant);
+                    return cache(ARRAY, z);
+                }
+                case ARRAY: {
+                }
+            }
     }
     return w;
 }
@@ -94,7 +100,9 @@ int vtally (int w, verb v){
 
 int viota (int w, verb v){
     switch(gettag(w)){
-        case LITERAL: return cache(ARRAY, iota(w));
+        //case LITERAL: return cache(ARRAY, iota(w));
+        case LITERAL:
+            return cache(ARRAY, array_new_function(1,&w,(int[]){0},1,ret_index));
     }
     return null;
 }
