@@ -38,14 +38,47 @@ int vminus(int a, int w, verb v){
 
 int vshapeof (int w, verb v){
     switch(gettag(w)){
+        case NULLOBJ: return newdata(LITERAL, 1);
         case ARRAY: {
             array a = getptr(w);
             return cache(ARRAY, copy(cast(a->dims,a->rank)));
         }
     }
-    return newdata(LITERAL, 1);
+    return null;
 }
+
+void mcopy(int *dest, int *src, int n){
+    int i;
+    for (i=0; i<n; i++)
+        dest[i] = src[i];
+}
+
 int vreshape (int a, int w, verb v){
+    switch(gettag(a)){
+        case LITERAL:
+            if (getval(a)==0)
+                return newdata(LITERAL, gettag(w));
+            switch(gettag(w)){
+                case LITERAL: {
+                    array z=array_new(getval(a));
+                    z->data[0]=w;
+                    mcopy(z->data+1,z->data,getval(a)*sizeof*z->data);
+                    return cache(ARRAY, z);
+                }
+                case ARRAY: {
+                    int n=getval(a);
+                    array W=getptr(w);
+                    int wn=productdims(W->rank,W->dims);
+                    array z=array_new(n);
+                    mcopy(z->data, W->data, wn=n>wn?wn:n);
+                    if((n-=wn)>0) mcopy(z->data+wn,z->data,n);
+                    return cache(ARRAY, z);
+                }
+            }
+        case ARRAY:
+            ;
+    }
+    return w;
 }
 
 int vtally (int w, verb v){
