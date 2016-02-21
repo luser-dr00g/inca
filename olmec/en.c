@@ -119,3 +119,11 @@ void *getptr(int d){
     }
 }
 
+int getfill(int d){
+    switch(gettag(d)){
+        default:
+        case LITERAL: return newdata(LITERAL, (1<<24)-1);
+        case CHAR: return newdata(CHAR, 0);
+    }
+}
+

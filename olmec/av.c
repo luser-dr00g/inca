@@ -19,7 +19,7 @@ _('@',  0,     atop, 0, 0, 0, 0, 0, 0 ) \
 #define ADVERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){id,__VA_ARGS__}; \
-    def(st, newdata(CHAR, id), cache(ADVERB, v));
+    def(st, newdata(PCHAR, id), cache(ADVERB, v));
 
 #define DERIV(...) \
     v=malloc(sizeof*v), \

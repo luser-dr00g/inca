@@ -156,7 +156,7 @@ int ex(array e, symtab st){
                 symtab tab = findsym(st,&p,&n,0);
 
                 if (tab->val == null) {
-                    printf("error undefined\n");
+                    printf("error undefined prefix\n");
                     return null;
                 }
                 while (n){ //while name
@@ -165,7 +165,7 @@ int ex(array e, symtab st){
                     s = p;
                     tab = findsym(st,&p,&n,0);         //parse name
                     if (tab->val == null) {
-                        printf("error undefined\n");
+                        printf("error undefined internal\n");
                         return null;
                     }
                 }

@@ -35,4 +35,5 @@ int newdata(int tag, int val);
 
 int cache(int tag, void *ptr);
 void *getptr(int d);
+int getfill(int d);
 

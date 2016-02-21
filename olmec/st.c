@@ -131,9 +131,13 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
 
 void def(symtab st, int name, int v){
     switch(gettag(name)){
-    case CHAR:{
+    case CHAR:
+    case PCHAR:{
         int n = 1;
         int *p = &name;
+        printf("%d(%d,%x) = %d(%d,%x)\n",
+                name, gettag(name), getval(name),
+                v, gettag(v), getval(v));
         symtab tab =findsym(st,&p,&n,1);
         tab->val = v;
         } break;
