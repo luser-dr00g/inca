@@ -161,7 +161,7 @@ int ex(array e, symtab st){
                 }
                 while (n){ //while name
                     printf("%d\n", n);
-                    stackpush(lstk,newobj(s,p-s,50)); //pushback prefix
+                    stackpush(lstk,newobj(s,p-s,70)); //pushback prefix
                     s = p;
                     tab = findsym(st,&p,&n,0);         //parse name
                     if (tab->val == null) {
