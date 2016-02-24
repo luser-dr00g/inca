@@ -35,7 +35,7 @@ int main() {
             printf("%04x ", buf[i]);
         printf("\n");
 
-        array a = wd(buf, n);
+        array a = scan_expression(buf, n);
         printf("\n");
 
         printf("%d\n", a->rank);

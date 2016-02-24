@@ -68,7 +68,7 @@ int wdtab[][sizeof cclass/sizeof*cclass] = {
 #define emit(start,end,state) (*p++=newobj(s+(start),(end)-(start),(state)*10))
 
 // scan up to n chars from s and produce 1D array of encoded expression
-array wd(int *s, int n){
+array scan_expression(int *s, int n){
     int a,b;
     int i,j,i_,state=0,oldstate=0,oldoldstate=0;
     int c;
