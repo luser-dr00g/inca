@@ -1,4 +1,6 @@
 
+// predicate table contains predicate functions
+// and associated enum values
 #define PREDTAB(_) \
 _( ANY  =    1, qa, 1 ) \
 _( VAR  =    2, qp, gettag(x)==PROG \
@@ -18,12 +20,17 @@ _( LPAR = 1024, ql, gettag(x)==LPAROBJ ) \
 _( RPAR = 2048, qr, gettag(x)==RPAROBJ ) \
 _( NUL  = 4096, qu, gettag(x)==NULLOBJ ) \
 /**/
+
+// declare predicate functions
 #define PRED_DECL(X,Y,...) int Y(int);
 PREDTAB(PRED_DECL)
+
+// declare predicate enums and composed patterns
 #define PRED_ENUM(X,...) X,
 enum predicate { PREDTAB(PRED_ENUM) 
                  EDGE = MARK+ASSN+LPAR,
                  AVN = VRB+NOUN+ADV };
 
+// execute an expression e with environment st
 int ex(array e, symtab st);
 

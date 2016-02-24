@@ -79,8 +79,15 @@ int punc(int x, int dummy, int dummy2, symtab st){
     return x;
 }
 
+// the Parse Table defines the grammar of the language
+// At each stack move, the top four elements of the right stack
+// are checked against each of these patterns. A matching pattern
+// returns element t[pre] from the pattern area to the right stack
+// then calls func(t[x],t[y],t[z]) and pushes the result to the
+// right stack, then pushes t[post] and t[post2]. The effects the
+// transformation of the stack.
 #define PARSETAB(_) \
-/*                                                   pre x y z   post,2*/\
+/*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
 _(L0, EDGE,     VRB,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \
 _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
 _(L2, ANY,      NOUN,     DEX,      ANY,      monad,  3, 2,1,-1,   0,-1) \
@@ -93,11 +100,17 @@ _(L8, LPAR,     ANY,      RPAR,     ANY,      punc,   3, 1,-1,-1, -1,-1) \
 _(L9, MARK,     ANY,      RPAR,     ANY,      punc,   3, 1,-1,-1,  0,-1) \
 _(L10,ANY,      LPAR,     ANY,      NUL,      punc,   3, 2,-1,-1,  0,-1) \
 /**/
+
+// create parsetab array of structs containing the patterns
 #define PARSETAB_PAT(label, pat1, pat2, pat3, pat4, ...) \
     {pat1, pat2, pat3, pat4},
 struct parsetab { int c[4]; } parsetab[] = { PARSETAB(PARSETAB_PAT) };
+
+// generate labels to coordinate table and execution
 #define PARSETAB_INDEX(label, ...) label,
 enum { PARSETAB(PARSETAB_INDEX) };
+
+// perform the grammar production, transforming the stack
 #define PARSETAB_ACTION(label,p1,p2,p3,p4, func, pre,x,y,z,post,post2) \
     case label: { \
         if (pre>=0) stackpush(rstk,t[pre]); \
@@ -106,6 +119,53 @@ enum { PARSETAB(PARSETAB_INDEX) };
         if (post2>=0) stackpush(rstk,t[post2]); \
     } break;
 
+// lookup name in environment unless to the left of assignment
+// if the full name is not found, but a defined prefix is found,
+// push the prefix back to the left stack and continue lookup
+// with remainder. push value to right stack.
+int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st){
+    if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
+        stackpush(rstk,x);
+    } else {
+        printf("lookup\n");
+        int *s;
+        int n;
+        switch(gettag(x)){
+            case PCHAR: {  // single char
+                s = &x;
+                n = 1;
+                } break;
+            case PROG: {   // longer name
+                array a = getptr(x);
+                s = a->data;
+                n = a->dims[0];
+                } break;
+        }
+        int *p = s;
+        symtab tab = findsym(st,&p,&n,0);
+
+        if (tab->val == null) {
+            printf("error undefined prefix\n");
+            return null;
+        }
+        while (n){ //while name
+            printf("%d\n", n);
+            stackpush(lstk,newobj(s,p-s,70)); //pushback prefix
+            s = p;
+            tab = findsym(st,&p,&n,0);         //parse name
+            if (tab->val == null) {
+                printf("error undefined internal\n");
+                return null;
+            }
+        }
+        //replace name with defined value
+        printf("==%d(%d,%x)\n", tab->val, gettag(tab->val), getval(tab->val));
+        stackpush(rstk,tab->val);
+    }
+    return 0;
+}
+
+// execute expression e using environment st and yield result
 int ex(array e, symtab st){
     int n = e->dims[0];
     int i,j;
@@ -134,62 +194,31 @@ int ex(array e, symtab st){
         x=stackpop(lstk);
         printf("->%d(%d,%x)\n", x, gettag(x), getval(x));
 
-        if (qp(x)){ //parse and lookup name
-            if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
-                stackpush(rstk,x);
-            } else {
-                printf("lookup\n");
-                int *s;
-                int n;
-                switch(gettag(x)){
-                    case PCHAR: {
-                        s = &x;
-                        n = 1;
-                        } break;
-                    case PROG: {
-                        array a = getptr(x);
-                        s = a->data;
-                        n = a->dims[0];
-                        } break;
-                }
-                int *p = s;
-                symtab tab = findsym(st,&p,&n,0);
-
-                if (tab->val == null) {
-                    printf("error undefined prefix\n");
-                    return null;
-                }
-                while (n){ //while name
-                    printf("%d\n", n);
-                    stackpush(lstk,newobj(s,p-s,70)); //pushback prefix
-                    s = p;
-                    tab = findsym(st,&p,&n,0);         //parse name
-                    if (tab->val == null) {
-                        printf("error undefined internal\n");
-                        return null;
-                    }
-                }
-                //replace name with defined value
-                printf("==%d(%d,%x)\n", tab->val, gettag(tab->val), getval(tab->val));
-                stackpush(rstk,tab->val);
-            }
-        } else { stackpush(rstk,x); }
+        if (qp(x)){ // x is a pronoun?
+            if (parse_and_lookup_name(lstk, rstk, x, st) == null)
+                return null;
+        } else {
+            stackpush(rstk,x);
+        }
 
         docheck = 1;
         while (docheck){ //check rstk with patterns and reduce
             docheck = 0;
             if (rstk->top>=4){ //enough elements to check?
                 int c[4];
+
                 for (j=0; j<4; j++)
                     c[j] = classify(rstk->a[rstk->top-1-j]);
                 //printf("%d %d %d %d\n", c[0], c[1], c[2], c[3]);
+
                 for (i=0; i<sizeof parsetab/sizeof*parsetab; i++){
                     if ( c[0] & parsetab[i].c[0]
                       && c[1] & parsetab[i].c[1]
                       && c[2] & parsetab[i].c[2]
                       && c[3] & parsetab[i].c[3] ) {
-                        printf("match %d\n", i);
                         int t[4];
+
+                        printf("match %d\n", i);
                         t[0] = stackpop(rstk);
                         t[1] = stackpop(rstk);
                         t[2] = stackpop(rstk);
@@ -204,6 +233,7 @@ int ex(array e, symtab st){
             }
         }
     }
+
     //assemble results and return
     //TODO check/handle extra elements on stack
     //(interpolate?, enclose and cat?)
