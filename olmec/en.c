@@ -28,6 +28,7 @@ int getval(int d){
 }
 
 int newdata(int tag, int val){
+    if (tag==LITERAL && val<0) return val;
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
     int x = int32.int32;
