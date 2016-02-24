@@ -3,6 +3,7 @@
 /*base             monad     dyad      f  g  h  mr lr rr*/ \
 _('+',             vid,      vplus,    0, 0, 0, 0, 0, 0 ) \
 _('-',             vneg,     vminus,   0, 0, 0, 0, 0, 0 ) \
+_('*',             vsignum,  vtimes,   0, 0, 0, 0, 0, 0 ) \
 _(0x2374/*rho*/,   vshapeof, vreshape, 0, 0, 0, 0, 0, 0 ) \
 _('#',             vtally,   0,        0, 0, 0, 0, 0, 0 ) \
 _(0x2373/*iota*/,  viota,    0,        0, 0, 0, 0, 0, 0 ) \

@@ -13,28 +13,115 @@ void common(int *ap, int *wp){
 }
 
 
-int vid (int w, verb v){ return w; }
+int vid (int w, verb v){
+    return w;
+}
+
 int vplus (int a, int w, verb v){
     common(&a,&w);
-    switch(gettag(w)){
+    switch(gettag(a)){
+    case LITERAL:
+        switch(gettag(w)){
         case LITERAL: return newdata(LITERAL, getval(a)+getval(w));
+        case ARRAY: {
+            array W = getptr(w);
+            if (W->type == function){
+                if (W->func == constant){ *W->data += a; }
+                if (W->func == j_vector){ W->data[2] += a; }
+                return w;
+            } else {
+            }
+        }
+        }
+    }
+
+    return null;
+}
+
+
+int vneg(int w, verb v){
+    switch(gettag(w)){
+    case LITERAL: return newdata(LITERAL, -getval(w));
+    case ARRAY: {
+        array W = getptr(w);
+        if (W->type == function){
+            if (W->func == constant){ *W->data = -*W->data; }
+            if (W->func == j_vector){ W->data[1] *= -1; }
+            return w;
+        } else {
+        }
+    }
     }
     return null;
 }
 
-int vneg(int w, verb v){
-    switch(gettag(w)){
-        case LITERAL: return newdata(LITERAL, -getval(w));
-    }
-    return null;
-}
 int vminus(int a, int w, verb v){
     common(&a,&w);
-    switch(gettag(w)){
+    switch(gettag(a)){
+    case LITERAL:
+        switch(gettag(w)){
         case LITERAL: return newdata(LITERAL, getval(a)-getval(w));
+        case ARRAY: {
+            array W = getptr(w);
+            if (W->type == function){
+                if (W->func == constant){ *W->data = getval(a)-*W->data; }
+                if (W->func == j_vector){ // a - i*x+y
+                    W->data[1] = -W->data[1];
+                    W->data[2] = a - W->data[2];
+                }
+                return w;
+            } else {
+            }
+        }
+        }
     }
     return null;
 }
+
+
+int vsignum (int w, verb v){
+    switch(gettag(w)){
+    case LITERAL: return getval(w)>0?1: getval(w)<0?-1: 0;
+    case ARRAY: {
+        array W = getptr(w);
+        if (W->type == function){
+            if (W->func == constant){ *W->data = vsignum(*W->data, v); }
+            if (W->func == j_vector){
+                array Z = array_new_dims(W->rank, W->dims);
+                int n = productdims(W->rank, W->dims);
+                int i;
+                for (i=0; i<n; i++)
+                    *elem(Z,i) = vsignum(*elem(W,i), v);
+                return cache(ARRAY, Z);
+            }
+            return w;
+        } else {
+        }
+    }
+    }
+}
+
+int vtimes (int a, int w, verb v){
+    switch(gettag(a)){
+    case LITERAL: 
+        switch(gettag(w)){
+        case LITERAL: return newdata(LITERAL, getval(a) * getval(w));
+        case ARRAY: {
+            array W = getptr(w);
+            if (W->type == function){
+                if (W->func == constant){ *W->data *= getval(a); }
+                if (W->func == j_vector){
+                    W->data[1] *= getval(a);
+                    W->data[2] *= getval(a);
+                }
+                return w;
+            } else {
+            }
+        }
+        }
+    }
+}
+
 
 int vshapeof (int w, verb v){
     switch(gettag(w)){
@@ -104,9 +191,7 @@ int vtally (int w, verb v){
 
 int viota (int w, verb v){
     switch(gettag(w)){
-        //case LITERAL: return cache(ARRAY, iota(w));
-        case LITERAL:
-            return cache(ARRAY, array_new_function(1,&w,(int[]){0},1,ret_index));
+        case LITERAL: return cache(ARRAY, iota(w));
     }
     return null;
 }
@@ -142,6 +227,21 @@ int vraze (int w, verb v){
 int vlink (int a, int w, verb v){
 }
 
+
+int box (int w, verb v){
+}
+
+int lessthan (int a, int w, verb v){
+}
+
+
+int unbox (int w, verb v){
+}
+
+int greaterthan (int a, int w, verb v){
+}
+
+
 int vhead (int w, verb v){
     switch(gettag(w)){
         case ARRAY: {
@@ -155,6 +255,14 @@ int vhead (int w, verb v){
 
 int vtake (int a, int w, verb v){
 }
+
+
+int vbehead (int w, verb v){
+}
+
+int vdrop (int a, int w, verb v){
+}
+
 
 #define VERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
