@@ -49,7 +49,7 @@ int main() {
         printf("\n");
         printf("%p\n", getptr(a->data[0]));
 
-        int x = ex(a,env);
+        int x = execute_expression(a,env);
         printf("%d(%d,%x)\n", x, gettag(x), getval(x));
         switch(gettag(x)){
             case ARRAY: {

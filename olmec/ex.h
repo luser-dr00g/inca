@@ -32,5 +32,5 @@ enum predicate { PREDTAB(PRED_ENUM)
                  AVN = VRB+NOUN+ADV };
 
 // execute an expression e with environment st
-int ex(array e, symtab st);
+int execute_expression(array e, symtab st);
 

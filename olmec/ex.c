@@ -21,7 +21,7 @@ typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stackpop(stkp) ((stkp)->a[--((stkp)->top)])
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
 
-/* predicate functions are instantiated accorind to the table
+/* predicate functions are instantiated according to the table
    defined in the header.
    the q[] function array is used by classify to apply all 
    predicate functions yielding a sum of all applicable codes
@@ -70,6 +70,7 @@ int conj_(int f, int g, int h, symtab st){
     return v->dyad(f,h,v);
 }
 
+//specification
 int spec(int name, int v, int dummy, symtab st){
     def(st, name, v);
     return v;
@@ -150,9 +151,10 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st){
         }
         while (n){ //while name
             printf("%d\n", n);
-            stackpush(lstk,newobj(s,p-s,70)); //pushback prefix
+            //stackpush(lstk,newobj(s,p-s,70)); //pushback prefix name
+            stackpush(lstk,tab->val);           //pushback value
             s = p;
-            tab = findsym(st,&p,&n,0);         //parse name
+            tab = findsym(st,&p,&n,0);         //lookup remaining name
             if (tab->val == null) {
                 printf("error undefined internal\n");
                 return null;
@@ -166,7 +168,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st){
 }
 
 // execute expression e using environment st and yield result
-int ex(array e, symtab st){
+int execute_expression(array e, symtab st){
     int n = e->dims[0];
     int i,j;
     int x;
