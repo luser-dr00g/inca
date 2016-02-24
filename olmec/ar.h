@@ -23,7 +23,7 @@ array array_new_dims(int rank, int dims[]);
 array array_new_function(int rank, int dims[],
         int *data, int datan, int *(*func)(array,int));
 int *constant(array a,int idx);
-int *ret_index(array a,int idx);
+int *j_vector(array a,int idx);
 void loaddimsv(int rank, int dims[], va_list ap);
 array (array_new)(int rank, ...);
 #define array_new(...) (array_new)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
