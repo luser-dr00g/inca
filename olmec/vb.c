@@ -65,7 +65,7 @@ int vminus(int a, int w, verb v){
             array W = getptr(w);
             if (W->type == function){
                 if (W->func == constant){ *W->data = getval(a)-*W->data; }
-                if (W->func == j_vector){ // a - i*x+y
+                if (W->func == j_vector){ // a - (i*x+y)
                     W->data[1] = -W->data[1];
                     W->data[2] = a - W->data[2];
                 }

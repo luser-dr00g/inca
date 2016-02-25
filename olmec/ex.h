@@ -4,8 +4,7 @@
 #define PREDTAB(_) \
 _( ANY  =    1, qa, 1 ) \
 _( VAR  =    2, qp, gettag(x)==PROG \
-                || (gettag(x)==PCHAR && getval(x)!=0x2190 /*leftarrow*/ \
-                    && getval(x)!='(' && getval(x)!=')' ) ) \
+                || (gettag(x)==PCHAR && getval(x)!=0x2190 /*leftarrow*/ ) ) \
 _( NOUN =    4, qn, gettag(x)==LITERAL \
                  || gettag(x)==CHAR \
                  || gettag(x)==ARRAY ) \

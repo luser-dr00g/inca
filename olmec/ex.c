@@ -10,6 +10,8 @@
 #include "vb.h"
 #include "ex.h"
 
+int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st);
+
 /* stack type
    the size is generously pre-calculated
    and so we can skip all bounds checking.
@@ -85,8 +87,7 @@ int punc(int x, int dummy, int dummy2, symtab st){
 // are checked against each of these patterns. A matching pattern
 // returns element t[pre] from the pattern area to the right stack
 // then calls func(t[x],t[y],t[z]) and pushes the result to the
-// right stack, then pushes t[post] and t[post2]. The effects the
-// transformation of the stack.
+// right stack, then pushes t[post] and t[post2]. 
 #define PARSETAB(_) \
 /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
 _(L0, EDGE,     VRB,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \
@@ -119,53 +120,6 @@ enum { PARSETAB(PARSETAB_INDEX) };
         if (post>=0) stackpush(rstk,t[post]); \
         if (post2>=0) stackpush(rstk,t[post2]); \
     } break;
-
-// lookup name in environment unless to the left of assignment
-// if the full name is not found, but a defined prefix is found,
-// push the prefix back to the left stack and continue lookup
-// with remainder. push value to right stack.
-int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st){
-    if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
-        stackpush(rstk,x);
-    } else {
-        printf("lookup\n");
-        int *s;
-        int n;
-        switch(gettag(x)){
-            case PCHAR: {  // single char
-                s = &x;
-                n = 1;
-                } break;
-            case PROG: {   // longer name
-                array a = getptr(x);
-                s = a->data;
-                n = a->dims[0];
-                } break;
-        }
-        int *p = s;
-        symtab tab = findsym(st,&p,&n,0);
-
-        if (tab->val == null) {
-            printf("error undefined prefix\n");
-            return null;
-        }
-        while (n){ //while name
-            printf("%d\n", n);
-            //stackpush(lstk,newobj(s,p-s,70)); //pushback prefix name
-            stackpush(lstk,tab->val);           //pushback value
-            s = p;
-            tab = findsym(st,&p,&n,0);         //lookup remaining name
-            if (tab->val == null) {
-                printf("error undefined internal\n");
-                return null;
-            }
-        }
-        //replace name with defined value
-        printf("==%d(%d,%x)\n", tab->val, gettag(tab->val), getval(tab->val));
-        stackpush(rstk,tab->val);
-    }
-    return 0;
-}
 
 // execute expression e using environment st and yield result
 int execute_expression(array e, symtab st){
@@ -241,5 +195,52 @@ int execute_expression(array e, symtab st){
     //(interpolate?, enclose and cat?)
     stackpop(rstk); // mark
     return stackpop(rstk);
+}
+
+// lookup name in environment unless to the left of assignment
+// if the full name is not found, but a defined prefix is found,
+// push the prefix back to the left stack and continue lookup
+// with remainder. push value to right stack.
+int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st){
+    if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
+        stackpush(rstk,x);
+    } else {
+        printf("lookup\n");
+        int *s;
+        int n;
+        switch(gettag(x)){
+            case PCHAR: {  // single char
+                s = &x;
+                n = 1;
+                } break;
+            case PROG: {   // longer name
+                array a = getptr(x);
+                s = a->data;
+                n = a->dims[0];
+                } break;
+        }
+        int *p = s;
+        symtab tab = findsym(st,&p,&n,0);
+
+        if (tab->val == null) {
+            printf("error undefined prefix\n");
+            return null;
+        }
+        while (n){ //while name
+            printf("%d\n", n);
+            //stackpush(lstk,newobj(s,p-s,70)); //pushback prefix name
+            stackpush(lstk,tab->val);           //pushback value
+            s = p;
+            tab = findsym(st,&p,&n,0);         //lookup remaining name
+            if (tab->val == null) {
+                printf("error undefined internal\n");
+                return null;
+            }
+        }
+        //replace name with defined value
+        printf("==%d(%d,%x)\n", tab->val, gettag(tab->val), getval(tab->val));
+        stackpush(rstk,tab->val);
+    }
+    return 0;
 }
 
