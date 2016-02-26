@@ -85,7 +85,7 @@ int punc(int x, int dummy, int dummy2, symtab st){
 // the Parse Table defines the grammar of the language
 // At each stack move, the top four elements of the right stack
 // are checked against each of these patterns. A matching pattern
-// returns element t[pre] from the pattern area to the right stack
+// returns element t[pre] from the temp area to the right stack
 // then calls func(t[x],t[y],t[z]) and pushes the result to the
 // right stack, then pushes t[post] and t[post2]. 
 #define PARSETAB(_) \
