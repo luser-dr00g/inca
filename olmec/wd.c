@@ -97,24 +97,6 @@ token *collapse_adjacent_numbers_if_needed(token *p){
 }
 
 
-static unsigned char cctab[64] = {
-    ['0']=1, ['1']=1, ['2']=1, ['3']=1, ['4']=1,
-    ['5']=1, ['6']=1, ['7']=1, ['8']=1, ['9']=1,
-    ['.']=2,
-    ['(']=3,
-    [')']=4,
-    ['\'']=5,
-    [' ']=6, ['\t']=6,
-    [0x0D]=8,
-};
-
-unsigned char character_class(int ch){
-    return ch<64? cctab[ch] :
-           ch==0x2910? 7 :
-           0;
-}
-
-
 token new_numeric(int *s, int n){
     char buf[n+1];
     for (int i=0; i<n; i++) buf[i] = s[i];

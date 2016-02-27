@@ -19,7 +19,7 @@ enum state {
     dit=30, //medial dot                             0.
     fra=40, //fraction                               0.0
     str=50, //initial quote                          '
-    quo=60, //end or escape quote                    'aaa''
+    quo=60, //end or escape quote                    'aaa'
     oth=70, //identifier or other symbol             a+
     dut=80, //trailing dot                           +.
     sng=90, //copula or other self-delimiting symbol ()
@@ -41,6 +41,23 @@ int wdtab[][sizeof "0.'() <r"] = {
 /*90*/{ oth+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 };
 
+static unsigned char cctab[64] = {
+    ['0']=1, ['1']=1, ['2']=1, ['3']=1, ['4']=1,
+    ['5']=1, ['6']=1, ['7']=1, ['8']=1, ['9']=1,
+    ['.']=2,
+    ['(']=3,
+    [')']=4,
+    ['\'']=5,
+    [' ']=6, ['\t']=6,
+    [0x0D]=8,
+};
+
+static inline unsigned char character_class(int ch){
+    return ch<64? cctab[ch] :
+           ch==0x2910? 7 :
+           0;
+}
+
+
 token newobj(int *s, int n, int state);
 token *collapse_adjacent_numbers_if_needed(token *p);
-unsigned char character_class(int ch);
