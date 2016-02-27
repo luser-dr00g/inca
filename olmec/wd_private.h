@@ -10,7 +10,7 @@
  * floating-point number. TODO: add floating-point numbers.
  * Otherwise, the dot is considered part of an identifier.
  *
- * Note, the state snum codes are 10* the corresponding table index.
+ * Note, the state enum codes are 10* the corresponding table index.
  */
 enum state {
     ini=0,  //indeterminate
