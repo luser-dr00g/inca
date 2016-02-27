@@ -72,7 +72,7 @@ void rehash(symtab st){
 }
 
 /* find the associated node for a(n integer) string.
-   string is passed by reference in case a prefix match,
+   string is passed by reference in case of prefix match,
    in which case the original string is updated to pointer
    to the unmatched remainder.
     mode=0: prefix match
