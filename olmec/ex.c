@@ -10,7 +10,6 @@
 #include "vb.h"
 #include "ex.h"
 
-int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st);
 
 /* stack type
    the size is generously pre-calculated
@@ -22,6 +21,8 @@ typedef struct stack { int top; int a[1];} stack; /* top==0::empty */
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--((stkp)->top)])
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
+
+int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st);
 
 /* predicate functions are instantiated according to the table
    defined in the header.
@@ -129,7 +130,7 @@ int execute_expression(array e, symtab st){
     stack *lstk,*rstk;
     int docheck;
 
-    for (i=0; i<n; i++) { // sum symbol lengths 
+    for (i=j=0; i<n; i++) { // sum symbol lengths 
         if (gettag(e->data[i])==PROG) {
             //printf("%p\n", getptr(e->data[i]));
             j+=((array)getptr(e->data[i]))->dims[0];
@@ -194,7 +195,10 @@ int execute_expression(array e, symtab st){
     //TODO check/handle extra elements on stack
     //(interpolate?, enclose and cat?)
     stackpop(rstk); // mark
-    return stackpop(rstk);
+    x = stackpop(rstk);
+    free(lstk);
+    free(rstk);
+    return x;
 }
 
 // lookup name in environment unless to the left of assignment
