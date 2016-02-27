@@ -232,7 +232,6 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, int x, symtab st){
         }
         while (n){ //while name
             printf("%d\n", n);
-            //stackpush(lstk,newobj(s,p-s,70)); //pushback prefix name
             stackpush(lstk,tab->val);           //pushback value
             s = p;
             tab = findsym(st,&p,&n,0);         //lookup remaining name
