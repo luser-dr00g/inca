@@ -2,8 +2,9 @@
  *  Word Formation (scanning)
  *
  *  As shown in en.c and en.h, the "encoding module",
- *  characters are stored in 24bits of a 32bit 
- *  int, so Unicode characters are referred-to by their UCS4 code. 
+ *  characters are stored in 24bits of a 32bit int, so Unicode
+ *  characters are referred-to by their UCS4 code. 
+ *
  *  This decision affects the scanner code in that it must deal 
  *  with "int-strings" although the contents are expected to 
  *  primarily be restricted to the ascii domain. One special char 
@@ -17,7 +18,7 @@
  *  and parse the identifiers. For the current purpose of these 
  *  functions, it is sufficient to distinguish numbers from non- 
  *  numbers and to ensure that certain special characters like 
- *  the left-arrow and the parens are encoded as single-chars 
+ *  the left-arrow and the parens are encoded as single tokens
  *  and not parts of identifiers. 
  *
  *  So it's a state-machine that runs through each character 
@@ -34,6 +35,7 @@
  *  The state-machine itself is "programmed" by the table and
  *  enum definitions in wd_private.h.
  */
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
