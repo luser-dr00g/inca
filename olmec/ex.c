@@ -1,3 +1,62 @@
+#if 0
+    Parsing and Execution
+
+    Execution in APL proceeds right-to-left and this is 
+    accomplished with a relatively straightforward algorithm. 
+    We have 2 stacks (it could also be done with a queue and 
+    a stack) called the left-stack and the right-stack. 
+    The left stack starts at the left edge and expands 
+    on the right. 
+
+        |- 0 1 2 3 top 
+
+    The right stack is the opposite, anchored at the right 
+    and growing to the left. 
+
+                   top 3 2 1 0 -| 
+
+    Of course this are just conceptual distinctions: they're 
+    both just stacks. The left stack is initialized with a 
+    mark object to indicate the left edge, and then 
+    the entire expression. The right stack has a single 
+    null object to indicate the right edge. 
+
+        |-2*1+⍳4   -| 
+
+    At each step, we A) move one object to the right stack, 
+
+        |-2*1+⍳   4-| 
+        |-2*1+   ⍳4-| 
+        |-2*1   +⍳4-| 
+
+    If there are at least 4 objects on the right stack, then 
+    we B) classify the top 4 elements with a set of predicate 
+    functions and then check through the list of grammatical patterns,
+    but this configuration doesn't match anything. Move another
+    object and try again.
+
+        |-2*   1+⍳4-| 
+
+    Now, the above case matches this production: 
+
+    /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\ 
+    _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \ 
+
+    application of a monadic verb. The numbers in the production indicate 
+    which elements should be preserved, and which should be passed to the 
+    handler function. The result from the handler function is interleaved 
+    back onto the right stack. 
+
+        |-2*   1+A-| 
+
+    where A represents the array object returned from the iota function. 
+    (Incidentally this is a lazy array, generating its values on-demand.) 
+
+    Eventually the expression ought to reduce to 3 objects: a mark, 
+    some result object, and a null. Anything else is an error 
+    TODO handle this error. 
+#endif
+
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,13 +71,6 @@
 
 typedef int object;
 #include "ex_private.h"
-
-int check_pattern(int *c, parsetab *ptab, int i){
-    return c[0] & ptab[i].c[0]
-        && c[1] & ptab[i].c[1]
-        && c[2] & ptab[i].c[2]
-        && c[3] & ptab[i].c[3];
-}
 
 // execute expression e using environment st and yield result
 int execute_expression(array e, symtab st){
@@ -99,6 +151,13 @@ size_t sum_symbol_lengths(array e, int n){
         }
     }
     return j;
+}
+
+int check_pattern(int *c, parsetab *ptab, int i){
+    return c[0] & ptab[i].c[0]
+        && c[1] & ptab[i].c[1]
+        && c[2] & ptab[i].c[2]
+        && c[3] & ptab[i].c[3];
 }
 
 /* Parser Actions,
