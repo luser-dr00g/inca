@@ -17,27 +17,32 @@
 
     Of course this are just conceptual distinctions: they're 
     both just stacks. The left stack is initialized with a 
-    mark object to indicate the left edge, and then 
-    the entire expression. The right stack has a single 
-    null object to indicate the right edge. 
+    mark object (illustrated here as ^) to indicate the left
+    edge, followed by the entire expression. The right stack
+    has a single null object (illustrated here as $) to indicate
+    the right edge. 
 
-        |-2*1+⍳4   -| 
+        |-^2*1+⍳4   $-| 
 
     At each step, we A) move one object to the right stack, 
 
-        |-2*1+⍳   4-| 
-        |-2*1+   ⍳4-| 
-        |-2*1   +⍳4-| 
+        |-^2*1+⍳   4$-| 
+
+    Until there are at least 4 objects on the right stack, we do
+    nothing else.
+
+        |-^2*1+   ⍳4$-| 
+        |-^2*1   +⍳4$-| 
 
     If there are at least 4 objects on the right stack, then 
     we B) classify the top 4 elements with a set of predicate 
     functions and then check through the list of grammatical patterns,
-    but this configuration doesn't match anything. Move another
-    object and try again.
+    but this configuration (VERB VERB NOUN NULL) doesn't match anything.
+    Move another object and try again.
 
-        |-2*   1+⍳4-| 
+        |-^2*   1+⍳4$-| 
 
-    Now, the above case matches this production: 
+    Now, the above case (NOUN VERB VERB NOUN) matches this production: 
 
     /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\ 
     _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \ 
@@ -47,14 +52,26 @@
     handler function. The result from the handler function is interleaved 
     back onto the right stack. 
 
-        |-2*   1+A-| 
+        |-^2*   1+A$-|    A←⍳4
 
     where A represents the array object returned from the iota function. 
     (Incidentally this is a lazy array, generating its values on-demand.) 
 
+        |-^2   *1+A$-|  dyad
+        |-^2   *B$-|      B←1+A
+        |-^   2*B$-| 
+        |-   ^2*B$-|  dyad
+        |-   ^C$-|        C←2*B
+
     Eventually the expression ought to reduce to 3 objects: a mark, 
     some result object, and a null. Anything else is an error 
     TODO handle this error. 
+
+        |-   ^C$-|
+              ^
+              |
+            result
+
 #endif
 
 #include <stdarg.h>
