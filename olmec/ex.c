@@ -15,7 +15,7 @@
 
                    top 3 2 1 0 -| 
 
-    Of course this are just conceptual distinctions: they're 
+    Of course these are just conceptual distinctions: they're 
     both just stacks. The left stack is initialized with a 
     mark object (illustrated here as ^) to indicate the left
     edge, followed by the entire expression. The right stack
