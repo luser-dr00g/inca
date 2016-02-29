@@ -13,7 +13,7 @@ typedef struct stack { int top; object a[1];} stack; /* top==0::empty */
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
 
 /* predicate functions are instantiated according to the table
-   defined in the header.
+   defined in the ex.h and are also exported.
    the q[] function array is used by classify to apply all 
    predicate functions yielding a sum of all applicable codes
    defined in the table. Specific qualities or combinations 
@@ -40,6 +40,11 @@ static inline int classify(object x){
 // returns element t[pre] from the temp area to the right stack
 // then calls func(t[x],t[y],t[z]) and pushes the result to the
 // right stack, then pushes t[post] and t[post2]. 
+// A -1 in any of these positions means do nothing, or do not
+// bother to pass anything meaningful. That is, any of the x,y,z
+// parameters marked -1 correspond to a "dummy" argument of 
+// the function which is there in order that all handler
+// functions have the same signature.
 #define PARSETAB(_) \
 /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
 _(L0, EDGE,     VRB,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \

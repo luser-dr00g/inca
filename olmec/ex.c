@@ -37,7 +37,7 @@
     If there are at least 4 objects on the right stack, then 
     we B) classify the top 4 elements with a set of predicate 
     functions and then check through the list of grammatical patterns,
-    but this configuration (VERB VERB NOUN NULL) doesn't match anything.
+    but this configuration (VERB VERB NOUN NULLOBJ) doesn't match anything.
     Move another object and try again.
 
         |-^2*   1+⍳4$-| 
