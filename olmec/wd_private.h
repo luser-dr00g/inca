@@ -54,7 +54,7 @@ static unsigned char cctab[64] = {
 
 static inline unsigned char character_class(int ch){
     return ch<64? cctab[ch] :
-           ch==0x2910? 7 :
+           ch==0x2190? 7 :
            0;
 }
 
