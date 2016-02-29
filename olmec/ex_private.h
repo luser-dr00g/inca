@@ -6,11 +6,11 @@
    stkp->top-1 is the topmost element
  */
 typedef struct stack { int top; object a[1];} stack; /* top==0::empty */
+#define stackinit(stkp,sz) (stkp=malloc(sizeof*stkp + (sz)*sizeof*stkp->a)), \
+                           (stkp->top=0)
 #define stackpush(stkp,el) ((stkp)->a[(stkp)->top++]=(el))
 #define stackpop(stkp) ((stkp)->a[--((stkp)->top)])
 #define stacktop(stkp) ((stkp)->a[(stkp)->top-1])
-
-int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st);
 
 /* predicate functions are instantiated according to the table
    defined in the header.
@@ -65,7 +65,6 @@ enum { PARSETAB(PARSETAB_INDEX) };
 typedef struct parsetab { int c[4]; } parsetab;
 static parsetab ptab[] = { PARSETAB(PARSETAB_PAT) };
 
-int check_pattern(int *c, parsetab *ptab, int i);
 
 // perform the grammar production, transforming the stack
 #define PARSETAB_ACTION(label,p1,p2,p3,p4, func, pre,x,y,z,post,post2) \
@@ -76,6 +75,11 @@ int check_pattern(int *c, parsetab *ptab, int i);
         if (post2>=0) stackpush(rstk,t[post2]); \
     } break;
 
+
+void init_stacks(stack **lstkp, stack **rstkp, array e, int n);
+int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st);
+int check_pattern(int *c, parsetab *ptab, int i);
+void move_top_four_to_temp(object *t, stack *rstk);
 size_t sum_symbol_lengths(array e, int n);
 
 int monad(int f, int y, int dummy, symtab st);

@@ -90,23 +90,14 @@ typedef int object;
 #include "ex_private.h"
 
 // execute expression e using environment st and yield result
+//TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
 int execute_expression(array e, symtab st){
-    int n = e->dims[0];
-    int i,j;
+    int i,j,n = e->dims[0];
     object x;
     stack *lstk,*rstk;
     int docheck;
 
-    j=sum_symbol_lengths(e,n);
-
-    lstk=malloc(sizeof*lstk + (n+j+1) * sizeof*lstk->a);
-    lstk->top=0;
-    stackpush(lstk,mark);
-    for (i=0; i<n; i++)
-        stackpush(lstk,e->data[i]);  // push entire expression to left stack
-    rstk=malloc(sizeof*rstk + (n+j+1) * sizeof*rstk->a);
-    rstk->top=0;
-    stackpush(rstk,null);    
+    init_stacks(&lstk, &rstk, e, n);
 
     while(lstk->top){ //left stack not empty
         x=stackpop(lstk);
@@ -115,44 +106,31 @@ int execute_expression(array e, symtab st){
         if (qp(x)){ // x is a pronoun?
             if (parse_and_lookup_name(lstk, rstk, x, st) == null)
                 return null;
-        } else {
-            stackpush(rstk,x);
-        }
+        } else stackpush(rstk,x);
 
         docheck = 1;
         while (docheck){ //check rstk with patterns and reduce
             docheck = 0;
-            if (rstk->top>=4){ //enough elements to check?
+            if (rstk->top>=4){
                 int c[4];
-
                 for (j=0; j<4; j++)
                     c[j] = classify(rstk->a[rstk->top-1-j]);
-                //printf("%d %d %d %d\n", c[0], c[1], c[2], c[3]);
 
-                for (i=0; i<sizeof ptab/sizeof*ptab; i++){
+                for (i=0; i<sizeof ptab/sizeof*ptab; i++)
                     if (check_pattern(c, ptab, i)) {
                         object t[4];
-
-                        printf("match %d\n", i);
-                        t[0] = stackpop(rstk);
-                        t[1] = stackpop(rstk);
-                        t[2] = stackpop(rstk);
-                        t[3] = stackpop(rstk);
+                        move_top_four_to_temp(t, rstk);
                         switch(i){
                             PARSETAB(PARSETAB_ACTION)
                         }
                         docheck = 1; //stack changed: check again
                         break;
                     }
-                }
             }
         }
     }
 
-    //assemble results and return
-    //TODO check/handle extra elements on stack
-    //(interpolate?, enclose and cat?)
-    stackpop(rstk); // mark
+    stackpop(rstk); // pop mark
     x = stackpop(rstk);
     free(lstk);
     free(rstk);
@@ -170,11 +148,28 @@ size_t sum_symbol_lengths(array e, int n){
     return j;
 }
 
+void init_stacks(stack **lstkp, stack **rstkp, array e, int n){
+    int i,j;
+    j=sum_symbol_lengths(e,n);
+    stackinit(lstk,n+j+1);
+    stackpush(lstk,mark);
+    for (i=0; i<n; i++) stackpush(lstk,e->data[i]);  // push expression
+    stackinit(rstk,n+j+1);
+    stackpush(rstk,null);    
+}
+
 int check_pattern(int *c, parsetab *ptab, int i){
     return c[0] & ptab[i].c[0]
         && c[1] & ptab[i].c[1]
         && c[2] & ptab[i].c[2]
         && c[3] & ptab[i].c[3];
+}
+
+void move_top_four_to_temp(object *t, stack *rstk){
+    t[0] = stackpop(rstk);
+    t[1] = stackpop(rstk);
+    t[2] = stackpop(rstk);
+    t[3] = stackpop(rstk);
 }
 
 /* Parser Actions,
