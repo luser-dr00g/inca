@@ -1,8 +1,27 @@
-/* the array data are always just straight 32bit integers.
-   but we treat as a 7bit tag and 24bit integer value.
+/* Encoding
+ *
+ * this file defines the sub-typing of data atoms.
 
-   this file defines the sub-typing of data items.
-   */
+ * the array data are always just straight 32bit integers.
+ * but we treat as a 7bit tag and 24bit integer value.
+ * An immediate integer value is indicated by a negative
+ * sign-bit or all-zero tag.
+
+ * Composite objects (boxed or reference objects) have
+ * an associated pointer stored in an array associated
+ * with the tag. Thus an array object can be enclosed
+ * into a scalar (integer handle) with
+
+       int x;
+       x = cache(ARRAY, array_new(3,3)); //3x3 matrix
+
+ * the array data structure (which is implicitly a pointer
+ * to its struct) can be retrived from the handle
+ * with
+
+       array a;
+       a = getptr(x);
+ */
 
 #include <stdarg.h>
 #include <stdint.h>
