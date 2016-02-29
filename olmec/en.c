@@ -1,6 +1,11 @@
 /* Encoding
  *
  * this file defines the sub-typing of data atoms.
+ * All data are packed into integer handles. The benefit for
+ * array operations is all data atoms will have a uniform
+ * size no matter what the content actually is. This replaces
+ * the intptr_t hackery (ab)used in earlier versions 
+ * (not portable to 64bit build). 
 
  * the array data are always just straight 32bit integers.
  * but we treat as a 7bit tag and 24bit integer value.
