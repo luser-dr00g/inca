@@ -1,3 +1,47 @@
+/* Symbol Table
+ *
+ * As a symbol-table for a Unicode-capable programming language
+ * interpreter, I decided to combine the 3 types of associative
+ * array that I had implemented before. Xpost's postscript
+ * nametype objects are implemented with a ternary search tree,
+ * and its dicttype objects are implemented with a hash table.
+ * Inca3's symbol table used a trie tree to hold variable-length
+ * keys.
+ *
+ * As a trie, it collapses similar prefixes from the keys.
+ * For "abc", "aaa", "abb", and "add", we get the structure:
+ * a - a - a
+ *   - b - b
+ *       - c
+ *   - d - d
+ *
+ * Every key has the same prefix "a" so it is represented
+ * exactly once.
+ *
+ * The Inca3 trie allows only alphabetic characters in symbols,
+ * so each node could contain an array of 52 pointers. But to
+ * adapt this code for Unicode code points, millions of pointers
+ * in each node seems grossly impractical. So the child nodes
+ * from each node are organized into a hash table keyed to the
+ * single character where they diverge from the tree.
+ *
+ * In the example above, ('a', 'b', 'd') and ('b', 'c') are
+ * collected in hash tables. There are also degenerate hash
+ * tables at each of the leaf nodes which are all null.
+ *
+ * So, each node contains a value or null. Each node also
+ * contains a pointer to a table of child nodes which is
+ * accessed via a hash lookup on a single char (code-point) of
+ * the key string. If the key string is not exhausted, lookup
+ * continues on the child nodes of the matched node.
+ *
+ * Taking advantage of the prefix-collapsing nature of the
+ * data-structure, The symbol-lookup mechanism will fallback
+ * to returning the longest-defined prefix if the full symbol
+ * cannot be found. Assuming this to represent two (or more)
+ * juxtaposed symbols, symbol-lookup may then proceed upon
+ * the remainder of the key string. see ex.c:parse_and_lookup_name
+ */
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -96,7 +140,7 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
         if (*t) { // slot not empty
             st = *t;
             sp++;
-            if ((*t)->val != null){ // partial match
+            if ((*t)->val != null){ // save partial match
                 last = st;
                 lasp = sp;
                 lasn = nn;
