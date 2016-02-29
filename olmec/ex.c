@@ -93,14 +93,13 @@ typedef int object;
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
 int execute_expression(array e, symtab st){
     int i,j,n = e->dims[0];
-    object x;
     stack *lstk,*rstk;
     int docheck;
 
     init_stacks(&lstk, &rstk, e, n);
 
     while(lstk->top){ //left stack not empty
-        x=stackpop(lstk);
+        object x = stackpop(lstk);
         printf("->%d(%d,%x)\n", x, gettag(x), getval(x));
 
         if (qp(x)){ // x is a pronoun?
@@ -130,11 +129,7 @@ int execute_expression(array e, symtab st){
         }
     }
 
-    stackpop(rstk); // pop mark
-    x = stackpop(rstk);
-    free(lstk);
-    free(rstk);
-    return x;
+    return extract_result_and_free_stacks(lstk,rstk);
 }
 
 size_t sum_symbol_lengths(array e, int n){
@@ -150,12 +145,25 @@ size_t sum_symbol_lengths(array e, int n){
 
 void init_stacks(stack **lstkp, stack **rstkp, array e, int n){
     int i,j;
+#define lstk (*lstkp) /* by-reference */
+#define rstk (*rstkp)
     j=sum_symbol_lengths(e,n);
     stackinit(lstk,n+j+1);
     stackpush(lstk,mark);
     for (i=0; i<n; i++) stackpush(lstk,e->data[i]);  // push expression
     stackinit(rstk,n+j+1);
     stackpush(rstk,null);    
+#undef lstk
+#undef rstk
+}
+
+object extract_result_and_free_stacks(stack *lstk, stack *rstk){
+    object x;
+    stackpop(rstk); // pop mark
+    x = stackpop(rstk);
+    free(lstk);
+    free(rstk);
+    return x;
 }
 
 int check_pattern(int *c, parsetab *ptab, int i){

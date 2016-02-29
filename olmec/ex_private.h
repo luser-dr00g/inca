@@ -77,6 +77,7 @@ static parsetab ptab[] = { PARSETAB(PARSETAB_PAT) };
 
 
 void init_stacks(stack **lstkp, stack **rstkp, array e, int n);
+object extract_result_and_free_stacks(stack *lstk, stack *rstk);
 int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st);
 int check_pattern(int *c, parsetab *ptab, int i);
 void move_top_four_to_temp(object *t, stack *rstk);
