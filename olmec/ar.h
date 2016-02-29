@@ -54,4 +54,7 @@ array scalar(int n);
 array (vector)(int n, ...);
 #define vector(...) (vector)(PP_NARG(__VA_ARGS__),__VA_ARGS__)
 
+int issolid(array a);
+array makesolid(array a);
+
 #endif

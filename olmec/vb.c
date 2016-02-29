@@ -26,8 +26,8 @@ int vplus (int a, int w, verb v){
         case ARRAY: {
             array W = getptr(w);
             if (W->type == function){
-                if (W->func == constant){ *W->data += a; }
-                if (W->func == j_vector){ W->data[2] += a; }
+                if (W->func == constant){ W->data[1] += a; }
+                if (W->func == j_vector){ W->cons += a; }
                 return w;
             } else {
             }
@@ -45,8 +45,8 @@ int vneg(int w, verb v){
     case ARRAY: {
         array W = getptr(w);
         if (W->type == function){
-            if (W->func == constant){ *W->data = -*W->data; }
-            if (W->func == j_vector){ W->data[1] *= -1; }
+            if (W->func == constant){ W->data[1] = -W->data[1]; }
+            if (W->func == j_vector){ W->weight[W->rank-1] *= -1; }
             return w;
         } else {
         }
@@ -64,10 +64,10 @@ int vminus(int a, int w, verb v){
         case ARRAY: {
             array W = getptr(w);
             if (W->type == function){
-                if (W->func == constant){ *W->data = getval(a)-*W->data; }
+                if (W->func == constant){ W->data[1] = getval(a)-W->data[1]; }
                 if (W->func == j_vector){ // a - (i*x+y)
-                    W->data[1] = -W->data[1];
-                    W->data[2] = a - W->data[2];
+                    W->weight[W->rank-1] = -W->weight[W->rank-1];
+                    W->cons = a - W->cons;
                 }
                 return w;
             } else {
@@ -99,6 +99,7 @@ int vsignum (int w, verb v){
         }
     }
     }
+    return null;
 }
 
 int vtimes (int a, int w, verb v){
@@ -111,8 +112,8 @@ int vtimes (int a, int w, verb v){
             if (W->type == function){
                 if (W->func == constant){ *W->data *= getval(a); }
                 if (W->func == j_vector){
-                    W->data[1] *= getval(a);
-                    W->data[2] *= getval(a);
+                    W->weight[W->rank-1] *= getval(a);
+                    W->cons *= getval(a);
                 }
                 return w;
             } else {
@@ -128,7 +129,7 @@ int vshapeof (int w, verb v){
         case NULLOBJ: return newdata(LITERAL, 1);
         case ARRAY: {
             array a = getptr(w);
-            return cache(ARRAY, copy(cast(a->dims,a->rank)));
+            return cache(ARRAY, cast(a->dims,a->rank));
         }
     }
     return null;
@@ -170,8 +171,12 @@ int vreshape (int a, int w, verb v){
                     return cache(ARRAY, z);
                 }
                 case ARRAY: {
-                    array A=getptr(a);
+                    array A=makesolid(getptr(a));
                     array W=getptr(w);
+                    int n=productdims(A->dims[0],A->data);
+                    if (W->type==function){
+                        array z=array_new_function(A->dims[0],A->data,W->data,2,W->func);
+                    }
                 }
             }
     }
@@ -192,6 +197,18 @@ int vtally (int w, verb v){
 int viota (int w, verb v){
     switch(gettag(w)){
         case LITERAL: return cache(ARRAY, iota(w));
+        case ARRAY: {
+            array W = getptr(w);
+            printf("%d %d %d\n", W->rank, W->dims[0], W->data[0]);
+            int n = productdims(W->dims[0],W->data);
+            printf("%d\n", n);
+            array I = iota(n);
+            int i = cache(ARRAY, I);
+            printf("%x(%d,%d)\n", i);
+            int z = vreshape(w,i,v);
+            printf("%x(%d,%d)\n", z);
+            return z;
+        }
     }
     return null;
 }

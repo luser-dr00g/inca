@@ -39,12 +39,12 @@ array array_new_dims(int rank, int dims[]){
 }
 
 int *constant(array a,int idx){
-    return a->data;
+    return a->data+1;
 }
 
 int *j_vector(array a,int idx){
-    *a->data = idx * a->data[1] + a->data[2];
-    return a->data;
+    a->data[1] = idx;
+    return a->data+1;
 }
 
 // create special function-type array
@@ -387,7 +387,7 @@ array iota(int n){
         *elem(z,i) = i;
     return z;
 #endif
-    return array_new_function(1,&n,(int[]){0,1,0},3,j_vector);
+    return array_new_function(1,&n,(int[]){1,0},2,j_vector);
 }
 
 // generate a 1 element vector, ie. a scalar array object
@@ -408,6 +408,22 @@ array (vector)(int n, ...){
         *elem(z,i) = va_arg(ap, int);
     va_end(ap);
     return z;
+}
+
+int issolid(array a){
+    int i,x;
+    for (i=a->rank-1,x=1; i>=0; i--){
+        if (a->weight[i] != x)
+            return 0;
+        x *= a->dims[i];
+    }
+    return 1;
+}
+
+array makesolid(array a){
+    if (a->type==function || !issolid(a))
+        return copy(a);
+    return a;
 }
 
 
