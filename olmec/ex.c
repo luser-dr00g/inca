@@ -100,7 +100,7 @@ int execute_expression(array e, symtab st){
 
     while(lstk->top){ //left stack not empty
         object x = stackpop(lstk);
-        printf("->%d(%d,%x)\n", x, gettag(x), getval(x));
+        printf("->%08x(%d,%d)\n", x, gettag(x), getval(x));
 
         if (qp(x)){ // x is a pronoun?
             if (parse_and_lookup_name(lstk, rstk, x, st) == null)
@@ -258,7 +258,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             }
         }
         //replace name with defined value
-        printf("==%d(%d,%x)\n", tab->val, gettag(tab->val), getval(tab->val));
+        printf("==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
         stackpush(rstk,tab->val);
     }
     return 0;

@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "ar.h"
@@ -148,7 +149,8 @@ int vreshape (int a, int w, verb v){
                 return newdata(LITERAL, gettag(w));
             switch(gettag(w)){
                 case LITERAL: {
-                    array z=array_new_function(1,&a,&w,1,constant);
+                    array z=array_new_function(1,&a,
+                            (int[]){1,w},2,constant);
                     return cache(ARRAY, z);
                 }
                 case ARRAY: {
@@ -167,7 +169,8 @@ int vreshape (int a, int w, verb v){
             switch(gettag(w)){
                 case LITERAL: {
                     array A=getptr(a);
-                    array z=array_new_function(A->dims[0],A->data,&w,1,constant);
+                    array z=array_new_function(A->dims[0],A->data,
+                            (int[]){1,w},2,constant);
                     return cache(ARRAY, z);
                 }
                 case ARRAY: {
@@ -204,9 +207,9 @@ int viota (int w, verb v){
             printf("%d\n", n);
             array I = iota(n);
             int i = cache(ARRAY, I);
-            printf("%x(%d,%d)\n", i);
+            printf("%08x(%d,%d)\n", i);
             int z = vreshape(w,i,v);
-            printf("%x(%d,%d)\n", z);
+            printf("%08x(%d,%d)\n", z);
             return z;
         }
     }

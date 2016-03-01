@@ -44,13 +44,13 @@ int main() {
         printf("\n");
 
         for (i=0;i<a->dims[0];i++)
-            printf("%d(%d,%x) ", a->data[i],
+            printf("%08x(%d,%d) ", a->data[i],
                     gettag(a->data[i]), getval(a->data[i]));
         printf("\n");
         printf("%p\n", getptr(a->data[0]));
 
         int x = execute_expression(a,env);
-        printf("%d(%d,%x)\n", x, gettag(x), getval(x));
+        printf("%08x(%d,%d)\n", x, gettag(x), getval(x));
         switch(gettag(x)){
             case ARRAY: {
                 array t = getptr(x);
@@ -60,7 +60,7 @@ int main() {
                 printf("\n");
                 for (i=0; i<t->dims[0]; i++){
                     int xx = *elem(t,i);
-                    printf("%d: %d(%d,%d)\n", i, xx, gettag(xx), getval(xx));
+                    printf("%d: %08x(%d,%d)\n", i, xx, gettag(xx), getval(xx));
                 }
             } break;
         }
