@@ -90,8 +90,7 @@ token *collapse_adjacent_numbers_if_needed(token *p){
     if (gettag(p[-2])==LITERAL && gettag(p[-1])==LITERAL){
         --p;
         p[-1]=cache(ARRAY, vector(p[-1],p[0]));
-    }
-    if (gettag(p[-2])==ARRAY && gettag(p[-1])==LITERAL){
+    } else if (gettag(p[-2])==ARRAY && gettag(p[-1])==LITERAL){
         --p;
         p[-1]=cache(ARRAY, cat(getptr(p[-1]), scalar(p[0])));
     }
