@@ -52,15 +52,27 @@ int main() {
         int x = execute_expression(a,env);
         printf("%08x(%d,%d)\n", x, gettag(x), getval(x));
         switch(gettag(x)){
+            case LITERAL:
+                printf("%d\n", getval(x));
+                break;
             case ARRAY: {
                 array t = getptr(x);
+
                 printf("%d\n",t->rank);
                 for (i=0; i<t->rank; i++)
                     printf("%d ", t->dims[i]);
                 printf("\n");
-                for (i=0; i<t->dims[0]; i++){
-                    int xx = *elem(t,i);
-                    printf("%d: %08x(%d,%d)\n", i, xx, gettag(xx), getval(xx));
+
+                int n = productdims(t->rank,t->dims);
+                printf("n=%d\n", n);
+                int scratch[t->rank];
+                for (i=0; i<n; i++){
+                    int xx = *elema(t,vector_index(i,t->dims,t->rank,scratch));
+                    char *app = "";
+                    for (int j=0; j<t->rank; j++, app=",")
+                        printf("%s%d", app, scratch[j]);
+                    printf(": ");
+                    printf("%08x(%d,%d)\n", xx, gettag(xx), getval(xx));
                 }
             } break;
         }
