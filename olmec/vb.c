@@ -157,10 +157,12 @@ int vreshape (int a, int w, verb v){
                     int n=getval(a);
                     array W=getptr(w);
                     int wn=productdims(W->rank,W->dims);
+                    int scratch[W->rank];
                     array z=array_new(n);
                     int i;
                     wn=n>wn?wn:n;
-                    for (i=0; i<wn; i++) z->data[i] = *elem(W,i);
+                    for (i=0; i<wn; i++)
+                        z->data[i] = *elema(W,vector_index(i,W->dims,W->rank,scratch));
                     if((n-=wn)>0) mcopy(z->data+wn,z->data,n);
                     return cache(ARRAY, z);
                 }
@@ -176,10 +178,16 @@ int vreshape (int a, int w, verb v){
                 case ARRAY: {
                     array A=makesolid(getptr(a));
                     array W=getptr(w);
-                    int n=productdims(A->dims[0],A->data);
-                    if (W->type==function){
-                        array z=array_new_function(A->dims[0],A->data,W->data,2,W->func);
-                    }
+                    int n=productdims(A->dims[0], A->data);
+                    array z=array_new_dims(A->dims[0], A->data);
+                    int wn=productdims(W->rank, W->dims);
+                    int scratch[W->rank];
+                    int i;
+                    wn=n>wn?wn:n;
+                    for (i=0; i<wn; i++)
+                        z->data[i] = *elema(W,vector_index(i,W->dims,W->rank,scratch));
+                    if ((n-=wn)>0) mcopy(z->data+wn,z->data,n);
+                    return cache(ARRAY, z);
                 }
             }
     }
@@ -207,9 +215,9 @@ int viota (int w, verb v){
             printf("%d\n", n);
             array I = iota(n);
             int i = cache(ARRAY, I);
-            printf("%08x(%d,%d)\n", i);
+            printf("%08x(%d,%d)\n", i, gettag(i), getval(i));
             int z = vreshape(w,i,v);
-            printf("%08x(%d,%d)\n", z);
+            printf("%08x(%d,%d)\n", z, gettag(z), getval(z));
             return z;
         }
     }
