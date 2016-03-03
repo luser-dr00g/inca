@@ -311,9 +311,9 @@ int vprenul (int w, verb v){
 int vhead (int w, verb v){
     switch(gettag(w)){
         case ARRAY: {
-            array a = getptr(w);
-            if (a->rank == 0) return getfill(w);
-            return  cache(ARRAY, slice(a, 0));
+            array W = getptr(w);
+            if (W->rank == 0) return getfill(w);
+            return  cache(ARRAY, slice(W, 0));
         }
     }
     return null;
@@ -324,6 +324,20 @@ int vtake (int a, int w, verb v){
 
 
 int vbehead (int w, verb v){
+    switch(gettag(w)){
+        case ARRAY: {
+            array W = getptr(w);
+            if (W->rank == 0) return getfill(w);
+            int s[W->rank];
+            int f[W->rank];
+            s[0]=1;
+            for (int i=1; i<W->rank; i++)
+                s[i]=0;
+            for (int i=0; i<W->rank; i++)
+                f[i]=W->dims[i]-1;
+            return cache(ARRAY, slices(W, s, f));
+        }
+    }
 }
 
 int vdrop (int a, int w, verb v){
@@ -346,6 +360,8 @@ int vindexleft(int a, int w, verb v){
             }
         }
         }
+    case ARRAY:
+        ;
     }
 }
 
@@ -353,11 +369,6 @@ int vindexright(int a, int w, verb v){
     return vindexleft(w,a,v);
 }
 
-
-#define VERBTAB_DEF(id,...) \
-    v=malloc(sizeof*v); \
-    *v=(struct verb){id,__VA_ARGS__}; \
-    def(st, newdata(PCHAR, id), cache(VERB, v));
 
 void init_vb(symtab st){
     verb v;

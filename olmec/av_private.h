@@ -8,12 +8,12 @@ _('/',  areduce, 0,    0, 0, 0, 0, 0, 0 ) \
 
 #define ADVERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
-    *v=(struct verb){id,__VA_ARGS__}; \
+    *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
     def(st, newdata(PCHAR, id), cache(ADVERB, v));
 
-#define DERIV(...) \
+#define DERIV(id,...) \
     v=malloc(sizeof*v), \
-    *v=(struct verb){__VA_ARGS__}, \
+    *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}, \
     cache(VERB, v)
 
 enum { NN, NV, VN, VV };

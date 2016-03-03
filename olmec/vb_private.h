@@ -1,4 +1,9 @@
 
+#define VERBTAB_DEF(id,...) \
+    v=malloc(sizeof*v); \
+    *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
+    def(st, newdata(PCHAR, id), cache(VERB, v));
+
 #define scalarop(a,func,w,op,v) \
     switch(gettag(a)){ \
     case LITERAL: switch(gettag(w)){ \

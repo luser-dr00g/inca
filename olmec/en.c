@@ -146,11 +146,13 @@ void *getptr(int d){
 
 int getfill(int d){
     switch(gettag(d)){
+        case PCHAR:
+            switch(getval(d)){
+            case '+': return 0;
+            case '*': return 1;
+            } /*fallthru*/
         default:
-        case LITERAL:
-            if (d=='+') return 0;
-            if (d=='*') return 1;
-            return newdata(LITERAL, (1<<24)-1);
+        case LITERAL: return newdata(LITERAL, (1<<24)-1);
         case CHAR: return newdata(CHAR, 0);
     }
 }
