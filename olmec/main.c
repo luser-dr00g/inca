@@ -11,6 +11,7 @@
 #include "wd.h"
 #include "vb.h"
 #include "av.h"
+#include "debug.h"
 
 symtab env;
 
@@ -32,22 +33,22 @@ int main() {
 
         //puts(buf);
         for (i=0;i<n;i++)
-            printf("%04x ", buf[i]);
-        printf("\n");
+            DEBUG("%04x ", buf[i]);
+        DEBUG("\n");
 
         array a = scan_expression(buf, n);
-        printf("\n");
+        DEBUG("\n");
 
-        printf("%d\n", a->rank);
+        DEBUG("%d\n", a->rank);
         for (i=0;i<a->rank;i++)
-            printf("%d ", a->dims[i]);
-        printf("\n");
+            DEBUG("%d ", a->dims[i]);
+        DEBUG("\n");
 
         for (i=0;i<a->dims[0];i++)
-            printf("%08x(%d,%d) ", a->data[i],
+            DEBUG("%08x(%d,%d) ", a->data[i],
                     gettag(a->data[i]), getval(a->data[i]));
-        printf("\n");
-        printf("%p\n", getptr(a->data[0]));
+        DEBUG("\n");
+        DEBUG("%p\n", getptr(a->data[0]));
 
         int x = execute_expression(a,env);
         printf("%08x(%d,%d)\n", x, gettag(x), getval(x));
