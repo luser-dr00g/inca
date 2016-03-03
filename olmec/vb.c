@@ -8,6 +8,7 @@
 #include "st.h"
 
 #include "vb.h"
+#include "debug.h"
 
 void common(int *ap, int *wp){
     //promote smaller number to matching type
@@ -15,67 +16,138 @@ void common(int *ap, int *wp){
 
 
 int vid (int w, verb v){
+    if (gettag(w)==ARRAY) return cache(ARRAY, makesolid(getptr(w)));
     return w;
 }
 
+#define scalarop(a,func,w,op,v) \
+    switch(gettag(a)){ \
+    case LITERAL: switch(gettag(w)){ \
+        case LITERAL: return newdata(LITERAL, getval(a) op getval(w)); \
+        case ARRAY: { \
+                array W = getptr(w); \
+                array Z=array_new_dims(W->rank,W->dims); \
+                int n=productdims(W->rank,W->dims); \
+                int scratch[W->rank]; \
+                int i; \
+                for (i=0; i<n; i++){ \
+                    vector_index(i,W->dims,W->rank,scratch); \
+                    *elema(Z,scratch) = func(a, *elema(W,scratch), v); \
+                } \
+                return cache(ARRAY, Z); \
+        } \
+    } \
+    case ARRAY: { \
+        array A = getptr(a); \
+        switch(gettag(w)){ \
+        case LITERAL: { \
+                array Z=array_new_dims(A->rank,A->dims); \
+                int n=productdims(A->rank,A->dims); \
+                int scratch[A->rank]; \
+                int i; \
+                for (i=0; i<n; i++){ \
+                    vector_index(i,A->dims,A->rank,scratch); \
+                    *elema(Z,scratch) = func(*elema(A,scratch), w, v); \
+                } \
+                return cache(ARRAY, Z); \
+        } \
+        case ARRAY: { \
+                array W = getptr(w); \
+                array Z=array_new_dims(W->rank,W->dims); \
+                int n=productdims(W->rank,W->dims); \
+                int scratch[W->rank]; \
+                int i; \
+                for (i=0; i<n; i++){ \
+                    vector_index(i,W->dims,W->rank,scratch); \
+                    *elema(Z,scratch) = func(*elema(A,scratch), *elema(W,scratch), v); \
+                } \
+                return cache(ARRAY, Z); \
+        } \
+        } \
+    } \
+    }
+
 int vplus (int a, int w, verb v){
     common(&a,&w);
-    switch(gettag(a)){
-    case LITERAL:
-        switch(gettag(w)){
-        case LITERAL: return newdata(LITERAL, getval(a)+getval(w));
-        case ARRAY: {
-            array W = getptr(w);
-            if (W->type == function){
-                if (W->func == constant){ W->data[1] += a; }
-                if (W->func == j_vector){ W->cons += a; }
-                return w;
-            } else {
-            }
-        }
+
+    if (gettag(a)==LITERAL && gettag(w)==ARRAY){
+        array W = getptr(w);
+        if (W->type == function){
+            if (W->func == constant){ W->data[1] += a; }
+            if (W->func == j_vector){ W->cons += a; }
+            return w;
         }
     }
+
+    scalarop(a,vplus,w,+,v)
 
     return null;
 }
 
 
+#define scalarmonad(func,w,op,v) \
+    switch(gettag(w)){ \
+    case LITERAL: return newdata(LITERAL, op getval(w)); \
+    case ARRAY: { \
+        array W = getptr(w); \
+        array Z=array_new_dims(W->rank,W->dims); \
+        int n=productdims(W->rank,W->dims); \
+        int scratch[W->rank]; \
+        int i; \
+        for (i=0; i<n; i++){ \
+            vector_index(i,W->dims,W->rank,scratch); \
+            *elema(Z,scratch) = func(*elema(W,scratch), v); \
+        } \
+        return cache(ARRAY, Z); \
+    } \
+    }
+
 int vneg(int w, verb v){
-    switch(gettag(w)){
-    case LITERAL: return newdata(LITERAL, -getval(w));
-    case ARRAY: {
+    if (gettag(w)==ARRAY){
         array W = getptr(w);
         if (W->type == function){
             if (W->func == constant){ W->data[1] = -W->data[1]; }
             if (W->func == j_vector){ W->weight[W->rank-1] *= -1; }
             return w;
-        } else {
         }
     }
-    }
+
+    scalarmonad(vneg,w,-,v)
+
     return null;
 }
 
 int vminus(int a, int w, verb v){
     common(&a,&w);
-    switch(gettag(a)){
-    case LITERAL:
-        switch(gettag(w)){
-        case LITERAL: return newdata(LITERAL, getval(a)-getval(w));
-        case ARRAY: {
-            array W = getptr(w);
-            if (W->type == function){
-                if (W->func == constant){ W->data[1] = getval(a)-W->data[1]; }
-                if (W->func == j_vector){ // a - (i*x+y)
-                    W->weight[W->rank-1] = -W->weight[W->rank-1];
-                    W->cons = a - W->cons;
-                }
-                return w;
-            } else {
+
+    if (gettag(a)==LITERAL && gettag(w)==ARRAY){
+        array W = getptr(w);
+        if (W->type == function){
+            if (W->func == constant){ W->data[1] = getval(a)-W->data[1]; }
+            if (W->func == j_vector){ // a - (i*x+y)
+                W->weight[W->rank-1] = -W->weight[W->rank-1];
+                W->cons = a - W->cons;
             }
-        }
+            return w;
         }
     }
+
+    scalarop(a,vminus,w,-,v)
+
+    return null;
+}
+
+
+int vdivide(int a, int w, verb v){
+    common(&a, &w);
+
+    scalarop(a,vdivide,w,/,v)
+
+    return null;
+}
+
+int vrecip(int w, verb v){
+    scalarop(1,vdivide,w,/,v)
     return null;
 }
 
@@ -87,41 +159,40 @@ int vsignum (int w, verb v){
         array W = getptr(w);
         if (W->type == function){
             if (W->func == constant){ *W->data = vsignum(*W->data, v); }
-            if (W->func == j_vector){
-                array Z = array_new_dims(W->rank, W->dims);
-                int n = productdims(W->rank, W->dims);
-                int i;
-                for (i=0; i<n; i++)
-                    *elem(Z,i) = vsignum(*elem(W,i), v);
-                return cache(ARRAY, Z);
-            }
             return w;
-        } else {
+        } 
+        array Z = array_new_dims(W->rank, W->dims);
+        int n = productdims(W->rank, W->dims);
+        int scratch[W->rank];
+        int i;
+        for (i=0; i<n; i++) {
+            vector_index(i,W->dims,W->rank,scratch);
+            *elema(Z,scratch) = vsignum(*elema(W,scratch), v);
         }
+        return cache(ARRAY, Z);
     }
     }
     return null;
 }
 
 int vtimes (int a, int w, verb v){
-    switch(gettag(a)){
-    case LITERAL: 
-        switch(gettag(w)){
-        case LITERAL: return newdata(LITERAL, getval(a) * getval(w));
-        case ARRAY: {
-            array W = getptr(w);
-            if (W->type == function){
-                if (W->func == constant){ *W->data *= getval(a); }
-                if (W->func == j_vector){
-                    W->weight[W->rank-1] *= getval(a);
-                    W->cons *= getval(a);
-                }
-                return w;
-            } else {
+    common(&a, &w);
+
+    if (gettag(a)==LITERAL && gettag(w)==ARRAY){
+        array W = getptr(w);
+        if (W->type == function){
+            if (W->func == constant){ *W->data *= getval(a); }
+            if (W->func == j_vector){
+                W->weight[W->rank-1] *= getval(a);
+                W->cons *= getval(a);
             }
-        }
-        }
+            return w;
+        } 
     }
+
+    scalarop(a,vtimes,w,*,v)
+
+    return null;
 }
 
 
@@ -210,14 +281,14 @@ int viota (int w, verb v){
         case LITERAL: return cache(ARRAY, iota(w));
         case ARRAY: {
             array W = getptr(w);
-            printf("%d %d %d\n", W->rank, W->dims[0], W->data[0]);
+            DEBUG("%d %d %d\n", W->rank, W->dims[0], W->data[0]);
             int n = productdims(W->dims[0],W->data);
-            printf("%d\n", n);
+            DEBUG("%d\n", n);
             array I = iota(n);
             int i = cache(ARRAY, I);
-            printf("%08x(%d,%d)\n", i, gettag(i), getval(i));
+            DEBUG("%08x(%d,%d)\n", i, gettag(i), getval(i));
             int z = vreshape(w,i,v);
-            printf("%08x(%d,%d)\n", z, gettag(z), getval(z));
+            DEBUG("%08x(%d,%d)\n", z, gettag(z), getval(z));
             return z;
         }
     }
@@ -227,6 +298,9 @@ int viota (int w, verb v){
 
 int vravel (int w, verb v){
     switch(gettag(w)){
+        case LITERAL: {
+            return cache(ARRAY, scalar(w));
+        }
         case ARRAY: {
             array a = getptr(w);
             array z = copy(a);
@@ -240,9 +314,15 @@ int vravel (int w, verb v){
 
 int vcat (int a, int w, verb v){
     switch(gettag(a)){
+        case LITERAL:
+            switch(gettag(w)){
+                case ARRAY: return cache(ARRAY, cat(scalar(a),getptr(w)));
+                case LITERAL: return cache(ARRAY, vector(a,w));
+            }
         case ARRAY: 
             switch(gettag(w)){
                 case ARRAY: return cache(ARRAY, cat(getptr(a),getptr(w)));
+                case LITERAL: return cache(ARRAY, cat(getptr(a),scalar(w)));
             }
     }
     return cache(ARRAY, vector(a,w));
