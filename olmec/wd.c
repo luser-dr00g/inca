@@ -46,6 +46,7 @@
 #include "en.h" // atomic encoding
 
 #include "wd.h"
+#include "debug.h"
 
 typedef int token;
 typedef char state;
@@ -62,6 +63,7 @@ array scan_expression(int *s, int n){
 
     for (i=j=0, ss=st=0; i < n; i++, ss=st, st=cc/10){
         cc = wdtab[st][ character_class(s[i]) ];
+        DEBUG("-%d-\n",cc);
 
         switch (cc%10){
             case 0: /* do nothing */
@@ -99,6 +101,7 @@ token *collapse_adjacent_numbers_if_needed(token *p){
 
 
 token new_numeric(int *s, int n){
+    DEBUG("num:%d\n", n);
     char buf[n+1];
     for (int i=0; i<n; i++) buf[i] = s[i];
     buf[n] = 0;
@@ -117,13 +120,24 @@ token new_numeric(int *s, int n){
 }
 
 token new_string(int *s, int n){
+    DEBUG("str:%d\n", n);
     array t=array_new(n);
-    for (int i=0; i<n; i++)
-        *elem(t,i) = newdata(CHAR, s[i]);
+    int i,j,q;
+    //for (int i=0; i<n; i++) *elem(t,i) = newdata(CHAR, s[i]);
+    for (i=1,j=0,q=0; i<n-1; i++){
+        if (q){
+            q=0; continue;
+        } else if (s[i]=='\'') {
+            q=1;
+        }
+        *elem(t,j++) = newdata(CHAR, s[i]);
+    }
+    t->dims[0]=j;
     return cache(ARRAY, t);
 }
 
 token new_executable(int *s, int n){
+    DEBUG("prog:%d\n", n);
     if (n==1){
         if (*s == '(') return newdata(LPAROBJ, 0);
         if (*s == ')') return newdata(RPAROBJ, 0);
