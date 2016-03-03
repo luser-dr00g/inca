@@ -448,11 +448,11 @@ static char *test_basic(){
     array c = iota(4);
     test_case(*elem(c,3)!=3);
 
-    //array d = iota(64);    // no longer works with j_vector iota
-    //array e = cast(d->data, 2,2,2,2,2,2);
+    //array d = iota(64);
+    //array e = cast(d->data, 2,2,2,2,2,2); // no longer works with j_vector iota
     //test_case(*elem(e, 1,1,1,1,1,1) != 63);
 
-    //array f = cast(d->data, 4,4,4);
+    //array f = cast(d->data, 4,4,4); // no longer works with j_vector iota
     //test_case(*elem(f, 3,3,3) != 63);
 
     return 0;
