@@ -53,6 +53,33 @@ int atop(int a, int w, verb v){
     }
 }
 
+
+int reduce(int w, verb v){
+    DECLFG;
+    switch(gettag(w)){
+    case LITERAL: return w;
+    case ARRAY: {
+        array W = getptr(w);
+        switch(W->rank){
+        case 1: switch(W->dims[0]){
+                case 0: return getfill(fv->id);
+                case 1: return *elem(W,0);
+                default: {
+                    int z=*elem(W,W->dims[0]-1);
+                    for (int i=W->dims[0]-2; i>=0; i--)
+                        z=f2(*elem(W,i),z,v);
+                    return z;
+                }
+                }
+        }
+    }
+    }
+}
+
+int areduce(int w, verb v){
+    return DERIV('/', reduce, 0, w, 0, 0, 0, 0, 0);
+}
+
 void init_av(symtab st){
     verb v;
     ADVERBTAB(ADVERBTAB_DEF)

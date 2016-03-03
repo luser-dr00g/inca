@@ -147,7 +147,10 @@ void *getptr(int d){
 int getfill(int d){
     switch(gettag(d)){
         default:
-        case LITERAL: return newdata(LITERAL, (1<<24)-1);
+        case LITERAL:
+            if (d=='+') return 0;
+            if (d=='*') return 1;
+            return newdata(LITERAL, (1<<24)-1);
         case CHAR: return newdata(CHAR, 0);
     }
 }
