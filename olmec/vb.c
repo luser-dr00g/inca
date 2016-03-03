@@ -169,8 +169,10 @@ int vreshape (int a, int w, verb v){
                     array z=array_new(n);
                     int i;
                     wn=n>wn?wn:n;
-                    for (i=0; i<wn; i++)
-                        z->data[i] = *elema(W,vector_index(i,W->dims,W->rank,scratch));
+                    for (i=0; i<wn; i++){
+                        vector_index(i,W->dims,W->rank,scratch);
+                        z->data[i] = *elema(W, scratch);
+                    }
                     if((n-=wn)>0) mcopy(z->data+wn,z->data,n);
                     return cache(ARRAY, z);
                 }
@@ -186,14 +188,18 @@ int vreshape (int a, int w, verb v){
                 case ARRAY: {
                     array A=makesolid(getptr(a));
                     array W=getptr(w);
+                    if (W->type==function && W->func==constant)
+                        return vreshape(a,W->data[1],v);
                     int n=productdims(A->dims[0], A->data);
                     array z=array_new_dims(A->dims[0], A->data);
                     int wn=productdims(W->rank, W->dims);
                     int scratch[W->rank];
                     int i;
                     wn=n>wn?wn:n;
-                    for (i=0; i<wn; i++)
-                        z->data[i] = *elema(W,vector_index(i,W->dims,W->rank,scratch));
+                    for (i=0; i<wn; i++){
+                        vector_index(i,W->dims,W->rank,scratch);
+                        z->data[i] = *elema(W, scratch);
+                    }
                     if ((n-=wn)>0) mcopy(z->data+wn,z->data,n);
                     return cache(ARRAY, z);
                 }
