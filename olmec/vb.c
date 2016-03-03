@@ -8,6 +8,7 @@
 #include "st.h"
 
 #include "vb.h"
+#include "vb_private.h"
 #include "debug.h"
 
 void common(int *ap, int *wp){
@@ -19,53 +20,6 @@ int vid (int w, verb v){
     if (gettag(w)==ARRAY) return cache(ARRAY, makesolid(getptr(w)));
     return w;
 }
-
-#define scalarop(a,func,w,op,v) \
-    switch(gettag(a)){ \
-    case LITERAL: switch(gettag(w)){ \
-        case LITERAL: return newdata(LITERAL, getval(a) op getval(w)); \
-        case ARRAY: { \
-                array W = getptr(w); \
-                array Z=array_new_dims(W->rank,W->dims); \
-                int n=productdims(W->rank,W->dims); \
-                int scratch[W->rank]; \
-                int i; \
-                for (i=0; i<n; i++){ \
-                    vector_index(i,W->dims,W->rank,scratch); \
-                    *elema(Z,scratch) = func(a, *elema(W,scratch), v); \
-                } \
-                return cache(ARRAY, Z); \
-        } \
-    } \
-    case ARRAY: { \
-        array A = getptr(a); \
-        switch(gettag(w)){ \
-        case LITERAL: { \
-                array Z=array_new_dims(A->rank,A->dims); \
-                int n=productdims(A->rank,A->dims); \
-                int scratch[A->rank]; \
-                int i; \
-                for (i=0; i<n; i++){ \
-                    vector_index(i,A->dims,A->rank,scratch); \
-                    *elema(Z,scratch) = func(*elema(A,scratch), w, v); \
-                } \
-                return cache(ARRAY, Z); \
-        } \
-        case ARRAY: { \
-                array W = getptr(w); \
-                array Z=array_new_dims(W->rank,W->dims); \
-                int n=productdims(W->rank,W->dims); \
-                int scratch[W->rank]; \
-                int i; \
-                for (i=0; i<n; i++){ \
-                    vector_index(i,W->dims,W->rank,scratch); \
-                    *elema(Z,scratch) = func(*elema(A,scratch), *elema(W,scratch), v); \
-                } \
-                return cache(ARRAY, Z); \
-        } \
-        } \
-    } \
-    }
 
 int vplus (int a, int w, verb v){
     common(&a,&w);
@@ -84,23 +38,6 @@ int vplus (int a, int w, verb v){
     return null;
 }
 
-
-#define scalarmonad(func,w,op,v) \
-    switch(gettag(w)){ \
-    case LITERAL: return newdata(LITERAL, op getval(w)); \
-    case ARRAY: { \
-        array W = getptr(w); \
-        array Z=array_new_dims(W->rank,W->dims); \
-        int n=productdims(W->rank,W->dims); \
-        int scratch[W->rank]; \
-        int i; \
-        for (i=0; i<n; i++){ \
-            vector_index(i,W->dims,W->rank,scratch); \
-            *elema(Z,scratch) = func(*elema(W,scratch), v); \
-        } \
-        return cache(ARRAY, Z); \
-    } \
-    }
 
 int vneg(int w, verb v){
     if (gettag(w)==ARRAY){
@@ -329,24 +266,39 @@ int vcat (int a, int w, verb v){
 }
 
 
-int vraze (int w, verb v){
+int vbox (int w, verb v){
+    return cache(ARRAY, scalar(w));
 }
+
+int vlessthan (int a, int w, verb v){
+}
+
+
+int vunbox (int w, verb v){
+    switch(gettag(w)){
+        case ARRAY: {
+            array W = getptr(w);
+            if (W->rank==0
+                || W->rank==1 && W->dims[0]==1)
+            w = *elem(W,0);
+        }
+    }
+    return w;
+}
+
+int vgreaterthan (int a, int w, verb v){
+}
+
 
 int vlink (int a, int w, verb v){
+    switch(gettag(w)){
+        case ARRAY: return vcat(vbox(a,v),w,v);
+    }
+    return vcat(vbox(a,v),vbox(w,v),v);
 }
 
-
-int box (int w, verb v){
-}
-
-int lessthan (int a, int w, verb v){
-}
-
-
-int unbox (int w, verb v){
-}
-
-int greaterthan (int a, int w, verb v){
+int vprenul (int w, verb v){
+    return vlink(null,w,v);
 }
 
 
