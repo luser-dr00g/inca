@@ -1,3 +1,10 @@
+/* Adverbs and Conjunctions
+ *
+ * These re-use the same structure as verbs, and generate
+ * new verb structures dynamically for a concrete representation
+ * of a "derived verb" which is an adverb or conjunction's result.
+ *
+ */
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
