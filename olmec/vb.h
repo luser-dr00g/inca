@@ -12,6 +12,8 @@ _(0x2373/*iota*/,  viota,    0,        0, 0, 0, 0, 0, 0 ) \
 _('{',             vhead,    vtake,    0, 0, 0, 0, 1, 0 ) \
 _(',',             vravel,   vcat,     0, 0, 0, 0, 0, 0 ) \
 _(';',             vprenul,  vlink,    0, 0, 0, 0, 0, 0 ) \
+_('[',             0,        vindexright, 0,0,0,0, 0, 0 ) \
+_(']',             0,        vindexleft,0,0, 0, 0, 0, 0 ) \
 /**/
 typedef struct verb {
     int id;

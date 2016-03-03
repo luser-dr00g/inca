@@ -324,6 +324,30 @@ int vdrop (int a, int w, verb v){
 }
 
 
+int vindexleft(int a, int w, verb v){
+    switch(gettag(a)){
+    case LITERAL:
+        switch(gettag(w)){
+        case LITERAL: return a==0? w : getfill(w);
+        case ARRAY: {
+            array W = getptr(w);
+            switch(W->rank){
+                case 1: return a>=0&&a<W->dims[0]? *elem(W,a):
+                        a>-W->dims[0]? *elem(W,W->dims[0]+a):
+                        getfill(*elem(W,0));
+                default:
+                        return cache(ARRAY, slice(W, a));
+            }
+        }
+        }
+    }
+}
+
+int vindexright(int a, int w, verb v){
+    return vindexleft(w,a,v);
+}
+
+
 #define VERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){id,__VA_ARGS__}; \
