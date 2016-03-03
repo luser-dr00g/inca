@@ -88,6 +88,7 @@
 
 typedef int object;
 #include "ex_private.h"
+#include "debug.h"
 
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
@@ -100,7 +101,7 @@ int execute_expression(array e, symtab st){
 
     while(lstk->top){ //left stack not empty
         object x = stackpop(lstk);
-        printf("->%08x(%d,%d)\n", x, gettag(x), getval(x));
+        DEBUG("->%08x(%d,%d)\n", x, gettag(x), getval(x));
 
         if (qp(x)){ // x is a pronoun?
             if (parse_and_lookup_name(lstk, rstk, x, st) == null)
@@ -184,26 +185,42 @@ void move_top_four_to_temp(object *t, stack *rstk){
    each function is called with x y z parameters defined in PARSETAB 
  */
 int monad(int f, int y, int dummy, symtab st){
-    printf("monad\n");
+    DEBUG("monad\n");
     verb v = getptr(f);
+    if (!v->monad) {
+        printf("monad undefined\n");
+        return null;
+    }
     return v->monad(y,v);
 }
 
 int dyad(int x, int f, int y, symtab st){
-    printf("dyad\n");
+    DEBUG("dyad\n");
     verb v = getptr(f);
+    if (!v->dyad) {
+        printf("dyad undefined\n");
+        return null;
+    }
     return v->dyad(x,y,v);
 }
 
 int adv(int f, int g, int dummy, symtab st){
-    printf("adverb\n");
+    DEBUG("adverb\n");
     verb v = getptr(g);
+    if (!v->monad) {
+        printf("adv undefined\n");
+        return null;
+    }
     return v->monad(f,v);
 }
 
 int conj_(int f, int g, int h, symtab st){
-    printf("conj\n");
+    DEBUG("conj\n");
     verb v = getptr(g);
+    if (!v->dyad) {
+        printf("conj undefined\n");
+        return null;
+    }
     return v->dyad(f,h,v);
 }
 
@@ -226,7 +243,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
     if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
         stackpush(rstk,x);
     } else {
-        printf("lookup\n");
+        DEBUG("lookup\n");
         int *s;
         int n;
         switch(gettag(x)){
@@ -248,7 +265,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             return null;
         }
         while (n){ //while name
-            printf("%d\n", n);
+            DEBUG("%d\n", n);
             stackpush(lstk,tab->val);           //pushback value
             s = p;
             tab = findsym(st,&p,&n,0);         //lookup remaining name
@@ -258,7 +275,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             }
         }
         //replace name with defined value
-        printf("==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
+        DEBUG("==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
         stackpush(rstk,tab->val);
     }
     return 0;
