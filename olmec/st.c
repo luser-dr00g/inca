@@ -49,6 +49,7 @@
 
 #include "ar.h"
 #include "en.h"
+#include "debug.h"
 
 #include "st.h"
 
@@ -180,7 +181,7 @@ void def(symtab st, int name, int v){
     case PCHAR:{
         int n = 1;
         int *p = &name;
-        printf("%08x(%d,%d) = %08x(%d,%d)\n",
+        DEBUG("%08x(%d,%d) = %08x(%d,%d)\n",
                 name, gettag(name), getval(name),
                 v, gettag(v), getval(v));
         symtab tab =findsym(st,&p,&n,1);
