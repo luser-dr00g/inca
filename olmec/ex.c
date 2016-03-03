@@ -1,61 +1,62 @@
 #if 0
-    Parsing and Execution
+/*
+ *  Parsing and Execution
 
-    Execution in APL proceeds right-to-left and this is 
-    accomplished with a relatively straightforward algorithm. 
-    We have 2 stacks (it could also be done with a queue and 
-    a stack) called the left-stack and the right-stack. 
-    The left stack starts at the left edge and expands 
-    on the right. 
+ *  Execution in APL proceeds right-to-left and this is 
+ *  accomplished with a relatively straightforward algorithm. 
+ *  We have 2 stacks (it could also be done with a queue and 
+ *  a stack) called the left-stack and the right-stack. 
+ *  The left stack starts at the left edge and expands 
+ *  on the right. 
 
         |- 0 1 2 3 top 
 
-    The right stack is the opposite, anchored at the right 
-    and growing to the left. 
+ *  The right stack is the opposite, anchored at the right 
+ *  and growing to the left. 
 
                    top 3 2 1 0 -| 
 
-    Of course these are just conceptual distinctions: they're 
-    both just stacks. The left stack is initialized with a 
-    mark object (illustrated here as ^) to indicate the left
-    edge, followed by the entire expression. The right stack
-    has a single null object (illustrated here as $) to indicate
-    the right edge. 
+ *  Of course these are just conceptual distinctions: they're 
+ *  both just stacks. The left stack is initialized with a 
+ *  mark object (illustrated here as ^) to indicate the left
+ *  edge, followed by the entire expression. The right stack
+ *  has a single null object (illustrated here as $) to indicate
+ *  the right edge. 
 
         |-^2*1+⍳4   $-| 
 
-    At each step, we A) move one object to the right stack, 
+ *  At each step, we A) move one object to the right stack, 
 
         |-^2*1+⍳   4$-| 
 
-    Until there are at least 4 objects on the right stack, we do
-    nothing else.
+ *  Until there are at least 4 objects on the right stack, we do
+ *  nothing else.
 
         |-^2*1+   ⍳4$-| 
         |-^2*1   +⍳4$-| 
 
-    If there are at least 4 objects on the right stack, then 
-    we B) classify the top 4 elements with a set of predicate 
-    functions and then check through the list of grammatical patterns,
-    but this configuration (VERB VERB NOUN NULLOBJ) doesn't match anything.
-    Move another object and try again.
+ *  If there are at least 4 objects on the right stack, then 
+ *  we B) classify the top 4 elements with a set of predicate 
+ *  functions and then check through the list of grammatical patterns,
+ *  but this configuration (VERB VERB NOUN NULLOBJ) doesn't match anything.
+ *  Move another object and try again.
 
         |-^2*   1+⍳4$-| 
 
-    Now, the above case (NOUN VERB VERB NOUN) matches this production: 
+ *  Now, the above case (NOUN VERB VERB NOUN) matches this production: 
 
-    /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\ 
-    _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \ 
+    /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
+    _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
 
-    application of a monadic verb. The numbers in the production indicate 
-    which elements should be preserved, and which should be passed to the 
-    handler function. The result from the handler function is interleaved 
-    back onto the right stack. 
+ *  application of a monadic verb. The numbers in the production indicate 
+ *  which elements should be preserved, and which should be passed to the 
+ *  handler function. The result from the handler function is interleaved 
+ *  back onto the right stack. 
 
         |-^2*   1+A$-|    A←⍳4
 
-    where A represents the array object returned from the iota function. 
-    (Incidentally this is a lazy array, generating its values on-demand.) 
+ *  where A represents the array object returned from the iota function. 
+ *  (Incidentally this is a lazy array, generating its values on-demand.) 
 
         |-^2   *1+A$-|  dyad
         |-^2   *B$-|      B←1+A
@@ -63,15 +64,15 @@
         |-   ^2*B$-|  dyad
         |-   ^C$-|        C←2*B
 
-    Eventually the expression ought to reduce to 3 objects: a mark, 
-    some result object, and a null. Anything else is an error 
-    TODO handle this error. 
+ *  Eventually the expression ought to reduce to 3 objects: a mark, 
+ *  some result object, and a null. Anything else is an error 
+ *  TODO handle this error. 
 
         |-   ^C$-|
               ^
               |
             result
-
+ */
 #endif
 
 #include <stdarg.h>
