@@ -216,6 +216,7 @@
     _( CIRCR,     MODE1('#'), 1, "#", ESC(o)".""\xE" ) \
     _( MU,        MODE1('$'), 1, "$", ESC(o)"5""\xE" ) \
     _( COLONBAR,  MODE1('+'), 1, "+", ESC(o)"w""\xE" ) \
+    _( COLONBR,   0x00f7, 1, "+", "\xC3\xb7" ) \
     _( DEL,       MODE1('&'), 1, "&", ESC(o)"P""\xE" ) \
     _( SUPONE,    MODE1('('), 1, "(", ESC(o)"9""\xE" ) \
     _( SUPTWO,    MODE1(')'), 1, ")", ESC(o)"2""\xE" ) \
