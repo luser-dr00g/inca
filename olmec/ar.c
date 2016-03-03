@@ -38,6 +38,9 @@ array array_new_dims(int rank, int dims[]){
     return z;
 }
 
+// as a convention, a->data[0]==1
+// indicating 1 (additional) data item (after data[0])
+// data[1] is the actual data
 int *constant(array a,int idx){
     return a->data+1;
 }
