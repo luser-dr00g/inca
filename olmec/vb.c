@@ -224,14 +224,14 @@ int viota (int w, verb v){
         case LITERAL: return cache(ARRAY, iota(w));
         case ARRAY: {
             array W = getptr(w);
-            DEBUG("%d %d %d\n", W->rank, W->dims[0], W->data[0]);
+            DEBUG(1,"%d %d %d\n", W->rank, W->dims[0], W->data[0]);
             int n = productdims(W->dims[0],W->data);
-            DEBUG("%d\n", n);
+            DEBUG(1,"%d\n", n);
             array I = iota(n);
             int i = cache(ARRAY, I);
-            DEBUG("%08x(%d,%d)\n", i, gettag(i), getval(i));
+            DEBUG(1,"%08x(%d,%d)\n", i, gettag(i), getval(i));
             int z = vreshape(w,i,v);
-            DEBUG("%08x(%d,%d)\n", z, gettag(z), getval(z));
+            DEBUG(1,"%08x(%d,%d)\n", z, gettag(z), getval(z));
             return z;
         }
     }

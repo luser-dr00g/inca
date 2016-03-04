@@ -7,6 +7,7 @@ _('-',             vneg,     vminus,     0, 0, 0, 0, 0, 0 ) \
 _('*',             vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
 _(MODE1('+'),      vrecip,   vdivide,    0, 0, 0, 0, 0, 0 ) \
 _(0x2374/*rho*/,   vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
+_('$',             vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
 _('#',             vtally,   0,          0, 0, 0, 0, 0, 0 ) \
 _(0x2373/*iota*/,  viota,    0,          0, 0, 0, 0, 0, 0 ) \
 _('{',             vhead,    vtake,      0, 0, 0, 0, 1, 0 ) \
@@ -15,6 +16,8 @@ _(',',             vravel,   vcat,       0, 0, 0, 0, 0, 0 ) \
 _(';',             vprenul,  vlink,      0, 0, 0, 0, 0, 0 ) \
 _('[',             0,        vindexright,0, 0, 0, 0, 0, 0 ) \
 _(']',             0,        vindexleft, 0, 0, 0, 0, 0, 0 ) \
+_(0x2191/*up*/,    0,        vtake,      0, 0, 0, 0, 0, 0 ) \
+_(0x2193/*down*/,  0,        vdrop,      0, 0, 0, 0, 0, 0 ) \
 /**/
 typedef struct verb {
     int id;
