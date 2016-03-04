@@ -181,7 +181,7 @@ void def(symtab st, int name, int v){
     case PCHAR:{
         int n = 1;
         int *p = &name;
-        DEBUG("%08x(%d,%d) = %08x(%d,%d)\n",
+        DEBUG(1,"%08x(%d,%d) = %08x(%d,%d)\n",
                 name, gettag(name), getval(name),
                 v, gettag(v), getval(v));
         symtab tab =findsym(st,&p,&n,1);
