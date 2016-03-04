@@ -25,36 +25,37 @@ enum state {
     sng=90, //copula or other self-delimiting symbol ()
 };
 
-int wdtab[][sizeof "0.'() <r"] = {
+int wdtab[][sizeof "-0.'() <r"] = {
 /*state*/
 /*|*//* character class*/
-/*V*//* none   0-9    .      '      (      )      sp     <-     \r    */
-/*0*/ { oth+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
-/*10*/{ oth+0, fra+0, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*20*/{ oth+1, num+0, dit+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*30*/{ oth+0, num+1, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*40*/{ oth+1, fra+0, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*50*/{ str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
-/*60*/{ oth+1, num+1, dot+1, str+0, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*70*/{ oth+0, num+1, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*80*/{ oth+0, num+3, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*90*/{ oth+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*V*//* none   minus  0-9    .      '      (      )      sp     <-     \r    */
+/*0*/ { oth+2, num+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
+/*10*/{ oth+0, num+1, fra+0, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*20*/{ oth+1, num+1, num+0, dit+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*30*/{ oth+0, num+1, num+1, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*40*/{ oth+1, num+1, fra+0, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*50*/{ str+0, str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
+/*60*/{ oth+1, num+1, num+1, dot+1, str+0, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*70*/{ oth+0, num+1, num+1, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*80*/{ oth+0, num+1, num+3, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/*90*/{ oth+1, num+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 };
 
 static unsigned char cctab[64] = {
-    ['0']=1, ['1']=1, ['2']=1, ['3']=1, ['4']=1,
-    ['5']=1, ['6']=1, ['7']=1, ['8']=1, ['9']=1,
-    ['.']=2,
-    ['\'']=3,
-    ['(']=4,
-    [')']=5,
-    [' ']=6, ['\t']=6,
-    [0x0D]=8,
+    ['0']=2, ['1']=2, ['2']=2, ['3']=2, ['4']=2,
+    ['5']=2, ['6']=2, ['7']=2, ['8']=2, ['9']=2,
+    ['.']=3,
+    ['\'']=4,
+    ['(']=5,
+    [')']=6,
+    [' ']=7, ['\t']=7,
+    [0x0D]=9,
 };
 
 static inline unsigned char character_class(int ch){
-    return ch<64? cctab[ch] :
-           ch==0x2190? 7 :
+    return ch<64? cctab[ch]:
+           ch==0x2190? 8:
+           ch==0x00af? 1:
            0;
 }
 
