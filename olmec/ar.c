@@ -86,8 +86,6 @@ void loaddimsv(int rank, int dims[], va_list ap){
 array (array_new)(int rank, ...){
     va_list ap;
     int dims[rank];
-    int i;
-    int x;
 
     va_start(ap,rank);
     loaddimsv(rank,dims,ap);
@@ -121,8 +119,6 @@ array cast_dims(int data[], int rank, int dims[]){
 array (cast)(int data[], int rank, ...){
     va_list ap;
     int dims[rank];
-    int i;
-    int x;
 
     va_start(ap,rank);
     loaddimsv(rank,dims,ap);
