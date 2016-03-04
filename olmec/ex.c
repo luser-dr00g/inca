@@ -30,7 +30,13 @@
         |-^2*1+⍳   4$-| 
 
  *  Until there are at least 4 objects on the right stack, we do
- *  nothing else.
+ *  nothing else. The next object is actually an identifier 
+ *  sequence '+⍳' which unless the top of the right stack is
+ *  the left-arrow (which means assignment) is split into
+ *  its defined components, '+' and '⍳' and only rightmost
+ *  one moves to right stack. Defined prefixes are pushed back
+ *  to the left stack. At this point these two characters
+ *  represent their respective verb objects.
 
         |-^2*1+   ⍳4$-| 
         |-^2*1   +⍳4$-| 
@@ -58,7 +64,7 @@
  *  where A represents the array object returned from the iota function. 
  *  (Incidentally this is a lazy array, generating its values on-demand.) 
 
-        |-^2   *1+A$-|  dyad
+        |-^2   *1+A$-|  dyad     * is now a verb object
         |-^2   *B$-|      B←1+A
         |-^   2*B$-| 
         |-   ^2*B$-|  dyad
@@ -93,7 +99,7 @@ typedef int object;
 
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
-int execute_expression(array e, symtab st){
+object execute_expression(array e, symtab st){
     int i,j,n = e->dims[0];
     stack *lstk,*rstk;
     int docheck;
@@ -185,7 +191,7 @@ void move_top_four_to_temp(object *t, stack *rstk){
 /* Parser Actions,
    each function is called with x y z parameters defined in PARSETAB 
  */
-int monad(int f, int y, int dummy, symtab st){
+object monad(object f, object y, object dummy, symtab st){
     DEBUG("monad\n");
     verb v = getptr(f);
     if (!v->monad) {
@@ -195,7 +201,7 @@ int monad(int f, int y, int dummy, symtab st){
     return v->monad(y,v);
 }
 
-int dyad(int x, int f, int y, symtab st){
+object dyad(object x, object f, object y, symtab st){
     DEBUG("dyad\n");
     verb v = getptr(f);
     if (!v->dyad) {
@@ -205,7 +211,7 @@ int dyad(int x, int f, int y, symtab st){
     return v->dyad(x,y,v);
 }
 
-int adv(int f, int g, int dummy, symtab st){
+object adv(object f, object g, object dummy, symtab st){
     DEBUG("adverb\n");
     verb v = getptr(g);
     if (!v->monad) {
@@ -215,7 +221,7 @@ int adv(int f, int g, int dummy, symtab st){
     return v->monad(f,v);
 }
 
-int conj_(int f, int g, int h, symtab st){
+object conj_(object f, object g, object h, symtab st){
     DEBUG("conj\n");
     verb v = getptr(g);
     if (!v->dyad) {
@@ -226,12 +232,12 @@ int conj_(int f, int g, int h, symtab st){
 }
 
 //specification
-int spec(int name, int v, int dummy, symtab st){
+object spec(object name, object v, object dummy, symtab st){
     def(st, name, v);
     return v;
 }
 
-int punc(int x, int dummy, int dummy2, symtab st){
+object punc(object x, object dummy, object dummy2, symtab st){
     return x;
 }
 

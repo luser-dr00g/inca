@@ -24,6 +24,12 @@ PREDTAB(PRED_FUNC)
 #define PRED_ENT(X,Y,...) Y,
 static int (*q[])(object) = { PREDTAB(PRED_ENT) };
 
+// declare predicate enums and composed patterns
+#define PRED_ENUM(X,...) X,
+enum predicate { PREDTAB(PRED_ENUM) 
+                 EDGE = MARK+ASSN+LPAR,
+                 AVN = VRB+NOUN+ADV };
+
 /* encode predicate applications into a binary number
    which can be compared to a pattern with a mask */
 static inline int classify(object x){
@@ -88,9 +94,9 @@ int check_pattern(int *c, parsetab *ptab, int i);
 void move_top_four_to_temp(object *t, stack *rstk);
 size_t sum_symbol_lengths(array e, int n);
 
-int monad(int f, int y, int dummy, symtab st);
-int dyad(int x, int f, int y, symtab st);
-int adv(int f, int g, int dummy, symtab st);
-int conj_(int f, int g, int h, symtab st);
-int spec(int name, int v, int dummy, symtab st);
-int punc(int x, int dummy, int dummy2, symtab st);
+object monad(object f, object y, object dummy, symtab st);
+object dyad(object x, object f, object y, symtab st);
+object adv(object f, object g, object dummy, symtab st);
+object conj_(object f, object g, object h, symtab st);
+object spec(object name, object v, object dummy, symtab st);
+object punc(object x, object dummy, object dummy2, symtab st);

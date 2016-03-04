@@ -24,12 +24,6 @@ _( NUL  = 4096, qu, gettag(x)==NULLOBJ ) \
 #define PRED_DECL(X,Y,...) int Y(int);
 PREDTAB(PRED_DECL)
 
-// declare predicate enums and composed patterns
-#define PRED_ENUM(X,...) X,
-enum predicate { PREDTAB(PRED_ENUM) 
-                 EDGE = MARK+ASSN+LPAR,
-                 AVN = VRB+NOUN+ADV };
-
 // execute an expression e with environment st
 int execute_expression(array e, symtab st);
 
