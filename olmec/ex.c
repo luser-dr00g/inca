@@ -108,7 +108,7 @@ object execute_expression(array e, symtab st){
 
     while(lstk->top){ //left stack not empty
         object x = stackpop(lstk);
-        DEBUG("->%08x(%d,%d)\n", x, gettag(x), getval(x));
+        DEBUG(0,"->%08x(%d,%d)\n", x, gettag(x), getval(x));
 
         if (qp(x)){ // x is a pronoun?
             if (parse_and_lookup_name(lstk, rstk, x, st) == null)
@@ -192,7 +192,7 @@ void move_top_four_to_temp(object *t, stack *rstk){
    each function is called with x y z parameters defined in PARSETAB 
  */
 object monad(object f, object y, object dummy, symtab st){
-    DEBUG("monad\n");
+    DEBUG(0,"monad\n");
     verb v = getptr(f);
     if (!v->monad) {
         printf("monad undefined\n");
@@ -202,7 +202,7 @@ object monad(object f, object y, object dummy, symtab st){
 }
 
 object dyad(object x, object f, object y, symtab st){
-    DEBUG("dyad\n");
+    DEBUG(0,"dyad\n");
     verb v = getptr(f);
     if (!v->dyad) {
         printf("dyad undefined\n");
@@ -212,7 +212,7 @@ object dyad(object x, object f, object y, symtab st){
 }
 
 object adv(object f, object g, object dummy, symtab st){
-    DEBUG("adverb\n");
+    DEBUG(0,"adverb\n");
     verb v = getptr(g);
     if (!v->monad) {
         printf("adv undefined\n");
@@ -222,7 +222,7 @@ object adv(object f, object g, object dummy, symtab st){
 }
 
 object conj_(object f, object g, object h, symtab st){
-    DEBUG("conj\n");
+    DEBUG(0,"conj\n");
     verb v = getptr(g);
     if (!v->dyad) {
         printf("conj undefined\n");
@@ -250,7 +250,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
     if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
         stackpush(rstk,x);
     } else {
-        DEBUG("lookup\n");
+        DEBUG(0,"lookup\n");
         int *s;
         int n;
         switch(gettag(x)){
@@ -272,7 +272,8 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             return null;
         }
         while (n){ //while name
-            DEBUG("%d\n", n);
+            DEBUG(0,"%d\n", n);
+            DEBUG(0,"<-%08x(%d,%d)\n",tab->val,gettag(tab->val),getval(tab->val));
             stackpush(lstk,tab->val);           //pushback value
             s = p;
             tab = findsym(st,&p,&n,0);         //lookup remaining name
@@ -282,7 +283,7 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             }
         }
         //replace name with defined value
-        DEBUG("==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
+        DEBUG(0,"==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
         stackpush(rstk,tab->val);
     }
     return 0;
