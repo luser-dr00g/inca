@@ -33,22 +33,21 @@ int main() {
 
         //puts(buf);
         for (i=0;i<n;i++)
-            DEBUG("%04x ", buf[i]);
-        DEBUG("\n");
+            DEBUG(1,"%04x ", buf[i]);
+        DEBUG(1,"\n");
 
         array a = scan_expression(buf, n);
-        DEBUG("\n");
+        DEBUG(1,"\n");
 
-        DEBUG("%d\n", a->rank);
+        DEBUG(1,"%d\n", a->rank);
         for (i=0;i<a->rank;i++)
-            DEBUG("%d ", a->dims[i]);
-        DEBUG("\n");
+            DEBUG(1,"%d ", a->dims[i]);
+        DEBUG(1,"\n");
 
         for (i=0;i<a->dims[0];i++)
-            DEBUG("%08x(%d,%d) ", a->data[i],
+            DEBUG(0,"%08x(%d,%d) ", a->data[i],
                     gettag(a->data[i]), getval(a->data[i]));
-        DEBUG("\n");
-        DEBUG("%p\n", getptr(a->data[0]));
+        DEBUG(0,"\n");
 
         int x = execute_expression(a,env);
         printf("%08x(%d,%d)\n", x, gettag(x), getval(x));
