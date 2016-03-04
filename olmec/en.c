@@ -34,6 +34,7 @@
 #include <stdlib.h>
 
 #include "en.h"
+#include "debug.h"
 
 int gettag(int d){
     if (d<0) return 0; /* negatives are literals */
@@ -56,7 +57,7 @@ int newdata(int tag, int val){
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
     int x = int32.int32;
-    //printf("newdata %d %d %d\n", tag, val, x);
+    DEBUG(2,"newdata %d %d %d\n", tag, val, x);
     return x;
 }
 
@@ -79,7 +80,7 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     }
     int z = (*used)++;
     (*data)[z] = ptr;
-    //printf("addnew %d %p %p\n", z, ptr, (*data)[z]);
+    DEBUG(2,"addnew %d %p %p\n", z, ptr, (*data)[z]);
     return z;
 }
 
@@ -102,28 +103,34 @@ size_t advused, advmax;
 void **advtab;
 
 int cache(int tag, void *ptr){
-    //printf("cache %p\n", ptr);
+    DEBUG(2,"cache %p\n", ptr);
     switch(tag){
         default:
         case LITERAL: 
         case CHAR: return null;
         case NUMBER:
-            return newdata(tag, addnewtocache(&numused, &nummax, &numtab, ptr));
+            return newdata(tag,
+                    addnewtocache(&numused, &nummax, &numtab, ptr));
         case PROG: {
-            //printf("cache prog\n");
-            int x = newdata(tag, addnewtocache(&progused, &progmax, &progtab, ptr));
-            //printf("cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
+            DEBUG(2,"cache prog\n");
+            int x = newdata(tag,
+                    addnewtocache(&progused, &progmax, &progtab, ptr));
+            DEBUG(2,"cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
             return x;
         }
         case ARRAY:
-            //printf("cache array\n");
-            return newdata(tag, addnewtocache(&arrused, &arrmax, &arrtab, ptr));
+            DEBUG(2,"cache array\n");
+            return newdata(tag,
+                    addnewtocache(&arrused, &arrmax, &arrtab, ptr));
         case SYMTAB:
-            return newdata(tag, addnewtocache(&symused, &symmax, &symtabtab, ptr));
+            return newdata(tag,
+                    addnewtocache(&symused, &symmax, &symtabtab, ptr));
         case VERB:
-            return newdata(tag, addnewtocache(&verbused, &verbmax, &verbtab, ptr));
+            return newdata(tag,
+                    addnewtocache(&verbused, &verbmax, &verbtab, ptr));
         case ADVERB:
-            return newdata(tag, addnewtocache(&advused, &advmax, &advtab, ptr));
+            return newdata(tag,
+                    addnewtocache(&advused, &advmax, &advtab, ptr));
         case NULLOBJ: return null;
     }
 }
@@ -153,7 +160,7 @@ int getfill(int d){
             } /*fallthru*/
         default:
         case LITERAL: return newdata(LITERAL, (1<<24)-1);
-        case CHAR: return newdata(CHAR, 0);
+        case CHAR: return newdata(CHAR, ' ');
     }
 }
 
