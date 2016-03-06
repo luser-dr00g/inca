@@ -9,19 +9,26 @@
  *  The left stack starts at the left edge and expands 
  *  on the right. 
 
-        |- 0 1 2 3 top 
+        |- 0 1 2 top 
 
  *  The right stack is the opposite, anchored at the right 
  *  and growing to the left. 
 
-                   top 3 2 1 0 -| 
+                   top 2 1 0 -| 
+
+ *  Placing them on one line, the *gap* between them in a
+ *  sense represents our *pointer* into the expression.
+
+                   |
+                   V
+        |- 0 1 2       2 1 0 -| 
 
  *  Of course these are just conceptual distinctions: they're 
  *  both just stacks. The left stack is initialized with a 
  *  mark object (illustrated here as ^) to indicate the left
  *  edge, followed by the entire expression. The right stack
- *  has a single null object (illustrated here as $) to indicate
- *  the right edge. 
+ *  is initialized with a single null object (illustrated
+ *  here as $) to indicate the right edge. 
 
         |-^2*1+⍳4   $-| 
 
@@ -33,18 +40,29 @@
  *  nothing else. The next object is actually an identifier 
  *  sequence '+⍳' which unless the top of the right stack is
  *  the left-arrow (which means assignment) is split into
- *  its defined components, '+' and '⍳' and only rightmost
+ *  its defined components, '+' and '⍳' and only the rightmost
  *  one moves to right stack. Defined prefixes are pushed back
  *  to the left stack. At this point these two characters
  *  represent their respective verb objects.
 
-        |-^2*1+   ⍳4$-| 
+        |-^2*1+   ⍳4$-|     + and ⍳ are now verb objects, not symbols
         |-^2*1   +⍳4$-| 
 
  *  If there are at least 4 objects on the right stack, then 
  *  we B) classify the top 4 elements with a set of predicate 
- *  functions and then check through the list of grammatical patterns,
- *  but this configuration (VERB VERB NOUN NULLOBJ) doesn't match anything.
+ *  functions and then check through the list of grammatical patterns.
+ *  The engine is always trying to examine the top 4 elements
+ *  of the right stack.
+
+        |- 0 1 2       2 1 0 -| 
+                       | | | |
+                       ?+?+?+? <--- 4 pattern slots
+
+ *  Back to our expression, we now have 4 elements to check.
+
+        |-^2*1   +⍳4$-| 
+
+ *  But this configuration (VERB VERB NOUN NULLOBJ) doesn't match anything.
  *  Move another object and try again.
 
         |-^2*   1+⍳4$-| 
@@ -142,7 +160,7 @@ object execute_expression(array e, symtab st){
 
 size_t sum_symbol_lengths(array e, int n){
     int i,j;
-    for (i=j=0; i<n; i++) { // sum symbol lengths 
+    for (i=j=0; i<n; i++) {
         if (gettag(e->data[i])==PROG) {
             //printf("%p\n", getptr(e->data[i]));
             j+=((array)getptr(e->data[i]))->dims[0];

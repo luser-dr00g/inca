@@ -51,6 +51,9 @@ static inline int classify(object x){
 // parameters marked -1 correspond to a "dummy" argument of 
 // the function which is there in order that all handler
 // functions have the same signature.
+//
+// The table itself is transformed via macro-expansion into
+// specific cases of a switch statement.
 #define PARSETAB(_) \
 /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
 _(L0, EDGE,     VRB,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \
