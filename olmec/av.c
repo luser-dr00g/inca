@@ -2,7 +2,7 @@
  *
  * These re-use the same structure as verbs, and generate
  * new verb structures dynamically for a concrete representation
- * of a "derived verb" which is an adverb or conjunction's result.
+ * of a "derived verb" which is the result of an adverb or conjunction.
  *
  */
 #include <stdarg.h>
