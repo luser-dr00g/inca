@@ -6,7 +6,7 @@
 
 #include "ar.h"
 
-int productdims(int rank, int dims[]){
+int productdims(int rank, int *dims){
     int i,z=1;
     for (i=0; i<rank; i++)
         z *= dims[i];
@@ -14,7 +14,7 @@ int productdims(int rank, int dims[]){
 }
 
 // create new array object
-array array_new_dims(int rank, int dims[]){
+array array_new_dims(int rank, int *dims){
     int datasz;
     int i;
     int x;
@@ -51,7 +51,7 @@ int *j_vector(array a,int idx){
 }
 
 // create special function-type array
-array array_new_function(int rank, int dims[],
+array array_new_function(int rank, int *dims,
         int *data, int datan, int *(*func)(array,int)){
     int i,x;
     array z;
@@ -75,7 +75,7 @@ array array_new_function(int rank, int dims[],
     return z;
 }
 
-void loaddimsv(int rank, int dims[], va_list ap){
+void loaddimsv(int rank, int *dims, va_list ap){
     int i;
     for (i=0; i<rank; i++){
         dims[i]=va_arg(ap,int);
@@ -95,7 +95,7 @@ array (array_new)(int rank, ...){
 }
 
 // create array object accessing existing array data
-array cast_dims(int data[], int rank, int dims[]){
+array cast_dims(int *data, int rank, int *dims){
     int i,x;
     array z=malloc(sizeof*z
             + (rank+rank)*sizeof(int));
@@ -116,7 +116,7 @@ array cast_dims(int data[], int rank, int dims[]){
 }
 
 // create array accessing existing data taking dims from varargs
-array (cast)(int data[], int rank, ...){
+array (cast)(int *data, int rank, ...){
     va_list ap;
     int dims[rank];
 
@@ -144,7 +144,7 @@ array clone(array a){
 }
 
 // convert a ravel index to an index vector
-int *vector_index(int ind, int dims[], int n, int vec[]){
+int *vector_index(int ind, int *dims, int n, int *vec){
     int i,t=ind, *z=vec;
     for (i=0; i<n; i++){
         z[n-1-i] = t % dims[n-1-i];
@@ -154,7 +154,7 @@ int *vector_index(int ind, int dims[], int n, int vec[]){
 }
 
 // convert index vector to ravel index
-int ravel_index(int vec[], int dims[], int n){
+int ravel_index(int *vec, int *dims, int n){
     int i,z=*vec;
     for (i=0; i<n-1; i++){
         z *= dims[i];
@@ -198,7 +198,7 @@ int *elemr(array a, int idx){
     else return a->data+idx;
 }
 
-int *elema(array a, int ind[]){
+int *elema(array a, int *ind){
     int idx = 0;
     int i;
     for (i=0; i<a->rank; i++){
@@ -273,7 +273,7 @@ void transpose(array a, int shift){
 }
 
 // select new order of indexing with array of dimension indices
-void transposea(array a, int spec[]){
+void transposea(array a, int *spec){
     int dims[a->rank];
     int weight[a->rank];
     int i;
@@ -302,7 +302,7 @@ array slice(array a, int i){
 
 // return new indirect array selecting a single item (if 0<=spec[i]<dims[i])
 // or all items (if spec[i]==-1) from each dimension
-array slicea(array a, int spec[]){
+array slicea(array a, int *spec){
     int i,j;
     int rank;
     for (i=0, rank=0; i<a->rank; i++)
@@ -325,7 +325,7 @@ array slicea(array a, int spec[]){
 }
 
 // select a contiguous range from s[i] to f[i] of each dimension
-array slices(array a, int s[], int f[]){
+array slices(array a, int *s, int *f){
     int rank = 0;
     int i;
     for (i=0; i<a->rank; i++){
