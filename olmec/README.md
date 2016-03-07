@@ -4,7 +4,7 @@
 * ar - array functions
 * av - adverbs and conjunctions
 * ed - line editor
-* en - integer encoding of various types
+* en - encoding of various types into integer handles
 * ex - parsing and execution
 * io - utf8<->ucs4 translators
 * main - repl
@@ -14,6 +14,28 @@
 * vb = verbs
 
 ## Design
+
+A major simplifying assumption in the design of this project is:
+"Everything is an `int`".
+The encoding module packs any data type into an integer handle.
+So `int` rules.
+
+There are 4 major abstractions which are not ints,
+each of which is a typedef of a pointer to the respective structure type:
+array, verb, symtab, number.
+
+All the innards of these structures are exposed by their header files,
+so there is encapsulation, but no information-hiding.
+
+The atomic types defined in the encoding module all overlay normal (assumed
+32bit) `int`s. So `int` is used as the external interface type. But various 
+modules define typedefs to indicate the sematics that a variable is an 
+encoded-int and not (necessarily) just a number. The scanner code calls
+it a `typedef int token;`. The parser code calls it a `typedef int
+object;`. The encoding code calls it a
+`typedef union integer { datum data; int32_t int32; } integer;`.
+
+## Notes, links, updates
 
 The problem I ran into with inca3 appears to be lack of overall design.
 This was pointed out to me when my question on Programmers.SE gave a code smell.
