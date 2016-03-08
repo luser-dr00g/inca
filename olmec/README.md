@@ -2,6 +2,15 @@
 
 A work-in-progress APL interpreter intended for code-golfing.
 
+Older than the Inca were the Olmec (according to the
+Belgian anime The Mysterious Cities of Gold).
+
+Where the earlier incarnations of the inca interpreter were inspired
+by the 'quipu', olmec is guided by simpler ideas such as counting-boards
+and pebbles. The links are de-emphasized, and the values brought to the
+surface. The implementation is composed of thin abstractions. The `int`s
+are visible, moving around, representing. [..additional poetic nonsense..]
+
 ## Design
 
 A major simplifying assumption in the design of this project is:
@@ -11,7 +20,8 @@ So `int` rules.
 
 There are 4 major abstractions which are not ints,
 each of which is a typedef of a pointer to the respective structure type:
-array, verb, symtab, number.
+array, verb, symtab, number. Each of these is constructed by functions or
+macros to properly initialize all the members.
 
 All the innards of these structures are exposed by their header files,
 so there is encapsulation, but no information-hiding.
@@ -40,8 +50,7 @@ It has been reviewed extensively
 In fact, these first pieces shall be part of a library from which the
 application will draw. This was a crowning achievement for my xpost Postscript interpreter.
 
-Older than the Inca were the Olmec (according to the
-Belgian anime The Mysterious Cities of Gold). I had already been moving towards
+I had already been moving towards
 a library approach by rewriting the array manipulation functions several times
 (both golfed and ungolfed -- golfing helps factoring). See 
 https://github.com/luser-dr00g/inca/blob/master/arr.c ,
