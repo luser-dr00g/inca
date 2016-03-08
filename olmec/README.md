@@ -1,17 +1,6 @@
-## TOC
+## olmec
 
-* alpha.h - input/internal/output character code table
-* ar - array functions
-* av - adverbs and conjunctions
-* ed - line editor
-* en - encoding of various types into integer handles
-* ex - parsing and execution
-* io - utf8<->ucs4 translators
-* main - repl
-* qn - rational numbers
-* st - symbol-table
-* wd - scanner, word-formation
-* vb = verbs
+A work-in-progress APL interpreter intended for code-golfing.
 
 ## Design
 
