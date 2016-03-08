@@ -14,7 +14,7 @@
 #include "encoding.h"
 #include "st.h"
 #include "vb.h"
-#include "ex.h"
+#include "exec.h"
 
 #include "adverbs.h"
 #include "adverb_private.h"

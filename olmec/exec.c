@@ -109,10 +109,10 @@
 #include "st.h"
 #include "wd.h"
 #include "vb.h"
-#include "ex.h"
+#include "exec.h"
 
 typedef int object;
-#include "ex_private.h"
+#include "exec_private.h"
 #include "debug.h"
 
 // execute expression e using environment st and yield result

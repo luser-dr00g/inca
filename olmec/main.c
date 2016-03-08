@@ -7,7 +7,7 @@
 #include "encoding.h"
 #include "io.h"
 #include "st.h"
-#include "ex.h"
+#include "exec.h"
 #include "wd.h"
 #include "vb.h"
 #include "adverbs.h"
