@@ -95,10 +95,12 @@ int vsignum (int w, verb v){
     case ARRAY: {
         array W = getptr(w);
         if (W->type == function){
-            if (W->func == constant){ *W->data = vsignum(*W->data, v); }
-            return w;
+            if (W->func == constant){
+                W->data[1] = vsignum(W->data[1], v);
+                return w;
+            }
         } 
-        array Z = array_new_dims(W->rank, W->dims);
+        array Z = array_new_rank_pdims(W->rank, W->dims);
         int n = productdims(W->rank, W->dims);
         int scratch[W->rank];
         int i;
@@ -118,7 +120,7 @@ int vtimes (int a, int w, verb v){
     if (gettag(a)==LITERAL && gettag(w)==ARRAY){
         array W = getptr(w);
         if (W->type == function){
-            if (W->func == constant){ *W->data *= getval(a); }
+            if (W->func == constant){ W->data[1] *= getval(a); }
             if (W->func == j_vector){
                 W->weight[W->rank-1] *= getval(a);
                 W->cons *= getval(a);
@@ -138,7 +140,7 @@ int vshapeof (int w, verb v){
         case NULLOBJ: return newdata(LITERAL, 1);
         case ARRAY: {
             array a = getptr(w);
-            return cache(ARRAY, cast(a->dims,a->rank));
+            return cache(ARRAY, cast_dims(a->dims,a->rank));
         }
     }
     return null;
@@ -166,7 +168,7 @@ int vreshape (int a, int w, verb v){
                     array W=getptr(w);
                     int wn=productdims(W->rank,W->dims);
                     int scratch[W->rank];
-                    array z=array_new(n);
+                    array z=array_new_dims(n);
                     int i;
                     wn=n>wn?wn:n;
                     for (i=0; i<wn; i++){
@@ -191,7 +193,7 @@ int vreshape (int a, int w, verb v){
                     if (W->type==function && W->func==constant)
                         return vreshape(a,W->data[1],v);
                     int n=productdims(A->dims[0], A->data);
-                    array z=array_new_dims(A->dims[0], A->data);
+                    array z=array_new_rank_pdims(A->dims[0], A->data);
                     int wn=productdims(W->rank, W->dims);
                     int scratch[W->rank];
                     int i;

@@ -18,7 +18,7 @@
  * into a scalar (integer handle) with
 
        int x;
-       x = cache(ARRAY, array_new(3,3)); //3x3 matrix
+       x = cache(ARRAY, array_new_dims(3,3)); //3x3 matrix
 
  * the array data structure (which is implicitly a pointer
  * to its struct) can be retrived from the handle

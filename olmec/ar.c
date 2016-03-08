@@ -6,15 +6,17 @@
 
 #include "ar.h"
 
-int productdims(int rank, int *dims){
-    int i,z=1;
-    for (i=0; i<rank; i++)
+
+int productdims(int rank, const int *dims){
+    int z = 1;
+    for (int i=0; i < rank; i++) {
         z *= dims[i];
+    }
     return z;
 }
 
 // create new array object
-array array_new_dims(int rank, int *dims){
+array array_new_rank_pdims(int rank, const int *dims){
     int datasz;
     int i;
     int x;
@@ -38,6 +40,29 @@ array array_new_dims(int rank, int *dims){
     return z;
 }
 
+
+
+void loaddimsv(int rank, int *dims, va_list ap){
+    int i;
+    for (i=0; i<rank; i++){
+        dims[i]=va_arg(ap,int);
+    }
+}
+
+// create array, taking dims from variable argument list
+array (array_new_rank_dims)(int rank, ...){
+    va_list ap;
+    int dims[rank];
+
+    va_start(ap,rank);
+    loaddimsv(rank,dims,ap);
+    va_end(ap);
+
+    return array_new_rank_pdims(rank,dims);
+}
+
+
+
 // as a convention, a->data[0]==1
 // indicating 1 (additional) data item (after data[0])
 // data[1] is the actual data
@@ -51,8 +76,8 @@ int *j_vector(array a,int idx){
 }
 
 // create special function-type array
-array array_new_function(int rank, int *dims,
-        int *data, int datan, int *(*func)(array,int)){
+array array_new_function(int rank, const int *dims,
+        const int *data, int datan, int *(*func)(array,int)){
     int i,x;
     array z;
     z=malloc(sizeof*z
@@ -75,27 +100,10 @@ array array_new_function(int rank, int *dims,
     return z;
 }
 
-void loaddimsv(int rank, int *dims, va_list ap){
-    int i;
-    for (i=0; i<rank; i++){
-        dims[i]=va_arg(ap,int);
-    }
-}
 
-// create array, taking dims from variable argument list
-array (array_new)(int rank, ...){
-    va_list ap;
-    int dims[rank];
-
-    va_start(ap,rank);
-    loaddimsv(rank,dims,ap);
-    va_end(ap);
-
-    return array_new_dims(rank,dims);
-}
 
 // create array object accessing existing array data
-array cast_dims(int *data, int rank, int *dims){
+array cast_rank_pdims(int *data, int rank, const int *dims){
     int i,x;
     array z=malloc(sizeof*z
             + (rank+rank)*sizeof(int));
@@ -116,7 +124,7 @@ array cast_dims(int *data, int rank, int *dims){
 }
 
 // create array accessing existing data taking dims from varargs
-array (cast)(int *data, int rank, ...){
+array (cast_rank_dims)(int *data, int rank, ...){
     va_list ap;
     int dims[rank];
 
@@ -124,8 +132,10 @@ array (cast)(int *data, int rank, ...){
     loaddimsv(rank,dims,ap);
     va_end(ap);
 
-    return cast_dims(data, rank, dims);
+    return cast_rank_pdims(data, rank, dims);
 }
+
+
 
 // create a duplicate descriptor sharing array data
 array clone(array a){
@@ -140,26 +150,6 @@ array clone(array a){
     z->data = a->data;
     memmove(z->dims,a->dims,z->rank*sizeof(int));
     memmove(z->weight,a->weight,z->rank*sizeof(int));
-    return z;
-}
-
-// convert a ravel index to an index vector
-int *vector_index(int ind, int *dims, int n, int *vec){
-    int i,t=ind, *z=vec;
-    for (i=0; i<n; i++){
-        z[n-1-i] = t % dims[n-1-i];
-        t /= dims[n-1-i];
-    }
-    return z;
-}
-
-// convert index vector to ravel index
-int ravel_index(int *vec, int *dims, int n){
-    int i,z=*vec;
-    for (i=0; i<n-1; i++){
-        z *= dims[i];
-        z += vec[i+1];
-    }
     return z;
 }
 
@@ -192,13 +182,51 @@ array copy(array a){
     return z;
 }
 
+int issolid(array a){
+    int i,x;
+    for (i=a->rank-1,x=1; i>=0; i--){
+        if (a->weight[i] != x)
+            return 0;
+        x *= a->dims[i];
+    }
+    return 1;
+}
+
+array makesolid(array a){
+    if (a->type==function || !issolid(a))
+        return copy(a);
+    return a;
+}
+
+
+// convert a ravel index to an index vector
+int *vector_index(int ind, const int *dims, int n, int *vec){
+    int i,t=ind, *z=vec;
+    for (i=0; i<n; i++){
+        z[n-1-i] = t % dims[n-1-i];
+        t /= dims[n-1-i];
+    }
+    return z;
+}
+
+// convert index vector to ravel index
+int ravel_index(const int *vec, const int *dims, int n){
+    int i,z=*vec;
+    for (i=0; i<n-1; i++){
+        z *= dims[i];
+        z += vec[i+1];
+    }
+    return z;
+}
+
+
 // nb. cannot run on the ravel with non-solid indirect array
 int *elemr(array a, int idx){
     if (a->type==function) return a->func(a,idx);
     else return a->data+idx;
 }
 
-int *elema(array a, int *ind){
+int *elema(array a, const int *ind){
     int idx = 0;
     int i;
     for (i=0; i<a->rank; i++){
@@ -230,6 +258,7 @@ int *elem(array a, ...){
 
     return z;
 }
+
 
 
 // elem(a,i,j) -> elem(a,j,i)
@@ -273,7 +302,7 @@ void transpose(array a, int shift){
 }
 
 // select new order of indexing with array of dimension indices
-void transposea(array a, int *spec){
+void transposea(array a, const int *spec){
     int dims[a->rank];
     int weight[a->rank];
     int i;
@@ -284,6 +313,8 @@ void transposea(array a, int *spec){
     memcpy(a->dims, dims, a->rank*sizeof(int));
     memcpy(a->weight, weight, a->rank*sizeof(int));
 }
+
+
 
 // return new indirect array of one item of array
 array slice(array a, int i){
@@ -302,7 +333,7 @@ array slice(array a, int i){
 
 // return new indirect array selecting a single item (if 0<=spec[i]<dims[i])
 // or all items (if spec[i]==-1) from each dimension
-array slicea(array a, int *spec){
+array slicea(array a, const int *spec){
     int i,j;
     int rank;
     for (i=0, rank=0; i<a->rank; i++)
@@ -315,7 +346,7 @@ array slicea(array a, int *spec){
         dims[i] = a->dims[i];
         weight[i] = a->weight[j];
     }
-    array z = cast_dims(a->data, rank, dims);
+    array z = cast_rank_pdims(a->data, rank, dims);
     memcpy(z->weight,weight,rank*sizeof(int));
     for (j=0; j<a->rank; j++){
         if (spec[j]!=-1)
@@ -325,7 +356,7 @@ array slicea(array a, int *spec){
 }
 
 // select a contiguous range from s[i] to f[i] of each dimension
-array slices(array a, int *s, int *f){
+array slices(array a, const int *s, const int *f){
     int rank = 0;
     int i;
     for (i=0; i<a->rank; i++){
@@ -340,13 +371,14 @@ array slices(array a, int *s, int *f){
         weight[i] =    s[j]<f[j] ? a->weight[j] : -a->weight[j];
         ++j;
     }
-    array z = cast_dims(a->data, rank, dims);
+    array z = cast_rank_pdims(a->data, rank, dims);
     memcpy(z->weight, weight, rank*sizeof(int));
     for (i=0; i<a->rank; i++){
         z->cons += s[i] * a->weight[i];
     }
     return z;
 }
+
 
 // prepend extra unit axes
 // extend(vector(...),1) -> 1xN row vector
@@ -357,8 +389,31 @@ array extend(array a, int extra){
     for (i=0; i<extra; i++)
         dims[i] = 1;
     memcpy(dims+extra, a->dims, a->rank*sizeof(int));
-    return cast_dims(a->data, rank, dims);
+    return cast_rank_pdims(a->data, rank, dims);
 }
+
+
+
+// generate a 1 element vector, ie. a scalar array object
+array scalar(int n){
+    array z = array_new_dims(1);
+    *elem(z,0) = n;
+    return z;
+}
+
+// create a vector array object initialized with variable arguments
+array (vector_n)(int n, ...){
+    va_list ap;
+    array z = array_new_dims(n);
+    int i;
+
+    va_start(ap,n);
+    for (i=0; i<n; i++)
+        *elem(z,i) = va_arg(ap, int);
+    va_end(ap);
+    return z;
+}
+
 
 
 // yield ravelled concatenation of two arrays 
@@ -366,7 +421,7 @@ array cat(array x, array y){
     int xsz = productdims(x->rank,x->dims);
     int ysz = productdims(y->rank,y->dims);
     int datasz = xsz + ysz;
-    array z=array_new(datasz);
+    array z=array_new_dims(datasz);
     int scratch[x->rank+y->rank];
     int i;
     for (i=0; i<xsz; i++)
@@ -380,7 +435,7 @@ array cat(array x, array y){
 // which yields iota values as a function of argument indices
 array iota(int n){
 #if 0
-    array z = array_new(n);
+    array z = array_new_dims(n);
     int i;
     for (i=0; i<n; i++)
         *elem(z,i) = i;
@@ -389,41 +444,6 @@ array iota(int n){
     return array_new_function(1,&n,(int[]){1,0},2,j_vector);
 }
 
-// generate a 1 element vector, ie. a scalar array object
-array scalar(int n){
-    array z = array_new(1);
-    *elem(z,0) = n;
-    return z;
-}
-
-// create a vector array object initialized with variable arguments
-array (vector)(int n, ...){
-    va_list ap;
-    array z = array_new(n);
-    int i;
-
-    va_start(ap,n);
-    for (i=0; i<n; i++)
-        *elem(z,i) = va_arg(ap, int);
-    va_end(ap);
-    return z;
-}
-
-int issolid(array a){
-    int i,x;
-    for (i=a->rank-1,x=1; i>=0; i--){
-        if (a->weight[i] != x)
-            return 0;
-        x *= a->dims[i];
-    }
-    return 1;
-}
-
-array makesolid(array a){
-    if (a->type==function || !issolid(a))
-        return copy(a);
-    return a;
-}
 
 
 #ifdef TESTMODULE
@@ -433,11 +453,11 @@ array makesolid(array a){
 int tests_run = 0;
 
 static char *test_basic(){
-    array a = array_new_dims(1, (int[]){4});
+    array a = array_new_rank_pdims(1, (int[]){4});
     *elem(a,3) = 12;
     test_case(*elem(a,3)!=12);
 
-    array b = array_new(4,5);
+    array b = array_new_dims(4,5);
     *elem(b,3,4) = 5;
     test_case(*elem(b,3,4)!=5);
 
@@ -445,10 +465,10 @@ static char *test_basic(){
     test_case(*elem(c,3)!=3);
 
     //array d = iota(64);
-    //array e = cast(d->data, 2,2,2,2,2,2); // no longer works with j_vector iota
+    //array e = cast_dims(d->data, 2,2,2,2,2,2); // no longer works with j_vector iota
     //test_case(*elem(e, 1,1,1,1,1,1) != 63);
 
-    //array f = cast(d->data, 4,4,4); // no longer works with j_vector iota
+    //array f = cast_dims(d->data, 4,4,4); // no longer works with j_vector iota
     //test_case(*elem(f, 3,3,3) != 63);
 
     return 0;

@@ -10,7 +10,7 @@
         case LITERAL: return newdata(LITERAL, getval(a) op getval(w)); \
         case ARRAY: { \
                 array W = getptr(w); \
-                array Z=array_new_dims(W->rank,W->dims); \
+                array Z=array_new_rank_pdims(W->rank,W->dims); \
                 int n=productdims(W->rank,W->dims); \
                 int scratch[W->rank]; \
                 int i; \
@@ -25,7 +25,7 @@
         array A = getptr(a); \
         switch(gettag(w)){ \
         case LITERAL: { \
-                array Z=array_new_dims(A->rank,A->dims); \
+                array Z=array_new_rank_pdims(A->rank,A->dims); \
                 int n=productdims(A->rank,A->dims); \
                 int scratch[A->rank]; \
                 int i; \
@@ -37,7 +37,7 @@
         } \
         case ARRAY: { \
                 array W = getptr(w); \
-                array Z=array_new_dims(W->rank,W->dims); \
+                array Z=array_new_rank_pdims(W->rank,W->dims); \
                 int n=productdims(W->rank,W->dims); \
                 int scratch[W->rank]; \
                 int i; \
@@ -56,7 +56,7 @@
     case LITERAL: return newdata(LITERAL, op getval(w)); \
     case ARRAY: { \
         array W = getptr(w); \
-        array Z=array_new_dims(W->rank,W->dims); \
+        array Z=array_new_rank_pdims(W->rank,W->dims); \
         int n=productdims(W->rank,W->dims); \
         int scratch[W->rank]; \
         int i; \

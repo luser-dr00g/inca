@@ -55,7 +55,7 @@ typedef char state_and_action_code;
 #include "wd_private.h"
 
 array scan_expression(int *s, int n){
-    array result = array_new(n+1);
+    array result = array_new_dims(n+1);
     token *p = result->data, *const p1 = p+1;
     state ss, st; /* last state, current state */
     state_and_action_code cc;
@@ -121,7 +121,7 @@ token new_numeric(int *s, int n){
 
 token new_string(int *s, int n){
     DEBUG(1,"str:%d\n", n);
-    array t=array_new(n);
+    array t=array_new_dims(n);
     int i,j,q;
     //for (int i=0; i<n; i++) *elem(t,i) = newdata(CHAR, s[i]);
     for (i=1,j=0,q=0; i<n-1; i++){
@@ -143,7 +143,7 @@ token new_executable(int *s, int n){
         if (*s == ')') return newdata(RPAROBJ, 0);
         return newdata(PCHAR, *s);
     } else {
-        array t=array_new(n);
+        array t=array_new_dims(n);
         for (int i=0; i<n; i++)
             *elem(t,i) = newdata(PCHAR, s[i]);
         return cache(PROG, t);
