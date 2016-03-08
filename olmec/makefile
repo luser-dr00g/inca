@@ -12,7 +12,7 @@ all_tests.c:all_tests.m4 makefile $(unitprogs)
 	m4 -D UNITS="$(units)" $< >$@
 all_tests:all_tests.c
 	$(CC) $(CFLAGS) -o $@ $^ encoding.o $(LDLIBS)
-st_test:st_test.c
+symtab_test:symtab_test.c
 	$(CC) $(CFLAGS) -o $@ $^ encoding.o $(LDLIBS)
 
 olmec:main.o editor.o encoding.o wd.o exec.o vb.o adverbs.o $(unitobjs)

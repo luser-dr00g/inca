@@ -106,7 +106,7 @@
 
 #include "array.h"
 #include "encoding.h"
-#include "st.h"
+#include "symtab.h"
 #include "wd.h"
 #include "vb.h"
 #include "exec.h"

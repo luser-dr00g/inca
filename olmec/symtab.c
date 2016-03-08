@@ -51,7 +51,7 @@
 #include "encoding.h"
 #include "debug.h"
 
-#include "st.h"
+#include "symtab.h"
 
 /* construct a new symbol table with n slots */
 symtab makesymtab(int n){

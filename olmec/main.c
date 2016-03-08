@@ -6,7 +6,7 @@
 #include "editor.h"
 #include "encoding.h"
 #include "io.h"
-#include "st.h"
+#include "symtab.h"
 #include "exec.h"
 #include "wd.h"
 #include "vb.h"
