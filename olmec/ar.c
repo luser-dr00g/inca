@@ -15,27 +15,28 @@ int productdims(int rank, const int *dims){
     return z;
 }
 
+void calcweight(int rank, const int *dims, int *weight){
+    for (int i = 0, wgt = 1; i < rank; ++i){
+        weight[rank-1-i] = wgt;
+        wgt *= dims[rank-1-i];
+    }
+}
+
 // create new array object
 array array_new_rank_pdims(int rank, const int *dims){
-    int datasz;
-    int i;
-    int x;
-    array z;
-    datasz=productdims(rank,dims);
-    z=malloc(sizeof*z
-            + (rank+rank+datasz)*sizeof(int));
-
+    const int datasz = productdims(rank, dims);
+    array z = malloc(sizeof *z + (2*rank+datasz)*sizeof(int));
     z->type = normal;
     z->rank = rank;
-    z->dims = (int*)(z+1);
     z->cons = 0;
-    z->weight = z->dims + rank;
-    z->data = z->weight + rank;
+
+    z->dims = (int*)(z+1);
     memmove(z->dims,dims,rank*sizeof(int));
-    for(x=1, i=rank-1; i>=0; i--){
-        z->weight[i] = x;
-        x *= z->dims[i];
-    }
+
+    z->weight = z->dims + rank;
+    calcweight(rank, dims, z->weight);
+
+    z->data = z->weight + rank;
 
     return z;
 }
@@ -43,8 +44,7 @@ array array_new_rank_pdims(int rank, const int *dims){
 
 
 void loaddimsv(int rank, int *dims, va_list ap){
-    int i;
-    for (i=0; i<rank; i++){
+    for (int i=0; i<rank; i++){
         dims[i]=va_arg(ap,int);
     }
 }
@@ -78,24 +78,20 @@ int *j_vector(array a,int idx){
 // create special function-type array
 array array_new_function(int rank, const int *dims,
         const int *data, int datan, int *(*func)(array,int)){
-    int i,x;
-    array z;
-    z=malloc(sizeof*z
-            + (rank+rank+datan)*sizeof(int));
-
+    array z = malloc(sizeof *z + (2*rank+datan)*sizeof(int));
     z->type = function;
+    z->func = func;
     z->rank = rank;
-    z->dims = (int*)(z+1);
     z->cons = 0;
+
+    z->dims = (int*)(z+1);
+    memmove(z->dims,dims,rank*sizeof(int));
+
     z->weight = z->dims + rank;
+    calcweight(rank, dims, z->weight);
+
     z->data = z->weight + rank;
     memmove(z->data, data, datan+sizeof(int));
-    z->func = func;
-    memmove(z->dims,dims,rank*sizeof(int));
-    for(x=1, i=rank-1; i>=0; i--){
-        z->weight[i] = x;
-        x *= z->dims[i];
-    }
 
     return z;
 }
@@ -104,21 +100,18 @@ array array_new_function(int rank, const int *dims,
 
 // create array object accessing existing array data
 array cast_rank_pdims(int *data, int rank, const int *dims){
-    int i,x;
-    array z=malloc(sizeof*z
-            + (rank+rank)*sizeof(int));
-
+    array z=malloc(sizeof*z + (2*rank)*sizeof(int));
     z->type = indirect;
     z->rank = rank;
-    z->dims = (int*)(z+1);
     z->cons = 0;
-    z->weight = z->dims + rank;
-    z->data = data;
+
+    z->dims = (int*)(z+1);
     memmove(z->dims,dims,rank*sizeof(int));
-    for(x=1, i=rank-1; i>=0; i--){
-        z->weight[i] = x;
-        x *= z->dims[i];
-    }
+
+    z->weight = z->dims + rank;
+    calcweight(rank, dims, z->weight);
+
+    z->data = data;
 
     return z;
 }
@@ -139,44 +132,40 @@ array (cast_rank_dims)(int *data, int rank, ...){
 
 // create a duplicate descriptor sharing array data
 array clone(array a){
-    array z=malloc(sizeof*z
-            + (a->rank+a->rank)*sizeof(int));
-
+    array z=malloc(sizeof *z + (2*a->rank)*sizeof(int));
     z->type = indirect;
     z->rank = a->rank;
-    z->dims = (int*)(z+1);
     z->cons = 0;
-    z->weight = z->dims + z->rank;
-    z->data = a->data;
+
+    z->dims = (int*)(z+1);
     memmove(z->dims,a->dims,z->rank*sizeof(int));
+
+    z->weight = z->dims + z->rank;
     memmove(z->weight,a->weight,z->rank*sizeof(int));
+
+    z->data = a->data;
+
     return z;
 }
 
 // create a new array object with data copied from array a
 array copy(array a){
-    int datasz = productdims(a->rank,a->dims);
-    array z=malloc(sizeof*z
-            + (a->rank+a->rank+datasz)*sizeof(int));
-    int i;
-    int x;
-    int ind[a->rank];
-
+    const int datasz = productdims(a->rank,a->dims);
+    array z=malloc(sizeof *z + (2*a->rank+datasz)*sizeof(int));
     z->type = normal;
     z->rank = a->rank;
-    z->dims = (int*)(z+1);
     z->cons = 0;
-    z->weight = z->dims + z->rank;
-    z->data = z->weight + z->rank;
-    memmove(z->dims,a->dims,z->rank*sizeof(int));
-    for (x=1, i=z->rank-1; i>=0; i--){
-        z->weight[i] = x;
-        x *= z->dims[i];
-    }
 
-    for (i=0; i<datasz; i++){
-        vector_index(i,z->dims,z->rank,ind);
-        z->data[i] = *elema(a,ind);
+    z->dims = (int*)(z+1);
+    memmove(z->dims,a->dims,z->rank*sizeof(int));
+
+    z->weight = z->dims + z->rank;
+    calcweight(z->rank, z->dims, z->weight);
+
+    z->data = z->weight + z->rank;
+    int scratch[a->rank];
+    for (int i=0; i < datasz; ++i){
+        z->data[i] = *elema(a, vector_index(i,z->dims,z->rank,scratch));
     }
 
     return z;
@@ -228,24 +217,18 @@ int *elemr(array a, int idx){
 
 int *elema(array a, const int *ind){
     int idx = 0;
-    int i;
-    for (i=0; i<a->rank; i++){
+    for (int i=0; i<a->rank; i++){
         idx += ind[i] * a->weight[i];
     }
-    idx += a->cons;
-    return elemr(a,idx);
+    return elemr(a,idx + a->cons);
 }
 
 int *elemv(array a, va_list ap){
     int idx = 0;
-    int i;
-    for (i=0; i<a->rank; i++){
-        int ind;
-        ind = va_arg(ap, int);
-        idx += ind * a->weight[i];
+    for (int i=0; i<a->rank; i++){
+        idx += va_arg(ap, int) * a->weight[i];
     }
-    idx += a->cons;
-    return elemr(a,idx);
+    return elemr(a,idx + a->cons);
 }
 
 int *elem(array a, ...){
@@ -260,16 +243,16 @@ int *elem(array a, ...){
 }
 
 
+void swap(int *x, int *y){
+    int t=*x;
+          *x=*y;
+             *y=t;
+}
 
 // elem(a,i,j) -> elem(a,j,i)
 void transpose2(array a){
-    int t;
-    t = a->dims[0],
-        a->dims[0] = a->dims[1],
-                     a->dims[1] = t;
-    t = a->weight[0],
-        a->weight[0] = a->weight[1],
-                       a->weight[1] = t;
+    swap(&a->dims[0],&a->dims[1]);
+    swap(&a->weight[0],&a->weight[1]);
 }
 
 // rotate indices by shift amount
@@ -305,8 +288,7 @@ void transpose(array a, int shift){
 void transposea(array a, const int *spec){
     int dims[a->rank];
     int weight[a->rank];
-    int i;
-    for (i=0; i<a->rank; i++){
+    for (int i=0; i<a->rank; i++){
         dims[i] = a->dims[spec[i]];
         weight[i] = a->weight[spec[i]];
     }
@@ -318,15 +300,17 @@ void transposea(array a, const int *spec){
 
 // return new indirect array of one item of array
 array slice(array a, int i){
-    int rank = a->rank-1;
-    array z=malloc(sizeof(struct ar)
-            + (rank+rank)*sizeof(int));
+    const int rank = a->rank-1;
+    array z=malloc(sizeof *z + (2*rank)*sizeof(int));
     z->rank = rank;
+
     z->dims = (int *)(z+1);
-    z->weight = z->dims + z->rank;
     memcpy(z->dims, a->dims+1, z->rank*sizeof(int));
+
+    z->weight = z->dims + z->rank;
     memcpy(z->weight, a->weight+1, z->rank*sizeof(int));
-    z->cons = i*a->weight[0];
+    z->cons = a->cons + i*a->weight[0];
+
     z->data = a->data;
     return z;
 }
@@ -334,48 +318,55 @@ array slice(array a, int i){
 // return new indirect array selecting a single item (if 0<=spec[i]<dims[i])
 // or all items (if spec[i]==-1) from each dimension
 array slicea(array a, const int *spec){
-    int i,j;
-    int rank;
-    for (i=0, rank=0; i<a->rank; i++)
+    int rank = 0;
+    for (int i=0; i<a->rank; ++i)
         rank += spec[i]==-1;
+
     int dims[rank];
     int weight[rank];
-    for (i=0,j=0; i<rank; i++,j++){
+    for (int i=0,j=0; i<rank; ++i,++j){
         while (spec[j]!=-1) j++;
         if (j>=a->rank) break;
-        dims[i] = a->dims[i];
+        dims[i] = a->dims[j];
         weight[i] = a->weight[j];
     }
+
     array z = cast_rank_pdims(a->data, rank, dims);
     memcpy(z->weight,weight,rank*sizeof(int));
-    for (j=0; j<a->rank; j++){
+
+    z->cons = a->cons;
+    for (int j=0; j<a->rank; j++){
         if (spec[j]!=-1)
             z->cons += spec[j] * a->weight[j];
     }
+
     return z;
 }
 
 // select a contiguous range from s[i] to f[i] of each dimension
 array slices(array a, const int *s, const int *f){
     int rank = 0;
-    int i;
-    for (i=0; i<a->rank; i++){
+    for (int i=0; i<a->rank; i++){
         rank += s[i] != f[i];
     }
+
     int dims[rank];
     int weight[rank];
-    int j=0;
-    for (i=0; i<rank; i++){
+    for (int i=0,j=0; i<rank; i++){
         while (s[j]==f[j]) ++j;
         dims[i] = 1 + (s[j]<f[j] ? f[j]-s[j] : s[j]-f[j] );
         weight[i] =    s[j]<f[j] ? a->weight[j] : -a->weight[j];
         ++j;
     }
+
     array z = cast_rank_pdims(a->data, rank, dims);
     memcpy(z->weight, weight, rank*sizeof(int));
-    for (i=0; i<a->rank; i++){
+
+    z->cons = a->cons;
+    for (int i=0; i<a->rank; i++){
         z->cons += s[i] * a->weight[i];
     }
+
     return z;
 }
 
@@ -385,8 +376,7 @@ array slices(array a, const int *s, const int *f){
 array extend(array a, int extra){
     int rank = a->rank + extra;
     int dims[rank];
-    int i;
-    for (i=0; i<extra; i++)
+    for (int i=0; i<extra; i++)
         dims[i] = 1;
     memcpy(dims+extra, a->dims, a->rank*sizeof(int));
     return cast_rank_pdims(a->data, rank, dims);
@@ -421,13 +411,15 @@ array cat(array x, array y){
     int xsz = productdims(x->rank,x->dims);
     int ysz = productdims(y->rank,y->dims);
     int datasz = xsz + ysz;
+
     array z=array_new_dims(datasz);
-    int scratch[x->rank+y->rank];
-    int i;
-    for (i=0; i<xsz; i++)
+
+    int scratch[x->rank+y->rank];  // cheap max
+    for (int i=0; i<xsz; i++)
         *elem(z,i) = *elema(x,vector_index(i,x->dims,x->rank,scratch));
-    for (i=0; i<ysz; i++)
+    for (int i=0; i<ysz; i++)
         *elem(z,xsz+i) = *elema(y,vector_index(i,y->dims,y->rank,scratch));
+
     return z;
 }
 
