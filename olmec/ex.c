@@ -118,9 +118,8 @@ typedef int object;
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
 object execute_expression(array e, symtab st){
-    int i,j,n = e->dims[0];
+    int n = e->dims[0];
     stack *lstk,*rstk;
-    int docheck;
 
     init_stacks(&lstk, &rstk, e, n);
 
@@ -133,31 +132,41 @@ object execute_expression(array e, symtab st){
                 return null;
         } else stackpush(rstk,x);
 
-        docheck = 1;
-        while (docheck){ //check rstk with patterns and reduce
-            docheck = 0;
-            if (rstk->top>=4){
-                int c[4];
-                for (j=0; j<4; j++)
-                    c[j] = classify(rstk->a[rstk->top-1-j]);
-
-                for (i=0; i<sizeof ptab/sizeof*ptab; i++)
-                    if (check_pattern(c, ptab, i)) {
-                        DEBUG(1,"match %d\n",i);
-                        object t[4];
-                        move_top_four_to_temp(t, rstk);
-                        switch(i){
-                            PARSETAB(PARSETAB_ACTION)
-                        }
-                        docheck = 1; //stack changed: check again
-                        break;
-                    }
-            }
-        }
+        check_rstk_with_patterns_and_reduce(rstk, st);
     }
+    stackpush(lstk,stackpop(rstk));
+    check_rstk_with_patterns_and_reduce(rstk, st);
+    stackpush(rstk,stackpop(lstk));
+    check_rstk_with_patterns_and_reduce(rstk, st);
 
     return extract_result_and_free_stacks(lstk,rstk);
 }
+
+void check_rstk_with_patterns_and_reduce(stack *rstk, symtab st){
+    int docheck = 1;
+    while (docheck){ //check rstk with patterns and reduce
+        docheck = 0;
+        if (rstk->top>=4){
+            int c[4];
+            for (int j=0; j<4; j++)
+                c[j] = classify(rstk->a[rstk->top-1-j]);
+            DEBUG(1, "%08x %08x %08x %08x\n", c[0], c[1], c[2], c[3]);
+
+            for (int i=0; i<sizeof ptab/sizeof*ptab; i++)
+                if (check_pattern(c, ptab, i)) {
+                    DEBUG(1,"match %d\n",i);
+                    DEBUG(1,"%08x %08x %08x %08x\n",
+                        ptab[i].c[0], ptab[i].c[1], ptab[i].c[2], ptab[i].c[3]);
+                    object t[4];
+                    move_top_four_to_temp(t, rstk);
+                    switch(i){ PARSETAB(PARSETAB_ACTION) }
+                    docheck = 1; //stack changed: check again
+                    break;
+                }
+        }
+    }
+}
+
 
 size_t sum_symbol_lengths(array e, int n){
     int i,j;
@@ -186,6 +195,7 @@ void init_stacks(stack **lstkp, stack **rstkp, array e, int n){
 
 object extract_result_and_free_stacks(stack *lstk, stack *rstk){
     object x;
+    DEBUG(1,"rstk->top=%d\n", rstk->top);
     stackpop(rstk); // pop mark
     x = stackpop(rstk);
     free(lstk);
@@ -257,13 +267,16 @@ object conj_(object f, object g, object h, symtab st){
 
 //specification
 object spec(object name, object v, object dummy, symtab st){
-    DEBUG(0,"assn\n");
+    DEBUG(0,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
+            name, gettag(name), getval(name),
+            v, gettag(v), getval(v));
     def(st, name, v);
     return v;
 }
 
 object punc(object x, object dummy, object dummy2, symtab st){
-    DEBUG(0,"punc\n");
+    DEBUG(0,"punc %08x(%d,%d)\n",
+            x, gettag(x), getval(x));
     return x;
 }
 
