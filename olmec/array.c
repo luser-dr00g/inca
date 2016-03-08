@@ -243,7 +243,7 @@ int *elem(array a, ...){
 }
 
 
-void swap(int *x, int *y){
+static inline void swap(int *x, int *y){
     int t=*x;
           *x=*y;
              *y=t;
