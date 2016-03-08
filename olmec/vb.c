@@ -137,13 +137,15 @@ int vtimes (int a, int w, verb v){
 
 int vshapeof (int w, verb v){
     switch(gettag(w)){
-        case NULLOBJ: return newdata(LITERAL, 1);
+        //case LITERAL: return 1;
         case ARRAY: {
             array a = getptr(w);
-            return cache(ARRAY, cast_dims(a->dims,a->rank));
+            int n = productdims(a->rank, a->dims);
+            //if (n)
+                return cache(ARRAY, cast_dims(a->dims,a->rank));
         }
     }
-    return null;
+    return cache(ARRAY, vector_n(0));
 }
 
 void mcopy(int *dest, int *src, int n){
