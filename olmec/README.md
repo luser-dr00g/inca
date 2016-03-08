@@ -119,7 +119,9 @@ Code Reviews:
 http://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding  
 http://codereview.stackexchange.com/questions/114243/unicode-capable-symbol-table-n-way-search-tree-with-hash-buckets  
 http://codereview.stackexchange.com/questions/115748/termios-xterm-line-editor-for-apl-interpreter  
-
+https://groups.google.com/d/topic/comp.lang.c/7NeTMCbl9zM/discussion int-code module
+https://groups.google.com/d/topic/comp.lang.c/X7BzyIKpogg/discussion scanner and parser
+http://codereview.stackexchange.com/questions/122038/ndarrays-in-c-slicing-transposing-polynomials
 
 --
 
