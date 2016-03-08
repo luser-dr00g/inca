@@ -10,7 +10,7 @@
 #include "ex.h"
 #include "wd.h"
 #include "vb.h"
-#include "av.h"
+#include "adverbs.h"
 #include "debug.h"
 
 symtab env;

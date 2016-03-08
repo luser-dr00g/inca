@@ -14,11 +14,10 @@
 #include "en.h"
 #include "st.h"
 #include "vb.h"
-#include "av.h"
 #include "ex.h"
 
-#include "av.h"
-#include "av_private.h"
+#include "adverbs.h"
+#include "adverb_private.h"
 
 int domerr(int w, verb v){
     return null;
