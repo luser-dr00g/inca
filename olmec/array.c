@@ -4,7 +4,7 @@
 #include <string.h>
 #include "../ppnarg.h"
 
-#include "ar.h"
+#include "array.h"
 
 
 int productdims(int rank, const int *dims){

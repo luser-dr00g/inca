@@ -104,7 +104,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ar.h"
+#include "array.h"
 #include "en.h"
 #include "st.h"
 #include "wd.h"

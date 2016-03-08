@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "ar.h"
+#include "array.h"
 #include "ed.h"
 #include "en.h"
 #include "io.h"

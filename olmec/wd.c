@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ar.h" // array type
+#include "array.h" // array type
 #include "en.h" // atomic encoding
 
 #include "wd.h"

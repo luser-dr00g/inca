@@ -1,2 +1,2 @@
 #define TESTMODULE
-#include "ar.c"
+#include "array.c"

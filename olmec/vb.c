@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ar.h"
+#include "array.h"
 #include "en.h"
 #include "st.h"
 
@@ -241,10 +241,10 @@ int vravel (int w, verb v){
             return cache(ARRAY, scalar(w));
         }
         case ARRAY: {
-            array a = getptr(w);
-            array z = copy(a);
+            array W = getptr(w);
+            array z = copy(W);
             z->rank = 1; 
-            z->dims[0] = productdims(a->rank, a->dims);
+            z->dims[0] = productdims(W->rank, W->dims);
             return cache(ARRAY, z);
         }
     }
@@ -356,9 +356,14 @@ int vindexleft(int a, int w, verb v){
             }
         }
         }
-    case ARRAY:
-        ;
+    case ARRAY: {
+        array z=copy(getptr(a));
+        int n=productdims(z->rank,z->dims);
+        for (int i=0; i< n; ++i)
+            z->data[i] = vindexleft(z->data[i], w, v);
+        return cache(ARRAY, z);
     }
+    } //switch
 }
 
 int vindexright(int a, int w, verb v){
