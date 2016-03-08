@@ -156,59 +156,51 @@ void mcopy(int *dest, int *src, int n){
 
 int vreshape (int a, int w, verb v){
     switch(gettag(a)){
-        case LITERAL:
-            if (getval(a)==0)
-                return newdata(LITERAL, gettag(w));
-            switch(gettag(w)){
-                case LITERAL: {
-                    array z=array_new_function(1,&a,
-                            (int[]){1,w},2,constant);
-                    return cache(ARRAY, z);
-                }
-                case ARRAY: {
-                    int n=getval(a);
-                    array W=getptr(w);
-                    int wn=productdims(W->rank,W->dims);
-                    int scratch[W->rank];
-                    array z=array_new_dims(n);
-                    int i;
-                    wn=n>wn?wn:n;
-                    for (i=0; i<wn; i++){
-                        vector_index(i,W->dims,W->rank,scratch);
-                        z->data[i] = *elema(W, scratch);
-                    }
-                    if((n-=wn)>0) mcopy(z->data+wn,z->data,n);
-                    return cache(ARRAY, z);
-                }
-            }
-        case ARRAY:
-            switch(gettag(w)){
-                case LITERAL: {
-                    array A=getptr(a);
-                    array z=array_new_function(A->dims[0],A->data,
-                            (int[]){1,w},2,constant);
-                    return cache(ARRAY, z);
-                }
-                case ARRAY: {
-                    array A=makesolid(getptr(a));
-                    array W=getptr(w);
-                    if (W->type==function && W->func==constant)
-                        return vreshape(a,W->data[1],v);
-                    int n=productdims(A->dims[0], A->data);
-                    array z=array_new_rank_pdims(A->dims[0], A->data);
-                    int wn=productdims(W->rank, W->dims);
-                    int scratch[W->rank];
-                    int i;
-                    wn=n>wn?wn:n;
-                    for (i=0; i<wn; i++){
-                        vector_index(i,W->dims,W->rank,scratch);
-                        z->data[i] = *elema(W, scratch);
-                    }
-                    if ((n-=wn)>0) mcopy(z->data+wn,z->data,n);
-                    return cache(ARRAY, z);
-                }
-            }
-    }
+    case LITERAL:
+        if (getval(a)==0) return newdata(LITERAL, gettag(w));
+        switch(gettag(w)){
+        case LITERAL: 
+            return cache(ARRAY, array_new_function(1,&a, (int[]){1,w},2,constant));
+        case ARRAY: {
+            int n=getval(a);
+            array W=getptr(w);
+            int wn=productdims(W->rank,W->dims);
+            int scratch[W->rank];
+            array z=array_new_dims(n);
+            wn=n>wn?wn:n;
+            for (int i=0; i<wn; i++)
+                z->data[i] = *elema(W, vector_index(i,W->dims,W->rank,scratch));
+            if((n-=wn)>0) mcopy(z->data+wn,z->data,n);
+            return cache(ARRAY, z);
+        }
+        }//switch
+    case ARRAY:
+        switch(gettag(w)){
+        case LITERAL: {
+            array A=getptr(a);
+            A = makesolid(A);
+            array z=array_new_function(A->dims[0],A->data, (int[]){1,w},2,constant);
+            return cache(ARRAY, z);
+        }
+        case ARRAY: {
+            array A=getptr(a);
+            if (A->rank != 1){ printf("RANK ERROR\n"); return null; }
+            array W=getptr(w);
+            if (W->type==function && W->func==constant)
+                return vreshape(a,W->data[1],v);
+            A = makesolid(A);
+            int n=productdims(A->dims[0], A->data);
+            array z=array_new_rank_pdims(A->dims[0], A->data);
+            int wn=productdims(W->rank, W->dims);
+            int scratch[W->rank];
+            wn=n>wn?wn:n;
+            for (int i=0; i<wn; i++)
+                z->data[i] = *elema(W, vector_index(i,W->dims,W->rank,scratch));
+            if ((n-=wn)>0) mcopy(z->data+wn,z->data,n);
+            return cache(ARRAY, z);
+        }
+        }//switch
+    }//switch
     return w;
 }
 
