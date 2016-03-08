@@ -15,6 +15,6 @@ all_tests:all_tests.c
 symtab_test:symtab_test.c
 	$(CC) $(CFLAGS) -o $@ $^ encoding.o $(LDLIBS)
 
-olmec:main.o editor.o encoding.o wd.o exec.o verbs.o adverbs.o $(unitobjs)
+olmec:main.o editor.o encoding.o lex.o exec.o verbs.o adverbs.o $(unitobjs)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 

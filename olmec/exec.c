@@ -107,7 +107,7 @@
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"
-#include "wd.h"
+#include "lex.h"
 #include "verbs.h"
 #include "exec.h"
 

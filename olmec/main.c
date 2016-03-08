@@ -8,7 +8,7 @@
 #include "io.h"
 #include "symtab.h"
 #include "exec.h"
-#include "wd.h"
+#include "lex.h"
 #include "verbs.h"
 #include "adverbs.h"
 #include "debug.h"

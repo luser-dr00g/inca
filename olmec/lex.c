@@ -45,14 +45,14 @@
 #include "array.h" // array type
 #include "encoding.h" // atomic encoding
 
-#include "wd.h"
+#include "lex.h"
 #include "debug.h"
 
 typedef int token;
 typedef char state;
 typedef char state_and_action_code;
 
-#include "wd_private.h"
+#include "lex_private.h"
 
 array scan_expression(int *s, int n){
     array result = array_new_dims(n+1);
