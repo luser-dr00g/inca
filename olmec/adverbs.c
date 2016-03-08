@@ -13,7 +13,7 @@
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"
-#include "vb.h"
+#include "verbs.h"
 #include "exec.h"
 
 #include "adverbs.h"

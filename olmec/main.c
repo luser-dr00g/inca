@@ -9,7 +9,7 @@
 #include "symtab.h"
 #include "exec.h"
 #include "wd.h"
-#include "vb.h"
+#include "verbs.h"
 #include "adverbs.h"
 #include "debug.h"
 

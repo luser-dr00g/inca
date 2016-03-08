@@ -108,7 +108,7 @@
 #include "encoding.h"
 #include "symtab.h"
 #include "wd.h"
-#include "vb.h"
+#include "verbs.h"
 #include "exec.h"
 
 typedef int object;

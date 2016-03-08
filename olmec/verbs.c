@@ -7,8 +7,8 @@
 #include "encoding.h"
 #include "symtab.h"
 
-#include "vb.h"
-#include "vb_private.h"
+#include "verbs.h"
+#include "verb_private.h"
 #include "debug.h"
 
 void common(int *ap, int *wp){
