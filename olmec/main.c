@@ -3,7 +3,7 @@
 #include <unistd.h>
 
 #include "array.h"
-#include "ed.h"
+#include "editor.h"
 #include "en.h"
 #include "io.h"
 #include "st.h"
