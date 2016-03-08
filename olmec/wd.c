@@ -43,7 +43,7 @@
 #include <string.h>
 
 #include "array.h" // array type
-#include "en.h" // atomic encoding
+#include "encoding.h" // atomic encoding
 
 #include "wd.h"
 #include "debug.h"

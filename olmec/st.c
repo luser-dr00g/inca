@@ -48,7 +48,7 @@
 #include <stdlib.h>
 
 #include "array.h"
-#include "en.h"
+#include "encoding.h"
 #include "debug.h"
 
 #include "st.h"

@@ -105,7 +105,7 @@
 #include <stdlib.h>
 
 #include "array.h"
-#include "en.h"
+#include "encoding.h"
 #include "st.h"
 #include "wd.h"
 #include "vb.h"

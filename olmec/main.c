@@ -4,7 +4,7 @@
 
 #include "array.h"
 #include "editor.h"
-#include "en.h"
+#include "encoding.h"
 #include "io.h"
 #include "st.h"
 #include "ex.h"
