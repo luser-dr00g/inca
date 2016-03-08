@@ -91,7 +91,7 @@ static parsetab ptab[] = { PARSETAB(PARSETAB_PAT) };
 
 
 void init_stacks(stack **lstkp, stack **rstkp, array e, int n);
-void check_rstk_with_patterns_and_reduce(stack *rstk, symtab st);
+void check_rstk_with_patterns_and_reduce(stack *lstk, stack *rstk, symtab st);
 object extract_result_and_free_stacks(stack *lstk, stack *rstk);
 int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st);
 int check_pattern(int *c, parsetab *ptab, int i);

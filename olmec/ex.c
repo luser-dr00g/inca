@@ -132,17 +132,13 @@ object execute_expression(array e, symtab st){
                 return null;
         } else stackpush(rstk,x);
 
-        check_rstk_with_patterns_and_reduce(rstk, st);
+        check_rstk_with_patterns_and_reduce(lstk, rstk, st);
     }
-    stackpush(lstk,stackpop(rstk));
-    check_rstk_with_patterns_and_reduce(rstk, st);
-    stackpush(rstk,stackpop(lstk));
-    check_rstk_with_patterns_and_reduce(rstk, st);
 
-    return extract_result_and_free_stacks(lstk,rstk);
+    return extract_result_and_free_stacks(lstk, rstk);
 }
 
-void check_rstk_with_patterns_and_reduce(stack *rstk, symtab st){
+void check_rstk_with_patterns_and_reduce(stack *lstk, stack *rstk, symtab st){
     int docheck = 1;
     while (docheck){ //check rstk with patterns and reduce
         docheck = 0;
@@ -160,6 +156,8 @@ void check_rstk_with_patterns_and_reduce(stack *rstk, symtab st){
                     object t[4];
                     move_top_four_to_temp(t, rstk);
                     switch(i){ PARSETAB(PARSETAB_ACTION) }
+                    if (i==L9)  //twiddle the mark for fake left paren
+                        stackpush(lstk,stackpop(rstk));
                     docheck = 1; //stack changed: check again
                     break;
                 }
