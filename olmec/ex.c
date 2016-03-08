@@ -143,6 +143,7 @@ object execute_expression(array e, symtab st){
 
                 for (i=0; i<sizeof ptab/sizeof*ptab; i++)
                     if (check_pattern(c, ptab, i)) {
+                        DEBUG(1,"match %d\n",i);
                         object t[4];
                         move_top_four_to_temp(t, rstk);
                         switch(i){
@@ -210,7 +211,9 @@ void move_top_four_to_temp(object *t, stack *rstk){
    each function is called with x y z parameters defined in PARSETAB 
  */
 object monad(object f, object y, object dummy, symtab st){
-    DEBUG(0,"monad\n");
+    DEBUG(0,"monad %08x(%d,%d) %08x(%d,%d)\n",
+            f, gettag(f), getval(f),
+            y, gettag(y), getval(y));
     verb v = getptr(f);
     if (!v->monad) {
         printf("monad undefined\n");
@@ -220,7 +223,10 @@ object monad(object f, object y, object dummy, symtab st){
 }
 
 object dyad(object x, object f, object y, symtab st){
-    DEBUG(0,"dyad\n");
+    DEBUG(0,"dyad %08x(%d,%d) %08x(%d,%d) %08x(%d,%d) \n",
+            x, gettag(x), getval(x),
+            f, gettag(f), getval(f),
+            y, gettag(y), getval(y));
     verb v = getptr(f);
     if (!v->dyad) {
         printf("dyad undefined\n");
@@ -251,11 +257,13 @@ object conj_(object f, object g, object h, symtab st){
 
 //specification
 object spec(object name, object v, object dummy, symtab st){
+    DEBUG(0,"assn\n");
     def(st, name, v);
     return v;
 }
 
 object punc(object x, object dummy, object dummy2, symtab st){
+    DEBUG(0,"punc\n");
     return x;
 }
 
