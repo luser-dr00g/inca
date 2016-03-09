@@ -19,6 +19,7 @@ enum tag {
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     VERB, /* val is a(n index to a) verb object */
     ADVERB, /* val is a(n index to a) verb object */
+    XVERB, /* val is a verb or adverb */
     MARKOBJ, /* val is irrelevant (s.b. 0) */
     LPAROBJ,
     RPAROBJ,

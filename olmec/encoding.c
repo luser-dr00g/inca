@@ -102,6 +102,9 @@ void **verbtab;
 size_t advused, advmax;
 void **advtab;
 
+size_t xvbused, xvbmax;
+void **xvbtab;
+
 int cache(int tag, void *ptr){
     DEBUG(2,"cache %p\n", ptr);
     switch(tag){
@@ -131,6 +134,9 @@ int cache(int tag, void *ptr){
         case ADVERB:
             return newdata(tag,
                     addnewtocache(&advused, &advmax, &advtab, ptr));
+        case XVERB:
+            return newdata(tag,
+                    addnewtocache(&xvbused, &xvbmax, &xvbtab, ptr));
         case NULLOBJ: return null;
     }
 }
