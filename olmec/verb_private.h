@@ -1,8 +1,21 @@
 
+#define mnone vid
+#define dnone vplus
+#define VERBTAB_DECL(base, monad, dyad, ...) \
+    int monad(int,verb); \
+    int dyad(int,int,verb);
+VERBTAB(VERBTAB_DECL)
+#undef mnone
+#undef dnone
+
+#define mnone 0
+#define dnone 0
 #define VERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
     def(st, newdata(PCHAR, id), cache(VERB, v));
+#undef mnone
+#undef dnone
 
 #define scalarop(a,func,w,op,v) \
     switch(gettag(a)){ \

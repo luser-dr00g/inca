@@ -316,6 +316,34 @@ int vhead (int w, verb v){
 }
 
 int vtake (int a, int w, verb v){
+    if (gettag(a) == ARRAY) {
+        array A = getptr(a);
+        if (productdims(A->rank, A->dims) > 1) {
+            printf("LENGTH ERROR\n");
+            return null;
+        }
+        a = *elem(A,0);
+    }
+    if (gettag(w) == LITERAL) w = vravel(w, v);
+    switch(gettag(a)){
+    case LITERAL:
+        a = getval(a);
+        switch(gettag(w)){
+        case ARRAY: {
+            array W = getptr(w);
+            int n = productdims(W->rank, W->dims);
+            if (a > 0) {
+                if (a <= n) return vindexleft(viota(a, v), w, v);
+                else return vcat(w, vreshape(a-n, null, v), v);
+            } else if (a < 0){
+                if (a >= -n) return vindexleft(vplus(viota(-a, v), n+a, v), w, v);
+                else return vcat(vreshape(abs(a+n), null, v), w, v);
+            } else
+                return null;
+        }
+        }
+    }
+    return null;
 }
 
 
@@ -373,6 +401,10 @@ int vindexright(int a, int w, verb v){
 
 void init_vb(symtab st){
     verb v;
+#define mnone 0
+#define dnone 0
     VERBTAB(VERBTAB_DEF)
+#undef mnone
+#undef dnone
 }
 
