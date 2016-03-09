@@ -6,8 +6,9 @@ Older than the Inca were the Olmec (according to the
 Belgian anime The Mysterious Cities of Gold).
 
 Where the earlier incarnations of the inca interpreter were inspired
-by the 'quipu', olmec is guided by simpler ideas such as counting-boards
-and pebbles. The links are de-emphasized, and the values brought to the
+by the 'quipu' which emphasizes links and pointers, olmec is guided
+by simpler ideas such as abaci, counting-boards and pebbles.
+The links are de-emphasized, and the values brought to the
 surface. The implementation is composed of thin abstractions. The `int`s
 are visible, moving around, representing. [..additional poetic nonsense..]
 
