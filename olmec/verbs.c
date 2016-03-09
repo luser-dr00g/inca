@@ -364,7 +364,35 @@ int vbehead (int w, verb v){
     }
 }
 
+static inline int signof(int x){
+    return x>=0? x==0? 0: 1: -1;
+}
+
 int vdrop (int a, int w, verb v){
+    if (gettag(a)==ARRAY){
+        array A = getptr(a);
+        if (productdims(A->rank, A->dims) > 1){
+            printf("LENGTH ERROR\n");
+            return null;
+        }
+        a = *elem(A,0);
+    }
+    switch(gettag(a)){
+    case LITERAL:
+        switch(gettag(w)){
+        case LITERAL:
+            w = vravel(w,v); // fallthrough
+        case ARRAY:
+            a = getval(a);
+            array W = getptr(w);
+            int n = productdims(W->rank, W->dims);
+            if (0 <= abs(a) && abs(a) <= n){
+                //printf("a=%d,n=%d,a-signof(a)*n=%d\n", a, n, a-signof(a)*n);
+                return vtake(a-signof(a)*n, w, v);
+            }
+        }
+    }
+    return null;
 }
 
 
