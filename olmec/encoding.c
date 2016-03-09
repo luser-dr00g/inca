@@ -153,16 +153,24 @@ void *getptr(int d){
         case SYMTAB: return symtabtab[getval(d)];
         case VERB: return verbtab[getval(d)];
         case ADVERB: return advtab[getval(d)];
+        case XVERB: return xvbtab[getval(d)];
         case NULLOBJ: return NULL;
     }
 }
 
+#define MODE1(x) (x|1<<7)
+// fill returns a "blank" value for any type
+// and identity elements for verbs
 int getfill(int d){
     switch(gettag(d)){
         case PCHAR:
             switch(getval(d)){
-            case '+': return 0;
-            case '*': return 1;
+            case '+':
+                return 0;
+            case MODE1('='): 
+            case MODE1('+'): 
+            case '*':
+                 return 1;
             } /*fallthru*/
         default:
         case LITERAL: return newdata(LITERAL, (1<<24)-1);

@@ -427,6 +427,15 @@ int vindexright(int a, int w, verb v){
 }
 
 
+int vcompress(int a, int w, verb v){
+    printf("compress\n");
+}
+
+int vexpand(int a, int w, verb v){
+    printf("expand\n");
+}
+
+
 void init_vb(symtab st){
     verb v;
 #define mnone 0

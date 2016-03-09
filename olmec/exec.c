@@ -109,6 +109,7 @@
 #include "symtab.h"
 #include "lex.h"
 #include "verbs.h"
+#include "xverb.h"
 #include "exec.h"
 
 typedef int object;
@@ -127,7 +128,7 @@ object execute_expression(array e, symtab st){
         object x = stackpop(lstk);
         DEBUG(0,"->%08x(%d,%d)\n", x, gettag(x), getval(x));
 
-        if (qp(x)){ // x is a pronoun?
+        if (qprog(x)){ // x is a pronoun?
             if (parse_and_lookup_name(lstk, rstk, x, st) == null)
                 return null;
         } else stackpush(rstk,x);
@@ -222,7 +223,11 @@ object monad(object f, object y, object dummy, symtab st){
     DEBUG(0,"monad %08x(%d,%d) %08x(%d,%d)\n",
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
-    verb v = getptr(f);
+    verb v;
+    switch(gettag(f)){
+    case VERB: v = getptr(f); break;
+    case XVERB: {xverb x = getptr(f); v = x->verb;} break;
+    }
     if (!v->monad) {
         printf("monad undefined\n");
         return null;
@@ -235,7 +240,16 @@ object dyad(object x, object f, object y, symtab st){
             x, gettag(x), getval(x),
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
-    verb v = getptr(f);
+    verb v;
+    switch(gettag(f)){
+    case VERB: v = getptr(f); break;
+    case XVERB: {
+                    xverb x = getptr(f);
+                    DEBUG(0,"xverb %08x(%d,%d)\n",
+                            x->base, gettag(x->base), getval(x->base));
+                    v = x->verb;
+                } break;
+    }
     if (!v->dyad) {
         printf("dyad undefined\n");
         return null;
@@ -245,7 +259,11 @@ object dyad(object x, object f, object y, symtab st){
 
 object adv(object f, object g, object dummy, symtab st){
     DEBUG(0,"adverb\n");
-    verb v = getptr(g);
+    verb v;
+    switch(gettag(g)){
+    case VERB: v = getptr(g); break;
+    case XVERB: {xverb x = getptr(g); v = x->adverb;} break;
+    }
     if (!v->monad) {
         printf("adv undefined\n");
         return null;
@@ -255,7 +273,11 @@ object adv(object f, object g, object dummy, symtab st){
 
 object conj_(object f, object g, object h, symtab st){
     DEBUG(0,"conj\n");
-    verb v = getptr(g);
+    verb v;
+    switch(gettag(g)){
+    case VERB: v = getptr(g); break;
+    case XVERB: {xverb x = getptr(g); v = x->adverb;} break;
+    }
     if (!v->dyad) {
         printf("conj undefined\n");
         return null;
@@ -284,7 +306,7 @@ object punc(object x, object dummy, object dummy2, symtab st){
 // push the prefix back to the left stack and continue lookup
 // with remainder. push value to right stack.
 int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
-    if (rstk->top && qc(stacktop(rstk))){ //assignment: no lookup
+    if (rstk->top && qassn(stacktop(rstk))){ //assignment: no lookup
         stackpush(rstk,x);
     } else {
         DEBUG(0,"lookup\n");

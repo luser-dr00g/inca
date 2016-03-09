@@ -8,24 +8,29 @@
     _('/', 0x1f, '/') \
 /**/
 
-#include "verbs.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "encoding.h"
 #include "symtab.h"
+#include "verbs.h"
+#include "xverb.h"
 
-typedef struct xverb {
-    int base;
-    verb verb;
-    verb adverb;
-} *xverb;
-
-#define XVERBTAB_DEF(id, verb, adverb) \
-    p=&(int[]){verb}; \
+#define XVERBTAB_DEF(id, vrb, adv) \
+    p=(int[]){newdata(PCHAR, vrb)}; \
     n=1; \
     t=findsym(st, &p, &n, 0); \
-    v=t->val; \
-    p=&(int[]){adverb}; \
+    printf("X%08x(%d,%d)\n", \
+            t->val, gettag(t->val), getval(t->val)); \
+    v=getptr(t->val); \
+\
+    p=(int[]){newdata(PCHAR, adv)}; \
     n=1; \
     t=findsym(st, &p, &n, 0); \
-    a=t->val; \
+    printf("X%08x(%d,%d)\n", \
+            t->val, gettag(t->val), getval(t->val)); \
+    a=getptr(t->val); \
+\
     x=malloc(sizeof*x); \
     *x=(struct xverb){newdata(PCHAR, id), v, a}; \
     def(st, newdata(PCHAR, id), cache(XVERB, x));

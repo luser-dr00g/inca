@@ -56,10 +56,10 @@ static inline int classify(object x){
 // specific cases of a switch statement.
 #define PARSETAB(_) \
 /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
-_(L0, EDGE,     VRB,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \
-_(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
+_(L0, EDGE,     MON,      NOUN,     ANY,      monad,  3, 1,2,-1,   0,-1) \
+_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
 _(L2, ANY,      NOUN,     DEX,      ANY,      monad,  3, 2,1,-1,   0,-1) \
-_(L3, EDGE+AVN, NOUN,     VRB,      NOUN,     dyad,  -1, 1,2,3,    0,-1) \
+_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyad,  -1, 1,2,3,    0,-1) \
 _(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,    3, 1,2,-1,   0,-1) \
 _(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,    3, 2,1,-1,   0,-1) \
 _(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_, -1, 1,2,3,    0,-1) \

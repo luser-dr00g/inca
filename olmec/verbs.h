@@ -4,6 +4,7 @@
 /*base                   monad     dyad        f  g  h  mr lr rr*/ \
 _('+',                   vid,      vplus,      0, 0, 0, 0, 0, 0 ) \
 _('-',                   vneg,     vminus,     0, 0, 0, 0, 0, 0 ) \
+_(MODE1('='),            vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
 _('*',                   vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
 _(MODE1('+'),            vrecip,   vdivide,    0, 0, 0, 0, 0, 0 ) \
 _(0x2374/*rho alt-r*/,   vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
@@ -18,6 +19,7 @@ _('[',                   mnone,    vindexright,0, 0, 0, 0, 0, 0 ) \
 _(']',                   mnone,    vindexleft, 0, 0, 0, 0, 0, 0 ) \
 _(0x2191/*up alt-y*/,    mnone,    vtake,      0, 0, 0, 0, 0, 0 ) \
 _(0x2193/*down alt-u*/,  mnone,    vdrop,      0, 0, 0, 0, 0, 0 ) \
+_(0x001f,                mnone,    vcompress,  0, 0, 0, 0, 0, 0 ) \
 /**/
 typedef struct verb {
     int id;

@@ -18,7 +18,7 @@ _('/',  areduce, 0,    0, 0, 0, 0, 0, 0 ) \
 
 enum { NN, NV, VN, VV };
 #define CONJCASE(a,w) \
-    (qv(a)*2+qv(w))
+    (qverb(a)*2+qverb(w))
 
 #define DECLFG \
     verb fv = getptr(v->f); \

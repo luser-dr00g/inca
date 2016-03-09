@@ -11,6 +11,7 @@
 #include "lex.h"
 #include "verbs.h"
 #include "adverbs.h"
+#include "xverb.h"
 #include "debug.h"
 
 symtab env;
@@ -25,6 +26,7 @@ int main() {
     env->val = null;
     init_vb(env);
     init_av(env);
+    init_xverb(env);
 
     if (isatty(fileno(stdin))) specialtty();
 
