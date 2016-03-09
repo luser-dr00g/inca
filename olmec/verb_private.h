@@ -56,7 +56,8 @@ VERBTAB(VERBTAB_DECL)
                 int i; \
                 for (i=0; i<n; i++){ \
                     vector_index(i,W->dims,W->rank,scratch); \
-                    *elema(Z,scratch) = func(*elema(A,scratch), *elema(W,scratch), v); \
+                    *elema(Z,scratch) = \
+                        func(*elema(A,scratch), *elema(W,scratch), v); \
                 } \
                 return cache(ARRAY, Z); \
         } \
