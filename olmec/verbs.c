@@ -463,21 +463,18 @@ int vbase(int a, int w, verb v){
             case LITERAL: w = vreshape(vshapeof(a,v),w,v); break;
         }
     }
-    int plus = DERIV('+',vid,vplus,0,0,0,0,0,0);
-    int pr = areduce(plus,v);
+    int pr = areduce(verbtab[VERB_PLUS],v);
     int (*plusreduce)(int,verb) = ((verb)getptr(pr))->monad;
     int times = DERIV(MODE1('='),vsignum,vtimes,0,0,0,0,0,0);
-    int ts = abackscan(times,v);
+    int ts = abackscan(verbtab[VERB_MUL],v);
     int (*timesscan)(int,verb) = ((verb)getptr(ts))->monad;
-    int drop = DERIV('d',0,vdrop,0,0,0,0,0,0);
-    int cat = DERIV(',',0,vcat,0,0,0,0,0,0);
     return plusreduce(
             vtimes(w,
                 vdrop(1,
                     vcat( timesscan(a,getptr(ts)), 1,
-                        getptr(cat)),
-                    getptr(drop)),
-                getptr(times)),
+                        getptr(verbtab[VERB_CAT])),
+                    getptr(verbtab[VERB_DROP])),
+                getptr(verbtab[VERB_MUL])),
             getptr(pr));
 }
 
