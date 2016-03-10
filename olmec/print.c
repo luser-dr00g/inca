@@ -9,6 +9,7 @@
 #include "symtab.h"
 #include "array.h"
 #include "verbs.h"
+#include "xverb.h"
 
 int printatom(int x, int width, int bprint){
     if (!bprint){
@@ -29,6 +30,12 @@ int printatom(int x, int width, int bprint){
         case VERB:
             printf("%*s", width,
                     basetooutput(getval( ((verb)getptr(x))->id ))); break;
+        case ADVERB:
+            printf("%*s", width,
+                    basetooutput(getval( ((verb)getptr(x))->id ))); break;
+        case XVERB:
+            printf("%*s", width,
+                    basetooutput(getval( ((xverb)getptr(x))->id ))); break;
         case LITERAL:
             printf(" %*d", width, getval(x)); break;
         default:

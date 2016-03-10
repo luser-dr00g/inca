@@ -1,6 +1,6 @@
 
 typedef struct xverb {
-    int base;
+    int id;
     verb verb;
     verb adverb;
 } *xverb;
