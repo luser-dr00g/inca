@@ -62,10 +62,9 @@ int printarray(array t, int width){
                 printatom(*elem(t,i), maxwidth, 1);
             break;
     default:
-            for (int i=0; i<t->dims[0]; ++i){
+            for (int i=0; i<t->dims[0]; ++i, printf("\n")){
                 array ts = slice(t,i);
                 printarray(ts, maxwidth);
-                printf("\n");
                 free(ts);
             }
             break;
