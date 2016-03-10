@@ -487,13 +487,29 @@ int vencode(int a, int w, verb v){
                     array A = getptr(a);
                     switch(A->rank){
                     case 1: if (A->dims[0]&&*elem(A,A->dims[0]-1)==0)
-                                return vcat(
-                                        vencode(
-                                            vdrop(-1,a,
+                                return vcat( vencode( vdrop(-1,a,
                                                 getptr(verbtab[VERB_DROP])),
                                             0,getptr(verbtab[VERB_ENC])),
                                         w,getptr(verbtab[VERB_CAT]));
-                            //return vcat(,,v);
+                            return vcat(
+                                    vencode(
+                                        vdrop(-1,a,getptr(verbtab[VERB_DROP])),
+                                        vdivide(
+                                            vminus(
+                                                w,
+                                                vresidue(
+                                                    vtake(-1,a,getptr(verbtab[VERB_TAKE])),
+                                                    w,
+                                                    getptr(verbtab[VERB_MOD])),
+                                                getptr(verbtab[VERB_SUB])),
+                                            vtake(-1,a,getptr(verbtab[VERB_TAKE])),
+                                            getptr(verbtab[VERB_DIV])),
+                                        getptr(verbtab[VERB_ENC])),
+                                    vresidue(
+                                        vtake(-1,a,getptr(verbtab[VERB_TAKE])),
+                                        w,
+                                        getptr(verbtab[VERB_MOD])),
+                                    getptr(verbtab[VERB_CAT]));
                     }
                 }
                 }
