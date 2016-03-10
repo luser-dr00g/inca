@@ -1,5 +1,5 @@
-/* Xverbs are an abstraction to handle the '/'
- * which can be a verb or an adverb.
+/* Xverbs are an abstraction to handle polymorphic symbols
+ * such as '/' which can be a verb or an adverb.
  *
  */
 

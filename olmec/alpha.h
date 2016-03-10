@@ -123,6 +123,8 @@
     /* ALPHA_NAME base      ext input output */ \
     /*_( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) */\
     /* xterm alt graphics chars */ \
+    _( SLASHBAR,  0x233F, 1, "/", "\xE2\x8c\xbf" ) \
+    _( BACKBAR,   0x2340, 1, "\\", "\xE2\x8d\x80" ) \
     _( TWODOTS,   0x00a8, 1, "!", ESC(o)"(""\xE" ) \
     _( DIAERESIS, MODE1('!'), 1, "!", /*U+00a8*/ /*"\xc2"*/"\xa8" ) \
     _( HIMINUS,   0x00af, 1, "@", ESC(o)"/""\xE" ) \

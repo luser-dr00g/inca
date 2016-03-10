@@ -1,13 +1,4 @@
 
-#define mnone vid
-#define dnone vplus
-#define VERBTAB_DECL(base, monad, dyad, ...) \
-    int monad(int,verb); \
-    int dyad(int,int,verb);
-VERBTAB(VERBTAB_DECL)
-#undef mnone
-#undef dnone
-
 #define mnone 0
 #define dnone 0
 #define VERBTAB_DEF(id,...) \

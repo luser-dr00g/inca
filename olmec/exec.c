@@ -261,8 +261,13 @@ object adv(object f, object g, object dummy, symtab st){
     DEBUG(0,"adverb\n");
     verb v;
     switch(gettag(g)){
-    case VERB: v = getptr(g); break;
-    case XVERB: {xverb x = getptr(g); v = x->adverb;} break;
+    case ADVERB: v = getptr(g); break;
+    case XVERB: {
+                    xverb x = getptr(g);
+                    DEBUG(0,"xverb %08x(%d,%d)\n",
+                            x->base, gettag(x->base), getval(x->base));
+                    v = x->adverb;
+                } break;
     }
     if (!v->monad) {
         printf("adv undefined\n");
@@ -275,7 +280,7 @@ object conj_(object f, object g, object h, symtab st){
     DEBUG(0,"conj\n");
     verb v;
     switch(gettag(g)){
-    case VERB: v = getptr(g); break;
+    case ADVERB: v = getptr(g); break;
     case XVERB: {xverb x = getptr(g); v = x->adverb;} break;
     }
     if (!v->dyad) {

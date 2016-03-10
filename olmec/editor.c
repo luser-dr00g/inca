@@ -67,6 +67,12 @@ void specialtty(){
     if (tcsetattr(0,TCSANOW,&tt) == -1)
         perror("tcsetattr");
 
+#if 0
+#define DO(n,x)  {int i=0,_n=(n);for(;i<_n;++i){x;}}
+    fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
+    fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
+    fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
+#endif
 }
 
 void restoretty(){

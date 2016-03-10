@@ -1,9 +1,11 @@
 
 #define ADVERBTAB(_) \
-/*base, monad,   dyad, f, g, h, mr,lr,rr*/ \
-_('&',  0,       amp,  0, 0, 0, 0, 0, 0 ) \
-_('@',  0,       atop, 0, 0, 0, 0, 0, 0 ) \
-_('/',  areduce, 0,    0, 0, 0, 0, 0, 0 ) \
+/*base,   monad,     dyad, f, g, h, mr,lr,rr*/ \
+_('&',    0,         amp,  0, 0, 0, 0, 0, 0 ) \
+_('@',    0,         atop, 0, 0, 0, 0, 0, 0 ) \
+_('/',    areduce,   0,    0, 0, 0, 0, 0, 0 ) \
+_('\\',   ascan,     0,    0, 0, 0, 0, 0, 0 ) \
+_(0x2340, abackscan, 0,    0, 0, 0, 0, 0, 0 ) \
 /**/
 
 #define ADVERBTAB_DEF(id,...) \

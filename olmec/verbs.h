@@ -29,5 +29,14 @@ typedef struct verb {
     int mr,lr,rr; /* monadic,left,right rank*/
 } *verb;
 
+#define mnone vid
+#define dnone vplus
+#define VERBTAB_DECL(base, monad, dyad, ...) \
+    int monad(int,verb); \
+    int dyad(int,int,verb);
+VERBTAB(VERBTAB_DECL)
+#undef mnone
+#undef dnone
+
 void init_vb(symtab st);
 

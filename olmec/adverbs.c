@@ -64,19 +64,85 @@ int reduce(int w, verb v){
                 case 0: return getfill(fv->id);
                 case 1: return *elem(W,0);
                 default: {
+#if 0
                     int z=*elem(W,W->dims[0]-1);
                     for (int i=W->dims[0]-2; i>=0; i--)
                         z=f2(*elem(W,i),z,v);
-                    return z;
+#endif
+                    return f2(*elem(W,0), reduce(vdrop(1,w,v), v), v);
                 }
                 }
         }
     }
     }
+    return null;
 }
 
 int areduce(int w, verb v){
     return DERIV('/', reduce, 0, w, 0, 0, 0, 0, 0);
+}
+
+
+int scan(int w, verb v){
+    DECLFG;
+    switch(gettag(w)){
+    case LITERAL: return w;
+    case ARRAY: {
+        array W = getptr(w);
+        switch(W->rank){
+        case 1: switch(W->dims[0]){
+                case 0: return getfill(fv->id);
+                case 1: return *elem(W,0);
+                default: {
+                    array z = array_new_rank_pdims(W->rank, W->dims);
+                    int n = W->dims[0];
+#if 0
+                    *elem(z,0) = *elem(W,0);
+                    for (int i=1; i<n; ++i)
+                        *elem(z,i) = f2(*elem(z,i-1), *elem(W,i), v);
+#endif
+                    for (int i=0; i<n; ++i)
+                        *elem(z,i) = reduce(vtake(i+1,w,v), v);
+                    return cache(ARRAY, z);
+                }
+                }
+        }
+    }
+    }
+    return null;
+}
+
+int ascan(int w, verb v){
+    return DERIV('\\', scan, 0, w, 0, 0, 0, 0, 0);
+}
+
+
+int backscan(int w, verb v){
+    DECLFG;
+    switch(gettag(w)){
+    case LITERAL: return w;
+    case ARRAY: {
+        array W = getptr(w);
+        switch(W->rank){
+        case 1: switch(W->dims[0]){
+                case 0: return getfill(fv->id);
+                case 1: return *elem(W,0);
+                default: {
+                    array z = array_new_rank_pdims(W->rank, W->dims);
+                    int n = W->dims[0];
+                    for (int i=0; i<n; ++i)
+                        *elem(z,i) = reduce(vdrop(i, w, v), v);
+                    return cache(ARRAY, z);
+                }
+                }
+        }
+    }
+    }
+    return null;
+}
+
+int abackscan(int w, verb v){
+    return DERIV(0x2340, backscan, 0, w, 0, 0, 0, 0, 0);
 }
 
 void init_av(symtab st){

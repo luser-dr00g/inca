@@ -333,7 +333,7 @@ int vtake (int a, int w, verb v){
             array W = getptr(w);
             int n = productdims(W->rank, W->dims);
             if (a > 0) {
-                if (a <= n) return vindexleft(viota(a, v), w, v);
+                if (a <= n) return a==n?w:vindexleft(viota(a, v), w, v);
                 else return vcat(w, vreshape(a-n, null, v), v);
             } else if (a < 0){
                 if (a >= -n) return vindexleft(vplus(viota(-a, v), n+a, v), w, v);
@@ -386,6 +386,7 @@ int vdrop (int a, int w, verb v){
             a = getval(a);
             array W = getptr(w);
             int n = productdims(W->rank, W->dims);
+            if (a==0) return w;
             if (0 <= abs(a) && abs(a) <= n){
                 //printf("a=%d,n=%d,a-signof(a)*n=%d\n", a, n, a-signof(a)*n);
                 return vtake(a-signof(a)*n, w, v);
