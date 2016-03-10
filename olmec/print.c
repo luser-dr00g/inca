@@ -25,9 +25,10 @@ int printatom(int x, int width, int bprint){
         switch(gettag(x)){
         case CHAR:
         case PCHAR:
-            printf("%s", basetooutput(getval(x))); break;
+            printf("%*s", width, basetooutput(getval(x))); break;
         case VERB:
-            printf("%s", basetooutput(getval( ((verb)getptr(x))->id ))); break;
+            printf("%*s", width,
+                    basetooutput(getval( ((verb)getptr(x))->id ))); break;
         case LITERAL:
             printf(" %*d", width, getval(x)); break;
         default:
