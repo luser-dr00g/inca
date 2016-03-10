@@ -147,6 +147,10 @@ int abackscan(int w, verb v){
 
 void init_av(symtab st){
     verb v;
+#define mnone 0
+#define dnone 0
     ADVERBTAB(ADVERBTAB_DEF)
+#undef mnone
+#undef dnone
 }
 

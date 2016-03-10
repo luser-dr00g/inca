@@ -1,22 +1,8 @@
 
-#define ADVERBTAB(_) \
-/*base,   monad,     dyad, f, g, h, mr,lr,rr*/ \
-_('&',    0,         amp,  0, 0, 0, 0, 0, 0 ) \
-_('@',    0,         atop, 0, 0, 0, 0, 0, 0 ) \
-_('/',    areduce,   0,    0, 0, 0, 0, 0, 0 ) \
-_('\\',   ascan,     0,    0, 0, 0, 0, 0, 0 ) \
-_(0x2340, abackscan, 0,    0, 0, 0, 0, 0, 0 ) \
-/**/
-
 #define ADVERBTAB_DEF(id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
     def(st, newdata(PCHAR, id), cache(ADVERB, v));
-
-#define DERIV(id,...) \
-    v=malloc(sizeof*v), \
-    *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}, \
-    cache(VERB, v)
 
 enum { NN, NV, VN, VV };
 #define CONJCASE(a,w) \
