@@ -136,6 +136,28 @@ int vtimes (int a, int w, verb v){
 }
 
 
+int vabs (int w, verb v){
+    scalarmonadfunc(vabs, w, (abs), v);
+
+    return null;
+}
+
+static inline void swap(int *x, int *y){
+    int t = *x;
+            *x = *y;
+                 *y = t;
+}
+
+int vresidue (int a, int w, verb v){
+    common(&a, &w);
+    swap(&a,&w);
+
+    scalarop(a,vresidue,w,%,v)
+
+    return null;
+}
+
+
 int vshapeof (int w, verb v){
     switch(gettag(w)){
         //case LITERAL: return 1;
@@ -452,19 +474,29 @@ int vbase(int a, int w, verb v){
     return plusreduce(
             vtimes(w,
                 vdrop(1,
-                    vcat(
-                        timesscan(a,getptr(ts))
-                        ,
-                        1,
+                    vcat( timesscan(a,getptr(ts)), 1,
                         getptr(cat)),
                     getptr(drop)),
                 getptr(times)),
-            getptr(pr))
-            ;
+            getptr(pr));
 }
 
 int vencode(int a, int w, verb v){
-    printf("encode\n");
+    array A;
+    switch(gettag(a)){
+    case LITERAL: A = scalar(a);
+    case ARRAY: switch(gettag(w)){
+                case LITERAL: {
+                    array A = getptr(a);
+                    switch(A->rank){
+                    case 1: if (A->dims[0]&&*elem(A,A->dims[0]-1)==0)
+                                return vcat(vencode(vdrop(-1,a,v),0,v),w,v);
+                            //return vcat(,,v);
+                    }
+                }
+                }
+    }
+    return null;
 }
 
 int vcompress(int a, int w, verb v){

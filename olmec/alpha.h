@@ -165,6 +165,7 @@
     _( CUP,       0x222a, 1, "v", /*U+222a*/ "\xe2\x88\xaa" ) \
     _( UPTACK,    0x22a5, 1, "b", /*U+22a5*/ "\xe2\x8a\xa5" ) \
     _( DNTACK,    0x22a4, 1, "n", /*U+22a4*/ "\xe2\x8a\xa4" ) \
+    _( PIPEA,     '|',    1, "m", "|" ) \
     _( DIVIDES,   0x2223, 1, "m", /*U+2223*/ "\xe2\x88\xa3" ) \
     _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
     _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \

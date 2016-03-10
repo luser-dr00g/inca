@@ -7,6 +7,7 @@ _('-',                   vneg,     vminus,     0, 0, 0, 0, 0, 0 ) \
 _(MODE1('='),            vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
 _('*',                   vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
 _(MODE1('+'),            vrecip,   vdivide,    0, 0, 0, 0, 0, 0 ) \
+_('|',                   vabs,     vresidue,   0, 0, 0, 0, 0, 0 ) \
 _(0x2374/*rho alt-r*/,   vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
 _('$',                   vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
 _('#',                   vtally,   dnone,      0, 0, 0, 0, 0, 0 ) \
