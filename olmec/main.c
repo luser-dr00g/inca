@@ -18,6 +18,8 @@
 
 symtab env;
 
+// define quad-k variable illustrating alt-keybaord layout
+// type quad with alt-l
 void init_qk(symtab st){
     //keyboard
     array qkname = array_new_dims(2);
