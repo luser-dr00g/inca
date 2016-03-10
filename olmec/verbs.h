@@ -41,7 +41,7 @@ VERBTAB(VERBTAB_DECL)
 #undef mnone
 #undef dnone
 
-extern int verbtab[];
+extern int vtab[];
 
 void init_vb(symtab st);
 

@@ -463,18 +463,18 @@ int vbase(int a, int w, verb v){
             case LITERAL: w = vreshape(vshapeof(a,v),w,v); break;
         }
     }
-    int pr = areduce(verbtab[VERB_PLUS],v);
+    int pr = areduce(vtab[VERB_PLUS],v);
     int (*plusreduce)(int,verb) = ((verb)getptr(pr))->monad;
     int times = DERIV(MODE1('='),vsignum,vtimes,0,0,0,0,0,0);
-    int ts = abackscan(verbtab[VERB_MUL],v);
+    int ts = abackscan(vtab[VERB_MUL],v);
     int (*timesscan)(int,verb) = ((verb)getptr(ts))->monad;
     return plusreduce(
             vtimes(w,
                 vdrop(1,
                     vcat( timesscan(a,getptr(ts)), 1,
-                        getptr(verbtab[VERB_CAT])),
-                    getptr(verbtab[VERB_DROP])),
-                getptr(verbtab[VERB_MUL])),
+                        getptr(vtab[VERB_CAT])),
+                    getptr(vtab[VERB_DROP])),
+                getptr(vtab[VERB_MUL])),
             getptr(pr));
 }
 
@@ -488,28 +488,28 @@ int vencode(int a, int w, verb v){
                     switch(A->rank){
                     case 1: if (A->dims[0]&&*elem(A,A->dims[0]-1)==0)
                                 return vcat( vencode( vdrop(-1,a,
-                                                getptr(verbtab[VERB_DROP])),
-                                            0,getptr(verbtab[VERB_ENC])),
-                                        w,getptr(verbtab[VERB_CAT]));
+                                                getptr(vtab[VERB_DROP])),
+                                            0,getptr(vtab[VERB_ENC])),
+                                        w,getptr(vtab[VERB_CAT]));
                             return vcat(
                                     vencode(
-                                        vdrop(-1,a,getptr(verbtab[VERB_DROP])),
+                                        vdrop(-1,a,getptr(vtab[VERB_DROP])),
                                         vdivide(
                                             vminus(
                                                 w,
                                                 vresidue(
-                                                    vtake(-1,a,getptr(verbtab[VERB_TAKE])),
+                                                    vtake(-1,a,getptr(vtab[VERB_TAKE])),
                                                     w,
-                                                    getptr(verbtab[VERB_MOD])),
-                                                getptr(verbtab[VERB_SUB])),
-                                            vtake(-1,a,getptr(verbtab[VERB_TAKE])),
-                                            getptr(verbtab[VERB_DIV])),
-                                        getptr(verbtab[VERB_ENC])),
+                                                    getptr(vtab[VERB_MOD])),
+                                                getptr(vtab[VERB_SUB])),
+                                            vtake(-1,a,getptr(vtab[VERB_TAKE])),
+                                            getptr(vtab[VERB_DIV])),
+                                        getptr(vtab[VERB_ENC])),
                                     vresidue(
-                                        vtake(-1,a,getptr(verbtab[VERB_TAKE])),
+                                        vtake(-1,a,getptr(vtab[VERB_TAKE])),
                                         w,
-                                        getptr(verbtab[VERB_MOD])),
-                                    getptr(verbtab[VERB_CAT]));
+                                        getptr(vtab[VERB_MOD])),
+                                    getptr(vtab[VERB_CAT]));
                     }
                 }
                 }
