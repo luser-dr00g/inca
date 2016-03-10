@@ -1,3 +1,26 @@
+/* Verbs
+ *
+ * Verbs are the "actions" that the interpreter performs upon
+ * the 'nouns' which are their arguments. As described in
+ * the encoding module, many data types are packed into 
+ * integer handles; thus most verbs have a very simple 
+ * function signature:
+ *
+ *   int monad(int a, verb v);
+ *   int dyad(int a, int w, verb v);
+ *
+ *  a and w are always the left and right arguments, respectively.
+ *  They are named after 'alpha' and 'omega' which they visually
+ *  resemble. The verb argument is a pointer to a verb structure 
+ *  containing the verb's instance data. If it is a derived verb,
+ *  resulting from an adverb, then the verb struct will contain
+ *  the base verb used by the derived verb.
+ *
+ *  Verb functions use the encoding functions gettag(), getval(),
+ *  and getptr() to crack the integer handles into their hidden
+ *  structures. 
+ *
+ */
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -481,6 +504,7 @@ int vbase(int a, int w, verb v){
 int vencode(int a, int w, verb v){
     array A;
     switch(gettag(a)){
+    case NULLOBJ: return null;
     case LITERAL: A = scalar(a);
     case ARRAY: switch(gettag(w)){
                 case LITERAL: {

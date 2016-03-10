@@ -1,5 +1,8 @@
 /* the raw-mode editor */
 
+int inputtobase(int c, int mode);
+char *basetooutput(int c);
+
 /* setup special raw terminal mode and save restore variable */
 void specialtty();
 

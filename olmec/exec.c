@@ -129,8 +129,9 @@ object execute_expression(array e, symtab st){
         DEBUG(0,"->%08x(%d,%d)\n", x, gettag(x), getval(x));
 
         if (qprog(x)){ // x is a pronoun?
-            if (parse_and_lookup_name(lstk, rstk, x, st) == null)
-                return null;
+            object y;
+            if ((y=parse_and_lookup_name(lstk, rstk, x, st)) != 0)
+                return y;
         } else stackpush(rstk,x);
 
         check_rstk_with_patterns_and_reduce(lstk, rstk, st);
@@ -329,7 +330,8 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
 
         if (tab->val == null) {
             printf("error undefined prefix\n");
-            return null;
+            return x;
+            //return null;
         }
         while (n){ //while name
             DEBUG(0,"%d\n", n);
@@ -339,7 +341,8 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             tab = findsym(st,&p,&n,0);         //lookup remaining name
             if (tab->val == null) {
                 printf("error undefined internal\n");
-                return null;
+                return x;
+                //return null;
             }
         }
         //replace name with defined value
