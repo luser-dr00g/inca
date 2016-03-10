@@ -1,12 +1,19 @@
 
+#define VERBTAB_ENUM(name, ...) \
+    VERB_ ## name,
+enum { VERBTAB(VERBTAB_ENUM) VERB_NOOP };
+
+int verbtab[VERB_NOOP];
+
 #define mnone 0
 #define dnone 0
-#define VERBTAB_DEF(id,...) \
+#define VERBTAB_DEF(name, id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
-    def(st, newdata(PCHAR, id), cache(VERB, v));
+    def(st, newdata(PCHAR, id), verbtab[VERB_##name] = cache(VERB, v));
 #undef mnone
 #undef dnone
+
 
 #define scalarop(a,func,w,op,v) \
     switch(gettag(a)){ \
