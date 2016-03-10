@@ -243,12 +243,10 @@ object dyad(object x, object f, object y, symtab st){
     verb v;
     switch(gettag(f)){
     case VERB: v = getptr(f); break;
-    case XVERB: {
-                    xverb x = getptr(f);
+    case XVERB: { xverb x = getptr(f);
                     DEBUG(0,"xverb %08x(%d,%d)\n",
                             x->base, gettag(x->base), getval(x->base));
-                    v = x->verb;
-                } break;
+                    v = x->verb; } break;
     }
     if (!v->dyad) {
         printf("dyad undefined\n");
@@ -262,12 +260,10 @@ object adv(object f, object g, object dummy, symtab st){
     verb v;
     switch(gettag(g)){
     case ADVERB: v = getptr(g); break;
-    case XVERB: {
-                    xverb x = getptr(g);
+    case XVERB: { xverb x = getptr(g);
                     DEBUG(0,"xverb %08x(%d,%d)\n",
                             x->base, gettag(x->base), getval(x->base));
-                    v = x->adverb;
-                } break;
+                    v = x->adverb; } break;
     }
     if (!v->monad) {
         printf("adv undefined\n");

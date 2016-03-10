@@ -430,7 +430,6 @@ int vindexright(int a, int w, verb v){
 
 
 int vbase(int a, int w, verb v){
-    printf("base\n");
     switch(gettag(a)){
     case LITERAL:
         switch(gettag(w)){
