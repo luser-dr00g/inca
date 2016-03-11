@@ -309,15 +309,25 @@ int vravel (int w, verb v){
 }
 
 int vcat (int a, int w, verb v){
+    //printf("cat\n");
+    //print(a,0);
+    //print(w,0);
     switch(gettag(a)){
+        case NULLOBJ:
+            return w;
+        case CHAR:
         case LITERAL:
             switch(gettag(w)){
+                case NULLOBJ: return a;
                 case ARRAY: return cache(ARRAY, cat(scalar(a),getptr(w)));
+                case CHAR:
                 case LITERAL: return cache(ARRAY, vector(a,w));
             }
         case ARRAY: 
             switch(gettag(w)){
+                case NULLOBJ: return a;
                 case ARRAY: return cache(ARRAY, cat(getptr(a),getptr(w)));
+                case CHAR:
                 case LITERAL: return cache(ARRAY, cat(getptr(a),scalar(w)));
             }
     }
@@ -559,7 +569,39 @@ int vencode(int a, int w, verb v){
 }
 
 int vcompress(int a, int w, verb v){
-    printf("compress\n");
+    //printf("compress\n");
+    //print(a,0);
+    //print(w,0);
+    switch (gettag(a)){
+    case LITERAL: if (getval(a)) return w;
+                  break;
+    case ARRAY: switch (gettag(w)){
+                case LITERAL:
+                    return vcompress(a,
+                            vreshape(vshapeof(a,VT(RHO)),w,VT(RHO)),VT(COMP));
+                case ARRAY: {
+                    array A = getptr(a);
+                    array W = getptr(w);
+                    if (A->rank == W->rank){
+                        int eq = 1;
+                        for (int i=0; i<A->rank; ++i)
+                            if (A->dims[i]!=W->dims[i])
+                                eq = 0;
+                        if (eq && productdims(A->rank,A->dims)!=0) {
+                            return vcat(
+                                    vcompress(vindexleft(0, a, VT(INDL)),
+                                        vindexleft(0, w, VT(INDR)),
+                                        VT(COMP)),
+                                    vcompress(vdrop(1, a, VT(DROP)),
+                                        vdrop(1, w, VT(DROP)),
+                                        VT(COMP)),
+                                    VT(CAT));
+                        }
+                    }
+                }
+                }
+    }
+    return null;
 }
 
 int vexpand(int a, int w, verb v){

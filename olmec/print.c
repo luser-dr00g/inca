@@ -52,6 +52,10 @@ int printarray(array t, int width){
     if (width){ maxwidth = width; }
     else {
         int n = productdims(t->rank,t->dims);
+        if (n==0) {
+            printf("NIL\n");
+            return 0;
+        }
 
         maxwidth = 0;
         for (int i=0; i<n; ++i){
@@ -87,6 +91,8 @@ void print(int x, int width){
         default: printatom(x, 0, 1);
                  printf("\n");
                  break;
+        case NULLOBJ: printf("NULL\n");
+                      break;
         case PROG:
         case ARRAY: {
             array t = getptr(x);

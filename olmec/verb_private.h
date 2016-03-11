@@ -5,7 +5,7 @@ enum { VERBTAB(VERBTAB_ENUM) VERB_NOOP };
 
 int vtab[VERB_NOOP];
 
-// yield verb from verbtab given enum
+// yield verb from verbtab given enum short name
 #define VT(x) getptr(vtab[VERB_##x])
 
 #define mnone 0
