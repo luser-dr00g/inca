@@ -4,8 +4,14 @@
 #include <string.h>
 #include "../ppnarg.h"
 
+#include "encoding.h"
 #include "array.h"
 
+array nilarray;
+void init_array(void){
+    nilarray = array_new_dims(0);
+    nil = cache(ARRAY, nilarray);
+}
 
 int productdims(int rank, const int *dims){
     int z = 1;

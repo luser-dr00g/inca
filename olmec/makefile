@@ -12,6 +12,8 @@ all_tests.c:all_tests.m4 makefile $(unitprogs)
 	m4 -D UNITS="$(units)" $< >$@
 all_tests:all_tests.c
 	$(CC) $(CFLAGS) -o $@ $^ encoding.o $(LDLIBS)
+array_test:array_test.c
+	$(CC) $(CFLAGS) -o $@ $^ encoding.o $(LDLIBS)
 symtab_test:symtab_test.c
 	$(CC) $(CFLAGS) -o $@ $^ encoding.o $(LDLIBS)
 

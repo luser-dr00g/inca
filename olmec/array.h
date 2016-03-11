@@ -18,6 +18,9 @@ enum type {
     function
 };
 
+extern array nilarray;
+void init_array(void);
+
 int productdims(int rank, const int *dims);
 array array_new_rank_pdims(int rank, const int *dims); // type=normal
 
@@ -41,6 +44,7 @@ array makesolid(array a); // type=normal
 
 int *vector_index(int ind, const int *dims, int n, int *vec);
 int ravel_index(const int *vec, const int *dims, int n);
+int *elemr(array a, int idx);
 int *elema(array a, const int *ind);
 int *elemv(array a, va_list ap);
 int *elem(array a, ...);

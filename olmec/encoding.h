@@ -1,3 +1,6 @@
+#ifndef ENCODING_H_
+#define ENCODING_H_
+
 #define MODE1(x) (x|1<<7)
 
 typedef struct datum {  // these two should be reversed for Big-Endian
@@ -29,6 +32,7 @@ enum tag {
 
 extern int null;
 extern int mark;
+extern int nil;
 
 void init_en();
 
@@ -40,3 +44,4 @@ int cache(int tag, void *ptr);
 void *getptr(int d);
 int getfill(int d);
 
+#endif

@@ -34,6 +34,7 @@
 #include "adverbs.h"
 #include "verb_private.h"
 #include "debug.h"
+#include "print.h"
 
 void common(int *ap, int *wp){
     //promote smaller number to matching type
@@ -171,11 +172,21 @@ static inline void swap(int *x, int *y){
                  *y = t;
 }
 
-int vresidue (int a, int w, verb v){
-    common(&a, &w);
-    swap(&a,&w);
+int resid(int a, int w){
+    if (w<0)
+        return resid(a,-w);
+    if (a<0)
+        return - (w % -a);
+    return w % a;
+}
 
-    scalarop(a,vresidue,w,%,v)
+int vresidue (int a, int w, verb v){
+    //printf("residue\n");
+    //print(a, 0);
+    //print(w, 0);
+    common(&a, &w);
+
+    scalaropfunc(a,vresidue,w,resid,v)
 
     return null;
 }
@@ -380,10 +391,10 @@ int vtake (int a, int w, verb v){
             int n = productdims(W->rank, W->dims);
             if (a > 0) {
                 if (a <= n) return a==n?w:vindexleft(viota(a, v), w, v);
-                else return vcat(w, vreshape(a-n, null, v), v);
+                else return vcat(w, vreshape(a-n, getfill(w), v), v);
             } else if (a < 0){
                 if (a >= -n) return vindexleft(vplus(viota(-a, v), n+a, v), w, v);
-                else return vcat(vreshape(abs(a+n), null, v), w, v);
+                else return vcat(vreshape(abs(a+n), getfill(w), v), w, v);
             } else
                 return null;
         }
@@ -493,47 +504,53 @@ int vbase(int a, int w, verb v){
     int (*timesscan)(int,verb) = ((verb)getptr(ts))->monad;
     return plusreduce(
             vtimes(w,
-                vdrop(1,
-                    vcat( timesscan(a,getptr(ts)), 1,
-                        getptr(vtab[VERB_CAT])),
-                    getptr(vtab[VERB_DROP])),
-                getptr(vtab[VERB_MUL])),
+                vdrop(1, vcat( timesscan(a,getptr(ts)), 1, VT(CAT)),
+                    VT(DROP)),
+                VT(MUL)),
             getptr(pr));
 }
 
+
 int vencode(int a, int w, verb v){
+    //printf("------\nencode\n");
+    //print(a,0);
+    //print(w,0);
+    if (gettag(w)==ARRAY){
+        array W = getptr(w);
+        if (productdims(W->rank, W->dims)==1){
+            w = *elemr(W,0);
+        }
+    }
     array A;
     switch(gettag(a)){
-    case NULLOBJ: return null;
-    case LITERAL: A = scalar(a);
+    case NULLOBJ: return w;
+    case LITERAL: A = scalar(a); // fallthrough
     case ARRAY: switch(gettag(w)){
                 case LITERAL: {
                     array A = getptr(a);
+                    //printf("A->rank=%d\n",A->rank);
                     switch(A->rank){
-                    case 1: if (A->dims[0]&&*elem(A,A->dims[0]-1)==0)
-                                return vcat( vencode( vdrop(-1,a,
-                                                getptr(vtab[VERB_DROP])),
-                                            0,getptr(vtab[VERB_ENC])),
-                                        w,getptr(vtab[VERB_CAT]));
-                            return vcat(
-                                    vencode(
-                                        vdrop(-1,a,getptr(vtab[VERB_DROP])),
-                                        vdivide(
-                                            vminus(
-                                                w,
-                                                vresidue(
-                                                    vtake(-1,a,getptr(vtab[VERB_TAKE])),
-                                                    w,
-                                                    getptr(vtab[VERB_MOD])),
-                                                getptr(vtab[VERB_SUB])),
-                                            vtake(-1,a,getptr(vtab[VERB_TAKE])),
-                                            getptr(vtab[VERB_DIV])),
-                                        getptr(vtab[VERB_ENC])),
-                                    vresidue(
-                                        vtake(-1,a,getptr(vtab[VERB_TAKE])),
-                                        w,
-                                        getptr(vtab[VERB_MOD])),
-                                    getptr(vtab[VERB_CAT]));
+                    case 1: {
+                            int drop = vdrop(-1,a, VT(DROP));
+                            //printf("drop:");
+                            //print(drop, 0);
+                            if (A->dims[0]&&*elem(A,A->dims[0]-1)==0)
+                                return vcat( vencode(drop, 0,VT(ENC)), w,VT(CAT));
+                            int tail = vtake(-1, a, VT(TAKE));
+                            //print(tail, 0);
+                            int mod = vresidue(tail, w, VT(MOD));
+                            //print(mod, 0);
+                            int e = vencode( drop,
+                                        vdivide( vminus(w, mod, VT(SUB)),
+                                            tail, VT(DIV)),
+                                        VT(ENC));
+                            //print(e, 0);
+                            int z = vcat(e, mod, VT(CAT));
+                            //z = vreshape(A->dims[0], z, VT(RHO));
+                            z = vtake(-A->dims[0], z, VT(TAKE));
+                            //print(z, 0);
+                            return z;
+                    }
                     }
                 }
                 }

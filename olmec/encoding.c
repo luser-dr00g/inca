@@ -65,6 +65,7 @@ integer nulldata = { .data = { .tag = NULLOBJ, .val = 0 } };
 int null /* = nulldata.int32 */;
 integer markdata = { .data = { .tag = MARKOBJ, .val = 0 } };
 int mark /* = markdata.int32 */;
+int nil;
 
 void init_en(){
     null = nulldata.int32;
