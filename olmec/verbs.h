@@ -21,6 +21,7 @@ _(INDL,']',                   mnone,    vindexleft, 0, 0, 0, 0, 0, 0 ) \
 _(TAK2,0x2191/*up alt-y*/,    mnone,    vtake,      0, 0, 0, 0, 0, 0 ) \
 _(DRO2,0x2193/*down alt-u*/,  mnone,    vdrop,      0, 0, 0, 0, 0, 0 ) \
 _(COMP,0x001f,                mnone,    vcompress,  0, 0, 0, 0, 0, 0 ) \
+_(EXP, 0x001e,                mnone,    vexpand,    0, 0, 0, 0, 0, 0 ) \
 _(BASE,0x22a5,                mnone,    vbase,      0, 0, 0, 0, 0, 0 ) \
 _(ENC, 0x22a4,                mnone,    vencode,    0, 0, 0, 0, 0, 0 ) \
 /**/

@@ -309,9 +309,9 @@ int vravel (int w, verb v){
 }
 
 int vcat (int a, int w, verb v){
-    //printf("cat\n");
-    //print(a,0);
-    //print(w,0);
+    printf("cat\n");
+    print(a,0);
+    print(w,0);
     switch(gettag(a)){
         case NULLOBJ:
             return w;
@@ -530,7 +530,8 @@ int vencode(int a, int w, verb v){
     if (gettag(w)==ARRAY){
         array W = getptr(w);
         if (productdims(W->rank, W->dims)==1){
-            w = *elemr(W,0);
+            int scratch[W->rank];
+            w = *elema(W,vector_index(0,W->dims,W->rank,scratch));
         }
     }
     array A;
@@ -608,6 +609,52 @@ int vcompress(int a, int w, verb v){
 
 int vexpand(int a, int w, verb v){
     printf("expand\n");
+    print(a,0);
+    print(w,0);
+    int sum = areduce(vtab[VERB_PLUS],v);
+    int (*sumf)(int,verb) = ((verb)getptr(sum))->monad;
+
+    switch (gettag(a)) {
+    case LITERAL: switch (gettag(w)) {
+                  case LITERAL:
+                      if (getval(a))
+                          return vravel(w,VT(CAT));
+                  case ARRAY: {
+                      array W = getptr(w);
+                      if (productdims(W->rank, W->dims) == 1)
+                          if (getval(a))
+                              return vravel(w,VT(CAT));
+                          
+                      break;
+                  }
+                  }
+    case ARRAY: switch (gettag(w)){
+                case LITERAL: {
+                    return vexpand(a,vreshape(sumf(a,getptr(sum)),w,VT(RHO)),VT(EXP));
+                }
+                case ARRAY: {
+                    array A = getptr(a);
+                    array W = getptr(w);
+                    switch (W->rank){
+                    case 1: 
+                        if (W->dims[0] == sumf(a,getptr(sum))) {
+                            if (A->dims[0] == 0) return getfill(w);
+                            int x = *elem(A, 0);
+                            if (gettag(x)==LITERAL && getval(x)){
+                                return vcat(vtake(1,w,VT(TAKE)),
+                                        vexpand(vdrop(1,a,VT(DROP)),
+                                            vdrop(1,w,VT(DROP)), VT(EXP)), VT(CAT));
+                            } else {
+                                return vcat(getfill(w),
+                                        vexpand(vdrop(1,a,VT(DROP)),
+                                            w, VT(EXP)), VT(CAT));
+                            }
+                        }
+                    }
+                }
+                }
+    }
+    return null;
 }
 
 
