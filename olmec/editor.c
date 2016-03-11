@@ -79,7 +79,7 @@ void restoretty(){
     tcsetattr(0,TCSANOW,&tm);
 }
 
-int *get_line(char *prompt, int **bufref, int *len){
+int *get_line(char *prompt, int **bufref, int *len, int *expn){
     int mode = 0;
     int tmpmode = 0;
     int *p;
@@ -166,7 +166,7 @@ storechar:
     }
 breakwhile:
     *p++ = 0;
-    *len = p-*bufref;
+    *expn = p-*bufref;
 err:
     return p==*bufref?NULL:*bufref;
 }

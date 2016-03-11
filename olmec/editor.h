@@ -10,5 +10,5 @@ void specialtty();
 void restoretty();
 
 /* get input line as int array of internal codes */
-int *get_line(char *prompt, int **bufref, int *len);
+int *get_line(char *prompt, int **bufref, int *buflen, int *expn);
 

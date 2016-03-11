@@ -62,8 +62,9 @@ void init_qk(symtab st){
 
 int main() {
     int *buf = NULL;
+    int buflen;
+    int expn;
     char *prompt = "        ";
-    int n;
 
     init_en();
     env = makesymtab(10);
@@ -75,15 +76,15 @@ int main() {
 
     if (isatty(fileno(stdin))) specialtty();
 
-    while(get_line(prompt, &buf, &n)){
+    while(get_line(prompt, &buf, &buflen, &expn)){
         int i;
 
         //puts(buf);
-        for (i=0;i<n;i++)
+        for (i=0;i<buflen;i++)
             DEBUG(1,"%04x ", buf[i]);
         DEBUG(1,"\n");
 
-        array a = scan_expression(buf, n);
+        array a = scan_expression(buf, expn);
         DEBUG(1,"\n");
 
         DEBUG(1,"%d\n", a->rank);
