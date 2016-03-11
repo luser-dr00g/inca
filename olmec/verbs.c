@@ -220,6 +220,7 @@ int vreshape (int a, int w, verb v){
             return cache(ARRAY, array_new_function(1,&a, (int[]){1,w},2,constant));
         case ARRAY: {
             int n=getval(a);
+            if (n==0) return nil;
             array W=getptr(w);
             int wn=productdims(W->rank,W->dims);
             int scratch[W->rank];
@@ -619,6 +620,7 @@ int vexpand(int a, int w, verb v){
                   case LITERAL:
                       if (getval(a))
                           return vravel(w,VT(CAT));
+                      break;
                   case ARRAY: {
                       array W = getptr(w);
                       if (productdims(W->rank, W->dims) == 1)
@@ -627,7 +629,7 @@ int vexpand(int a, int w, verb v){
                           
                       break;
                   }
-                  }
+                  } break;
     case ARRAY: switch (gettag(w)){
                 case LITERAL: {
                     return vexpand(a,vreshape(sumf(a,getptr(sum)),w,VT(RHO)),VT(EXP));

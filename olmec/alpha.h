@@ -151,6 +151,7 @@
     _( EPSILON,   0x2208,     1, "e", /*U+2208*/ "\xe2\x88\x88" ) \
     _( EPSILUND,  0x2377,     1, "E", "\xe2\x8d\xb7" ) \
     _( RHO,       0x2374,     1, "r", /*U+2374*/ "\xe2\x8d\xb4" ) \
+    _( DOUBR,     0x211d,     1, "R", "\xe2\x84\x9d" ) \
     _( CIRCJOT,   0x233e,     1, "t", "\xe2\x8c\xbe" ) \
     _( TILDOP,    '~',        1, "t", "~" ) \
     _( TILDEOP,   0x223c,     1, "t", /*U+223c*/ "\xe2\x88\xbe" ) \
@@ -158,6 +159,7 @@
     _( UPARROW,   0x2191,     1, "y", /*U+2191*/ "\xe2\x86\x91" ) \
     _( YEN,       MODE1('Y'), 1, "Y", ESC(o)"%""\xE" ) \
     _( DNARROW,   0x2193,     1, "u", /*U+2193*/ "\xe2\x86\x93" ) \
+    _( POSITION,  0x2316,     1, "U", "\xe2\x8c\x96" ) \
     _( IOTA,      0x2373,     1, "i", /*U+2373*/ "\xe2\x8d\xb3" ) \
     _( IOTAUND,   0x2378,     1, "I", "\xe2\x8d\xb8" ) \
     _( CIRCLE,    0x25cb,     1, "o", /*U+25cb*/ "\xe2\x97\x8b" ) \

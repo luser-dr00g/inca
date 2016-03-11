@@ -156,7 +156,7 @@ int *get_line(char *prompt, int **bufref, int *len, int *expn){
                 break;
         default:
 storechar:
-                c = inputtobase(c,mode|tmpmode);
+                c = inputtobase(c,mode^tmpmode);
                 *p++ = c;
                 tmpmode = 0;
                 fputs(basetooutput(c), stdout);

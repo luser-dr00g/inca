@@ -29,7 +29,11 @@ int printatom(int x, int width, int bprint){
                       break;
         case CHAR:
         case PCHAR:
-            printf("%*s", width, basetooutput(getval(x))); break;
+            if (width)
+                printf(" %*s", width, basetooutput(getval(x)));
+            else
+                printf("%s", basetooutput(getval(x)));
+            break;
         case VERB:
             printf("%*s", width,
                     basetooutput(getval( ((verb)getptr(x))->id ))); break;

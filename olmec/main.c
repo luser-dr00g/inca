@@ -117,21 +117,21 @@ int main() {
 
         //puts(buf);
         for (i=0;i<buflen;i++)
-            DEBUG(1,"%04x ", buf[i]);
-        DEBUG(1,"\n");
+            DEBUG(2,"%04x ", buf[i]);
+        DEBUG(2,"\n");
 
         array a = scan_expression(buf, expn);
-        DEBUG(1,"\n");
+        DEBUG(2,"\n");
 
-        DEBUG(1,"%d\n", a->rank);
+        DEBUG(2,"%d\n", a->rank);
         for (i=0;i<a->rank;i++)
-            DEBUG(1,"%d ", a->dims[i]);
+            DEBUG(2,"%d ", a->dims[i]);
         DEBUG(1,"\n");
 
         for (i=0;i<a->dims[0];i++)
-            DEBUG(0,"%08x(%d,%d) ", a->data[i],
+            DEBUG(1,"%08x(%d,%d) ", a->data[i],
                     gettag(a->data[i]), getval(a->data[i]));
-        DEBUG(0,"\n");
+        DEBUG(1,"\n");
 
         int x = execute_expression(a,env);
 

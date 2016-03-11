@@ -63,7 +63,7 @@ array scan_expression(int *s, int n){
 
     for (i=j=0, ss=st=0; i < n; i++, ss=st, st=cc/10){
         cc = wdtab[st][ character_class(s[i]) ];
-        DEBUG(1,"-%d-\n",cc);
+        DEBUG(2,"-%d-\n",cc);
 
         switch (cc%10){
             case 0: /* do nothing */
@@ -101,7 +101,7 @@ token *collapse_adjacent_numbers_if_needed(token *p){
 
 
 token new_numeric(int *s, int n){
-    DEBUG(1,"num:%d\n", n);
+    DEBUG(2,"num:%d\n", n);
     char buf[n+1];
     for (int i=0; i<n; i++) buf[i] = s[i]==0x00af? '-': s[i];
     buf[n] = 0;
@@ -120,7 +120,7 @@ token new_numeric(int *s, int n){
 }
 
 token new_string(int *s, int n){
-    DEBUG(1,"str:%d\n", n);
+    DEBUG(2,"str:%d\n", n);
     array t=array_new_dims(n);
     int i,j,q;
     //for (int i=0; i<n; i++) *elem(t,i) = newdata(CHAR, s[i]);
@@ -137,7 +137,7 @@ token new_string(int *s, int n){
 }
 
 token new_executable(int *s, int n){
-    DEBUG(1,"prog:%d\n", n);
+    DEBUG(2,"prog:%d\n", n);
     if (n==1){
         if (*s == '(') return newdata(LPAROBJ, 0);
         if (*s == ')') return newdata(RPAROBJ, 0);

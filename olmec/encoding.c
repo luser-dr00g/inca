@@ -175,6 +175,7 @@ int getfill(int d){
             } /*fallthru*/
         default:
         case LITERAL:
+            return newdata(CHAR, 0x2316); //position
             return newdata(CHAR, 0x2218); //jot
             //return newdata(LITERAL, (1<<24)-1);
         case CHAR: return newdata(CHAR, ' ');
