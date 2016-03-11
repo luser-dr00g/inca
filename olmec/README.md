@@ -144,7 +144,8 @@ indicates an immediate 24bit integer so common integer values simply
 encode to themselves.
 
 So all arrays can be "mixed" arrays and we will be targeting 
-"Generalized APL". http://www.softwarepreservation.org/projects/apl/Books/AGENERALIZATIONOFAPL/view
+"Generalized APL".
+http://www.softwarepreservation.org/projects/apl/Books/AGENERALIZATIONOFAPL/view
 
 
 --
