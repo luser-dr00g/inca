@@ -78,16 +78,6 @@
     _( EIGHT,           '8',  0, "8", "8" ) \
     _( NINE,            '9',  0, "9", "9" ) \
     _( ZERO,            '0',  0, "0", "0" ) \
-    _( ONE1,            '1',  1, "1", "1" ) /* accept same digits in alt mode */ \
-    _( TWO1,            '2',  1, "2", "2" ) \
-    _( THREE1,          '3',  1, "3", "3" ) \
-    _( FOUR1,           '4',  1, "4", "4" ) \
-    _( FIVE1,           '5',  1, "5", "5" ) \
-    _( SIX1,            '6',  1, "6", "6" ) \
-    _( SEVEN1,          '7',  1, "7", "7" ) \
-    _( EIGHT1,          '8',  1, "8", "8" ) \
-    _( NINE1,           '9',  1, "9", "9" ) \
-    _( ZERO1,           '0',  1, "0", "0" ) \
     _( PLUS,            '+',  0, "+", "+" ) /* ascii punctuation */ \
     _( MINUS,           '-',  0, "-", "-" ) \
     _( EQUAL,           '=',  0, "=", "=" ) \
@@ -123,57 +113,106 @@
     /* ALPHA_NAME base      ext input output */ \
     /*_( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) */\
     /* xterm alt graphics chars */ \
+    _( IBEAM,     0x2336,     1, "!", "\xe2\x8c\xb6" ) \
+    _( DELTILDE,  0x236b,     1, "@", "\xe2\x8d\xab" ) \
+    _( DELTASTIL, 0x234b,     1, "#", "\xe2\x8d\x8b" ) \
+    _( DELSTIL,   0x2352,     1, "$", "\xe2\x8d\x92" ) \
+    _( CIRCSTIL,  0x233d,     1, "%", "\xe2\x8c\xbd" ) \
+    _( CIRCBACK,  0x2349,     1, "^", "\xe2\x8d\x89" ) \
+    _( CIRCBAR,   0x2296,     1, "&", "\xe2\x8a\x96" ) \
+    _( CIRCSTAR,  0x235F,     1, "*", "\xe2\x8d\x9f" ) \
+    _( DNCRTIL,   0x2371,     1, "(", "\xe2\x8d\xb1" ) \
+    _( UPCRTIL,   0x2372,     1, ")", "\xe2\x8d\xb2" ) \
+    _( QEQ,       0x2338,     1, "_", "\xe2\x8c\xb8" ) \
+    _( BANG,      '!',        1, "_", "!" ) \
+    _( DOMINO,    0x2339,     1, "+", "\xe2\x8c\xb9" ) \
     _( SLASHBAR,  0x233F,     1, "/", "\xE2\x8c\xbf" ) \
     _( BACKBAR,   0x2340,     1, "\\", "\xE2\x8d\x80" ) \
-    _( TWODOTS,   0x00a8,     1, "!", ESC(o)"(""\xE" ) \
+    _( DELTUND,   0x2359,     1, "|", "\xe2\x8d\x99" ) \
+    _( TWODOTS,   0x00a8,     1, "1", ESC(o)"(""\xE" ) \
     _( DIAERESIS, MODE1('!'), 1, "!", /*U+00a8*/ /*"\xc2"*/"\xa8" ) \
-    _( HIMINUS,   0x00af,     1, "@", ESC(o)"/""\xE" ) \
+    _( HIMINUS,   0x00af,     1, "2", ESC(o)"/""\xE" ) \
     _( MACRON,    MODE1('@'), 1, "@", /*U+00af*/ /*"\xc2"*/"\xaf" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
-    _( LESS,            '<',  1, "#", "<" ) \
-    _( LESSEQ,    0x2264,     1, "$", /*U+2264*/ "\xe2\x89\xa4") \
+    _( LESS,            '<',  1, "3", "<" ) \
+    _( LESSEQ,    0x2264,     1, "4", /*U+2264*/ "\xe2\x89\xa4") \
     _( LESSEQUAL, MODE1('$'), 1, "$", ESC(n)"y""\xE" ) \
-    _( EQALT,           '=',  1, "%", "=" ) \
-    _( MOREEQ,    0x2265,     1, "^", /*U+2265*/ "\xe2\x89\xa5") \
+    _( EQALT,           '=',  1, "5", "=" ) \
+    _( MOREEQ,    0x2265,     1, "6", /*U+2265*/ "\xe2\x89\xa5") \
     _( MOREEQUAL, MODE1('^'), 1, "^", ESC(n)"z""\xE" ) \
-    _( MORE,            '>',  1, "&", ">" ) \
-    _( EQSLASH,   MODE1('*'), 1, "*", ESC(n)"|""\xE" ) \
+    _( MORE,            '>',  1, "7", ">" ) \
+    _( EQSLASH,   MODE1('*'), 1, "8", ESC(n)"|""\xE" ) \
+    _( OR,        0x2228,     1, "9", "\xe2\x88\xa8" ) \
+    _( AND,       0x2227,     1, "0", "\xe2\x88\xa7" ) \
     _( QUEST,           '?',  1, "q", "?" ) \
+    _( INVQUEST,  MODE1('Q'), 1, "Q", ESC(o)"?""\xE" ) \
     _( OMEGA,     0x2375,     1, "w", /*U+2375*/ "\xe2\x8d\xb5" ) \
+    _( OMEGAUND,  0x2379,     1, "W", "\xe2\x8d\xb9" ) \
     _( EPSILON,   0x2208,     1, "e", /*U+2208*/ "\xe2\x88\x88" ) \
+    _( EPSILUND,  0x2377,     1, "E", "\xe2\x8d\xb7" ) \
     _( RHO,       0x2374,     1, "r", /*U+2374*/ "\xe2\x8d\xb4" ) \
+    _( CIRCJOT,   0x233e,     1, "t", "\xe2\x8c\xbe" ) \
+    _( TILDOP,    '~',        1, "t", "~" ) \
     _( TILDEOP,   0x223c,     1, "t", /*U+223c*/ "\xe2\x88\xbe" ) \
+    _( STLTILDE,  0x236d,     1, "T", "\xe2\x8d\xad" ) \
     _( UPARROW,   0x2191,     1, "y", /*U+2191*/ "\xe2\x86\x91" ) \
+    _( YEN,       MODE1('Y'), 1, "Y", ESC(o)"%""\xE" ) \
     _( DNARROW,   0x2193,     1, "u", /*U+2193*/ "\xe2\x86\x93" ) \
     _( IOTA,      0x2373,     1, "i", /*U+2373*/ "\xe2\x8d\xb3" ) \
+    _( IOTAUND,   0x2378,     1, "I", "\xe2\x8d\xb8" ) \
     _( CIRCLE,    0x25cb,     1, "o", /*U+25cb*/ "\xe2\x97\x8b" ) \
+    _( DIARCIRC,  0x2365,     1, "O", "\xe2\x8d\xa5" ) \
     _( STAROP,    0x22c6,     1, "p", /*U+22c6*/ "\xe2\x8b\x86" ) \
+    _( POUND,     MODE1('}'), 1, "P", ESC(n)"}""\xE" ) \
+    _( LTTACK,    0x22a3,     1, "{", "\xe2\x8a\xa3" ) \
+    _( RTTACK,    0x22a2,     1, "}", "\xe2\x8a\xa2" ) \
     _( LTARROW,   0x2190,     1, "[", /*U+2190*/ "\xe2\x86\x90" ) \
-    _( RTARROW,   0x2192,     1, "{", /*U+2192*/ "\xe2\x86\x92" ) \
+    _( RTARROW,   0x2192,     1, "]", /*U+2192*/ "\xe2\x86\x92" ) \
     _( ALPHA,     0x237a,     1, "a", /*U+237a*/ "\xe2\x8d\xba" ) \
+    _( ALPHAUND,  0x2376,     1, "A", "\xe2\x8d\xb6" ) \
     _( LEFTCEIL,  0x2308,     1, "s", /*U+2308*/ "\xe2\x8c\x88" ) \
+    _( SQUISHQ,   0x2337,     1, "S", "\xe2\x8c\xb7" ) \
     _( LEFTFLOOR, 0x230a,     1, "d", /*U+230a*/ "\xe2\x8c\x8a" ) \
+    _( QMORE,     0x2344,     1, "D", "\xe2\x8d\x84" ) \
     _( UNDBAR2,         '_',  1, "f", "_" ) \
+    _( SAME,      0x2261,     1, "F", "\xe2\x89\xa1" ) \
     _( NABLA,     0x2207,     1, "g", /*U+2207*/ "\xe2\x88\x87" ) \
+    _( DELTASTL,  0x234b,     1, "G", "\xe2\x8d\x8b" ) \
     _( INCREMENT, 0x2206,     1, "h", /*U+2206*/ "\xe2\x88\x86" ) \
+    _( DELSTL,    0x2352,     1, "H", "\xe2\x8d\x92" ) \
     _( RING,      0x2218,     1, "j", /*U+2218*/ "\xe2\x88\x98" ) \
+    _( DIARJOT,   0x2364,     1, "J", "\xe2\x8d\xa4" ) \
+    _( DIARDOT,   0x2235,     1, ".", "\xe2\x88\xb5" ) \
     _( KWOTE,          '\'',  1, "k", "'" ) \
+    _( QLESS,     0x2343,     1, "K", "\xe2\x8d\x83" ) \
     _( QUAD,      0x2395,     1, "l", /*U+2395*/ "\xe2\x8e\x95" ) \
+    _( QQUAD,     0x235e,     1, "L", "\xe2\x8d\x9e" ) \
+    _( QSLASH,    0x2341,     1, ";", "\xe2\x8d\x81" ) \
+    _( QBACKSL,   0x2342,     1, ":", "\xe2\x8d\x82" ) \
+    _( QJOT,      0x233b,     1, "\"", "\xe2\x8c\xbb" ) \
     _( SUBSET,    0x2282,     1, "z", /*U+2282*/ "\xe2\x8a\x82" ) \
+    _( LTSHOESTL, 0x2367,     1, "Z", "\xe2\x8d\xa7" ) \
     _( SUPERSET,  0x2283,     1, "x", /*U+2283*/ "\xe2\x8a\x83" ) \
+    _( QDIAMOND,  0x233a,     1, "X", "\xe2\x8c\xba" ) \
     _( CAP,       0x2229,     1, "c", /*U+2229*/ "\xe2\x88\xa9" ) \
+    _( UPSHOEJOT, 0x235d,     1, "C", "\xe2\x8d\x9d" ) \
     _( CUP,       0x222a,     1, "v", /*U+222a*/ "\xe2\x88\xaa" ) \
+    _( DNSHOESTL, 0x2366,     1, "V", "\xe2\x8d\xa6" ) \
     _( UPTACK,    0x22a5,     1, "b", /*U+22a5*/ "\xe2\x8a\xa5" ) \
+    _( UPTAKJOT,  0x234e,     1, "B", "\xe2\x8d\x8e" ) \
     _( DNTACK,    0x22a4,     1, "n", /*U+22a4*/ "\xe2\x8a\xa4" ) \
+    _( DNTAKJOT,  0x2355,     1, "N", "\xe2\x8d\x95" ) \
+    _( QDELTA,    0x234d,     1, "m", "\xe2\x8d\x8d" ) \
+    _( QDEL,      0x2354,     1, "M", "\xe2\x8d\x94" ) \
     _( PIPEA,     '|',        1, "m", "|" ) \
     _( DIVIDES,   0x2223,     1, "m", /*U+2223*/ "\xe2\x88\xa3" ) \
     _( DOT,       MODE1('~'), 1, "~", ESC(n)"~""\xE" ) \
+    _( DIAM,      0x22c4,     1, "`", "\xe2\x8b\x84" ) \
+    _( COMMABAR,  0x236a,     1, ",", "\xe2\x8d\xaa" ) \
     _( DIAMOND,   MODE1('`'), 1, "`", ESC(n)"`""\xE" ) \
     _( PI,        MODE1('{'), 1, "{", ESC(n)"{""\xE" ) \
-    _( POUND,     MODE1('}'), 1, "}", ESC(n)"}""\xE" ) \
     _( EURO,      MODE1('e'), 1, "e", "\xe2\x82\xac" ) \
     _( CENT,      MODE1('e'), 1, "e", ESC(o)"\"""\xE" ) \
-    _( YEN,       MODE1('d'), 1, "d", ESC(o)"%""\xE" ) \
     _( HBAR0,     MODE1('o'), 1, "o", ESC(n)"o""\xE" ) \
     _( HBAR1,     MODE1('p'), 1, "p", ESC(n)"p""\xE" ) \
     _( HBAR3,     MODE1('q'), 1, "q", ESC(n)"q""\xE" ) \
@@ -199,12 +238,12 @@
     _( JUNCW,     MODE1('b'), 1, "b", ESC(n)"v""\xE" ) \
     /* ALPHA_NAME base       ext input output */ \
     _( INVEXCL,   MODE1('!'), 1, "!", ESC(o)"!""\xE" ) /* "uk" chars patch */ \
-    _( INVQUEST,  MODE1('?'), 1, "?", ESC(o)"?""\xE" ) \
     _( GUILLEFT,  MODE1('<'), 1, "<", ESC(o)"+""\xE" ) \
     _( GUILRIGHT, MODE1('>'), 1, ">", ESC(o)";""\xE" ) \
     _( COMPL,     MODE1('^'), 1, "^", ESC(o)",""\xE" ) \
-    _( TIMES,     MODE1('='), 1, "=", ESC(o)"W""\xE" ) \
+    _( TIMES,     MODE1('='), 1, "-", ESC(o)"W""\xE" ) \
     _( DIVIDE,    MODE1('/'), 1, "/", ESC(o)"w""\xE" ) \
+    _( PARAGRAPH, MODE1(','), 1, "?", ESC(o)"6""\xE" ) \
     _( CDOT,      MODE1('.'), 1, ".", ESC(o)"7""\xE" ) \
     _( HYPHEN,    MODE1('-'), 1, "-", ESC(o)"-""\xE" ) \
     _( BUTTON,    MODE1('i'), 1, "i", ESC(o)"$""\xE" ) \
@@ -214,11 +253,10 @@
     _( ZEROSLASH, MODE1('v'), 1, "v", ESC(o)"X""\xE" ) \
     _( OBAR,      MODE1(';'), 1, ";", ESC(o)":""\xE" ) \
     /* ALPHA_NAME base       ext input output */ \
-    _( PARAGRAPH, MODE1(','), 1, ",", ESC(o)"6""\xE" ) \
     _( BARA,      MODE1('@'), 1, "@", ESC(o)"*""\xE" ) \
     _( CIRCR,     MODE1('#'), 1, "#", ESC(o)".""\xE" ) \
     _( MU,        MODE1('$'), 1, "$", ESC(o)"5""\xE" ) \
-    _( COLONBAR,  MODE1('+'), 1, "+", ESC(o)"w""\xE" ) \
+    _( COLONBAR,  MODE1('+'), 1, "=", ESC(o)"w""\xE" ) \
     _( COLONBR,   0x00f7, 1, "+", "\xC3\xb7" ) \
     _( DEL,       MODE1('&'), 1, "&", ESC(o)"P""\xE" ) \
     _( SUPONE,    MODE1('('), 1, "(", ESC(o)"9""\xE" ) \
@@ -276,6 +314,16 @@
     _( X1, 'X', 1, "X", "X" ) \
     _( Y1, 'Y', 1, "Y", "Y" ) \
     _( Z1, 'Z', 1, "Z", "Z" ) \
+    _( ONE1,            '1',  1, "1", "1" ) /* fallback: digits in alt mode */ \
+    _( TWO1,            '2',  1, "2", "2" ) \
+    _( THREE1,          '3',  1, "3", "3" ) \
+    _( FOUR1,           '4',  1, "4", "4" ) \
+    _( FIVE1,           '5',  1, "5", "5" ) \
+    _( SIX1,            '6',  1, "6", "6" ) \
+    _( SEVEN1,          '7',  1, "7", "7" ) \
+    _( EIGHT1,          '8',  1, "8", "8" ) \
+    _( NINE1,           '9',  1, "9", "9" ) \
+    _( ZERO1,           '0',  1, "0", "0" ) \
     _( PLUS1,            '+',  1, "+", "+" ) /* fallback: ascii punctuation */ \
     _( MINUS1,           '-',  1, "-", "-" ) \
     _( EQUAL1,           '=',  1, "=", "=" ) \

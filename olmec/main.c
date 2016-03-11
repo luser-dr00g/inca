@@ -26,7 +26,45 @@ void init_qk(symtab st){
     qkname->data[0] = newdata(PCHAR, 0x2395);
     qkname->data[1] = newdata(PCHAR, 'k');
     array qk = array_new_dims(8,13);
-#define P(_) newdata(PCHAR, _)
+#define P(_) newdata(PCHAR, inputtobase(*#_,1)),
+#define Q(_) newdata(PCHAR, inputtobase(_,1)),
+    int keys[] = {
+        P(~) P(!) Q('@') P(#) P($) P(%) P(^) P(&) P(*)Q('(') Q(')') P(_) P(+)
+        P(`) P(1) P(2) P(3) P(4) P(5) P(6) P(7) P(8) P(9) P(0) P(-) P(=)
+        P(Q) P(W) P(E) P(R) P(T) P(Y) P(U) P(I) P(O) P(P) Q('{') Q('}') P(|)
+        P(q) P(w) P(e) P(r) P(t) P(y) P(u) P(i) P(o) P(p) Q('[') Q(']')Q('\\')
+        P(A) P(S) P(D) P(F) P(G) P(H) P(J) P(K) P(L) Q(':') Q('"') Q(' ') Q(' ')
+        P(a) P(s) P(d) P(f) P(g) P(h) P(j) P(k) P(l) Q(';') Q('\'') Q(' ') Q(' ')
+        P(Z) P(X) P(C) P(V) P(B) P(N) P(M) P(<) P(>) Q('?') Q(' ')Q(' ')Q(' ')
+        P(z) P(x) P(c) P(v) P(b) P(n) P(m) Q(',') P(.) P(/) Q(' ')Q(' ')Q(' ')
+    };
+    memcpy(qk->data, keys, sizeof keys);
+    def(st, cache(PROG, qkname), cache(ARRAY, qk));
+#undef P
+#undef Q
+
+    array qaname = array_new_dims(2);
+    qaname->data[0] = newdata(PCHAR, 0x2395);
+    qaname->data[1] = newdata(PCHAR, 'a');
+    array qa = array_new_dims(8,13);
+#define P(_) newdata(PCHAR, inputtobase(*#_,0)),
+#define Q(_) newdata(PCHAR, inputtobase(_,0)),
+    int keysa[] = {
+        P(~) P(!) Q('@') P(#) P($) P(%) P(^) P(&) P(*)Q('(') Q(')') P(_) P(+)
+        P(`) P(1) P(2) P(3) P(4) P(5) P(6) P(7) P(8) P(9) P(0) P(-) P(=)
+        P(Q) P(W) P(E) P(R) P(T) P(Y) P(U) P(I) P(O) P(P) Q('{') Q('}') P(|)
+        P(q) P(w) P(e) P(r) P(t) P(y) P(u) P(i) P(o) P(p) Q('[') Q(']')Q('\\')
+        P(A) P(S) P(D) P(F) P(G) P(H) P(J) P(K) P(L) Q(':') Q('"') Q(' ') Q(' ')
+        P(a) P(s) P(d) P(f) P(g) P(h) P(j) P(k) P(l) Q(';') Q('\'') Q(' ') Q(' ')
+        P(Z) P(X) P(C) P(V) P(B) P(N) P(M) P(<) P(>) Q('?') Q(' ')Q(' ')Q(' ')
+        P(z) P(x) P(c) P(v) P(b) P(n) P(m) Q(',') P(.) P(/) Q(' ')Q(' ')Q(' ')
+    };
+    memcpy(qa->data, keysa, sizeof keysa);
+    def(st, cache(PROG, qaname), cache(ARRAY, qa));
+#undef P
+#undef Q
+
+#if 0
     int keys[] = {
         P(MODE1('~')), P(0x00a8), P(0x00af), P('<'), P(0x2264),
             P('='), P(0x2265), P('>'), P(MODE1('*')),
@@ -55,9 +93,7 @@ void init_qk(symtab st){
             P(MODE1(',')), P(MODE1('.')), P(0x233f),
             P(32), P(32), P(32),
     };
-    memcpy(qk->data, keys, sizeof keys);
-
-    def(st, cache(PROG, qkname), cache(ARRAY, qk));
+#endif
 }
 
 int main() {
