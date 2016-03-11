@@ -30,6 +30,7 @@ _( NUL  = 16384, qnull, gettag(x)==NULLOBJ ) \
 #define PRED_DECL(X,Y,...) int Y(int);
 PREDTAB(PRED_DECL)
 
+extern int last_was_assn;
 // execute an expression e with environment st
 int execute_expression(array e, symtab st);
 

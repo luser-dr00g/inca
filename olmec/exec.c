@@ -116,6 +116,8 @@ typedef int object;
 #include "exec_private.h"
 #include "debug.h"
 
+int last_was_assn;
+
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
 object execute_expression(array e, symtab st){
@@ -233,6 +235,7 @@ object monad(object f, object y, object dummy, symtab st){
         printf("monad undefined\n");
         return null;
     }
+    last_was_assn = 0;
     return v->monad(y,v);
 }
 
@@ -253,6 +256,7 @@ object dyad(object x, object f, object y, symtab st){
         printf("dyad undefined\n");
         return null;
     }
+    last_was_assn = 0;
     return v->dyad(x,y,v);
 }
 
@@ -270,6 +274,7 @@ object adv(object f, object g, object dummy, symtab st){
         printf("adv undefined\n");
         return null;
     }
+    last_was_assn = 0;
     return v->monad(f,v);
 }
 
@@ -284,6 +289,7 @@ object conj_(object f, object g, object h, symtab st){
         printf("conj undefined\n");
         return null;
     }
+    last_was_assn = 0;
     return v->dyad(f,h,v);
 }
 
@@ -293,12 +299,14 @@ object spec(object name, object v, object dummy, symtab st){
             name, gettag(name), getval(name),
             v, gettag(v), getval(v));
     def(st, name, v);
+    last_was_assn = 1;
     return v;
 }
 
 object punc(object x, object dummy, object dummy2, symtab st){
     DEBUG(0,"punc %08x(%d,%d)\n",
             x, gettag(x), getval(x));
+    last_was_assn = 0;
     return x;
 }
 

@@ -135,7 +135,8 @@ int main() {
 
         int x = execute_expression(a,env);
 
-        print(x, 0);
+        if (!last_was_assn)
+            print(x, 0);
     }
 
     if (isatty(fileno(stdin))) restoretty();

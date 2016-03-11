@@ -14,6 +14,7 @@
 int printatom(int x, int width, int bprint){
     if (!bprint){
         switch(gettag(x)){
+        case NULLOBJ: return strlen("NULL");
         case CHAR:
         case PCHAR:
             return 1;
@@ -24,6 +25,8 @@ int printatom(int x, int width, int bprint){
         }
     } else {
         switch(gettag(x)){
+        case NULLOBJ: printf("NULL");
+                      break;
         case CHAR:
         case PCHAR:
             printf("%*s", width, basetooutput(getval(x))); break;
@@ -91,8 +94,6 @@ void print(int x, int width){
         default: printatom(x, 0, 1);
                  printf("\n");
                  break;
-        case NULLOBJ: printf("NULL\n");
-                      break;
         case PROG:
         case ARRAY: {
             array t = getptr(x);

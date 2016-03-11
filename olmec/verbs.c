@@ -474,7 +474,9 @@ int vindexleft(int a, int w, verb v){
             switch(W->rank){
                 case 1: return a>=0&&a<W->dims[0]? *elem(W,a):
                         a>-W->dims[0]? *elem(W,W->dims[0]+a):
-                        getfill(*elem(W,0));
+                        //getfill(*elem(W,0))
+                        null
+                        ;
                 default:
                         return cache(ARRAY, slice(W, a));
             }
