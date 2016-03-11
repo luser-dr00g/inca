@@ -309,7 +309,7 @@
     _( LPAREN1,          '(',  1, "(", "(" ) \
     _( RPAREN1,          ')',  1, ")", ")" ) \
     /* ALPHA_NAME base      ext input output */ \
-    _( NULLCHAR, 0, 0, 0, "" )
+    _( NULLCHAR, 0, 0, "", "" )
 #define ALPHATAB_ENT(a,...) {__VA_ARGS__},
 struct alpha{
     int base;int ext;char*input;char*output;
