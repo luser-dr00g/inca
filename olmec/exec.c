@@ -246,7 +246,7 @@ object dyad(object x, object f, object y, symtab st){
     case VERB: v = getptr(f); break;
     case XVERB: { xverb x = getptr(f);
                     DEBUG(0,"xverb %08x(%d,%d)\n",
-                            x->base, gettag(x->base), getval(x->base));
+                            x->id, gettag(x->id), getval(x->id));
                     v = x->verb; } break;
     }
     if (!v->dyad) {
@@ -263,7 +263,7 @@ object adv(object f, object g, object dummy, symtab st){
     case ADVERB: v = getptr(g); break;
     case XVERB: { xverb x = getptr(g);
                     DEBUG(0,"xverb %08x(%d,%d)\n",
-                            x->base, gettag(x->base), getval(x->base));
+                            x->id, gettag(x->id), getval(x->id));
                     v = x->adverb; } break;
     }
     if (!v->monad) {
