@@ -1,6 +1,11 @@
 /* Xverbs are an abstraction to handle polymorphic symbols
  * such as '/' which can be a verb or an adverb.
  *
+ * The verb and adverb must be defined with non-conflicting
+ * identifiers. The xverb definition uses these two
+ * definitions to select its components and then defines
+ * the "superposition" under (presumably) one of the same
+ * identifiers.
  */
 
 #include <stdint.h>
