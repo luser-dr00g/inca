@@ -87,6 +87,36 @@ may be verbs or adverbs depending upon context, such as `/` and `\`
 which are verbs if preceded by a noun, but are adverbs if preceded
 by a(n other) verb.
 
+The "abstractions" as I keep calling them, are essentially *classes* in the OO
+sense, but with somewhat less discipline. The `array.h` defines the
+class structure and member-functions for the array type. Ditto for `symtab`
+and `verb`. `adverb` is a derived type, distinct from verbs, but sharing
+exactly the same implementation, And `xverb` is multiply-inherited
+from both `verb` and `adverb`, although it is aware that they share the
+same representation. 
+
+So a verb is an object, with an internal `struct` representation and
+*semi-atomic* `verb` representation which is implicitly a pointer to the
+struct, and a *fully-atomic* representation as an encoded integer.
+Verbs are all loaded into the default symbol table as single-character
+identifiers, then adverbs are loaded, then xverbs (using the verb and
+adverb definitions) are loaded.
+
+The top-level of execution then procedes with the stereotypical
+*READ-EVAL-PRINT* loop, augmented with APL's behavior that definitions
+are not printed by default. The *READ* stage calls the `editor.h` functions.
+The *PRINT* stage calls the `print.h` functions. The *EVAL* stage calls
+`lex.h` functions and `exec.h` functions. The `qn.h` functions are 
+obsolescent. But it's sad to see them go.
+
+The `io.h` functions implement utf-8 to/from ucs4 conversions, but
+they are not currently used. When patched in, it should allow pasting
+of expressions *into* the terminal window (copying out already works)
+as well as execution of saved scripts. Currently only keyboard input
+is accepted to select special APL characters, with hand-coded conversions
+defined in `alpha.h` and used by the editor functions. So the full 
+enormity of Unicode characters are not yet unleashed for the identifier
+set, although the implementation has support (mostly) available for this.
 
 ## Notes, links, updates
 
