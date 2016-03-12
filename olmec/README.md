@@ -72,13 +72,33 @@ Both of these build upon the unifying notion that all data is composed
 of *cells* of a certain fixed size, motivating the use of `int` as a 
 *unified* or `union` type. 
 
+But much of the code comes from
+[inca3](https://github.com/luser-dr00g/inca/blob/master/inca3.c)
+which (ab)uses the same style as the incunabulum.
+
+The `array.h` file defines the multidimensional array structure
+and helper functions, storing `int`s. The `symtab.h` file defines
+the symbol table structure and helper functions, mapping `int`
+sequences to `int`. The `encoding.h` file defines the tag/value
+partitioning of the `int` and the tables of pointers which map
+`int` to `void *`, be it an `array` pointer or `verb` or `symtab`
+or `xverb`. The xverb structure is used for those symbols which
+may be verbs or adverbs depending upon context, such as `/` and `\`
+which are verbs if preceded by a noun, but are adverbs if preceded
+by a(n other) verb.
+
+
 ## Notes, links, updates
 
 The problem I ran into with inca3 appears to be lack of overall design.
 This was pointed out to me when my question on Programmers.SE gave a code smell.
 http://programmers.stackexchange.com/questions/286898/are-there-any-problems-with-defining-a-single-source-module-in-c-using-conditi
 
-So, starting over (yet again), inca4 will start with design. Simple,
+Another enormous problem with the **inca** series is the use of `intptr_t` as a
+unified type, making assumptions about the ranges represented by pointers which
+are empirically not workable on 64bit systems.
+
+So, starting over (yet again), inca4 (aka `olmec`) will start with design. Simple,
 flexible pieces design and built separately, in separate files. With unit testing.
 The very start is UTF-8, the basis of the I/O module.
 It has been reviewed extensively
