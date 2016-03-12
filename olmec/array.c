@@ -1,3 +1,82 @@
+/*
+ *  These functions allocate their
+ *  results and expect the caller to manage freeing appropriately.
+ *
+ *  The [ppnarg.h](https://github.com/luser-dr00g/inca/blob/master/ppnarg.h)
+ *  file provides counting of arguments in variadic macros. This is used to
+ *  provide an easy interface to these functions. In order to create a
+ *  [2][3][4] array, one calls.
+ *
+ *      array a = array_new_dims(2,3,4);
+ *
+ *  The values can be accessed with the `elem` function which returns a
+ *  pointer to the specified element, so that dereferencing the resulting
+ *  pointer is an l-value and can be the target of assignment.
+ *
+ *      *elem(a,1,1,1) = 'k';
+ *      putchar(*elem(a,1,1,1));
+ *
+ *  Various other function families like `slice*` and `transpose*` provide
+ *  other superpowers by creating new *views* of existing data for which
+ *  the `*elem()` function will index differently. One of my favorites is
+ *  `cast` which lets you *hijack* an existing C array and wrap the dynamic
+ *  header around it.
+ *
+ *  In order to generically iterate through the row-major order of any array
+ *  requires the coordinated use of several of these functions, but I haven't
+ *  packaged this into its own function. The different places where I have
+ *  needed to do this haven't really factored nicely into a separate function.
+ *
+ *      // assuming `a` as defined above, will iterate through all 2x3x4 elements
+ *      int n = productdims(a->rank,a->dims);
+ *      int scratch[a->rank];
+ *      for (int i=0; i<n; ++i){
+ *          vector_index(i, a->dims, a->rank, scratch);
+ *          *elema(a,scratch) = 3;
+ *      }
+ *
+ *  `vector_index` returns its `scratch` parameter so the two functions can
+ *  be composed into a single line. But it makes for a really long,
+ *  unreadable line. At each stage, the *n-d coordinates* are available in
+ *  the scratch array.
+ *
+ *  A simpler way to do it is to make sure it's solid, and then run over
+ *  the ravel.
+ *
+ *      int n = productdims(a->rank,a->dims);
+ *      a = makesolid(a);
+ *      for (int i=0; i<n; ++i)
+ *          *elemr(a,i) = 3;
+ *
+ *  But of course, unless it's already solid, this will allocate a new complete
+ *  copy of the array data.
+ *
+ *  And my most recent augmentation is *function-type* arrays, which do not
+ *  store all their declared data, but generate it as a function of the index.
+ *  Thus, a [2][3][4] array of the constant `1` can be created without actually
+ *  storing 24 `1`s in memory.
+ *
+ *      array b = array_new_function(3, (int[]){2,3,4},
+ *      (int[]){1,1}, 2, constant);
+ *
+ *  `*elem()` for each index will return `1`. An array which simply consists
+ *  of sequential integers `0`..`n` can be created with the `j_vector`
+ *  function-type array. An a considerable degree of constant-folding can be
+ *  done by modifying the elements of the `->weight` member array and the
+ *  `cons` member. Indeed the values of any polynomial can be enumerated
+ *  by creation of suitable dimension and weight parameters.
+ *
+ *      array c = iota(10); // function-type array generating 0..9 for indices 0..9
+ *
+ *  With function-type arrays, the advantage of the longer `vector_index` 
+ *  technique over the `makesolid` technique can be seen.
+ *  If the array was previously a function-type,
+ *  `makesolid` will *shake-off* the function, applying it to all indices
+ *  to generate the fully-realized array in memory. But but iterating over
+ *  the array's proper indices, we can access its data element by element,
+ *  bypassing the creation of this intermediate copy.
+ *
+ */
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
