@@ -144,6 +144,8 @@
     _( EQSLASH,   MODE1('*'), 1, "8", ESC(n)"|""\xE" ) \
     _( OR,        0x2228,     1, "9", "\xe2\x88\xa8" ) \
     _( AND,       0x2227,     1, "0", "\xe2\x88\xa7" ) \
+    _( TURTLE,    0x2361,     1, "q", "\xe2\x8d\xa1" ) \
+    _( QUESTBOX,  0x2370,     1, "q", "\xe2\x8d\xb0" ) \
     _( QUEST,           '?',  1, "q", "?" ) \
     _( INVQUEST,  MODE1('Q'), 1, "Q", ESC(o)"?""\xE" ) \
     _( OMEGA,     0x2375,     1, "w", /*U+2375*/ "\xe2\x8d\xb5" ) \
@@ -180,6 +182,7 @@
     _( SQUISHQ,   0x2337,     1, "S", "\xe2\x8c\xb7" ) \
     _( LEFTFLOOR, 0x230a,     1, "d", /*U+230a*/ "\xe2\x8c\x8a" ) \
     _( QMORE,     0x2344,     1, "D", "\xe2\x8d\x84" ) \
+    _( SPOOK,     0x2363,     1, "f", "\xe2\x8d\xa3" ) \
     _( UNDBAR2,         '_',  1, "f", "_" ) \
     _( SAME,      0x2261,     1, "F", "\xe2\x89\xa1" ) \
     _( NABLA,     0x2207,     1, "g", /*U+2207*/ "\xe2\x88\x87" ) \
@@ -189,6 +192,7 @@
     _( JOT,      0x2218,     1, "j", /*U+2218*/ "\xe2\x88\x98" ) \
     _( DIARJOT,   0x2364,     1, "J", "\xe2\x8d\xa4" ) \
     _( DIARDOT,   0x2235,     1, ".", "\xe2\x88\xb5" ) \
+    _( MOUSE,     0x2362,     1, "k", "\xe2\x8d\xa2" ) \
     _( KWOTE,          '\'',  1, "k", "'" ) \
     _( QLESS,     0x2343,     1, "K", "\xe2\x8d\x83" ) \
     _( QUAD,      0x2395,     1, "l", /*U+2395*/ "\xe2\x8e\x95" ) \
