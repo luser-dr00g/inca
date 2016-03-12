@@ -96,6 +96,26 @@
               ^
               |
             result
+
+ *  One complication of the setup happens when performing the 
+ *  "fake left paren" production. Whereas in the real "paren-
+ *  punctuation" production there is a left paren which can
+ *  simply be eliminated, yielding just the paren contents on top
+ *  of the right-stack,... in the "fake left paren", we treat the
+ *  beginning-of-line *mark* object as a left paren. But we
+ *  cannot simply eliminate it because this would produce a
+ *  mal-formed configuration of the whole engine, a violation of
+ *  the invariants. But we need it out of the way so the 
+ *  remaining productions can effectively reduce the expression.
+ *  So, just after the fancy switch-x-macro invocation, there is
+ *  this hack:
+ *
+                    if (i==L9)  //twiddle the mark for fake left paren
+                        stackpush(lstk,stackpop(rstk));
+
+ *  So, I hope this explains what that's about. Without it, the 
+ *  super-parens idea just fails to work with the grammar machine.
+
  */
 #endif
 
