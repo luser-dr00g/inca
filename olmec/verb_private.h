@@ -20,6 +20,7 @@ int vtab[VERB_NOOP];
 
 #define scalarop(a,func,w,op,v) \
     switch(gettag(a)){ \
+aliteral: \
     case LITERAL: switch(gettag(w)){ \
         case LITERAL: return newdata(LITERAL, getval(a) op getval(w)); \
         case ARRAY: { \
@@ -36,6 +37,10 @@ int vtab[VERB_NOOP];
     } \
     case ARRAY: { \
         array A = getptr(a); \
+        if (A->rank == 1 && A->dims[0] == 1) { \
+            a = *elem(A,0); \
+            goto aliteral; \
+        } \
         switch(gettag(w)){ \
         case LITERAL: { \
                 array Z=array_new_rank_pdims(A->rank,A->dims); \

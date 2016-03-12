@@ -85,12 +85,17 @@ int vminus(int a, int w, verb v){
     if (gettag(a)==LITERAL && gettag(w)==ARRAY){
         array W = getptr(w);
         if (W->type == function){
-            if (W->func == constant){ W->data[1] = getval(a)-W->data[1]; }
+            if (W->func == constant){
+                W->data[1] = getval(a)-W->data[1];
+                return w;
+            }
+#if 0
             if (W->func == j_vector){ // a - (i*x+y)
                 W->weight[W->rank-1] = -W->weight[W->rank-1];
                 W->cons = a - W->cons;
+                return w;
             }
-            return w;
+#endif
         }
     }
 
@@ -109,7 +114,8 @@ int vdivide(int a, int w, verb v){
 }
 
 int vrecip(int w, verb v){
-    scalarop(1,vdivide,w,/,v)
+    //scalarop(1,vdivide,w,/,v)
+    return vdivide(1, w, VT(DIV));
     return null;
 }
 
@@ -659,6 +665,26 @@ int vexpand(int a, int w, verb v){
     return null;
 }
 
+
+int vreverse(int w, verb v){
+    //printf("reverse\n");
+    //print(w, 0);
+    int shapew = vshapeof(w, VT(RHO));
+    //print(shapew, 0);
+    int plus = vplus(-1,shapew, VT(PLUS));
+    //print(plus, 0);
+    int iot = viota(shapew, VT(IOTA));
+    //print(iot, 0);
+    int idx = vminus(plus, iot , VT(SUB));
+    //print(idx, 0);
+    int idxw = vindexleft(idx, w, VT(INDL));
+    //print(idxw, 0);
+    return idxw;
+}
+
+
+int vrotate(int a, int w, verb v){
+}
 
 
 

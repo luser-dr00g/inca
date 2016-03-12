@@ -24,6 +24,7 @@ _(COMP,0x001f,                mnone,    vcompress,  0, 0, 0, 0, 0, 0 ) \
 _(EXP, 0x001e,                mnone,    vexpand,    0, 0, 0, 0, 0, 0 ) \
 _(BASE,0x22a5,                mnone,    vbase,      0, 0, 0, 0, 0, 0 ) \
 _(ENC, 0x22a4,                mnone,    vencode,    0, 0, 0, 0, 0, 0 ) \
+_(ROT, 0x233d,                vreverse, vrotate,    0, 0, 0, 0, 0, 0 ) \
 /**/
 typedef struct verb {
     int id;
