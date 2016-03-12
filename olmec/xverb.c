@@ -3,12 +3,6 @@
  *
  */
 
-#define XVERBTAB(_) \
-    /*name verb adverb*/\
-    _('/', 0x1f, '/') \
-    _('\\', 0x1e, '\\') \
-/**/
-
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

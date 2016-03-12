@@ -159,6 +159,10 @@
     _( UPARROW,   0x2191,     1, "y", /*U+2191*/ "\xe2\x86\x91" ) \
     _( YEN,       MODE1('Y'), 1, "Y", ESC(o)"%""\xE" ) \
     _( DNARROW,   0x2193,     1, "u", /*U+2193*/ "\xe2\x86\x93" ) \
+    _( NULL,      0x2300,     1, "U", "\xe2\x8c\x80" ) \
+    _( ZIT,       0x2311,     1, "U", "\xe2\x8c\x91" ) \
+    _( RUDDER,    0x2388,     1, "U", "\xe2\x8e\x88" ) \
+    _( ZILDE,     0x236c,     1, "U", "\xe2\x8d\xac" ) \
     _( POSITION,  0x2316,     1, "U", "\xe2\x8c\x96" ) \
     _( IOTA,      0x2373,     1, "i", /*U+2373*/ "\xe2\x8d\xb3" ) \
     _( IOTAUND,   0x2378,     1, "I", "\xe2\x8d\xb8" ) \

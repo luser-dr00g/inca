@@ -121,6 +121,9 @@ token new_numeric(int *s, int n){
 
 token new_string(int *s, int n){
     DEBUG(2,"str:%d\n", n);
+    if (n==3){
+        return newdata(CHAR, s[1]);
+    }
     array t=array_new_dims(n);
     int i,j,q;
     //for (int i=0; i<n; i++) *elem(t,i) = newdata(CHAR, s[i]);

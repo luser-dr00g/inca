@@ -7,6 +7,7 @@ _('/',    areduce,   dnone, 0, 0, 0, 0, 0, 0 ) \
 _('\\',   ascan,     dnone, 0, 0, 0, 0, 0, 0 ) \
 _(0x2340, abackscan, dnone, 0, 0, 0, 0, 0, 0 ) \
 /**/
+/* see verbs.h for struct verb {} def */
 
 #define mnone areduce
 #define dnone amp

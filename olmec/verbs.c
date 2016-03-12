@@ -218,10 +218,20 @@ void mcopy(int *dest, int *src, int n){
 }
 
 int vreshape (int a, int w, verb v){
+    printf("reshape\n");
+    print(a, 0);
+    print(w, 0);
     switch(gettag(a)){
     case LITERAL:
         if (getval(a)==0) return newdata(LITERAL, gettag(w));
         switch(gettag(w)){
+        case CHAR: {
+            int n = getval(a);
+            array z=array_new_dims(n);
+            for (int i=0; i<n; ++i)
+                z->data[i] = w;
+            return cache(ARRAY, z);
+        }
         case LITERAL: 
             return cache(ARRAY, array_new_function(1,&a, (int[]){1,w},2,constant));
         case ARRAY: {
@@ -240,6 +250,16 @@ int vreshape (int a, int w, verb v){
         }//switch
     case ARRAY:
         switch(gettag(w)){
+        case CHAR: {
+            array A = getptr(a);
+            if (A->rank != 1){ printf("RANK ERROR\n"); return null; }
+            A = makesolid(A);
+            int n = productdims(A->dims[0], A->data);
+            array z = array_new_rank_dims(A->dims[0], A->data);
+            for (int i=0; i<n; ++i)
+                z->data[i] = w;
+            return cache(ARRAY, z);
+        }
         case LITERAL: {
             array A=getptr(a);
             A = makesolid(A);
@@ -554,14 +574,18 @@ int vencode(int a, int w, verb v){
                             int drop = vdrop(-1,a, VT(DROP));
                             //printf("drop:");
                             //print(drop, 0);
-                            if (A->dims[0]&&*elem(A,A->dims[0]-1)==0)
-                                return vcat( vencode(drop, 0,VT(ENC)), w,VT(CAT));
+                            if (A->dims[0]
+                                    && *elem(A, A->dims[0]-1)== 0)
+                                return vcat( vencode(drop,
+                                            0,VT(ENC)),
+                                        w,VT(CAT));
                             int tail = vtake(-1, a, VT(TAKE));
                             //print(tail, 0);
                             int mod = vresidue(tail, w, VT(MOD));
                             //print(mod, 0);
                             int e = vencode( drop,
-                                        vdivide( vminus(w, mod, VT(SUB)),
+                                        vdivide( vminus(w,
+                                                mod, VT(SUB)),
                                             tail, VT(DIV)),
                                         VT(ENC));
                             //print(e, 0);
@@ -586,9 +610,11 @@ int vcompress(int a, int w, verb v){
     case LITERAL: if (getval(a)) return w;
                   break;
     case ARRAY: switch (gettag(w)){
+                case CHAR:
                 case LITERAL:
                     return vcompress(a,
-                            vreshape(vshapeof(a,VT(RHO)),w,VT(RHO)),VT(COMP));
+                            vreshape(vshapeof(a,VT(RHO)),
+                                w,VT(RHO)),VT(COMP));
                 case ARRAY: {
                     array A = getptr(a);
                     array W = getptr(w);
@@ -599,7 +625,8 @@ int vcompress(int a, int w, verb v){
                                 eq = 0;
                         if (eq && productdims(A->rank,A->dims)!=0) {
                             return vcat(
-                                    vcompress(vindexleft(0, a, VT(INDL)),
+                                    vcompress(vindexleft(0,
+                                            a, VT(INDL)),
                                         vindexleft(0, w, VT(INDR)),
                                         VT(COMP)),
                                     vcompress(vdrop(1, a, VT(DROP)),
@@ -623,7 +650,9 @@ int vexpand(int a, int w, verb v){
 
     switch (gettag(a)) {
     case LITERAL: switch (gettag(w)) {
+                  case CHAR:
                   case LITERAL:
+                      printf("LL\n");
                       if (getval(a))
                           return vravel(w,VT(CAT));
                       break;
@@ -637,10 +666,15 @@ int vexpand(int a, int w, verb v){
                   }
                   } break;
     case ARRAY: switch (gettag(w)){
+                case CHAR:
                 case LITERAL: {
-                    return vexpand(a,vreshape(sumf(a,getptr(sum)),w,VT(RHO)),VT(EXP));
+                    printf("AL\n");
+                    return vexpand(a,
+                            vreshape(sumf(a,getptr(sum)),
+                                w,VT(RHO)),VT(EXP));
                 }
                 case ARRAY: {
+                    printf("AA\n");
                     array A = getptr(a);
                     array W = getptr(w);
                     switch (W->rank){
@@ -651,7 +685,9 @@ int vexpand(int a, int w, verb v){
                             if (gettag(x)==LITERAL && getval(x)){
                                 return vcat(vtake(1,w,VT(TAKE)),
                                         vexpand(vdrop(1,a,VT(DROP)),
-                                            vdrop(1,w,VT(DROP)), VT(EXP)), VT(CAT));
+                                            vdrop(1,w,VT(DROP)),
+                                            VT(EXP)),
+                                        VT(CAT));
                             } else {
                                 return vcat(getfill(w),
                                         vexpand(vdrop(1,a,VT(DROP)),
