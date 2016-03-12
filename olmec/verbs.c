@@ -180,7 +180,7 @@ static inline void swap(int *x, int *y){
 
 int resid(int a, int w){
     if (w<0)
-        return resid(a,-w);
+        return resid(a,w+a);
     if (a<0)
         return - (w % -a);
     return w % a;
@@ -673,7 +673,7 @@ int vreverse(int w, verb v){
     //print(shapew, 0);
     int plus = vplus(-1,shapew, VT(PLUS));
     //print(plus, 0);
-    int iot = viota(shapew, VT(IOTA));
+    int iot = viota(vreshape(nil, shapew, VT(RHO)), VT(IOTA));
     //print(iot, 0);
     int idx = vminus(plus, iot , VT(SUB));
     //print(idx, 0);
@@ -684,6 +684,16 @@ int vreverse(int w, verb v){
 
 
 int vrotate(int a, int w, verb v){
+    //printf("rotate\n");
+    int shapew = vshapeof(w, VT(RHO));
+    //print(shapew, 0);
+    int iot = viota(shapew, VT(IOTA));
+    //print(iot, 0);
+    int plus = vplus(a, iot, VT(PLUS));
+    //print(plus, 0);
+    int idx = vresidue(shapew, plus, VT(MOD));
+    //print(idx, 0);
+    return vindexleft(idx, w, VT(INDL));
 }
 
 

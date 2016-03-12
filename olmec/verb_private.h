@@ -70,6 +70,7 @@ aliteral: \
 
 #define scalaropfunc(a,f,w,func,v) \
     switch(gettag(a)){ \
+aliteral: \
     case LITERAL: switch(gettag(w)){ \
         case LITERAL: return newdata(LITERAL, func(getval(a), getval(w))); \
         case ARRAY: { \
@@ -86,6 +87,10 @@ aliteral: \
     } \
     case ARRAY: { \
         array A = getptr(a); \
+        if (A->rank == 1 && A->dims[0] == 1) { \
+            a = *elem(A,0); \
+            goto aliteral; \
+        } \
         switch(gettag(w)){ \
         case LITERAL: { \
                 array Z=array_new_rank_pdims(A->rank,A->dims); \
