@@ -12,6 +12,26 @@ The links are de-emphasized, and the values brought to the
 surface. The implementation is composed of thin abstractions. The `int`s
 are visible, moving around, representing. [..additional poetic nonsense..]
 
+## Language
+
+The language is built on APL ideas. 
+Implementation has begun with the formal descriptions of basic vector
+verbs and adverbs from
+[A Generalization of APL](http://www.softwarepreservation.org/projects/apl/Books/AGENERALIZATIONOFAPL/view).
+rho, iota, cat, compress, expand, reduce, scan, backscan, encode, decode, reverse,
+rotate.
+
+One major unique point is that anything not whitespace, a number, a paren,
+a left-arrow, or a quote (beginning a quoted-string) is an identifier.
+Any contiguous sequence of letters and symbols is an identifier.
+The longest-defined prefix of an identifer is partitioned-off and the
+remaining characters are scanned again and again for the next
+longest-defined prefix until the string is exhausted.
+So if you're defining a variable in the middle of an expression, make sure
+it butts up against a paren, number or add a space. Otherwise, you'll be
+assigning a value to the entire identifer sequence.
+
+
 ## Design
 
 A major simplifying assumption in the design of this project is:
@@ -34,6 +54,23 @@ encoded-int and not (necessarily) just a number. The scanner code calls
 it a `typedef int token;`. The parser code calls it a `typedef int
 object;`. The encoding code calls it a
 `typedef union integer { datum data; int32_t int32; } integer;`.
+
+A spiritual predecessor of sort is
+[sexp.c](https://github.com/luser-dr00g/sexp.c/blob/master/sexp.c)
+which employs a similar integer encoding, permitting all functions
+over compound data structures to be declared with integer parameter
+and return types. Thus an object *represents* a value, but does not
+necessarily *contain* its respective value(s). From the APL perspective,
+this means all objects are boxed at the function-call interface.
+Verbs are currently defined over narrow-ranged integers (24bit+sign)
+or 1-D arrays, ie. vectors. 
+
+Another ancestor is this toy "forth machine" interpreter: 
+https://groups.google.com/forum/#!topic/comp.lang.c/WGSl7ERMu1U/discussion
+
+Both of these build upon the unifying notion that all data is composed
+of *cells* of a certain fixed size, motivating the use of `int` as a 
+*unified* or `union` type. 
 
 ## Notes, links, updates
 
