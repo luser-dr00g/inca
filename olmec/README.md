@@ -55,7 +55,7 @@ it a `typedef int token;`. The parser code calls it a `typedef int
 object;`. The encoding code calls it a
 `typedef union integer { datum data; int32_t int32; } integer;`.
 
-A spiritual predecessor of sort is
+A spiritual predecessor of sorts is
 [sexp.c](https://github.com/luser-dr00g/sexp.c/blob/master/sexp.c)
 which employs a similar integer encoding, permitting all functions
 over compound data structures to be declared with integer parameter
