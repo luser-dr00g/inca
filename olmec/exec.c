@@ -69,7 +69,7 @@
 
  *  Now, the above case (NOUN VERB VERB NOUN) matches this production: 
 
-    /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2*/\
+    /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2//\
     _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
 
  *  application of a monadic verb. The numbers in the production indicate 
