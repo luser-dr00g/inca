@@ -1,31 +1,43 @@
-/* Encoding
+/*  Encoding
  *
- * this file defines the sub-typing of data atoms.
- * All data are packed into integer handles. The benefit for
- * array operations is all data atoms will have a uniform
- * size no matter what the content actually is. This replaces
- * the intptr_t hackery (ab)used in earlier versions 
- * (not portable to 64bit build). 
-
- * the array data are always just straight 32bit integers.
- * but we treat as a 7bit tag and 24bit integer value.
- * An immediate integer value is indicated by a negative
- * sign-bit or all-zero tag.
-
- * Composite objects (boxed or reference objects) have
- * an associated pointer stored in an array associated
- * with the tag. Thus an array object can be enclosed
- * into a scalar (integer handle) with
-
-       int x;
-       x = cache(ARRAY, array_new_dims(3,3)); //3x3 matrix
-
- * the array data structure (which is implicitly a pointer
- * to its struct) can be retrived from the handle
- * with
-
-       array a;
-       a = getptr(x);
+ *  this file defines the sub-typing of data atoms.
+ *  All data are packed into integer handles. The benefit for
+ *  array operations is all data atoms will have a uniform
+ *  size no matter what the content actually is. This replaces
+ *  the intptr_t hackery (ab)used in earlier versions 
+ *  (not portable to 64bit build). 
+ *
+ *  the array data are always just straight 32bit integers.
+ *  but we treat as a 7bit tag and 24bit integer value.
+ *  An immediate integer value is indicated by a negative
+ *  sign-bit or all-zero tag.
+ *
+ *  Composite objects (boxed or reference objects) have
+ *  an associated pointer stored in an array associated
+ *  with the tag. Thus an array object can be enclosed
+ *  into a scalar (integer handle) with
+ *
+ *      int x;
+ *      x = cache(ARRAY, array_new_dims(3,3)); //3x3 matrix
+ *
+ *  the array data structure (which is implicitly a pointer
+ *  to its struct) can be retrived from the handle
+ *  with
+ *
+ *      array a;
+ *      a = getptr(x);
+ *
+ *  Most functions will need to check the types of their 
+ *  arguments in order to determine how to proceed.
+ *  This can be accomplished with `gettag()`.
+ *
+ *      switch(gettag(x)){
+ *      case LITERAL: // handle atomic integer
+ *          break;
+ *      case ARRAY: {
+ *          array X = getptr(x); 
+ *      }
+ *      }
  */
 
 #include <stdarg.h>
