@@ -296,4 +296,5 @@ and regular minus.
              -¯2¯3¯4
     2 3 4
 
-For some reason hi-minus is displaying here as slash.
+For some reason hi-minus is displaying here as slash. Looks fine from
+github.com.
