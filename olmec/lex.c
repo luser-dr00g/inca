@@ -1,7 +1,7 @@
 /*
  *  Word Formation (scanning)
  *
- *  As shown in en.c and en.h, the "encoding module",
+ *  As shown in the encoding module,
  *  characters are stored in 24bits of a 32bit int, so Unicode
  *  characters are referred-to by their UCS4 code. 
  *
