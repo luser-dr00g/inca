@@ -283,3 +283,17 @@ implemented verbs. Of course these supplementary uses of verbs must
 be for simpler cases than *normal* usage of verbs, to avoid an infinite
 recursion. 
 
+--
+
+Added 'quad-minus' variable which flip-flops the semantics of high-minus
+and regular minus.
+
+    ./olmec
+             ⎕-←1
+             ¯-2-3-4
+    2 3 4
+             ⎕-←0
+             -¯2¯3¯4
+    2 3 4
+
+For some reason hi-minus is displaying here as slash.
