@@ -34,6 +34,8 @@
  *
  *  The state-machine itself is "programmed" by the table and
  *  enum definitions in wd_private.h.
+ *
+ *  TODO handle fractional values
  */
 
 #include <stdarg.h>
@@ -44,9 +46,12 @@
 
 #include "array.h" // array type
 #include "encoding.h" // atomic encoding
+#include "symtab.h"
+#include "debug.h"
 
 #include "lex.h"
-#include "debug.h"
+
+int quadneg;  // hi-minus v. minus semantics.
 
 typedef int token;
 typedef char state;
@@ -54,13 +59,14 @@ typedef char state_and_action_code;
 
 #include "lex_private.h"
 
-array scan_expression(int *s, int n){
+array scan_expression(int *s, int n, symtab env){
     array result = array_new_dims(n+1);
     token *p = result->data, *const p1 = p+1;
     state ss, st; /* last state, current state */
     state_and_action_code cc;
     int i,j;
 
+    check_quadneg(env);
     for (i=j=0, ss=st=0; i < n; i++, ss=st, st=cc/10){
         cc = wdtab[st][ character_class(s[i]) ];
         DEBUG(2,"-%d-\n",cc);
@@ -86,6 +92,17 @@ array scan_expression(int *s, int n){
 
     result->dims[0] = p - result->data; // set actual encoded length
     return result;
+}
+
+void check_quadneg(symtab st){
+    array name = array_new_dims(2);
+    name->data[0] = newdata(PCHAR, 0x2395);
+    name->data[1] = newdata(PCHAR, '-');
+    int *p = name->data;
+    int n = 2;
+    symtab t = findsym(st, &p, &n, 0);
+    quadneg = t->val;
+    DEBUG(0,"quadneg=%d\n",quadneg);
 }
 
 token *collapse_adjacent_numbers_if_needed(token *p){
@@ -162,9 +179,11 @@ token newobj(int *s, int n, int state){
         case str: return new_string(s, n);
 
         case ini:
+        case min:
         case dot:
         case dut:
         case oth:
+        case tra:
         case sng: return new_executable(s, n);
 
         default:  return null;

@@ -491,7 +491,7 @@ int vdrop (int a, int w, verb v){
 }
 
 
-int vindexleft(int a, int w, verb v){
+int vectorindexleft(int a, int w, verb v){
     switch(gettag(a)){
     case LITERAL:
         switch(gettag(w)){
@@ -517,6 +517,33 @@ int vindexleft(int a, int w, verb v){
         return cache(ARRAY, z);
     }
     } //switch
+}
+
+int unitindexleft(int a, int w, verb v){
+    switch(gettag(a)){
+    case LITERAL:
+        return vindexleft(vbase(vshapeof(w, VT(RHO)), vreveal(a, VT(REVL)), VT(BASE)),
+                    vravel(w, VT(CAT)), VT(INDL));
+    case ARRAY: {
+        array A = getptr(a);
+        if (A->rank == 1) {
+            array Z = array_new_rank_dims(A->rank, A->dims);
+            int n = productdims(A->rank, A->dims);
+            for (int i=0; i<n; ++i)
+                Z->data[i] = vindexleft(vindexleft(i, a, VT(INDL)), w, VT(INDL));
+            return cache(ARRAY, Z);
+        } //else {
+        //}
+    }
+    }
+    return vreshape(vshapeof(a, VT(RHO)),
+                vindexleft(vravel(a, VT(CAT)), w, VT(INDL)), VT(RHO));
+}
+
+
+int vindexleft(int a, int w, verb v){
+    return unitindexleft(a, w, v);
+    return vectorindexleft(a, w, v);
 }
 
 int vindexright(int a, int w, verb v){
@@ -732,6 +759,31 @@ int vrotate(int a, int w, verb v){
     return vindexleft(idx, w, VT(INDL));
 }
 
+
+int vconceal(int w, verb v){
+    switch(gettag(w)){
+    case LITERAL:
+    case CHAR: return w;
+    case ARRAY: {
+        array W = getptr(w);
+        if (W->rank==1 && W->dims[0]==1)
+            return w;
+    }
+    }
+    return cache(ARRAY, scalar(w));
+}
+
+
+int vreveal(int w, verb v){
+    switch(gettag(w)){
+    case ARRAY: {
+        array W = getptr(w);
+        if (W->rank==1 && W->dims[0]==1)
+            return *elem(W, 0);
+    }
+    }
+    return w;
+}
 
 
 void init_vb(symtab st){

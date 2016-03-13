@@ -43,7 +43,7 @@ void specialtty(){
 
     fputs(ESC()")B",stdout); // set G1 charset to B:usascii
     fputs(ESC(*0),stdout); // set G2 to 0:line drawing ESC(n)
-    fputs(ESC(+A),stdout); // set G3 to A:"uk" accented ESC(o)
+    fputs(ESC(+A),stdout); // set G3 to A:"uk" accented ESC(o) (HI_MINUS)
     fputc(CTL('N'),stdout); // select G1 charset
                             // ESC(n): select G2
                             // ESC(o): select G3

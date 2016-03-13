@@ -132,6 +132,8 @@
     _( TWODOTS,   0x00a8,     1, "1", ESC(o)"(""\xE" ) \
     _( DIAERESIS, MODE1('!'), 1, "!", /*U+00a8*/ /*"\xc2"*/"\xa8" ) \
     _( HIMINUS,   0x00af,     1, "2", ESC(o)"/""\xE" ) \
+    _( HIMIN,     0x00af,     1, "2", "\xc2\xaf" ) \
+    _( HIMN,      0x00af,     1, "2", "\xaf" ) \
     _( MACRON,    MODE1('@'), 1, "@", /*U+00af*/ /*"\xc2"*/"\xaf" ) \
     _( NOTEQUAL,  MODE1('|'), 1, "|", ESC(n)"|""\xE" ) \
     _( LESS,            '<',  1, "3", "<" ) \

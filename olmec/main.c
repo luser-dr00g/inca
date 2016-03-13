@@ -18,6 +18,13 @@
 
 symtab env;
 
+void init_qneg(symtab st){
+    array name = array_new_dims(2);
+    name->data[0] = newdata(PCHAR, 0x2395);
+    name->data[1] = newdata(PCHAR, '-');
+    def(st, cache(PROG, name), 0);
+}
+
 // define quad-k variable illustrating alt-keybaord layout
 // type quad with alt-l
 void init_qk(symtab st){
@@ -108,6 +115,7 @@ int main() {
     init_vb(env);
     init_av(env);
     init_xverb(env);
+    init_qneg(env);
     init_qk(env);
 
     if (isatty(fileno(stdin))) specialtty();
@@ -120,7 +128,7 @@ int main() {
             DEBUG(2,"%04x ", buf[i]);
         DEBUG(2,"\n");
 
-        array a = scan_expression(buf, expn);
+        array a = scan_expression(buf, expn, env);
         DEBUG(2,"\n");
 
         DEBUG(2,"%d\n", a->rank);

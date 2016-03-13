@@ -144,6 +144,7 @@ object execute_expression(array e, symtab st){
     int n = e->dims[0];
     stack *lstk,*rstk;
 
+    last_was_assn = 0;
     init_stacks(&lstk, &rstk, e, n);
 
     while(lstk->top){ //left stack not empty

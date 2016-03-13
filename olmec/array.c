@@ -1,4 +1,8 @@
 /*
+ * The general idea is motivated by my two
+ * [Stack Overflow](http://stackoverflow.com/questions/30023867/how-can-i-work-with-dynamically-allocated-arbitrary-dimensional-arrays)
+ * [questions](http://stackoverflow.com/questions/30409991/use-a-dope-vector-to-access-arbitrary-axial-slices-of-a-multidimensional-array), 
+ *
  *  These functions allocate their
  *  results and expect the caller to manage freeing appropriately.
  *

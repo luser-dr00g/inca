@@ -104,7 +104,12 @@ void print(int x, int width){
             printarray(t, 0);
             printf("\n");
 
-            if (0) {
+        } break;
+    }
+}
+
+
+#if 0
                 printf("\n");
                 //printf("%d\n",t->rank);
                 for (int i=0; i<t->rank; i++)
@@ -134,8 +139,4 @@ void print(int x, int width){
                     }
                     printf("\n");
                 }
-            }
-        } break;
-    }
-}
-
+#endif
