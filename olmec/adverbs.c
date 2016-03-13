@@ -4,6 +4,21 @@
  * new verb structures dynamically for a concrete representation
  * of a "derived verb" which is the result of an adverb or conjunction.
  *
+ * That is, these functions take other functions (verbs) as arguments.
+ * 
+ * & amp implements currying a left or right argument to a function,
+ * yielding a monadic derived verb. For 2 verbs it creates a 
+ * derived verb which is the composition f o g.
+ * 
+ * @ atop performs a similar but simpler f o g composition.
+ *
+ * / areduce yields a derived verb which is a reduction wrt the argument verb.
+ *
+ * \ ascan yields a derived verb which is yields a series of partial reductions
+ * of increasing prefixes of the argument.
+ *
+ * abackscan behaves like ascan but yields the partial reductions of decreasing
+ * suffixes of the argument (`back`wards `scan`)
  */
 #include <stdarg.h>
 #include <stdint.h>
