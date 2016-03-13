@@ -1,3 +1,42 @@
+/*
+ * The editor functions handle the *READ* part of the REPL.
+ * It defines a large character-translation table to coordinate the
+ * input-form/internal-rep/output-form for "normal" keyboards and an
+ * "alternate" keyboard accessed with the alt key (also toggle-able
+ * with ctrln). The alternate keyboard is patterned after the classic
+ * APL keyboards I've seen. The ⎕a and ⎕k variables illustrate the
+ * two keyboards, normal and ALT respectively.
+
+$ ./olmec
+        ⎕a
+ ~ ! @ # $ % ^ & * ( ) _ +
+ ` 1 2 3 4 5 6 7 8 9 0 - =
+ Q W E R T Y U I O P { } |
+ q w e r t y u i o p [ ] \
+ A S D F G H J K L : "    
+ a s d f g h j k l ; '    
+ Z X C V B N M < > ?      
+ z x c v b n m , . /      
+
+        ⎕k
+ · ⌶ ⍫ ⍋ ⍒ ⌽ ⍉ ⊖ ⍟ ⍱ ⍲ ⌸ ⌹
+ ⋄ ¨ ¯ < ≤ = ≥ > ≠ ∨ ∧ × ÷
+ ¿ ⍹ ⍷ ℝ ⍭ ¥ ⌀ ⍸ ⍥ £ ⊣ ⊢ ⍙
+ ⍡ ⍵ ∈ ⍴ ⌾ ↑ ↓ ⍳ ○ ⋆ ← → ⍀
+ ⍶ ⌷ ⍄ ≡ ⍋ ⍒ ⍤ ⍃ ⍞ ⍂ ⌻    
+ ⍺ ⌈ ⌊ ⍣ ∇ ∆ ∘ ⍢ ⎕ ⍁ ´    
+ ⍧ ⌺ ⍝ ⍦ ⍎ ⍕ ⍔ « » ¶      
+ ⊂ ⊃ ∩ ∪ ⊥ ⊤ ⍍ ⍪ ∵ ⌿      
+
+
+ *
+ * It sets up a specialtty() mode using termios settings and VT220
+ * charset codes. The VT codes are largely a crutch until I better
+ * understand how to interface Unicode more directly with Xterm.
+ * In particular, diaeresis and macron and a few others do not 
+ * copy correctly with mouse selection.
+ * 
+ */
 #include<errno.h>
 #include<limits.h>
 #include<math.h>
