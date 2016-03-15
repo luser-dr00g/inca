@@ -476,6 +476,7 @@ static inline int signof(int x){
 }
 
 int vdrop (int a, int w, verb v){
+    DEBUG(1, "drop\n");
     if (gettag(a)==ARRAY){
         array A = getptr(a);
         if (productdims(A->rank, A->dims) > 1){
@@ -495,12 +496,13 @@ int vdrop (int a, int w, verb v){
             int n = productdims(W->rank, W->dims);
             if (a==0) return w;
             if (0 <= abs(a) && abs(a) <= n){
-                //printf("a=%d,n=%d,a-signof(a)*n=%d\n", a, n, a-signof(a)*n);
+                DEBUG(1,"a=%d,n=%d,a-signof(a)*n=%d\n", a, n, a-signof(a)*n);
                 return vtake(a-signof(a)*n, w, v);
             }
         }
     }
-    return null;
+    DEBUG(1,"nil= %08x(%d,%d)\n", nil, gettag(nil), getval(nil));
+    return nil;
 }
 
 
@@ -583,11 +585,19 @@ int vbase(int a, int w, verb v){
     case LITERAL:
         switch(gettag(w)){
             case LITERAL: break;
-            case ARRAY: a = vreshape(vshapeof(w,v),a,v); break;
+            case ARRAY: a = vreshape(vshapeof(w,VT(RHO)),a,VT(RHO)); break;
         }
     case ARRAY:
         switch(gettag(w)){
-            case LITERAL: w = vreshape(vshapeof(a,v),w,v); break;
+            case LITERAL: w = vreshape(vshapeof(a,VT(RHO)),w,VT(RHO)); break;
+            case ARRAY: {
+                array A = getptr(a);
+                array W = getptr(w);
+                if (A->rank == 0)
+                    a = vreshape(vshapeof(w,VT(RHO)),a,VT(RHO));
+                if (W->rank == 0)
+                    w = vreshape(vshapeof(a,VT(RHO)),w,VT(RHO));
+            }
         }
     }
     int pr = areduce(vtab[VERB_PLUS],v);
