@@ -171,12 +171,12 @@ void check_rstk_with_patterns_and_reduce(stack *lstk, stack *rstk, symtab st){
             int c[4];
             for (int j=0; j<4; j++)
                 c[j] = classify(rstk->a[rstk->top-1-j]);
-            DEBUG(1, "%08x %08x %08x %08x\n", c[0], c[1], c[2], c[3]);
+            DEBUG(3, "%08x %08x %08x %08x\n", c[0], c[1], c[2], c[3]);
 
             for (int i=0; i<sizeof ptab/sizeof*ptab; i++)
                 if (check_pattern(c, ptab, i)) {
-                    DEBUG(1,"match %d\n",i);
-                    DEBUG(1,"%08x %08x %08x %08x\n",
+                    DEBUG(3,"match %d\n",i);
+                    DEBUG(3,"%08x %08x %08x %08x\n",
                         ptab[i].c[0], ptab[i].c[1], ptab[i].c[2], ptab[i].c[3]);
                     object t[4];
                     move_top_four_to_temp(t, rstk);
@@ -218,7 +218,7 @@ void init_stacks(stack **lstkp, stack **rstkp, array e, int n){
 
 object extract_result_and_free_stacks(stack *lstk, stack *rstk){
     object x;
-    DEBUG(1,"rstk->top=%d\n", rstk->top);
+    DEBUG(3,"rstk->top=%d\n", rstk->top);
     stackpop(rstk); // pop mark
     x = stackpop(rstk);
     free(lstk);
@@ -244,7 +244,7 @@ void move_top_four_to_temp(object *t, stack *rstk){
    each function is called with x y z parameters defined in PARSETAB 
  */
 object monad(object f, object y, object dummy, symtab st){
-    DEBUG(0,"monad %08x(%d,%d) %08x(%d,%d)\n",
+    DEBUG(1,"monad %08x(%d,%d) %08x(%d,%d)\n",
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
     verb v;
@@ -261,7 +261,7 @@ object monad(object f, object y, object dummy, symtab st){
 }
 
 object dyad(object x, object f, object y, symtab st){
-    DEBUG(0,"dyad %08x(%d,%d) %08x(%d,%d) %08x(%d,%d) \n",
+    DEBUG(1,"dyad %08x(%d,%d) %08x(%d,%d) %08x(%d,%d) \n",
             x, gettag(x), getval(x),
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
@@ -269,7 +269,7 @@ object dyad(object x, object f, object y, symtab st){
     switch(gettag(f)){
     case VERB: v = getptr(f); break;
     case XVERB: { xverb x = getptr(f);
-                    DEBUG(0,"xverb %08x(%d,%d)\n",
+                    DEBUG(1,"xverb %08x(%d,%d)\n",
                             x->id, gettag(x->id), getval(x->id));
                     v = x->verb; } break;
     }
@@ -282,12 +282,12 @@ object dyad(object x, object f, object y, symtab st){
 }
 
 object adv(object f, object g, object dummy, symtab st){
-    DEBUG(0,"adverb\n");
+    DEBUG(1,"adverb\n");
     verb v;
     switch(gettag(g)){
     case ADVERB: v = getptr(g); break;
     case XVERB: { xverb x = getptr(g);
-                    DEBUG(0,"xverb %08x(%d,%d)\n",
+                    DEBUG(1,"xverb %08x(%d,%d)\n",
                             x->id, gettag(x->id), getval(x->id));
                     v = x->adverb; } break;
     }
@@ -300,7 +300,7 @@ object adv(object f, object g, object dummy, symtab st){
 }
 
 object conj_(object f, object g, object h, symtab st){
-    DEBUG(0,"conj\n");
+    DEBUG(1,"conj\n");
     verb v;
     switch(gettag(g)){
     case ADVERB: v = getptr(g); break;
@@ -316,7 +316,7 @@ object conj_(object f, object g, object h, symtab st){
 
 //specification
 object spec(object name, object v, object dummy, symtab st){
-    DEBUG(0,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
+    DEBUG(1,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
             name, gettag(name), getval(name),
             v, gettag(v), getval(v));
     def(st, name, v);
@@ -325,7 +325,7 @@ object spec(object name, object v, object dummy, symtab st){
 }
 
 object punc(object x, object dummy, object dummy2, symtab st){
-    DEBUG(0,"punc %08x(%d,%d)\n",
+    DEBUG(1,"punc %08x(%d,%d)\n",
             x, gettag(x), getval(x));
     last_was_assn = 0;
     return x;
@@ -340,21 +340,22 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
     if (rstk->top && qassn(stacktop(rstk))){ //assignment: no lookup
         stackpush(rstk,x);
     } else {
-        DEBUG(0,"lookup\n");
+        DEBUG(1,"lookup ");
         int *s;
-        int n;
+        int n,n0;
         switch(gettag(x)){
             case PCHAR: {  // single char
                 s = &x;
-                n = 1;
+                n0 = n = 1;
                 } break;
             case PROG: {   // longer name
                 array a = getptr(x);
                 s = a->data;
-                n = a->dims[0];
+                n0 = n = a->dims[0];
                 } break;
         }
         int *p = s;
+        DEBUG(1,"%d ", n);
         symtab tab = findsym(st,&p,&n,0);
 
         if (tab->val == null) {
@@ -363,10 +364,12 @@ int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
             //return null;
         }
         while (n){ //while name
-            DEBUG(0,"%d\n", n);
-            DEBUG(0,"<-%08x(%d,%d)\n",tab->val,gettag(tab->val),getval(tab->val));
+            DEBUG(0,"%d<-%08x(%d,%d)\n", n-n0,
+                    tab->val,gettag(tab->val),getval(tab->val));
+            DEBUG(1,"%d ", n);
             stackpush(lstk,tab->val);           //pushback value
             s = p;
+            n0 = n;
             tab = findsym(st,&p,&n,0);         //lookup remaining name
             if (tab->val == null) {
                 printf("error undefined internal\n");
