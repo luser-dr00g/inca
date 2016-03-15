@@ -110,6 +110,7 @@ int main() {
     char *prompt = "        ";
 
     init_en();
+    init_array();
     env = makesymtab(10);
     env->val = null;
     init_vb(env);
