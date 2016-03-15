@@ -180,17 +180,17 @@ static inline void swap(int *x, int *y){
 
 int resid(int a, int w){
     if (a==0) return w;
+    if (a<0)
+        return -resid(-a,w);
     if (w<0)
         return resid(a,w+a);
-    if (a<0)
-        return - (w % -a);
     return w % a;
 }
 
 int vresidue (int a, int w, verb v){
-    //printf("residue\n");
-    //print(a, 0);
-    //print(w, 0);
+    DEBUG(1,"residue\n");
+    IFDEBUG(1,print(a, 0));
+    IFDEBUG(1,print(w, 0));
     common(&a, &w);
 
     scalaropfunc(a,vresidue,w,resid,v)
@@ -204,6 +204,8 @@ int vshapeof (int w, verb v){
         //case LITERAL: return 1;
         case ARRAY: {
             array a = getptr(w);
+            if (a->rank==0)
+                return nil;
             int n = productdims(a->rank, a->dims);
             //if (n)
                 return cache(ARRAY, cast_dims(a->dims,a->rank));
@@ -615,12 +617,12 @@ int vbase(int a, int w, verb v){
 
 
 int vencode(int a, int w, verb v){
-    //printf("------\nencode\n");
-    //print(a,0);
-    //print(w,0);
+    DEBUG(1,"------\nencode\n");
+    IFDEBUG(1,print(a,0));
+    IFDEBUG(1,print(w,0));
     if (gettag(w)==ARRAY){
         array W = getptr(w);
-        if (productdims(W->rank, W->dims)==1){
+        if (W->rank==0 || productdims(W->rank, W->dims)==1){
             int scratch[W->rank];
             w = *elema(W,vector_index(0,W->dims,W->rank,scratch));
         }
@@ -632,31 +634,31 @@ int vencode(int a, int w, verb v){
     case ARRAY: switch(gettag(w)){
                 case LITERAL: {
                     array A = getptr(a);
-                    //printf("A->rank=%d\n",A->rank);
+                    DEBUG(1,"A->rank=%d\n",A->rank);
                     switch(A->rank){
                     case 1: {
                             int drop = vdrop(-1,a, VT(DROP));
-                            //printf("drop:");
-                            //print(drop, 0);
+                            DEBUG(1,"drop:");
+                            IFDEBUG(1,print(drop, 0));
                             if (A->dims[0]
                                     && *elem(A, A->dims[0]-1)== 0)
                                 return vcat( vencode(drop,
                                             0,VT(ENC)),
                                         w,VT(CAT));
                             int tail = vtake(-1, a, VT(TAKE));
-                            //print(tail, 0);
+                            IFDEBUG(1,print(tail, 0));
                             int mod = vresidue(tail, w, VT(MOD));
-                            //print(mod, 0);
+                            IFDEBUG(1,print(mod, 0));
                             int e = vencode( drop,
                                         vdivide( vminus(w,
                                                 mod, VT(SUB)),
                                             tail, VT(DIV)),
                                         VT(ENC));
-                            //print(e, 0);
+                            IFDEBUG(1,print(e, 0));
                             int z = vcat(e, mod, VT(CAT));
                             //z = vreshape(A->dims[0], z, VT(RHO));
                             z = vtake(-A->dims[0], z, VT(TAKE));
-                            //print(z, 0);
+                            IFDEBUG(1,print(z, 0));
                             return z;
                     }
                     }
