@@ -69,7 +69,7 @@ int newdata(int tag, int val){
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
     int x = int32.int32;
-    DEBUG(2,"newdata %d %d %d\n", tag, val, x);
+    DEBUG(3,"newdata %x(%d %d)\n", x, tag, val);
     return x;
 }
 
@@ -93,7 +93,7 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     }
     int z = (*used)++;
     (*data)[z] = ptr;
-    DEBUG(2,"addnew %d %p %p\n", z, ptr, (*data)[z]);
+    DEBUG(3,"addnew %d %p %p\n", z, ptr, (*data)[z]);
     return z;
 }
 
@@ -119,7 +119,7 @@ size_t xvbused, xvbmax;
 void **xvbtab;
 
 int cache(int tag, void *ptr){
-    DEBUG(2,"cache %p\n", ptr);
+    DEBUG(3,"cache %p\n", ptr);
     switch(tag){
         default:
         case LITERAL: 
@@ -128,14 +128,14 @@ int cache(int tag, void *ptr){
             return newdata(tag,
                     addnewtocache(&numused, &nummax, &numtab, ptr));
         case PROG: {
-            DEBUG(2,"cache prog\n");
+            DEBUG(3,"cache prog\n");
             int x = newdata(tag,
                     addnewtocache(&progused, &progmax, &progtab, ptr));
-            DEBUG(2,"cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
+            DEBUG(3,"cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
             return x;
         }
         case ARRAY:
-            DEBUG(2,"cache array\n");
+            DEBUG(3,"cache array\n");
             return newdata(tag,
                     addnewtocache(&arrused, &arrmax, &arrtab, ptr));
         case SYMTAB:
