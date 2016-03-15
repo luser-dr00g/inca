@@ -5,8 +5,8 @@
 typedef struct ar {
     int type;
     enum {
-        none = 0;
-        temp = 1;
+        none = 0,
+        temp = 1,
     } flag;
     int rank;    // number of dimensions
     int *dims;   // size of each dimension
