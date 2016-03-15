@@ -669,12 +669,14 @@ int vencode(int a, int w, verb v){
 }
 
 int vcompress(int a, int w, verb v){
-    //printf("compress\n");
-    //print(a,0);
-    //print(w,0);
+    DEBUG(1,"compress\n");
+    IFDEBUG(1,print(a,0));
+    IFDEBUG(1,print(w,0));
+recheck:
     switch (gettag(a)){
     case LITERAL: if (getval(a)) return w;
                   break;
+recheckw:
     case ARRAY: switch (gettag(w)){
                 case CHAR:
                 case LITERAL:
@@ -683,7 +685,9 @@ int vcompress(int a, int w, verb v){
                                 w,VT(RHO)),VT(COMP));
                 case ARRAY: {
                     array A = getptr(a);
+                    if (A->rank==0){ a=A->data[0]; goto recheck; }
                     array W = getptr(w);
+                    if (W->rank==0){ w=W->data[0]; goto recheckw; }
                     if (A->rank == W->rank){
                         int eq = 1;
                         for (int i=0; i<A->rank; ++i)
