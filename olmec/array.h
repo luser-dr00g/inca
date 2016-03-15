@@ -4,6 +4,10 @@
 
 typedef struct ar {
     int type;
+    enum {
+        none = 0;
+        temp = 1;
+    } flag;
     int rank;    // number of dimensions
     int *dims;   // size of each dimension
     int cons;    // constant term of the indexing formula

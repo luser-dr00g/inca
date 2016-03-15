@@ -474,10 +474,11 @@ array extend(array a, int extra){
 
 
 
-// generate a 1 element vector, ie. a scalar array object
+// generate a 1 element 0 rank array, ie. a scalar array object
 array scalar(int n){
     array z = array_new_dims(1);
     *elem(z,0) = n;
+    z->rank = 0;
     return z;
 }
 
