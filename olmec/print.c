@@ -64,14 +64,14 @@ int printatom(int x, int width){
 
 void printindexdisplay(array t){
     //printf("\n");
-    //printf("%d\n",t->rank);
+    DEBUG(1,"%d\n",t->rank);
     printf("%s", basetooutput(0x2374)); // rho
     for (int i=0; i<t->rank; i++)
         printf("%d ", t->dims[i]);
     //printf("\n");
 
     int n = productdims(t->rank,t->dims);
-    //DEBUG(1,"n=%d", n);
+    DEBUG(1,"n=%d", n);
     printf("\n");
     int scratch[t->rank];
     for (int i=0; i<n; i++){
@@ -80,7 +80,7 @@ void printindexdisplay(array t){
         for (int j=0; j<t->rank; j++, app=",")
             printf("%s%d", app, scratch[j]);
         printf(": ");
-        DEBUG(2,"%08x(%d,%d)", xx, gettag(xx), getval(xx));
+        DEBUG(1,"%08x(%d,%d)", xx, gettag(xx), getval(xx));
         printf("\n");
         switch(gettag(xx)){
             case CHAR:
@@ -128,12 +128,13 @@ int printarray(array t, int width){
         printindexdisplay(t);
     else
         switch(t->rank){
-        case 0: //printf("%*d\n", maxwidth, *t->data); break;
+        case 0: DEBUG(1,"%*d\n", maxwidth, *t->data); break;
                 printatom(t->data[0], maxwidth);
                 break;
-        case 1: for (int i=0; i<t->dims[0]; ++i)
-                    //printf("%*d\n", maxwidth, *elem(t,i));
+        case 1: for (int i=0; i<t->dims[0]; ++i) {
+                    DEBUG(1,"%*d\n", maxwidth, *elem(t,i));
                     printatom(*elem(t,i), maxwidth);
+                }
                 break;
         default:
                 for (int i=0; i<t->dims[0]; ++i, printf("\n")){
@@ -148,7 +149,7 @@ int printarray(array t, int width){
 
 
 void print(int x, int width){
-    //printf("%08x(%d,%d)", x, gettag(x), getval(x));
+    DEBUG(1,"%08x(%d,%d)", x, gettag(x), getval(x));
     switch(gettag(x)){
         default: printatom(x, 0);
                  printf("\n");
