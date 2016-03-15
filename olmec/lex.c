@@ -102,10 +102,26 @@ void check_quadneg(symtab st){
     int n = 2;
     symtab t = findsym(st, &p, &n, 0);
     quadneg = t->val;
-    DEBUG(0,"quadneg=%d\n",quadneg);
+    DEBUG(2,"quadneg=%d\n",quadneg);
 }
 
 token *collapse_adjacent_numbers_if_needed(token *p){
+    if (gettag(p[-2])==ARRAY && gettag(p[-1])==ARRAY){
+        array p2 = getptr(p[-2]);
+        array p1 = getptr(p[-1]);
+        if (((p2->rank == 0 && p1->rank == 0)
+          && (gettag(p2->data[0])==LITERAL
+              && gettag(p1->data[0])==LITERAL))
+        || ((p2->rank == 1 && p1->rank == 0)
+          && (gettag(p2->data[p2->dims[0]-1])==LITERAL
+              && gettag(p1->data[0])==LITERAL))){
+            --p;
+            p[-1] = cache(ARRAY,cat(p2, p1));
+        }
+    }
+    return p;
+}
+#if 0
     if (gettag(p[-2])==LITERAL && gettag(p[-1])==LITERAL){
         --p;
         p[-1]=cache(ARRAY, vector(p[-1],p[0]));
@@ -113,8 +129,7 @@ token *collapse_adjacent_numbers_if_needed(token *p){
         --p;
         p[-1]=cache(ARRAY, cat(getptr(p[-1]), scalar(p[0])));
     }
-    return p;
-}
+#endif
 
 
 token new_numeric(int *s, int n){
@@ -124,7 +139,8 @@ token new_numeric(int *s, int n){
     buf[n] = 0;
 
     char *p;
-    token t = newdata(LITERAL, strtol(buf,&p,10));
+    //token t = newdata(LITERAL, strtol(buf,&p,10));
+    token t = cache(ARRAY, scalar(strtol(buf,&p,10)));
     if (*p) {
         array z = scalar(t);
         while(*p) {
@@ -138,9 +154,7 @@ token new_numeric(int *s, int n){
 
 token new_string(int *s, int n){
     DEBUG(2,"str:%d\n", n);
-    if (n==3){
-        return newdata(CHAR, s[1]);
-    }
+    //if (n==3){ return newdata(CHAR, s[1]); }
     array t=array_new_dims(n);
     int i,j,q;
     //for (int i=0; i<n; i++) *elem(t,i) = newdata(CHAR, s[i]);
