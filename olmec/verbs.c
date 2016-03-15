@@ -712,17 +712,18 @@ recheckw:
 }
 
 int vexpand(int a, int w, verb v){
-    printf("expand\n");
-    print(a,0);
-    print(w,0);
+    DEBUG(1,"expand\n");
+    IFDEBUG(1,print(a,0));
+    IFDEBUG(1,print(w,0));
     int sum = areduce(vtab[VERB_PLUS],v);
     int (*sumf)(int,verb) = ((verb)getptr(sum))->monad;
 
+recheck:
     switch (gettag(a)) {
     case LITERAL: switch (gettag(w)) {
                   case CHAR:
                   case LITERAL:
-                      printf("LL\n");
+                      DEBUG(1,"LL\n");
                       if (getval(a))
                           return vravel(w,VT(CAT));
                       break;
@@ -735,19 +736,22 @@ int vexpand(int a, int w, verb v){
                       break;
                   }
                   } break;
+recheckw:
     case ARRAY: switch (gettag(w)){
                 case CHAR:
                 case LITERAL: {
-                    printf("AL\n");
+                    DEBUG(1,"AL\n");
                     return vexpand(a,
                             vreshape(sumf(a,getptr(sum)),
                                 w,VT(RHO)),VT(EXP));
                 }
                 case ARRAY: {
-                    printf("AA\n");
+                    DEBUG(1,"AA\n");
                     array A = getptr(a);
+                    if (A->rank==0) { a = A->data[0]; goto recheck; }
                     array W = getptr(w);
                     switch (W->rank){
+                    case 0: w = W->data[0]; goto recheckw;
                     case 1: 
                         if (W->dims[0] == sumf(a,getptr(sum))) {
                             if (A->dims[0] == 0) return getfill(w);
