@@ -124,7 +124,7 @@ int main() {
         int i;
 
         //puts(buf);
-        for (i=0;i<buflen;i++)
+        for (i=0;i<expn;i++)
             DEBUG(2,"%04x ", buf[i]);
         DEBUG(2,"\n");
 
