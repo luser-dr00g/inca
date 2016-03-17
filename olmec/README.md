@@ -129,7 +129,7 @@ unified type, making assumptions about the ranges represented by pointers which
 are empirically not workable on 64bit systems.
 
 So, starting over (yet again), inca4 (aka `olmec`) will start with design. Simple,
-flexible pieces design and built separately, in separate files. With unit testing.
+flexible pieces designed and built separately, in separate files. With unit testing.
 The very start is UTF-8, the basis of the I/O module.
 It has been reviewed extensively
 (https://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding).
