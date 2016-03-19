@@ -1,11 +1,11 @@
 /* symbol table */
 
-typedef struct st {
+struct symtab {
     int key;
     int val;
     int n;
-    struct st **tab /*[n]*/ ;
-} *symtab;
+    symtab *tab /*[n]*/ ;
+};
 
 symtab makesymtab(int n);
 /*  mode=0: prefix match

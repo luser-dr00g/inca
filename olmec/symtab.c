@@ -42,14 +42,12 @@
  * juxtaposed symbols, symbol-lookup may then proceed upon
  * the remainder of the key string. see ex.c:parse_and_lookup_name
  */
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "array.h"
 #include "encoding.h"
-#include "debug.h"
 
 #include "symtab.h"
 
@@ -154,8 +152,8 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
                 *n = lasn;
                 return last;
             case 1: // defining search
-                *t = calloc(1, sizeof(struct st));
-                (*t)->tab = calloc((*t)->n = 11, sizeof(struct st));
+                *t = calloc(1, sizeof(struct symtab));
+                (*t)->tab = calloc((*t)->n = 11, sizeof(struct symtab));
                 st = *t;
                 lasn = nn;
                 lasp = sp;
@@ -204,7 +202,7 @@ int tests_run = 0;
 
 #include <stdio.h>
 
-struct st st = { .key = 0, .val = 0, .n = 10, .tab=(struct st *[10]){0} };
+struct symtab st = { .key = 0, .val = 0, .n = 10, .tab=(struct symtab *[10]){0} };
 
 static char *test_put_get(){
     int array[] = {48,49,50};
