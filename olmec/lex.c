@@ -38,24 +38,24 @@
  *  TODO handle fractional values
  */
 
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "array.h" // array type
 #include "encoding.h" // atomic encoding
 #include "symtab.h"
-#include "debug.h"
 
 #include "lex.h"
 
 int quadneg;  // hi-minus v. minus semantics.
+              // the value from the symbol table is
+              // cached here at the start of scan_expression
 
 typedef int token;
-typedef char state;
-typedef char state_and_action_code;
+typedef int state;
+typedef int state_and_action_code;
 
 #include "lex_private.h"
 
