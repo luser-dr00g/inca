@@ -23,6 +23,14 @@
                    V
         |- 0 1 2       2 1 0 -| 
 
+ *  The engine is always trying to examine the top 4 elements
+ *  of the right stack. It cannot perform its pattern-match
+ *  unless there are at least 4 objects to check.
+
+        |- 0 1 2       2 1 0 -| 
+                       | | | |
+                       ?+?+?+? <--- 4 pattern slots
+
  *  Of course these are just conceptual distinctions: they're 
  *  both just stacks. The left stack is initialized with a 
  *  mark object (illustrated here as ^) to indicate the left
@@ -51,14 +59,7 @@
  *  If there are at least 4 objects on the right stack, then 
  *  we B) classify the top 4 elements with a set of predicate 
  *  functions and then check through the list of grammatical patterns.
- *  The engine is always trying to examine the top 4 elements
- *  of the right stack.
-
-        |- 0 1 2       2 1 0 -| 
-                       | | | |
-                       ?+?+?+? <--- 4 pattern slots
-
- *  Back to our expression, we now have 4 elements to check.
+ *  We now have 4 elements to check.
 
         |-^2*1   +⍳4$-| 
 
@@ -104,8 +105,8 @@
  *  of the right-stack,... in the "fake left paren", we treat the
  *  beginning-of-line *mark* object as a left paren. But we
  *  cannot simply eliminate it because this would produce a
- *  mal-formed configuration of the whole engine, a violation of
- *  the invariants. But we need it out of the way so the 
+ *  mal-formed configuration of the stacks, of the whole engine,
+ *  a violation of the invariants. But we need it out of the way so the 
  *  remaining productions can effectively reduce the expression.
  *  So, just after the fancy switch-x-macro invocation, there is
  *  this hack:
@@ -119,11 +120,10 @@
  */
 #endif
 
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"
@@ -134,63 +134,54 @@
 
 typedef int object;
 #include "exec_private.h"
-#include "debug.h"
 
 int last_was_assn;
 
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
-object execute_expression(array e, symtab st){
-    int n = e->dims[0];
-    stack *lstk,*rstk;
-
+object execute_expression(array expr, symtab env){
     last_was_assn = 0;
-    init_stacks(&lstk, &rstk, e, n);
 
-    while(lstk->top){ //left stack not empty
-        object x = stackpop(lstk);
-        DEBUG(0,"->%08x(%d,%d)\n", x, gettag(x), getval(x));
+    stack left = new_left_stack_for(expr);
+    stack right = new_stack(1+stack_capacity(left));
+    stack_push_datum(right, null);
+    DEBUG(0,"->%08x(%d,%d)\n", null, gettag(null), getval(null));
 
-        if (qprog(x)){ // x is a pronoun?
+    while(!stack_is_empty(left)){
+        stack_element x = stack_pop(left);
+        DEBUG(0,"->%08x(%d,%d)\n", x.datum, gettag(x.datum), getval(x.datum));
+
+        if (!is_pronoun(x)) stack_push(right, x);
+        else {
             object y;
-            if ((y=parse_and_lookup_name(lstk, rstk, x, st)) != 0)
+            if ((y=parse_and_lookup_name(left, right, x, env)) != 0)
                 return y;
-        } else stackpush(rstk,x);
+        }
 
-        check_rstk_with_patterns_and_reduce(lstk, rstk, st);
-    }
-
-    return extract_result_and_free_stacks(lstk, rstk);
-}
-
-void check_rstk_with_patterns_and_reduce(stack *lstk, stack *rstk, symtab st){
-    int docheck = 1;
-    while (docheck){ //check rstk with patterns and reduce
-        docheck = 0;
-        if (rstk->top>=4){
-            int c[4];
-            for (int j=0; j<4; j++)
-                c[j] = classify(rstk->a[rstk->top-1-j]);
-            DEBUG(3, "%08x %08x %08x %08x\n", c[0], c[1], c[2], c[3]);
-
-            for (int i=0; i<sizeof ptab/sizeof*ptab; i++)
-                if (check_pattern(c, ptab, i)) {
-                    DEBUG(3,"match %d\n",i);
-                    DEBUG(3,"%08x %08x %08x %08x\n",
-                        ptab[i].c[0], ptab[i].c[1], ptab[i].c[2], ptab[i].c[3]);
-                    object t[4];
-                    move_top_four_to_temp(t, rstk);
-                    switch(i){ PARSETAB(PARSETAB_ACTION) }
-                    if (i==L9)  //twiddle the mark for fake left paren
-                        stackpush(lstk,stackpop(rstk));
-                    docheck = 1; //stack changed: check again
-                    break;
-                }
+        while (stack_element_count(right) >= 4){
+            stack_element *items = stack_top_elements_address(right, 4);
+            if (0) ;
+            PARSE_PRODUCTIONS_FOREACH(PRODUCTION_ELSEIFS)
+            else break;
         }
     }
+
+    return stack_release(left), penultimate_prereleased_value(right);
 }
 
+static
+int is_pronoun(stack_element x){
+    return qprog(x.datum);
+    return x.code & VAR;
+}
 
+static
+int is_assn(stack_element x){
+    return qassn(x.datum);
+    return x.code && ASSN;
+}
+
+static
 size_t sum_symbol_lengths(array e, int n){
     int i,j;
     for (i=j=0; i<n; i++) {
@@ -202,48 +193,35 @@ size_t sum_symbol_lengths(array e, int n){
     return j;
 }
 
-void init_stacks(stack **lstkp, stack **rstkp, array e, int n){
-    int i,j;
-#define lstk (*lstkp) /* by-reference */
-#define rstk (*rstkp)
-    j=sum_symbol_lengths(e,n);
-    stackinit(lstk,n+j+1);
-    stackpush(lstk,mark);
-    for (i=0; i<n; i++) stackpush(lstk,e->data[i]);  // push expression
-    stackinit(rstk,n+j+1);
-    stackpush(rstk,null);    
-#undef lstk
-#undef rstk
+static
+stack new_left_stack_for (array expr){
+    int n = expr->dims[0];
+    stack r = new_stack(n + sum_symbol_lengths(expr, n) + 2);
+    stack_push_datum(r, mark);
+    for (int i=0; i<n; i++) stack_push_datum(r, expr->data[i]);
+    return r;
 }
 
-object extract_result_and_free_stacks(stack *lstk, stack *rstk){
-    object x;
-    DEBUG(3,"rstk->top=%d\n", rstk->top);
-    stackpop(rstk); // pop mark
-    x = stackpop(rstk);
-    free(lstk);
-    free(rstk);
-    return x;
+static
+int matches_ptab_pattern (stack_element items[4], int i){
+    return
+        items[3].code & ptab[i].c[0] &&
+        items[2].code & ptab[i].c[1] &&
+        items[1].code & ptab[i].c[2] &&
+        items[0].code & ptab[i].c[3];
 }
 
-int check_pattern(int *c, parsetab *ptab, int i){
-    return c[0] & ptab[i].c[0]
-        && c[1] & ptab[i].c[1]
-        && c[2] & ptab[i].c[2]
-        && c[3] & ptab[i].c[3];
+static
+int penultimate_prereleased_value (stack s){
+    int result = stack_top_elements_address(s, 2)->datum;
+    return stack_release(s), result;
 }
 
-void move_top_four_to_temp(object *t, stack *rstk){
-    t[0] = stackpop(rstk);
-    t[1] = stackpop(rstk);
-    t[2] = stackpop(rstk);
-    t[3] = stackpop(rstk);
-}
 
 /* Parser Actions,
-   each function is called with x y z parameters defined in PARSETAB 
+   each function is called with x y z parameters defined in PARSE_PRODUCTIONS_FOREACH 
  */
-object monad(object f, object y, object dummy, symtab st){
+object monadic(object f, object y, object dummy, symtab env){
     DEBUG(1,"monad %08x(%d,%d) %08x(%d,%d)\n",
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
@@ -260,7 +238,7 @@ object monad(object f, object y, object dummy, symtab st){
     return v->monad(y,v);
 }
 
-object dyad(object x, object f, object y, symtab st){
+object dyadic(object x, object f, object y, symtab env){
     DEBUG(1,"dyad %08x(%d,%d) %08x(%d,%d) %08x(%d,%d) \n",
             x, gettag(x), getval(x),
             f, gettag(f), getval(f),
@@ -281,7 +259,7 @@ object dyad(object x, object f, object y, symtab st){
     return v->dyad(x,y,v);
 }
 
-object adv(object f, object g, object dummy, symtab st){
+object adv(object f, object g, object dummy, symtab env){
     DEBUG(1,"adverb\n");
     verb v;
     switch(gettag(g)){
@@ -299,7 +277,7 @@ object adv(object f, object g, object dummy, symtab st){
     return v->monad(f,v);
 }
 
-object conj_(object f, object g, object h, symtab st){
+object conj_(object f, object g, object h, symtab env){
     DEBUG(1,"conj\n");
     verb v;
     switch(gettag(g)){
@@ -315,71 +293,74 @@ object conj_(object f, object g, object h, symtab st){
 }
 
 //specification
-object spec(object name, object v, object dummy, symtab st){
+object spec(object name, object assn, object v, symtab env){
     DEBUG(1,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
             name, gettag(name), getval(name),
             v, gettag(v), getval(v));
-    def(st, name, v);
+    def(env, name, v);
     last_was_assn = 1;
     return v;
 }
 
-object punc(object x, object dummy, object dummy2, symtab st){
+object punc(object paren, object x, object dummy2, symtab env){
     DEBUG(1,"punc %08x(%d,%d)\n",
             x, gettag(x), getval(x));
     last_was_assn = 0;
     return x;
 }
 
-
 // lookup name in environment unless to the left of assignment
 // if the full name is not found, but a defined prefix is found,
 // push the prefix back to the left stack and continue lookup
 // with remainder. push value to right stack.
-int parse_and_lookup_name(stack *lstk, stack *rstk, object x, symtab st){
-    if (rstk->top && qassn(stacktop(rstk))){ //assignment: no lookup
-        stackpush(rstk,x);
+static
+int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
+
+    if (!stack_is_empty(right)
+            && is_assn(*stack_top_elements_address(right, 1))){
+        DEBUG(1,"pass name\n");
+        stack_push(right, x);   //assignment: no lookup
     } else {
         DEBUG(1,"lookup ");
         int *s;
         int n,n0;
-        switch(gettag(x)){
+        switch(gettag(x.datum)){
             case PCHAR: {  // single char
-                s = &x;
+                s = &x.datum;
                 n0 = n = 1;
                 } break;
             case PROG: {   // longer name
-                array a = getptr(x);
+                array a = getptr(x.datum);
                 s = a->data;
                 n0 = n = a->dims[0];
                 } break;
         }
+
         int *p = s;
         DEBUG(1,"%d ", n);
-        symtab tab = findsym(st,&p,&n,0);
-
+        symtab tab = findsym(env,&p,&n,0);
         if (tab->val == null) {
             printf("error undefined prefix\n");
-            return x;
-            //return null;
+            return x.datum;
         }
-        while (n){ //while name
+
+        while (n){ //while name not exhausted
             DEBUG(0,"%d<-%08x(%d,%d)\n", n-n0,
                     tab->val,gettag(tab->val),getval(tab->val));
             DEBUG(1,"%d ", n);
-            stackpush(lstk,tab->val);           //pushback value
+            stack_push_datum(left, tab->val);           //pushback value
             s = p;
             n0 = n;
-            tab = findsym(st,&p,&n,0);         //lookup remaining name
+            tab = findsym(env,&p,&n,0);         //lookup remaining name
             if (tab->val == null) {
                 printf("error undefined internal\n");
-                return x;
-                //return null;
+                return x.datum;
             }
         }
+
         //replace name with defined value
         DEBUG(0,"==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
-        stackpush(rstk,tab->val);
+        stack_push_datum(right, tab->val);
     }
     return 0;
 }

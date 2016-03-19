@@ -1,7 +1,7 @@
 
 // predicate table contains predicate functions
 // and associated enum values
-#define PREDTAB(_) \
+#define PREDICATES_FOREACH(_) \
 _( ANY  =     1, qany, 1 ) \
 _( VAR  =     2, qprog, gettag(x)==PROG \
                 || (gettag(x)==PCHAR && getval(x)!=0x2190 /*leftarrow*/ ) ) \
@@ -27,10 +27,10 @@ _( NUL  = 16384, qnull, gettag(x)==NULLOBJ ) \
 /**/
 
 // declare predicate functions
-#define PRED_DECL(X,Y,...) int Y(int);
-PREDTAB(PRED_DECL)
+#define DECLARE_PREDICATE_FUNCTION(enum_def,fname,...) int fname(int);
+PREDICATES_FOREACH(DECLARE_PREDICATE_FUNCTION)
 
 extern int last_was_assn;
 // execute an expression e with environment st
-int execute_expression(array e, symtab st);
+int execute_expression(array expr, symtab st);
 
