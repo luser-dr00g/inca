@@ -40,13 +40,11 @@
  *      }
  */
 
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "encoding.h"
-#include "debug.h"
 
 int gettag(int d){
     if (d<0) return 0; /* negatives are literals */
@@ -180,8 +178,8 @@ int getfill(int d){
             switch(getval(d)){
             case '+':
                 return 0;
-            case MODE1('='): 
-            case MODE1('+'): 
+            case MODE1('='):  // Times
+            case MODE1('+'):  // Divided-By
             case '*':
                  return 1;
             } /*fallthru*/
