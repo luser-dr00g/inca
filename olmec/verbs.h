@@ -32,10 +32,10 @@ _(CONC,0x2282/*alt-z*/,       vconceal, dnone,      0, 0, 0, 0, 0, 0 ) \
 _(REVL,0x2283/*alt-x*/,       vreveal,  dnone,      0, 0, 0, 0, 0, 0 ) \
 /**/
 struct verb {
-    int id;
+    object id;
     monad *monad;
     dyad *dyad;
-    int f,g,h; /* operator arguments */
+    object f,g,h; /* operator arguments */
     int mr,lr,rr; /* monadic,left,right rank*/
 };
 
@@ -49,7 +49,7 @@ VERBS_FOREACH(DECLARE_VERB_FUNCTIONS)
 #undef dnone
 #undef DECLARE_VERB_FUNCTIONS
 
-extern int vtab[];
+extern object vtab[];
 
 void init_vb(symtab st);
 

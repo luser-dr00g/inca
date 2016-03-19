@@ -45,7 +45,7 @@
 
 #include "encoding.h"
 
-int gettag(int d){
+int gettag(object d){
     if (d<0) return 0; /* negatives are literals */
     integer int32;
     int32.int32 = d;
@@ -53,7 +53,7 @@ int gettag(int d){
     return dat.tag;
 }
 
-int getval(int d){
+int getval(object d){
     if (d<0) return d;
     integer int32;
     int32.int32 = d;
@@ -61,7 +61,7 @@ int getval(int d){
     return dat.val;
 }
 
-int newdata(int tag, int val){
+object newdata(int tag, int val){
     if (tag==LITERAL && val<0) return val;
     datum dat = { .tag = tag, .val = val };
     integer int32 = { .data = dat };
@@ -71,10 +71,10 @@ int newdata(int tag, int val){
 }
 
 integer nulldata = { .data = { .tag = NULLOBJ, .val = 0 } };
-int null /* = nulldata.int32 */;
+object null /* = nulldata.int32 */;
 integer markdata = { .data = { .tag = MARKOBJ, .val = 0 } };
-int mark /* = markdata.int32 */;
-int nil;
+object mark /* = markdata.int32 */;
+object nil;
 
 void init_en(){
     null = nulldata.int32;
@@ -115,7 +115,7 @@ void **advtab;
 size_t xvbused, xvbmax;
 void **xvbtab;
 
-int cache(int tag, void *ptr){
+object cache(int tag, void *ptr){
     DEBUG(3,"cache %p\n", ptr);
     switch(tag){
         default:
@@ -126,7 +126,7 @@ int cache(int tag, void *ptr){
                     addnewtocache(&numused, &nummax, &numtab, ptr));
         case PROG: {
             DEBUG(3,"cache prog\n");
-            int x = newdata(tag,
+            object x = newdata(tag,
                     addnewtocache(&progused, &progmax, &progtab, ptr));
             DEBUG(3,"cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
             return x;
@@ -151,7 +151,7 @@ int cache(int tag, void *ptr){
     }
 }
 
-void *getptr(int d){
+void *getptr(object d){
     if (d<0) return NULL;
     switch(gettag(d)){
         default:
@@ -171,7 +171,7 @@ void *getptr(int d){
 #define MODE1(x) (x|1<<7)
 // fill returns a "blank" value for any type
 // and identity elements for verbs
-int getfill(int d){
+object getfill(object d){
     switch(gettag(d)){
         case PCHAR:
             switch(getval(d)){

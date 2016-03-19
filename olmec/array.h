@@ -12,7 +12,7 @@ struct array {
     int *dims;   // size of each dimension
     int cons;    // constant term of the indexing formula
     int *weight; // corresponding coefficient in the indexing formula
-    int *data;   // address of first array element
+    object *data;   // address of first array element
     int *(*func)(array,int); // data function (if function type)
 };
 
@@ -48,10 +48,10 @@ array makesolid(array a); // type=normal
 
 int *vector_index(int ind, const int *dims, int n, int *vec);
 int ravel_index(const int *vec, const int *dims, int n);
-int *elemr(array a, int idx);
-int *elema(array a, const int *ind);
-int *elemv(array a, va_list ap);
-int *elem(array a, ...);
+object *elemr(array a, int idx);
+object *elema(array a, const int *ind);
+object *elemv(array a, va_list ap);
+object *elem(array a, ...);
 
 void transpose2(array a);
 void transpose(array a, int shift);

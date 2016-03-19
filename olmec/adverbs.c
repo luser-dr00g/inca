@@ -32,16 +32,16 @@
 #include "adverbs.h"
 #include "adverb_private.h"
 
-int domerr(int w, verb v){
+object domerr(object w, verb v){
     return null;
 }
 
-int withl(int w, verb v){ DECLFG; return g2(v->f, w, gv); }
-int withr(int w, verb v){ DECLFG; return f2(w, v->g, fv); }
-int on1(int w, verb v){ DECLFG; return f1(g1(w,gv),fv); }
-int on2(int a, int w, verb v){ DECLFG; return f2(g1(a,gv),g1(w,gv),fv); }
+object withl(object w, verb v){ DECLFG; return g2(v->f, w, gv); }
+object withr(object w, verb v){ DECLFG; return f2(w, v->g, fv); }
+object on1(object w, verb v){ DECLFG; return f1(g1(w,gv),fv); }
+object on2(object a, object w, verb v){ DECLFG; return f2(g1(a,gv),g1(w,gv),fv); }
 
-int amp(int a, int w, verb v){
+object amp(object a, object w, verb v){
     switch(CONJCASE(a,w)){
         case NN: return domerr(0,v);
         case NV: return DERIV('&', withl, NULL, a, w, 0, 0, 0, 0);
@@ -51,9 +51,9 @@ int amp(int a, int w, verb v){
 }
 
 
-int atop2(int a, int w, verb v){ DECLFG; return f1(g2(a,w,gv),fv); }
+object atop2(object a, object w, verb v){ DECLFG; return f1(g2(a,w,gv),fv); }
 
-int atop(int a, int w, verb v){
+object atop(object a, object w, verb v){
     switch(CONJCASE(a,w)){
         case NN: return domerr(0,v);
         case NV: return domerr(0,v);
@@ -66,7 +66,7 @@ int atop(int a, int w, verb v){
 }
 
 
-int reduce(int w, verb v){
+object reduce(object w, verb v){
     DECLFG;
     switch(gettag(w)){
     case LITERAL: return w;
@@ -91,12 +91,12 @@ int reduce(int w, verb v){
     return null;
 }
 
-int areduce(int w, verb v){
+object areduce(object w, verb v){
     return DERIV('/', reduce, 0, w, 0, 0, 0, 0, 0);
 }
 
 
-int scan(int w, verb v){
+object scan(object w, verb v){
     DECLFG;
     switch(gettag(w)){
     case LITERAL: return w;
@@ -125,12 +125,12 @@ int scan(int w, verb v){
     return null;
 }
 
-int ascan(int w, verb v){
+object ascan(object w, verb v){
     return DERIV('\\', scan, 0, w, 0, 0, 0, 0, 0);
 }
 
 
-int backscan(int w, verb v){
+object backscan(object w, verb v){
     DECLFG;
     switch(gettag(w)){
     case LITERAL: return w;
@@ -154,7 +154,7 @@ int backscan(int w, verb v){
     return null;
 }
 
-int abackscan(int w, verb v){
+object abackscan(object w, verb v){
     return DERIV(0x2340, backscan, 0, w, 0, 0, 0, 0, 0);
 }
 

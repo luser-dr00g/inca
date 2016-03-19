@@ -33,17 +33,17 @@
 #include "verb_private.h"
 #include "print.h"
 
-void common(int *ap, int *wp){
+void common(object *ap, object *wp){
     //promote smaller number to matching type
 }
 
 
-int vid (int w, verb v){
+object vid (object w, verb v){
     if (gettag(w)==ARRAY) return cache(ARRAY, makesolid(getptr(w)));
     return w;
 }
 
-int vplus (int a, int w, verb v){
+object vplus (object a, object w, verb v){
     common(&a,&w);
 
     if (gettag(a)==LITERAL && gettag(w)==ARRAY){
@@ -61,7 +61,7 @@ int vplus (int a, int w, verb v){
 }
 
 
-int vneg(int w, verb v){
+object vneg(object w, verb v){
     if (gettag(w)==ARRAY){
         array W = getptr(w);
         if (W->type == function){
@@ -76,7 +76,7 @@ int vneg(int w, verb v){
     return null;
 }
 
-int vminus(int a, int w, verb v){
+object vminus(object a, object w, verb v){
     common(&a,&w);
 
     if (gettag(a)==LITERAL && gettag(w)==ARRAY){
@@ -102,7 +102,7 @@ int vminus(int a, int w, verb v){
 }
 
 
-int vdivide(int a, int w, verb v){
+object vdivide(object a, object w, verb v){
     common(&a, &w);
 
     scalarop(a,vdivide,w,/,v)
@@ -110,14 +110,14 @@ int vdivide(int a, int w, verb v){
     return null;
 }
 
-int vrecip(int w, verb v){
+object vrecip(object w, verb v){
     //scalarop(1,vdivide,w,/,v)
     return vdivide(1, w, VT(DIV));
     return null;
 }
 
 
-int vsignum (int w, verb v){
+object vsignum (object w, verb v){
     switch(gettag(w)){
     case LITERAL: return getval(w)>0?1: getval(w)<0?-1: 0;
     case ARRAY: {
@@ -142,7 +142,7 @@ int vsignum (int w, verb v){
     return null;
 }
 
-int vtimes (int a, int w, verb v){
+object vtimes (object a, object w, verb v){
     common(&a, &w);
 
     if (gettag(a)==LITERAL && gettag(w)==ARRAY){
@@ -163,14 +163,14 @@ int vtimes (int a, int w, verb v){
 }
 
 
-int vabs (int w, verb v){
+object vabs (object w, verb v){
     scalarmonadfunc(vabs, w, (abs), v);
 
     return null;
 }
 
-static inline void swap(int *x, int *y){
-    int t = *x;
+static inline void swap(object *x, object *y){
+    object t = *x;
             *x = *y;
                  *y = t;
 }
@@ -184,7 +184,7 @@ int resid(int a, int w){
     return w % a;
 }
 
-int vresidue (int a, int w, verb v){
+object vresidue (object a, object w, verb v){
     DEBUG(1,"residue\n");
     IFDEBUG(1,print(a, 0));
     IFDEBUG(1,print(w, 0));
@@ -196,7 +196,7 @@ int vresidue (int a, int w, verb v){
 }
 
 
-int vshapeof (int w, verb v){
+object vshapeof (object w, verb v){
     switch(gettag(w)){
         //case LITERAL: return 1;
         case ARRAY: {
@@ -211,13 +211,13 @@ int vshapeof (int w, verb v){
     return cache(ARRAY, vector_n(0));
 }
 
-void mcopy(int *dest, int *src, int n){
+void mcopy(object *dest, object *src, int n){
     int i;
     for (i=0; i<n; i++)
         dest[i] = src[i];
 }
 
-int vreshape (int a, int w, verb v){
+object vreshape (object a, object w, verb v){
     DEBUG(1,"reshape\n");
     IFDEBUG(1,print(a, 0));
     IFDEBUG(1,print(w, 0));
@@ -290,7 +290,7 @@ recheck:
     return w;
 }
 
-int vtally (int w, verb v){
+object vtally (object w, verb v){
     switch(gettag(w)){
         case ARRAY: {
             array a = getptr(w);
@@ -301,7 +301,7 @@ int vtally (int w, verb v){
 }
 
 
-int viota (int w, verb v){
+object viota (object w, verb v){
 recheck:
     switch(gettag(w)){
         case LITERAL: return cache(ARRAY, iota(w));
@@ -323,7 +323,7 @@ recheck:
 }
 
 
-int vravel (int w, verb v){
+object vravel (object w, verb v){
     switch(gettag(w)){
         case LITERAL: {
             return cache(ARRAY, scalar(w));
@@ -347,7 +347,7 @@ int vravel (int w, verb v){
     return w;
 }
 
-int vcat (int a, int w, verb v){
+object vcat (object a, object w, verb v){
     DEBUG(1,"cat\n");
     IFDEBUG(1, print(a,0));
     IFDEBUG(1, print(w,0));
@@ -374,15 +374,15 @@ int vcat (int a, int w, verb v){
 }
 
 
-int vbox (int w, verb v){
+object vbox (object w, verb v){
     return cache(ARRAY, scalar(w));
 }
 
-int vlessthan (int a, int w, verb v){
+object vlessthan (object a, object w, verb v){
 }
 
 
-int vunbox (int w, verb v){
+object vunbox (object w, verb v){
     switch(gettag(w)){
         case ARRAY: {
             array W = getptr(w);
@@ -394,23 +394,23 @@ int vunbox (int w, verb v){
     return w;
 }
 
-int vgreaterthan (int a, int w, verb v){
+object vgreaterthan (object a, object w, verb v){
 }
 
 
-int vlink (int a, int w, verb v){
+object vlink (object a, object w, verb v){
     switch(gettag(w)){
         case ARRAY: return vcat(vbox(a,v),w,v);
     }
     return vcat(vbox(a,v),vbox(w,v),v);
 }
 
-int vprenul (int w, verb v){
+object vprenul (object w, verb v){
     return vlink(null,w,v);
 }
 
 
-int vhead (int w, verb v){
+object vhead (object w, verb v){
     switch(gettag(w)){
         case ARRAY: {
             array W = getptr(w);
@@ -421,7 +421,7 @@ int vhead (int w, verb v){
     return null;
 }
 
-int vtake (int a, int w, verb v){
+object vtake (object a, object w, verb v){
     if (gettag(a) == ARRAY) {
         array A = getptr(a);
         if (productdims(A->rank, A->dims) > 1) {
@@ -453,7 +453,7 @@ int vtake (int a, int w, verb v){
 }
 
 
-int vbehead (int w, verb v){
+object vbehead (object w, verb v){
     switch(gettag(w)){
         case ARRAY: {
             array W = getptr(w);
@@ -474,7 +474,7 @@ static inline int signof(int x){
     return x>=0? x==0? 0: 1: -1;
 }
 
-int vdrop (int a, int w, verb v){
+object vdrop (object a, object w, verb v){
     DEBUG(1, "drop\n");
     if (gettag(a)==ARRAY){
         array A = getptr(a);
@@ -505,7 +505,7 @@ int vdrop (int a, int w, verb v){
 }
 
 
-int vectorindexleft(int a, int w, verb v){
+object vectorindexleft(object a, object w, verb v){
     switch(gettag(a)){
     case LITERAL:
         switch(gettag(w)){
@@ -533,7 +533,7 @@ int vectorindexleft(int a, int w, verb v){
     } //switch
 }
 
-int unitindexleft(int a, int w, verb v){
+object unitindexleft(object a, object w, verb v){
     DEBUG(1, "unitindexleft\n");
     IFDEBUG(1, print(a, 0));
     IFDEBUG(1, print(w, 0));
@@ -571,17 +571,17 @@ recheck:
 }
 
 
-int vindexleft(int a, int w, verb v){
+object vindexleft(object a, object w, verb v){
     return unitindexleft(a, w, v);
     //return vectorindexleft(a, w, v);
 }
 
-int vindexright(int a, int w, verb v){
+object vindexright(object a, object w, verb v){
     return vindexleft(w,a,v);
 }
 
 
-int vbase(int a, int w, verb v){
+object vbase(object a, object w, verb v){
     switch(gettag(a)){
     case LITERAL:
         switch(gettag(w)){
@@ -601,10 +601,10 @@ int vbase(int a, int w, verb v){
             }
         }
     }
-    int pr = areduce(vtab[VERB_PLUS],v);
+    object pr = areduce(vtab[VERB_PLUS],v);
     int (*plusreduce)(int,verb) = ((verb)getptr(pr))->monad;
-    int times = DERIV(MODE1('='),vsignum,vtimes,0,0,0,0,0,0);
-    int ts = abackscan(vtab[VERB_MUL],v);
+    object times = DERIV(MODE1('='),vsignum,vtimes,0,0,0,0,0,0);
+    object ts = abackscan(vtab[VERB_MUL],v);
     int (*timesscan)(int,verb) = ((verb)getptr(ts))->monad;
     return plusreduce(
             vtimes(w,
@@ -615,7 +615,7 @@ int vbase(int a, int w, verb v){
 }
 
 
-int vencode(int a, int w, verb v){
+object vencode(object a, object w, verb v){
     DEBUG(1,"------\nencode\n");
     IFDEBUG(1,print(a,0));
     IFDEBUG(1,print(w,0));
@@ -636,7 +636,7 @@ int vencode(int a, int w, verb v){
                     DEBUG(1,"A->rank=%d\n",A->rank);
                     switch(A->rank){
                     case 1: {
-                            int drop = vdrop(-1,a, VT(DROP));
+                            object drop = vdrop(-1,a, VT(DROP));
                             DEBUG(1,"drop:");
                             IFDEBUG(1,print(drop, 0));
                             if (A->dims[0]
@@ -644,17 +644,17 @@ int vencode(int a, int w, verb v){
                                 return vcat( vencode(drop,
                                             0,VT(ENC)),
                                         w,VT(CAT));
-                            int tail = vtake(-1, a, VT(TAKE));
+                            object tail = vtake(-1, a, VT(TAKE));
                             IFDEBUG(1,print(tail, 0));
-                            int mod = vresidue(tail, w, VT(MOD));
+                            object mod = vresidue(tail, w, VT(MOD));
                             IFDEBUG(1,print(mod, 0));
-                            int e = vencode( drop,
+                            object e = vencode( drop,
                                         vdivide( vminus(w,
                                                 mod, VT(SUB)),
                                             tail, VT(DIV)),
                                         VT(ENC));
                             IFDEBUG(1,print(e, 0));
-                            int z = vcat(e, mod, VT(CAT));
+                            object z = vcat(e, mod, VT(CAT));
                             //z = vreshape(A->dims[0], z, VT(RHO));
                             z = vtake(-A->dims[0], z, VT(TAKE));
                             IFDEBUG(1,print(z, 0));
@@ -667,7 +667,7 @@ int vencode(int a, int w, verb v){
     return null;
 }
 
-int vcompress(int a, int w, verb v){
+object vcompress(object a, object w, verb v){
     DEBUG(1,"compress\n");
     IFDEBUG(1,print(a,0));
     IFDEBUG(1,print(w,0));
@@ -710,11 +710,11 @@ recheckw:
     return null;
 }
 
-int vexpand(int a, int w, verb v){
+object vexpand(object a, object w, verb v){
     DEBUG(1,"expand\n");
     IFDEBUG(1,print(a,0));
     IFDEBUG(1,print(w,0));
-    int sum = areduce(vtab[VERB_PLUS],v);
+    object sum = areduce(vtab[VERB_PLUS],v);
     int (*sumf)(int,verb) = ((verb)getptr(sum))->monad;
 
 recheck:
@@ -775,38 +775,38 @@ recheckw:
 }
 
 
-int vreverse(int w, verb v){
+object vreverse(object w, verb v){
     //printf("reverse\n");
     //print(w, 0);
-    int shapew = vshapeof(w, VT(RHO));
+    object shapew = vshapeof(w, VT(RHO));
     //print(shapew, 0);
-    int plus = vplus(-1,shapew, VT(PLUS));
+    object plus = vplus(-1,shapew, VT(PLUS));
     //print(plus, 0);
-    int iot = viota(vreshape(nil, shapew, VT(RHO)), VT(IOTA));
+    object iot = viota(vreshape(nil, shapew, VT(RHO)), VT(IOTA));
     //print(iot, 0);
-    int idx = vminus(plus, iot , VT(SUB));
+    object idx = vminus(plus, iot , VT(SUB));
     //print(idx, 0);
-    int idxw = vectorindexleft(idx, w, VT(INDL));
+    object idxw = vectorindexleft(idx, w, VT(INDL));
     //print(idxw, 0);
     return idxw;
 }
 
 
-int vrotate(int a, int w, verb v){
+object vrotate(object a, object w, verb v){
     //printf("rotate\n");
-    int shapew = vshapeof(w, VT(RHO));
+    object shapew = vshapeof(w, VT(RHO));
     //print(shapew, 0);
-    int iot = viota(shapew, VT(IOTA));
+    object iot = viota(shapew, VT(IOTA));
     //print(iot, 0);
-    int plus = vplus(a, iot, VT(PLUS));
+    object plus = vplus(a, iot, VT(PLUS));
     //print(plus, 0);
-    int idx = vresidue(shapew, plus, VT(MOD));
+    object idx = vresidue(shapew, plus, VT(MOD));
     //print(idx, 0);
     return vectorindexleft(idx, w, VT(INDL));
 }
 
 
-int vconceal(int w, verb v){
+object vconceal(object w, verb v){
     switch(gettag(w)){
     case LITERAL:
     case CHAR: return w;
@@ -822,7 +822,7 @@ int vconceal(int w, verb v){
 }
 
 
-int vreveal(int w, verb v){
+object vreveal(object w, verb v){
     switch(gettag(w)){
     case ARRAY: {
         array W = getptr(w);

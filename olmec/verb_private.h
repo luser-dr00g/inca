@@ -3,9 +3,9 @@
     VERB_ ## name,
 enum { VERBS_FOREACH(VERBTAB_ENUM) VERB_NOOP };
 
-int vtab[VERB_NOOP];
+object vtab[VERB_NOOP];
 
-int vectorindexleft(int a, int w, verb v);
+object vectorindexleft(object a, object w, verb v);
 
 // yield verb from verbtab given enum short name
 #define VT(x) getptr(vtab[VERB_##x])

@@ -8,7 +8,7 @@
     _('\\', 0x1e, '\\') \
 /**/
 struct xverb {
-    int id;
+    object id;
     verb verb;
     verb adverb;
 };

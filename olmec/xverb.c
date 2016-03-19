@@ -39,7 +39,7 @@ void init_xverb(symtab st){
     verb a,v;
     xverb x;
     symtab t;
-    int *p;
+    object *p;
     int n;
     XVERBS_FOREACH(DEFINE_XVERB_IN_ENV)
 }

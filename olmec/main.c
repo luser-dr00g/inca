@@ -140,7 +140,7 @@ int main() {
                     gettag(a->data[i]), getval(a->data[i]));
         DEBUG(1,"\n");
 
-        int x = execute_expression(a,env);
+        object x = execute_expression(a,env);
 
         if (!last_was_assn)
             print(x, 0);

@@ -14,7 +14,7 @@
 int printarray(array t, int width);
 
 /* return 1 if element is nonscalar */
-int checkatom(int x, int *pwidth){
+int checkatom(object x, int *pwidth){
     switch(gettag(x)){
     case NULLOBJ:
         *pwidth = strlen("NULL");
@@ -32,7 +32,7 @@ int checkatom(int x, int *pwidth){
     }
 }
 
-int printatom(int x, int width){
+int printatom(object x, int width){
     switch(gettag(x)){
     case NULLOBJ: printf("NULL");
                   break;
@@ -154,7 +154,7 @@ int printarray(array t, int width){
 }
 
 
-void print(int x, int width){
+void print(object x, int width){
     DEBUG(1,"%08x(%d,%d)", x, gettag(x), getval(x));
     switch(gettag(x)){
         default: printatom(x, width);

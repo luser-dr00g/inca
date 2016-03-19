@@ -116,12 +116,12 @@ void rehash(symtab st){
 
 /* find the associated node for a(n integer) string.
    string is passed by reference in case of prefix match,
-   in which case the original string is updated to pointer
+   in which case the original string is updated to point
    to the unmatched remainder.
     mode=0: prefix match
     mode=1: defining search
    */
-symtab findsym(symtab st, int **spp, int *n, int mode){
+symtab findsym(symtab st, object **spp, int *n, int mode){
     symtab last = st; // saved last-match value of st
 #define sp (*spp)     // sp is an (int*) "by reference"
     int *lasp = sp;   // saved last-match pointer
@@ -172,12 +172,12 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
 #undef sp
 
 
-void def(symtab st, int name, int v){
+void def(symtab st, object name, object v){
     switch(gettag(name)){
     case CHAR:
     case PCHAR:{
         int n = 1;
-        int *p = &name;
+        object *p = &name;
         DEBUG(2,"%08x(%d,%d) = %08x(%d,%d)\n",
                 name, gettag(name), getval(name),
                 v, gettag(v), getval(v));
@@ -187,7 +187,7 @@ void def(symtab st, int name, int v){
     case PROG: {
         array na = getptr(name);
         int n = na->dims[0];
-        int *p = na->data;
+        object *p = na->data;
         symtab tab = findsym(st,&p,&n,1);
         tab->value = v;
         } break;
@@ -197,7 +197,7 @@ void def(symtab st, int name, int v){
 void (define_symbol_n)(symtab st, int n, ...){
     va_list ap;
     int key[n-1];
-    int *p = key;
+    object *p = key;
 
     va_start(ap,n);
     for (int i=0; i<n-1; ++i)
@@ -209,10 +209,10 @@ void (define_symbol_n)(symtab st, int n, ...){
     tab->value = va_arg(ap,int);
 }
 
-int (symbol_value_n)(symtab st, int n, ...){
+object (symbol_value_n)(symtab st, int n, ...){
     va_list ap;
     int key[n];
-    int *p = key;
+    object *p = key;
 
     va_start(ap,n);
     for (int i=0; i<n; ++i)

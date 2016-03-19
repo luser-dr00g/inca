@@ -2,18 +2,18 @@
 #define ENCODING_H_
 #include "common.h"
 
-extern int null;
-extern int mark;
-extern int nil;
+extern object null;
+extern object mark;
+extern object nil;
 
 void init_en();
 
-int gettag(int d);
-int getval(int d);
-int newdata(int tag, int val);
+int gettag(object d);
+int getval(object d);
+object newdata(int tag, int val);
 
-int cache(int tag, void *ptr);
-void *getptr(int d);
-int getfill(int d);
+object cache(int tag, void *ptr);
+void *getptr(object d);
+object getfill(object d);
 
 #endif

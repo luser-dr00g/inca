@@ -298,12 +298,12 @@ int ravel_index(const int *vec, const int *dims, int n){
 
 
 // nb. cannot run on the ravel with non-solid indirect array
-int *elemr(array a, int idx){
+object *elemr(array a, int idx){
     if (a->type==function) return a->func(a,idx);
     else return a->data+idx;
 }
 
-int *elema(array a, const int *ind){
+object *elema(array a, const int *ind){
     int idx = 0;
     for (int i=0; i<a->rank; i++){
         idx += ind[i] * a->weight[i];
@@ -311,7 +311,7 @@ int *elema(array a, const int *ind){
     return elemr(a,idx + a->cons);
 }
 
-int *elemv(array a, va_list ap){
+object *elemv(array a, va_list ap){
     int idx = 0;
     for (int i=0; i<a->rank; i++){
         idx += va_arg(ap, int) * a->weight[i];
@@ -319,7 +319,7 @@ int *elemv(array a, va_list ap){
     return elemr(a,idx + a->cons);
 }
 
-int *elem(array a, ...){
+object *elem(array a, ...){
     va_list ap;
     int *z;
 
