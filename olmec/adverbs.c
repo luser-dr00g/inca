@@ -20,11 +20,10 @@
  * abackscan behaves like ascan but yields the partial reductions of decreasing
  * suffixes of the argument (`back`wards `scan`)
  */
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"
@@ -164,7 +163,7 @@ void init_av(symtab st){
     verb v;
 #define mnone 0
 #define dnone 0
-    ADVERBTAB(ADVERBTAB_DEF)
+    ADVERBS_FOREACH(ADVERBTAB_DEF)
 #undef mnone
 #undef dnone
 }

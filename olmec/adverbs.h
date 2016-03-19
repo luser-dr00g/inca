@@ -1,5 +1,5 @@
 
-#define ADVERBTAB(_) \
+#define ADVERBS_FOREACH(_) \
 /*base,   monad,     dyad,  f, g, h, mr,lr,rr*/ \
 _('&',    mnone,     amp,   0, 0, 0, 0, 0, 0 ) \
 _('@',    mnone,     atop,  0, 0, 0, 0, 0, 0 ) \
@@ -11,12 +11,13 @@ _(0x2340, abackscan, dnone, 0, 0, 0, 0, 0, 0 ) \
 
 #define mnone areduce
 #define dnone amp
-#define ADVERBTAB_DECL(id, monad, dyad, ...) \
-    int monad(int,verb); \
-    int dyad(int,int,verb);
-ADVERBTAB(ADVERBTAB_DECL)
+#define DECLARE_ADVERB_FUNCTIONS(id, fmonad, fdyad, ...) \
+    monad fmonad; \
+    dyad fdyad;
+ADVERBS_FOREACH(DECLARE_ADVERB_FUNCTIONS)
 #undef mnone
 #undef dnone
+#undef DECLARE_ADVERB_FUNCTIONS
 
 #define DERIV(id,...) \
     (v=malloc(sizeof*v), \
