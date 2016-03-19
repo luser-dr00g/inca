@@ -8,16 +8,16 @@
  * identifiers.
  */
 
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "common.h"
 #include "encoding.h"
 #include "symtab.h"
 #include "verbs.h"
 #include "xverb.h"
-#include "debug.h"
 
-#define XVERBTAB_DEF(id, vrb, adv) \
+#define DEFINE_XVERB_IN_ENV(id, vrb, adv) \
     p=(int[]){newdata(PCHAR, vrb)}; \
     n=1; \
     t=findsym(st, &p, &n, 0); \
@@ -42,6 +42,6 @@ void init_xverb(symtab st){
     symtab t;
     int *p;
     int n;
-    XVERBTAB(XVERBTAB_DEF)
+    XVERBS_FOREACH(DEFINE_XVERB_IN_ENV)
 }
 
