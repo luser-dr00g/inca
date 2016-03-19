@@ -21,11 +21,10 @@
  *  structures. 
  *
  */
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"
@@ -33,7 +32,6 @@
 #include "verbs.h"
 #include "adverbs.h"
 #include "verb_private.h"
-#include "debug.h"
 #include "print.h"
 
 void common(int *ap, int *wp){
@@ -537,44 +535,46 @@ int vectorindexleft(int a, int w, verb v){
 }
 
 int unitindexleft(int a, int w, verb v){
-    DEBUG(0, "unitindexleft\n");
-    IFDEBUG(0, print(a, 0));
-    IFDEBUG(0, print(w, 0));
+    DEBUG(1, "unitindexleft\n");
+    IFDEBUG(1, print(a, 0));
+    IFDEBUG(1, print(w, 0));
+recheck:
     switch(gettag(a)){
     case LITERAL:
-        DEBUG(0, "LIT\n");
+        DEBUG(1, "LIT\n");
             return vectorindexleft( vbase( vshapeof(w, VT(RHO)),
                         vreveal(a, VT(REVL)), VT(BASE)),
                     vravel(w, VT(CAT)), VT(INDL));
-    case ARRAY: if (((array)getptr(a))->rank == 1 &&
-                        ((array)getptr(a))->dims[0] == 1) {
-                    DEBUG(0, "vec, n=1\n");
-                    return vectorindexleft( vbase( vshapeof(w, VT(RHO)),
-                                vreveal(a, VT(REVL)), VT(BASE)),
-                            vravel(w, VT(CAT)), VT(INDL));
-                }
-        { //else
-            DEBUG(0, "ARR\n");
-        array A = getptr(a);
-        if (A->rank == 1) {
-            array Z = array_new_rank_dims(A->rank, A->dims);
-            int n = A->dims[0]; //productdims(A->rank, A->dims);
-            for (int i=0; i<n; ++i)
-                Z->data[i] = vectorindexleft(*elem(A,i), w, VT(INDL));
-            return cache(ARRAY, Z);
-        } else {
-            return vreshape(vshapeof(a, VT(RHO)),
-                        vindexleft(vravel(a, VT(CAT)), w, VT(INDL)), VT(RHO));
+    case ARRAY:
+        {
+            array A = getptr(a);
+            if (A->rank==0 ||
+                    (A->rank == 1 && A->dims[0] == 1)) {
+                DEBUG(1, "VEC\n");
+                return vectorindexleft( vbase( vshapeof(w, VT(RHO)),
+                            vreveal(a, VT(REVL)), VT(BASE)),
+                        vravel(w, VT(CAT)), VT(INDL));
+            }
+            DEBUG(1, "ARR\n");
+            if (A->rank == 1) {
+                array Z = array_new_rank_dims(A->rank, A->dims);
+                int n = A->dims[0]; //productdims(A->rank, A->dims);
+                for (int i=0; i<n; ++i)
+                    Z->data[i] = vindexleft(*elem(A,i), w, VT(INDL));
+                return cache(ARRAY, Z);
+            } else {
+                return vreshape(vshapeof(a, VT(RHO)),
+                            vindexleft(vravel(a, VT(CAT)), w, VT(INDL)), VT(RHO));
+            }
         }
-    }
     }
     return null;
 }
 
 
 int vindexleft(int a, int w, verb v){
-    //return unitindexleft(a, w, v);
-    return vectorindexleft(a, w, v);
+    return unitindexleft(a, w, v);
+    //return vectorindexleft(a, w, v);
 }
 
 int vindexright(int a, int w, verb v){
@@ -814,7 +814,8 @@ int vconceal(int w, verb v){
     case ARRAY: {
         array W = getptr(w);
         if (W->rank==0
-                || (W->rank==1 && W->dims[0]==1))
+                //|| (W->rank==1 && W->dims[0]==1)
+                )
             return w;
     }
     }
@@ -827,7 +828,8 @@ int vreveal(int w, verb v){
     case ARRAY: {
         array W = getptr(w);
         if (W->rank==0
-                || (W->rank==1 && W->dims[0]==1))
+                //|| (W->rank==1 && W->dims[0]==1)
+                )
             return *elem(W, 0);
     }
     }
@@ -839,7 +841,7 @@ void init_vb(symtab st){
     verb v;
 #define mnone 0
 #define dnone 0
-    VERBTAB(VERBTAB_DEF)
+    VERBS_FOREACH(DEFINE_VERB_IN_ENV)
 #undef mnone
 #undef dnone
 }

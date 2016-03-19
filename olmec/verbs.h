@@ -1,6 +1,6 @@
 #define MODE1(x) (x|1<<7)
 
-#define VERBTAB(_) \
+#define VERBS_FOREACH(_) \
 /*name base                   monad     dyad        f  g  h  mr lr rr*/ \
 _(PLUS,'+',                   vid,      vplus,      0, 0, 0, 0, 0, 0 ) \
 _(SUB, '-',                   vneg,     vminus,     0, 0, 0, 0, 0, 0 ) \
@@ -23,28 +23,29 @@ _(TAK2,0x2191/*up alt-y*/,    mnone,    vtake,      0, 0, 0, 0, 0, 0 ) \
 _(DRO2,0x2193/*down alt-u*/,  mnone,    vdrop,      0, 0, 0, 0, 0, 0 ) \
 _(COMP,0x001f,                mnone,    vcompress,  0, 0, 0, 0, 0, 0 ) \
 _(EXP, 0x001e,                mnone,    vexpand,    0, 0, 0, 0, 0, 0 ) \
-_(BASE,0x22a5,                mnone,    vbase,      0, 0, 0, 0, 0, 0 ) \
-_(ENC, 0x22a4,                mnone,    vencode,    0, 0, 0, 0, 0, 0 ) \
-_(ROT, 0x233d,                vreverse, vrotate,    0, 0, 0, 0, 0, 0 ) \
-_(CONC,0x2282,                vconceal, dnone,      0, 0, 0, 0, 0, 0 ) \
-_(REVL,0x2283,                vreveal,  dnone,      0, 0, 0, 0, 0, 0 ) \
+_(BASE,0x22a5/*alt-b*/,       mnone,    vbase,      0, 0, 0, 0, 0, 0 ) \
+_(ENC, 0x22a4/*alt-n*/,       mnone,    vencode,    0, 0, 0, 0, 0, 0 ) \
+_(ROT, 0x233d/*alt-%*/,       vreverse, vrotate,    0, 0, 0, 0, 0, 0 ) \
+_(CONC,0x2282/*alt-z*/,       vconceal, dnone,      0, 0, 0, 0, 0, 0 ) \
+_(REVL,0x2283/*alt-x*/,       vreveal,  dnone,      0, 0, 0, 0, 0, 0 ) \
 /**/
-typedef struct verb {
+struct verb {
     int id;
-    int (*monad)(int,struct verb*);
-    int (*dyad)(int,int,struct verb*);
+    monad *monad;
+    dyad *dyad;
     int f,g,h; /* operator arguments */
     int mr,lr,rr; /* monadic,left,right rank*/
-} *verb;
+};
 
 #define mnone vid
 #define dnone vplus
-#define VERBTAB_DECL(name, base, monad, dyad, ...) \
-    int monad(int,verb); \
-    int dyad(int,int,verb);
-VERBTAB(VERBTAB_DECL)
+#define DECLARE_VERB_FUNCTIONS(name, base, fmonad, fdyad, ...) \
+    monad fmonad; \
+    dyad fdyad;
+VERBS_FOREACH(DECLARE_VERB_FUNCTIONS)
 #undef mnone
 #undef dnone
+#undef DECLARE_VERB_FUNCTIONS
 
 extern int vtab[];
 
