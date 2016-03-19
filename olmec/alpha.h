@@ -13,7 +13,7 @@
    currently only output uses strings. only the first char of *input
    is currently matched.
  */
-#define ALPHATAB(_) \
+#define ALPHA_FOREACH(_) \
     _( SPACE, ' ', 0, " ", " " ) \
     _( a, 'a', 0, "a", "a" ) /* basic latin alphabet */ \
     _( b, 'b', 0, "b", "b" ) \
@@ -370,10 +370,10 @@
     _( RPAREN1,          ')',  1, ")", ")" ) \
     /* ALPHA_NAME base      ext input output */ \
     _( NULLCHAR, 0, 0, "", "" )
-#define ALPHATAB_ENT(a,...) {__VA_ARGS__},
+#define ALPHATAB_DATA(a,...) {__VA_ARGS__},
 struct alpha{
     int base;int ext;char*input;char*output;
-}alphatab[]={ALPHATAB(ALPHATAB_ENT)};
+}alphatab[]={ALPHA_FOREACH(ALPHATAB_DATA)};
 #define ALPHATAB_NAME(a,...) ALPHA_ ## a ,
-enum alphaname { ALPHATAB(ALPHATAB_NAME) };
+enum alphaname { ALPHA_FOREACH(ALPHATAB_NAME) };
     /* NB. ALPHA_NAME!=alphatab[ALPHA_NAME].base */
