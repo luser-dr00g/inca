@@ -102,10 +102,10 @@ static int min(int x, int y){
                     n>=3? items[s+2*dir].datum: 0, \
                     env) \
                 ); \
-        while (excess--) { \
-            ++minfs; \
-            items[minfs] = items[minfs-1+n]; \
+        for (int i=0; i<excess; ++i){ \
+            items[minfs+1+i] = items[minfs+i+n]; \
         } \
+        stack_reclaim(right, excess+1+minfs); \
     }
 
 
@@ -183,6 +183,11 @@ unsigned stack_element_count (stack s){
 static
 void stack_prune (stack s, unsigned n){
     s->next -= n;
+}
+
+static
+void stack_reclaim (stack s, unsigned n){
+    s->next += n;
 }
 
 static
