@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include "../ppnarg.h"
 
 #define MODE1(x) (x|1<<7) //add hi bit of ascii char
 
