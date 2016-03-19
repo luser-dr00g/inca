@@ -4,7 +4,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-#define MODE1(x) (x|1<<7)
+#define MODE1(x) (x|1<<7) //add hi bit of ascii char
 
 typedef struct datum {  // these two should be reversed for Big-Endian
     unsigned int val:24;
@@ -42,5 +42,14 @@ typedef int dyad(int a,int w,verb v);
 typedef struct xverb *xverb;
 
 typedef struct symtab *symtab;
+
+
+#ifdef DEBUGMODE
+    #define DEBUG(LVL,...) if (LVL<=DEBUGMODE) fprintf(stderr, __VA_ARGS__)
+    #define IFDEBUG(LVL,...) do if (LVL<=DEBUGMODE) { __VA_ARGS__; } while(0)
+#else
+    #define DEBUG(...)
+    #define IFDEBUG(...)
+#endif
 
 #endif
