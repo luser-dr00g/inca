@@ -82,12 +82,11 @@
  *  bypassing the creation of this intermediate copy.
  *
  */
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../ppnarg.h"
 
+#include "common.h"
 #include "encoding.h"
 #include "array.h"
 

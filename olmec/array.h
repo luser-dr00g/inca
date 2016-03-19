@@ -1,8 +1,8 @@
-#ifndef AR_H_
-#define AR_H_
+#ifndef ARRAY_H_
+#define ARRAY_H_
 #include "../ppnarg.h"
 
-typedef struct ar {
+struct array {
     int type;
     enum {
         none = 0,
@@ -13,8 +13,8 @@ typedef struct ar {
     int cons;    // constant term of the indexing formula
     int *weight; // corresponding coefficient in the indexing formula
     int *data;   // address of first array element
-    int *(*func)(struct ar *,int); // data function (if function type)
-} *array;
+    int *(*func)(array,int); // data function (if function type)
+};
 
 enum type {
     normal,
