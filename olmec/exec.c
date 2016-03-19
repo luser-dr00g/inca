@@ -70,8 +70,9 @@
 
  *  Now, the above case (NOUN VERB VERB NOUN) matches this production: 
 
-    /*    p[0]      p[1]      p[2]      p[3]      func   pre x y z   post,2//\
-    _(L1, EDGE+AVN, VRB,      VRB,      NOUN,     monad, -1, 2,3,-1,   1, 0) \
+//    p[0]      p[1]      p[2]      p[3]      func     start finish //\
+//-->items[3]   it[2]     it[1]     it[0]                         hack  //\
+_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 
  *  application of a monadic verb. The numbers in the production indicate 
  *  which elements should be preserved, and which should be passed to the 
@@ -108,11 +109,9 @@
  *  mal-formed configuration of the stacks, of the whole engine,
  *  a violation of the invariants. But we need it out of the way so the 
  *  remaining productions can effectively reduce the expression.
- *  So, just after the fancy switch-x-macro invocation, there is
- *  this hack:
- *
-                    if (i==L9)  //twiddle the mark for fake left paren
-                        stackpush(lstk,stackpop(rstk));
+ *  So, in the fake left paren production, there is this hack:
+
+        stack_push(left,stack_pop(right)) ) \
 
  *  So, I hope this explains what that's about. Without it, the 
  *  super-parens idea just fails to work with the grammar machine.
