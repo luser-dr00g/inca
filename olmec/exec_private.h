@@ -57,8 +57,8 @@ _(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,  0) \
 _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 _(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,  0) \
 _(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,  0) \
-_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      1,    2,  0) \
-_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      2,    1,  0) \
+_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,  0) \
+_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,  0) \
 _(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,  0) \
 _(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,  0) \
 _(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,  0) \
