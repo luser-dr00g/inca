@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "encoding.h"
 #include "symtab.h"
 #include "verbs.h"

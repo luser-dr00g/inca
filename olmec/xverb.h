@@ -1,3 +1,6 @@
+#ifndef XVERB_H_
+#define XVERB_H_
+#include "common.h"
 
 #define XVERBS_FOREACH(_) \
     /*name verb adverb*/\
@@ -12,3 +15,4 @@ struct xverb {
 
 void init_xverb(symtab st);
 
+#endif

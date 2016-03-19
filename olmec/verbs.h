@@ -1,4 +1,6 @@
-#define MODE1(x) (x|1<<7)
+#ifndef VERBS_H_
+#define VERBS_H_
+#include "common.h"
 
 #define VERBS_FOREACH(_) \
 /*name base                   monad     dyad        f  g  h  mr lr rr*/ \
@@ -51,3 +53,4 @@ extern int vtab[];
 
 void init_vb(symtab st);
 
+#endif

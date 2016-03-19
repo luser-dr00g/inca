@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
 #include "editor.h"
 #include "encoding.h"
 #include "symtab.h"

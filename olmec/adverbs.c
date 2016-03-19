@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"

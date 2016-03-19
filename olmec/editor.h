@@ -1,3 +1,4 @@
+#include "common.h"
 /* the raw-mode editor */
 
 int inputtobase(int c, int mode);

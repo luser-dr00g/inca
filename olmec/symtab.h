@@ -1,3 +1,6 @@
+#ifndef SYMBOL_H_
+#define SYMBOL_H_
+#include "common.h"
 /* symbol table */
 
 struct symtab {
@@ -13,3 +16,4 @@ symtab makesymtab(int n);
 symtab findsym(symtab st, int **spp, int *n, int mode);
 void def(symtab st, int name, int v);
 
+#endif

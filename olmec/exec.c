@@ -1,6 +1,5 @@
 #if 0
-/*
- *  Parsing and Execution
+/*  Parsing and Execution
 
  *  Execution in APL proceeds right-to-left and this is 
  *  accomplished with a relatively straightforward algorithm. 
@@ -122,7 +121,6 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "array.h"
 #include "encoding.h"
 #include "symtab.h"

@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "common.h"
 #include "array.h"
 #include "editor.h"
 #include "encoding.h"

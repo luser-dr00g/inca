@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
 #include "array.h" // array type
 #include "encoding.h" // atomic encoding
 #include "symtab.h"

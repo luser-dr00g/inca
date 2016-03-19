@@ -86,7 +86,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common.h"
 #include "encoding.h"
 #include "array.h"
 

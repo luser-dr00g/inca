@@ -43,7 +43,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
 #include "encoding.h"
 
 int gettag(int d){

@@ -1,3 +1,4 @@
+#include "common.h"
 
 #define ADVERBS_FOREACH(_) \
 /*base,   monad,     dyad,  f, g, h, mr,lr,rr*/ \

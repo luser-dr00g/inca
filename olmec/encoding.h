@@ -1,5 +1,6 @@
 #ifndef ENCODING_H_
 #define ENCODING_H_
+#include "common.h"
 
 extern int null;
 extern int mark;
