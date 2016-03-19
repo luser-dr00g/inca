@@ -1,9 +1,8 @@
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "editor.h"
 #include "encoding.h"
 #include "symtab.h"
@@ -12,10 +11,10 @@
 #include "xverb.h"
 #include "print.h"
 
-#include "debug.h"
 
 int printarray(array t, int width);
 
+/* return 1 if element is nonscalar */
 int checkatom(int x, int *pwidth){
     switch(gettag(x)){
     case NULLOBJ:
@@ -45,12 +44,20 @@ int printatom(int x, int width){
         else
             printf("%s", basetooutput(getval(x)));
         break;
-    case VERB:
-        printf("%*s", width,
-                basetooutput(getval( ((verb)getptr(x))->id ))); break;
-    case ADVERB:
-        printf("%*s", width,
-                basetooutput(getval( ((verb)getptr(x))->id ))); break;
+    case VERB: {
+        verb v = getptr(x);
+        if (v->f) print(v->f, width);
+        printf("%*s", width, basetooutput(getval(v->id)));
+        if (v->g) print(v->g, width);
+        break;
+    }
+    case ADVERB: {
+        verb v = getptr(x);
+        if (v->f) print(v->f, width);
+        printf("%*s", width, basetooutput(getval(v->id)));
+        if (v->g) print(v->g, width);
+        break;
+    }
     case XVERB:
         printf("%*s", width,
                 basetooutput(getval( ((xverb)getptr(x))->id ))); break;
@@ -128,11 +135,11 @@ int printarray(array t, int width){
         printindexdisplay(t);
     else
         switch(t->rank){
-        case 0: DEBUG(1,"%*d\n", maxwidth, *t->data); break;
+        case 0: //DEBUG(1,"%*d\n", maxwidth, *t->data);
                 printatom(t->data[0], maxwidth);
                 break;
         case 1: for (int i=0; i<t->dims[0]; ++i) {
-                    DEBUG(1,"%*d\n", maxwidth, *elem(t,i));
+                    //DEBUG(1,"%*d\n", maxwidth, *elem(t,i));
                     printatom(*elem(t,i), maxwidth);
                 }
                 break;
@@ -151,13 +158,13 @@ int printarray(array t, int width){
 void print(int x, int width){
     DEBUG(1,"%08x(%d,%d)", x, gettag(x), getval(x));
     switch(gettag(x)){
-        default: printatom(x, 0);
+        default: printatom(x, width);
                  printf("\n");
                  break;
         case PROG:
         case ARRAY: {
             array t = getptr(x);
-            printarray(t, 0);
+            printarray(t, width);
             printf("\n");
 
         } break;
