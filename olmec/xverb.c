@@ -21,15 +21,15 @@
     n=1; \
     t=findsym(st, &p, &n, 0); \
     DEBUG(3,"X%08x(%d,%d)\n", \
-            t->val, gettag(t->val), getval(t->val)); \
-    v=getptr(t->val); \
+            t->value, gettag(t->value), getval(t->value)); \
+    v=getptr(t->value); \
 \
     p=(int[]){newdata(PCHAR, adv)}; \
     n=1; \
     t=findsym(st, &p, &n, 0); \
     DEBUG(3,"X%08x(%d,%d)\n", \
-            t->val, gettag(t->val), getval(t->val)); \
-    a=getptr(t->val); \
+            t->value, gettag(t->value), getval(t->value)); \
+    a=getptr(t->value); \
 \
     x=malloc(sizeof*x); \
     *x=(struct xverb){newdata(PCHAR, id), v, a}; \

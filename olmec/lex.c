@@ -100,7 +100,7 @@ void check_quadneg(symtab st){
     int *p = name->data;
     int n = 2;
     symtab t = findsym(st, &p, &n, 0);
-    quadneg = t->val;
+    quadneg = t->value;
     DEBUG(2,"quadneg=%d\n",quadneg);
 }
 

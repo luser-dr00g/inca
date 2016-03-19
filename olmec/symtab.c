@@ -55,7 +55,7 @@ symtab makesymtab(int n){
     symtab z = malloc(sizeof *z);
     if (z){
         z->key = 0;  // key int transitioning into this node
-        z->val = 0;  // associated value (pointer to struct symtab)
+        z->value = 0;  // associated value (pointer to struct symtab)
         z->n = n;    // num slots in table
         z->tab = calloc(n, sizeof *z->tab);  // hashtable of child nodes
     }
@@ -139,7 +139,7 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
         if (*t) { // slot not empty
             st = *t;
             sp++;
-            if ((*t)->val != null){ // save partial match
+            if ((*t)->value != null){ // save partial match
                 last = st;
                 lasp = sp;
                 lasn = nn;
@@ -158,7 +158,7 @@ symtab findsym(symtab st, int **spp, int *n, int mode){
                 lasp = sp;
                 last = st;
                 st->key = *sp++;
-                st->val = null;
+                st->value = null;
                 break;
             }
         }
@@ -182,16 +182,45 @@ void def(symtab st, int name, int v){
                 name, gettag(name), getval(name),
                 v, gettag(v), getval(v));
         symtab tab =findsym(st,&p,&n,1);
-        tab->val = v;
+        tab->value = v;
         } break;
     case PROG: {
         array na = getptr(name);
         int n = na->dims[0];
         int *p = na->data;
         symtab tab = findsym(st,&p,&n,1);
-        tab->val = v;
+        tab->value = v;
         } break;
     }
+}
+
+void (define_symbol_n)(symtab st, int n, ...){
+    va_list ap;
+    int key[n-1];
+    int *p = key;
+
+    va_start(ap,n);
+    for (int i=0; i<n-1; ++i)
+        key[i]=va_arg(ap,int);
+    va_end(ap);
+    --n;
+
+    symtab tab = findsym(st,&p,&n,1);
+    tab->value = va_arg(ap,int);
+}
+
+int (symbol_value_n)(symtab st, int n, ...){
+    va_list ap;
+    int key[n];
+    int *p = key;
+
+    va_start(ap,n);
+    for (int i=0; i<n; ++i)
+        key[i]=va_arg(ap,int);
+    va_end(ap);
+
+    symtab tab = findsym(st,&p,&n,0);
+    return tab->value;
 }
 
 
@@ -201,7 +230,7 @@ int tests_run = 0;
 
 #include <stdio.h>
 
-struct symtab st = { .key = 0, .val = 0, .n = 10, .tab=(struct symtab *[10]){0} };
+struct symtab st = { .key = 0, .value = 0, .n = 10, .tab=(struct symtab *[10]){0} };
 
 static char *test_put_get(){
     int array[] = {48,49,50};
@@ -213,13 +242,13 @@ static char *test_put_get(){
     n = 3;
     t = findsym(&st,&sym,&n,1);
     //printf("%p\n",(void*)t);
-    t->val = 42;
+    t->value = 42;
 
     sym = array;
     n = 3;
     t = findsym(&st,&sym,&n,0);
     //printf("%p\n",(void*)t);
-    test_case(t->val != 42);
+    test_case(t->value != 42);
     printf("%d\n", n);
     test_case(n != 0);
 

@@ -110,7 +110,7 @@ int main() {
     init_en();
     init_array();
     env = makesymtab(10);
-    env->val = null;
+    env->value = null;
     init_vb(env);
     init_av(env);
     init_xverb(env);

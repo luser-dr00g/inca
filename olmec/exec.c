@@ -336,28 +336,28 @@ int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
         int *p = s;
         DEBUG(1,"%d ", n);
         symtab tab = findsym(env,&p,&n,0);
-        if (tab->val == null) {
+        if (tab->value == null) {
             printf("error undefined prefix\n");
             return x.datum;
         }
 
         while (n){ //while name not exhausted
             DEBUG(0,"%d<-%08x(%d,%d)\n", n-n0,
-                    tab->val,gettag(tab->val),getval(tab->val));
+                    tab->value,gettag(tab->value),getval(tab->value));
             DEBUG(1,"%d ", n);
-            stack_push_datum(left, tab->val);           //pushback value
+            stack_push_datum(left, tab->value);           //pushback value
             s = p;
             n0 = n;
             tab = findsym(env,&p,&n,0);         //lookup remaining name
-            if (tab->val == null) {
+            if (tab->value == null) {
                 printf("error undefined internal\n");
                 return x.datum;
             }
         }
 
         //replace name with defined value
-        DEBUG(0,"==%08x(%d,%d)\n", tab->val, gettag(tab->val), getval(tab->val));
-        stack_push_datum(right, tab->val);
+        DEBUG(0,"==%08x(%d,%d)\n", tab->value, gettag(tab->value), getval(tab->value));
+        stack_push_datum(right, tab->value);
     }
     return 0;
 }
