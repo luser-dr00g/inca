@@ -52,18 +52,19 @@ static inline int classify(object x){
 // specific cases of a switch statement.
 #define PARSE_PRODUCTIONS_FOREACH(_) \
 /*    p[0]      p[1]      p[2]      p[3]      func     start finish */\
-/*-->items[3]   it[2]     it[1]     it[0]                           */\
-_(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1 ) \
-_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0 ) \
-_(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2 ) \
-_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0 ) \
-_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      1,    2 ) \
-_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      2,    1 ) \
-_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0 ) \
-_(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1 ) \
-_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1 ) \
-_(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2 ) \
-_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1 ) \
+/*-->items[3]   it[2]     it[1]     it[0]                         hack  */\
+_(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,  0) \
+_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
+_(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,  0) \
+_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,  0) \
+_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      1,    2,  0) \
+_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      2,    1,  0) \
+_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,  0) \
+_(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,  0) \
+_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,  0) \
+_(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,  \
+        stack_push(left,stack_pop(right)) ) \
+_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,  0) \
 /**/
 
 // generate labels to coordinate table and execution
@@ -86,7 +87,7 @@ static int min(int x, int y){
     return x<y? x: y;
 }
 
-#define PRODUCTION_ELSEIFS(label, p1,p2,p3,p4, func, s, f) \
+#define PRODUCTION_ELSEIFS(label, p1,p2,p3,p4, func, s, f, hack) \
     else if (matches_ptab_pattern(items, label)) { \
         stack_prune(right, 4); \
         int dir = f-s>0 ? 1 : -1; \
@@ -106,6 +107,7 @@ static int min(int x, int y){
             items[minfs+1+i] = items[minfs+i+n]; \
         } \
         stack_reclaim(right, excess+1+minfs); \
+        (void)hack; \
     }
 
 
