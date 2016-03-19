@@ -167,14 +167,14 @@ object execute_expression(array expr, symtab env){
 
 static
 int is_pronoun(stack_element x){
-    return qprog(x.datum);
     return x.code & VAR;
+    return qprog(x.datum);
 }
 
 static
 int is_assn(stack_element x){
+    return x.code & ASSN;
     return qassn(x.datum);
-    return x.code && ASSN;
 }
 
 static
@@ -312,8 +312,8 @@ object punc(object paren, object x, object dummy2, symtab env){
 static
 int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
 
-    if (!stack_is_empty(right)
-            && is_assn(*stack_top_elements_address(right, 1))){
+    if (//!stack_is_empty(right) &&  //always NUL at least
+            is_assn(*stack_top_elements_address(right, 1))){
         DEBUG(1,"pass name\n");
         stack_push(right, x);   //assignment: no lookup
     } else {
@@ -332,7 +332,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
                 } break;
         }
 
-        int *p = s;
+        object *p = s;
         DEBUG(1,"%d ", n);
         symtab tab = findsym(env,&p,&n,0);
         if (tab->value == null) {

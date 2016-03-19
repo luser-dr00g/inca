@@ -27,10 +27,10 @@ _( NUL  = 16384, qnull, gettag(x)==NULLOBJ ) \
 /**/
 
 // declare predicate functions
-#define DECLARE_PREDICATE_FUNCTION(enum_def,fname,...) int fname(int);
+#define DECLARE_PREDICATE_FUNCTION(enum_def,fname,...) int fname(object);
 PREDICATES_FOREACH(DECLARE_PREDICATE_FUNCTION)
 
 extern int last_was_assn;
 // execute an expression e with environment st
-int execute_expression(array expr, symtab st);
+object execute_expression(array expr, symtab st);
 
