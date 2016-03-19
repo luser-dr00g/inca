@@ -7,6 +7,8 @@
 
 #define MODE1(x) (x|1<<7) //add hi bit of ascii char
 
+typedef int object;
+
 typedef struct datum {  // these two should be reversed for Big-Endian
     unsigned int val:24;
     unsigned int tag:8; // hi-bit of tag should overlay the sign bit

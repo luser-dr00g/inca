@@ -129,7 +129,6 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 #include "xverb.h"
 #include "exec.h"
 
-typedef int object;
 #include "exec_private.h"
 
 int last_was_assn;

@@ -1,4 +1,8 @@
 
+typedef int token;
+typedef int state;
+typedef int state_and_action_code;
+
 /*
  * The transition table and state set
  *

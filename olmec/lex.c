@@ -52,10 +52,6 @@ int quadneg;  // hi-minus v. minus semantics.
               // the value from the symbol table is
               // cached here at the start of scan_expression
 
-typedef int token;
-typedef int state;
-typedef int state_and_action_code;
-
 #include "lex_private.h"
 
 array scan_expression(int *s, int n, symtab env){
