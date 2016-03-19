@@ -1,8 +1,8 @@
-#include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "array.h"
 #include "editor.h"
 #include "encoding.h"
@@ -13,7 +13,6 @@
 #include "verbs.h"
 #include "adverbs.h"
 #include "xverb.h"
-#include "debug.h"
 #include "print.h"
 
 symtab env;
