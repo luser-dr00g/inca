@@ -1,4 +1,3 @@
-int quadneg;
 
 /*
  * The transition table and state set
