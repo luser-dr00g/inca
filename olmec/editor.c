@@ -34,7 +34,8 @@ $ ./olmec
  * charset codes. The VT codes are largely a crutch until I better
  * understand how to interface Unicode more directly with Xterm.
  * In particular, diaeresis and macron and a few others do not 
- * copy correctly with mouse selection.
+ * copy correctly with mouse selection. They display wrongly pasted
+ * here in the source in vim.
  * 
  */
 #include<errno.h>
@@ -80,6 +81,8 @@ struct termios tm;
 
 void specialtty(){
 
+    // is the use of these causing my problems
+    // outputing macron as \xc2\xaf or \xaf ?
     fputs(ESC()")B",stdout); // set G1 charset to B:usascii
     fputs(ESC(*0),stdout); // set G2 to 0:line drawing ESC(n)
     fputs(ESC(+A),stdout); // set G3 to A:"uk" accented ESC(o) (HI_MINUS)
