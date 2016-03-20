@@ -17,10 +17,13 @@
 symtab env;
 
 void init_qneg(symtab st){
+#if 0
     array name = array_new_dims(2);
     name->data[0] = newdata(PCHAR, 0x2395);
     name->data[1] = newdata(PCHAR, '-');
     def(st, cache(PROG, name), 0);
+#endif
+    define_symbol(st, newdata(PCHAR, 0x2395),newdata(PCHAR, '-'), 0);
 }
 
 // define quad-k variable illustrating alt-keybaord layout
