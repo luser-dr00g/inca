@@ -1,3 +1,18 @@
+/*
+ *  The central concept of encoding data is the use of the basic `int` type
+ *  for "everything". We chop the 32 bits into an 8 bit tag[*] and 24 bit value.
+ *  So we can't deal with literal numbers that are larger than 16.7 million 
+ *  or so. 
+ *
+ *  An `int` which contains one of our encoded-integer values should be 
+ *  declared `object` to convey this semantics to the reader.
+ *  Conversely, having determined that an object's tag is LITERAL,
+ *  code may feel free to treat it as a restricted-range integer value.
+ *
+ *  [*] since we treat negative numbers as encoding to themselves, in essence
+ *  we only have a 7bit tag to play with.
+ */
+
 #ifndef COMMON_H_
 #define COMMON_H_
 
