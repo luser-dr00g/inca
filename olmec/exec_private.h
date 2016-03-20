@@ -54,7 +54,7 @@ static inline int classify(object x){
 _(L0, ANY,      ANY,      ANY,      NIL,      niladic,  0,    0,     0) \
 _(L1, ANY,      ANY,      NIL,      ANY,      niladic,  1,    1,     0) \
 _(L2, ANY,      NIL,      ANY,      ANY,      niladic,  2,    2,     0) \
-_(L3, NIL,      ANY,      ANY,      ANY,      niladic   3,    3,     0) \
+_(L3, NIL,      ANY,      ANY,      ANY,      niladic,  3,    3,     0) \
 _(L4, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,     0) \
 _(L5, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,     0) \
 _(L6, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,     0) \
