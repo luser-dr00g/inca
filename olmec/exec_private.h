@@ -1,6 +1,6 @@
 
-/* predicate functions are instantiated according to the table
-   defined in the ex.h and are also exported.
+/* predicate functions are instantiated according to the 
+ * PREDICATES_FOREACH X-macro.
    the q[] function array is used by classify to apply all 
    predicate functions yielding a sum of all applicable codes
    defined in the table. Specific qualities or combinations 
@@ -39,42 +39,38 @@ static inline int classify(object x){
 // the Parse Table defines the grammar of the language
 // At each stack move, the top four elements of the right stack
 // are checked against each of these patterns. A matching pattern
-// returns element t[pre] from the temp area to the right stack
-// then calls func(t[x],t[y],t[z]) and pushes the result to the
-// right stack, then pushes t[post] and t[post2]. 
-// A -1 in any of these positions means do nothing, or do not
-// bother to pass anything meaningful. That is, any of the x,y,z
-// parameters marked -1 correspond to a "dummy" argument of 
-// the function which is there in order that all handler
-// functions have the same signature.
+// causes the designated span of elements to be passed to the
+// indicated function and the result interleaved back to the
+// same position (shifting higher elements down and adjusting
+// the top-of-stack pointer).
 //
 // The table itself is transformed via macro-expansion into
-// specific cases of a switch statement.
+// branches of an if-else chain.
 #define PARSE_PRODUCTIONS_FOREACH(_) \
-/*    p[0]      p[1]      p[2]      p[3]      func     start finish */\
-/*-->items[3]   it[2]     it[1]     it[0]                         hack  */\
-_(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,  0) \
-_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
-_(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,  0) \
-_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,  0) \
-_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,  0) \
-_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,  0) \
-_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,  0) \
-_(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,  0) \
-_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,  0) \
-_(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,  \
-        stack_push(left,stack_pop(right)) ) \
-_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,  0) \
+/*    p[0]      p[1]      p[2]      p[3]    */ \
+/*-->items[3]  items[2]  items[1]  items[0] */ \
+/*                    items[start..finish] => func(items[start..finish])   */\
+/*                                            func      start finish hack  */\ 
+_(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,     0) \
+_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,     0) \
+_(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,     0) \
+_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,     0) \
+_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,     0) \
+_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,     0) \
+_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,     0) \
+_(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
+_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
+_(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
+                                    stack_push(left,stack_pop(right)) ) \
+_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,     0) \
 /**/
 
-// generate labels to coordinate table and execution
-enum {
+enum { // generate labels to coordinate table and execution
 #define PRODUCTION_LABEL(label, ...) label,
     PARSE_PRODUCTIONS_FOREACH(PRODUCTION_LABEL)
 #undef PRODUCTION_LABEL
 };
 
-// create parsetab array of structs containing the patterns
 static
 struct parsetab { int c[4]; } ptab[] = {
 #define PRODUCTION_PATTERNS(label, pat1, pat2, pat3, pat4, ...) \
@@ -122,6 +118,13 @@ object punc(object x, object dummy, object dummy2, symtab st);
 /* stack type
    the size is generously pre-calculated
    and so we can skip all bounds checking.
+
+   An idea generously implemented by Tim Rentsch caches the results
+   of the classify() function instead of repeatedly recomputing them.
+   Thus the stack_element has two members. And the special function
+   stack_push_datum() must be used whenever a new object enters the
+   stack 'arena' in order to call classify() upon it.
+
  */
 
 typedef struct stack_element {
