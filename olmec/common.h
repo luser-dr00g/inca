@@ -54,6 +54,7 @@ enum tag {
 typedef struct array *array;
 
 typedef struct verb *verb; // also used for adverbs
+typedef object nilad(verb v);
 typedef object monad(object w,verb v);
 typedef object dyad(object a,object w,verb v);
 

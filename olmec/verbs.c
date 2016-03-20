@@ -603,7 +603,7 @@ object vbase(object a, object w, verb v){
     }
     object pr = areduce(vtab[VERB_PLUS],v);
     int (*plusreduce)(int,verb) = ((verb)getptr(pr))->monad;
-    object times = DERIV(MODE1('='),vsignum,vtimes,0,0,0,0,0,0);
+    object times = DERIV(MODE1('='),0,vsignum,vtimes,0,0,0,0,0,0);
     object ts = abackscan(vtab[VERB_MUL],v);
     int (*timesscan)(int,verb) = ((verb)getptr(ts))->monad;
     return plusreduce(
@@ -835,12 +835,28 @@ object vreveal(object w, verb v){
     return w;
 }
 
+object vnil(verb v){
+    printf("niladic verb\n");
+    return 42;
+}
+
+object vnoresult(object w, verb v){
+    printf("!no result!\n");
+    return mark;
+}
+
+object vnoresultd(object a, object w, verb v){
+    return vnoresult(w,v);
+}
+
 
 void init_vb(symtab st){
     verb v;
+#define nnone 0
 #define mnone 0
 #define dnone 0
     VERBS_FOREACH(DEFINE_VERB_IN_ENV)
+#undef nnone
 #undef mnone
 #undef dnone
 }

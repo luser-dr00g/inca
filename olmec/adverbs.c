@@ -44,9 +44,9 @@ object on2(object a, object w, verb v){ DECLFG; return f2(g1(a,gv),g1(w,gv),fv);
 object amp(object a, object w, verb v){
     switch(CONJCASE(a,w)){
         case NN: return domerr(0,v);
-        case NV: return DERIV('&', withl, NULL, a, w, 0, 0, 0, 0);
-        case VN: return DERIV('&', withr, NULL, a, w, 0, 0, 0, 0);
-        case VV: return DERIV('&', on1,   on2,  a, w, 0, 0, 0, 0);
+        case NV: return DERIV('&', NULL, withl, NULL, a, w, 0, 0, 0, 0);
+        case VN: return DERIV('&', NULL, withr, NULL, a, w, 0, 0, 0, 0);
+        case VV: return DERIV('&', NULL, on1,   on2,  a, w, 0, 0, 0, 0);
     }
 }
 
@@ -60,7 +60,7 @@ object atop(object a, object w, verb v){
         case VN: return domerr(0,v);
         case VV: {
             v = getptr(w);
-            return DERIV('@', on1, atop2, a, w, 0, v->mr, v->lr, v->rr);
+            return DERIV('@', NULL, on1, atop2, a, w, 0, v->mr, v->lr, v->rr);
         } 
     }
 }
@@ -92,7 +92,7 @@ object reduce(object w, verb v){
 }
 
 object areduce(object w, verb v){
-    return DERIV('/', reduce, 0, w, 0, 0, 0, 0, 0);
+    return DERIV('/', NULL, reduce, 0, w, 0, 0, 0, 0, 0);
 }
 
 
@@ -126,7 +126,7 @@ object scan(object w, verb v){
 }
 
 object ascan(object w, verb v){
-    return DERIV('\\', scan, 0, w, 0, 0, 0, 0, 0);
+    return DERIV('\\', NULL, scan, 0, w, 0, 0, 0, 0, 0);
 }
 
 
@@ -155,14 +155,16 @@ object backscan(object w, verb v){
 }
 
 object abackscan(object w, verb v){
-    return DERIV(0x2340, backscan, 0, w, 0, 0, 0, 0, 0);
+    return DERIV(0x2340, NULL, backscan, 0, w, 0, 0, 0, 0, 0);
 }
 
 void init_av(symtab st){
     verb v;
+#define nnone 0
 #define mnone 0
 #define dnone 0
     ADVERBS_FOREACH(ADVERBTAB_DEF)
+#undef nnone
 #undef mnone
 #undef dnone
 }

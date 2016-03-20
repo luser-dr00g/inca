@@ -51,18 +51,22 @@ static inline int classify(object x){
 /*-->items[3]  items[2]  items[1]  items[0] */ \
 /*                    items[start..finish] => func(items[start..finish])   */\
 /*                                            func      start finish hack  */\ 
-_(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,     0) \
-_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,     0) \
-_(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,     0) \
-_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,     0) \
-_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,     0) \
-_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,     0) \
-_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,     0) \
-_(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
-_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
-_(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
+_(L0, ANY,      ANY,      ANY,      NIL,      niladic,  0,    0,     0) \
+_(L1, ANY,      ANY,      NIL,      ANY,      niladic,  1,    1,     0) \
+_(L2, ANY,      NIL,      ANY,      ANY,      niladic,  2,    2,     0) \
+_(L3, NIL,      ANY,      ANY,      ANY,      niladic   3,    3,     0) \
+_(L4, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,     0) \
+_(L5, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,     0) \
+_(L6, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,     0) \
+_(L7, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,     0) \
+_(L8, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,     0) \
+_(L9, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,     0) \
+_(L10,EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,     0) \
+_(L11,VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
+_(L12,LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
+_(L13,MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
-_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,     0) \
+_(L14,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution
@@ -99,6 +103,7 @@ static int min(int x, int y){
                     n>=3? items[s+2*dir].datum: 0, \
                     env) \
                 ); \
+        minfs -= is_mark(items[minfs]); \
         for (int i=0; i<excess; ++i){ \
             items[minfs+1+i] = items[minfs+i+n]; \
         } \
@@ -107,6 +112,7 @@ static int min(int x, int y){
     }
 
 
+object niladic(object f, object dummy, object dummy2, symtab env);
 object monadic(object f, object y, object dummy, symtab st);
 object dyadic(object x, object f, object y, symtab st);
 object adv(object f, object g, object dummy, symtab st);
@@ -202,6 +208,7 @@ stack_element *stack_top_elements_address (stack s, unsigned n){
 
 static int is_pronoun(stack_element x);
 static int is_assn(stack_element x);
+static int is_mark(stack_element x);
 static size_t sum_symbol_lengths(array e, int n);
 static int parse_and_lookup_name(stack left, stack right, stack_element x, symtab st);
 static stack new_left_stack_for (array expr);

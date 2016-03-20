@@ -8,22 +8,23 @@ _( VAR  =     2, qprog, gettag(x)==PROG \
 _( NOUN =     4, qnoun, gettag(x)==LITERAL \
                  || gettag(x)==CHAR \
                  || gettag(x)==ARRAY ) \
-_( MON  =     8, qmon, (gettag(x)==VERB && ((verb)getptr(x))->monad) \
+_( NIL  =     8, qnil, (gettag(x)==VERB && ((verb)getptr(x))->nilad) ) \
+_( MON  =    16, qmon, (gettag(x)==VERB && ((verb)getptr(x))->monad) \
                  || (gettag(x)==XVERB && ((xverb)getptr(x))->verb->monad) ) \
-_( DYA  =    16, qdya, (gettag(x)==VERB && ((verb)getptr(x))->dyad) \
+_( DYA  =    32, qdya, (gettag(x)==VERB && ((verb)getptr(x))->dyad) \
                  || (gettag(x)==XVERB && ((xverb)getptr(x))->verb->dyad) ) \
-_( VRB  =    32, qverb, qmon(x) || qdya(x) ) \
-_( DEX  =    64, qdex, 0 ) /*dextri-monadic verb*/\
-_( ADV  =   128, qadv, (gettag(x)==ADVERB && ((verb)getptr(x))->monad) \
+_( VRB  =    64, qverb, qmon(x) || qdya(x) ) \
+_( DEX  =   128, qdex, 0 ) /*dextri-monadic verb*/\
+_( ADV  =   256, qadv, (gettag(x)==ADVERB && ((verb)getptr(x))->monad) \
                  || (gettag(x)==XVERB && ((xverb)getptr(x))->adverb->monad) ) \
-_( LEV  =   256, qlev, 0 ) /*sinister adverb*/\
-_( CONJ =   512, qconj, (gettag(x)==ADVERB && ((verb)getptr(x))->dyad) \
+_( LEV  =   512, qlev, 0 ) /*sinister adverb*/\
+_( CONJ =  1024, qconj, (gettag(x)==ADVERB && ((verb)getptr(x))->dyad) \
                  || (gettag(x)==XVERB && ((xverb)getptr(x))->adverb->dyad) ) \
-_( MARK =  1024, qmark, gettag(x)==MARKOBJ ) \
-_( ASSN =  2048, qassn, gettag(x)==PCHAR && getval(x) == 0x2190 ) \
-_( LPAR =  4096, qlpar, gettag(x)==LPAROBJ ) \
-_( RPAR =  8192, qrpar, gettag(x)==RPAROBJ ) \
-_( NUL  = 16384, qnull, gettag(x)==NULLOBJ ) \
+_( MARK =  2048, qmark, gettag(x)==MARKOBJ ) \
+_( ASSN =  4096, qassn, gettag(x)==PCHAR && getval(x) == 0x2190 ) \
+_( LPAR =  8192, qlpar, gettag(x)==LPAROBJ ) \
+_( RPAR = 16384, qrpar, gettag(x)==RPAROBJ ) \
+_( NUL  = 32768, qnull, gettag(x)==NULLOBJ ) \
 /**/
 
 // declare predicate functions

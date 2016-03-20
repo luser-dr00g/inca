@@ -167,14 +167,19 @@ object execute_expression(array expr, symtab env){
 
 static
 int is_pronoun(stack_element x){
-    return x.code & VAR;
+    return !!(x.code & VAR);
     return qprog(x.datum);
 }
 
 static
 int is_assn(stack_element x){
-    return x.code & ASSN;
+    return !!(x.code & ASSN);
     return qassn(x.datum);
+}
+
+static
+int is_mark(stack_element x){
+    return !!(x.code & MARK);
 }
 
 static
@@ -217,6 +222,16 @@ int penultimate_prereleased_value (stack s){
 /* Parser Actions,
    each function is called with x y z parameters defined in PARSE_PRODUCTIONS_FOREACH 
  */
+object niladic(object f, object dummy, object dummy2, symtab env){
+    verb v = getptr(f);
+    if (!v->nilad){
+        printf("nilad undefined\n");
+        return null;
+    }
+    last_was_assn = 0;
+    return v->nilad(v);
+}
+
 object monadic(object f, object y, object dummy, symtab env){
     DEBUG(1,"monad %08x(%d,%d) %08x(%d,%d)\n",
             f, gettag(f), getval(f),
