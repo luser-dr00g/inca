@@ -147,12 +147,16 @@ object execute_expression(array expr, symtab env){
         stack_element x = stack_pop(left);
         DEBUG(0,"->%08x(%d,%d)\n", x.datum, gettag(x.datum), getval(x.datum));
 
-        if (!is_pronoun(x)) stack_push(right, x);
-        else {
-            object y;
-            if ((y=parse_and_lookup_name(left, right, x, env)) != 0)
-                return y;
+        if (is_pronoun(x)) {
+            object y = parse_and_lookup_name(left, right, &x, env);
+            if (y != 0) return y;
         }
+        if (is_nilad(x)) {
+            stack_element y = datum_to_stack_element(niladic(x.datum, 0, 0, env));
+            if (!is_mark(y))
+                stack_push(right, y);
+        } else
+            stack_push(right, x);
 
         while (stack_element_count(right) >= 4){
             stack_element *items = stack_top_elements_address(right, 4);
@@ -180,6 +184,11 @@ int is_assn(stack_element x){
 static
 int is_mark(stack_element x){
     return !!(x.code & MARK);
+}
+
+static
+int is_nilad(stack_element x){
+    return !!(x.code & NIL);
 }
 
 static
@@ -325,23 +334,26 @@ object punc(object paren, object x, object dummy2, symtab env){
 // push the prefix back to the left stack and continue lookup
 // with remainder. push value to right stack.
 static
-int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
+int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env){
 
+#if 0
     if (//!stack_is_empty(right) &&  //always NUL at least
             is_assn(*stack_top_elements_address(right, 1))){
         DEBUG(1,"pass name\n");
         stack_push(right, x);   //assignment: no lookup
     } else {
+#endif
+    if (!is_assn(*stack_top_elements_address(right, 1))) {
         DEBUG(1,"lookup ");
         int *s;
         int n,n0;
-        switch(gettag(x.datum)){
+        switch(gettag(x->datum)){
             case PCHAR: {  // single char
-                s = &x.datum;
+                s = &x->datum;
                 n0 = n = 1;
                 } break;
             case PROG: {   // longer name
-                array a = getptr(x.datum);
+                array a = getptr(x->datum);
                 s = a->data;
                 n0 = n = a->dims[0];
                 } break;
@@ -352,7 +364,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
         symtab tab = findsym(env,&p,&n,0);
         if (tab->value == null) {
             printf("error undefined prefix\n");
-            return x.datum;
+            return x->datum;
         }
 
         while (n){ //while name not exhausted
@@ -365,13 +377,14 @@ int parse_and_lookup_name(stack left, stack right, stack_element x, symtab env){
             tab = findsym(env,&p,&n,0);         //lookup remaining name
             if (tab->value == null) {
                 printf("error undefined internal\n");
-                return x.datum;
+                return x->datum;
             }
         }
 
         //replace name with defined value
         DEBUG(0,"==%08x(%d,%d)\n", tab->value, gettag(tab->value), getval(tab->value));
-        stack_push_datum(right, tab->value);
+        //stack_push_datum(right, tab->value);
+        *x = datum_to_stack_element(tab->value);
     }
     return 0;
 }

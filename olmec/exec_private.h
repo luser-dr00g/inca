@@ -1,17 +1,18 @@
 
-/* predicate functions are instantiated according to the 
+/* predicate functions are instantiated according to the
  * PREDICATES_FOREACH X-macro.
-   the q[] function array is used by classify to apply all 
-   predicate functions yielding a sum of all applicable codes
-   defined in the table. Specific qualities or combinations 
-   may then be determined easily by masking.
+ * the q[] function array is used by classify to apply all
+ * predicate functions yielding a sum of all applicable codes
+ * defined in the table. Specific qualities or combinations
+ * may then be determined easily by masking.
  */
 #define DEFINE_PREDICATE_FUNCTION(enum_def,fname,...) \
     int fname(object x){ return __VA_ARGS__; }
 PREDICATES_FOREACH(DEFINE_PREDICATE_FUNCTION)
 #undef DEFINE_PREDICATE_FUNCTION
 
-static int (*q[])(object) = {
+static
+int (*q[])(object) = {
 #define PREDICATE_FUNCTION_NAME(enum_def,fname,...) fname,
     PREDICATES_FOREACH(PREDICATE_FUNCTION_NAME)
 #undef PREDICATE_FUNCTION_NAME
@@ -28,7 +29,8 @@ enum predicate {
 
 /* encode predicate applications into a binary number
    which can be compared to a pattern with a mask */
-static inline int classify(object x){
+static
+inline int classify(object x){
     int i,v,r;
     for (i=0, v=1, r=0; i<sizeof q/sizeof*q; i++, v*=2)
         if (q[i](x))
@@ -51,22 +53,18 @@ static inline int classify(object x){
 /*-->items[3]  items[2]  items[1]  items[0] */ \
 /*                    items[start..finish] => func(items[start..finish])   */\
 /*                                            func      start finish hack  */\ 
-_(L0, ANY,      ANY,      ANY,      NIL,      niladic,  0,    0,     0) \
-_(L1, ANY,      ANY,      NIL,      ANY,      niladic,  1,    1,     0) \
-_(L2, ANY,      NIL,      ANY,      ANY,      niladic,  2,    2,     0) \
-_(L3, NIL,      ANY,      ANY,      ANY,      niladic,  3,    3,     0) \
-_(L4, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,     0) \
-_(L5, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,     0) \
-_(L6, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,     0) \
-_(L7, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,     0) \
-_(L8, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,     0) \
-_(L9, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,     0) \
-_(L10,EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,     0) \
-_(L11,VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
-_(L12,LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
-_(L13,MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
+_(L0, EDGE,     MON,      NOUN,     ANY,      monadic,  2,    1,     0) \
+_(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,     0) \
+_(L2, ANY,      NOUN,     DEX,      ANY,      monadic,  1,    2,     0) \
+_(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,     0) \
+_(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,     0) \
+_(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,     0) \
+_(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,     0) \
+_(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
+_(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
+_(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
-_(L14,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,     0) \
+_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution
@@ -83,7 +81,8 @@ struct parsetab { int c[4]; } ptab[] = {
 #undef PRODUCTION_PATTERNS
 };
 
-static int min(int x, int y){
+static
+int min(int x, int y){
     return x<y? x: y;
 }
 
@@ -103,7 +102,7 @@ static int min(int x, int y){
                     n>=3? items[s+2*dir].datum: 0, \
                     env) \
                 ); \
-        minfs -= is_mark(items[minfs]); \
+        minfs -= is_mark(items[minfs]); /*suppress "noresult" indicater*/\
         for (int i=0; i<excess; ++i){ \
             items[minfs+1+i] = items[minfs+i+n]; \
         } \
@@ -209,8 +208,9 @@ stack_element *stack_top_elements_address (stack s, unsigned n){
 static int is_pronoun(stack_element x);
 static int is_assn(stack_element x);
 static int is_mark(stack_element x);
+static int is_nilad(stack_element x);
 static size_t sum_symbol_lengths(array e, int n);
-static int parse_and_lookup_name(stack left, stack right, stack_element x, symtab st);
+static int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab st);
 static stack new_left_stack_for (array expr);
 static int matches_ptab_pattern (stack_element items[4], int i);
 static int penultimate_prereleased_value (stack s);
