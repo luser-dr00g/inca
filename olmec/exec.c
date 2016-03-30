@@ -229,7 +229,10 @@ int penultimate_prereleased_value (stack s){
 
 
 /* Parser Actions,
-   each function is called with x y z parameters defined in PARSE_PRODUCTIONS_FOREACH 
+ * each function is called with x y z parameters defined in
+ * PARSE_PRODUCTIONS_FOREACH,
+ * except niladic functions which are called at the time the object passes
+ * from the left stack to the right stack.
  */
 object niladic(object f, object dummy, object dummy2, symtab env){
     verb v = getptr(f);
