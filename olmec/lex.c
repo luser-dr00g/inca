@@ -62,11 +62,11 @@ array scan_expression(int *s, int n, symtab env){
     int i,j;
 
     check_quadneg(env);
-    for (i=j=0, ss=st=0; i < n; i++, ss=st, st=cc/10){
+    for (i=j=0, ss=st=0; i < n; i++, ss=st, st=state_from(cc)){
         cc = wdtab[st][ character_class(s[i]) ];
         DEBUG(2,"-%d-\n",cc);
 
-        switch (cc%10){
+        switch (action_from(cc)){
             case 0: /* do nothing */
                     break;
 

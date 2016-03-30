@@ -2,6 +2,8 @@
 typedef int token;
 typedef int state;
 typedef int state_and_action_code;
+#define state_from(s_a_a_c) ((s_a_a_c)/10)
+#define action_from(s_a_a_c) ((s_a_a_c)%10)
 
 /*
  * The transition table and state set
@@ -32,7 +34,7 @@ enum state {
     sng=110, //copula or other self-delimiting symbol ()
 };
 
-int wdtab[][sizeof "-0.'() <r"] = {
+state_and_action_code wdtab[][sizeof "-0.'() <r"] = {
 /* state*/
 /* | *//*character class*/
 /* V *//*none   minus  0-9    .      '      (      )      sp     <-     \r    */
