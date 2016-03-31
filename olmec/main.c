@@ -16,23 +16,16 @@
 
 symtab env;
 
+// quad-neg variable controls minus/hi-minus semantics in
+// the lexical analysis
 void init_qneg(symtab st){
-#if 0
-    array name = array_new_dims(2);
-    name->data[0] = newdata(PCHAR, 0x2395);
-    name->data[1] = newdata(PCHAR, '-');
-    def(st, cache(PROG, name), 0);
-#endif
     define_symbol(st, newdata(PCHAR, 0x2395),newdata(PCHAR, '-'), 0);
 }
 
 // define quad-k variable illustrating alt-keybaord layout
 // type quad with alt-l
 void init_qk(symtab st){
-    //keyboard
-    array qkname = array_new_dims(2);
-    qkname->data[0] = newdata(PCHAR, 0x2395);
-    qkname->data[1] = newdata(PCHAR, 'k');
+    //alt-keyboard
     array qk = array_new_dims(8,13);
 #define P(_) newdata(PCHAR, inputtobase(*#_,1)),
 #define Q(_) newdata(PCHAR, inputtobase(_,1)),
@@ -47,13 +40,12 @@ void init_qk(symtab st){
         P(z) P(x) P(c) P(v) P(b) P(n) P(m) Q(',') P(.) P(/) Q(' ')Q(' ')Q(' ')
     };
     memcpy(qk->data, keys, sizeof keys);
-    def(st, cache(PROG, qkname), cache(ARRAY, qk));
+    define_symbol(st,newdata(PCHAR, 0x2395),newdata(PCHAR, 'k'), cache(ARRAY, qk));
+
 #undef P
 #undef Q
 
-    array qaname = array_new_dims(2);
-    qaname->data[0] = newdata(PCHAR, 0x2395);
-    qaname->data[1] = newdata(PCHAR, 'a');
+    //normal keyboard
     array qa = array_new_dims(8,13);
 #define P(_) newdata(PCHAR, inputtobase(*#_,0)),
 #define Q(_) newdata(PCHAR, inputtobase(_,0)),
@@ -68,7 +60,7 @@ void init_qk(symtab st){
         P(z) P(x) P(c) P(v) P(b) P(n) P(m) Q(',') P(.) P(/) Q(' ')Q(' ')Q(' ')
     };
     memcpy(qa->data, keysa, sizeof keysa);
-    def(st, cache(PROG, qaname), cache(ARRAY, qa));
+    define_symbol(st,newdata(PCHAR, 0x2395),newdata(PCHAR, 'a'), cache(ARRAY, qa));
 #undef P
 #undef Q
 
@@ -113,7 +105,7 @@ int main() {
     init_en();
     init_array();
     env = makesymtab(10);
-    env->value = null;
+    env->value = null; // set root-node value
     init_vb(env);
     init_av(env);
     init_xverb(env);
@@ -123,25 +115,30 @@ int main() {
     if (isatty(fileno(stdin))) specialtty();
 
     while(get_line(prompt, &buf, &buflen, &expn)){
-        int i;
 
-        //puts(buf);
-        for (i=0;i<expn;i++)
-            DEBUG(2,"%04x ", buf[i]);
-        DEBUG(2,"\n");
+        IFDEBUG(2,
+            for (int i=0;i<expn;i++)
+                DEBUG(2,"%04x ", buf[i]);
+            DEBUG(2,"\n");
+            );
 
         array a = scan_expression(buf, expn, env);
-        DEBUG(2,"\n");
 
-        DEBUG(2,"%d\n", a->rank);
-        for (i=0;i<a->rank;i++)
-            DEBUG(2,"%d ", a->dims[i]);
-        DEBUG(1,"\n");
+        IFDEBUG(2,
+            DEBUG(2,"\n");
 
-        for (i=0;i<a->dims[0];i++)
-            DEBUG(1,"%08x(%d,%d) ", a->data[i],
+            DEBUG(2,"%d\n", a->rank);
+            for (int i=0;i<a->rank;i++)
+                DEBUG(2,"%d ", a->dims[i]);
+            DEBUG(1,"\n");
+            );
+
+        IFDEBUG(1,
+            for (int i=0;i<a->dims[0];i++)
+                DEBUG(1,"%08x(%d,%d) ", a->data[i],
                     gettag(a->data[i]), getval(a->data[i]));
-        DEBUG(1,"\n");
+            DEBUG(1,"\n");
+            );
 
         object x = execute_expression(a,env);
 
