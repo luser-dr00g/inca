@@ -88,12 +88,12 @@ int min(int x, int y){
 
 #define PRODUCTION_ELSEIFS(label, p1,p2,p3,p4, func, s, f, hack) \
     else if (matches_ptab_pattern(items, label)) { \
-        stack_prune(right, 4); \
-        int dir = f-s>0 ? 1 : -1; \
-        int n = 1+abs(f-s); \
-        int minfs = min(f,s); \
-        int excess = 4 - n - minfs; \
-        DEBUG(0, "s=%d f=%d dir=%d, n=%d, minfs=%d, excess=%d\n", \
+        stack_prune(right, 4);    /*rewind stack pointer*/\
+        int dir = f-s>0 ? 1 : -1; /*orientation of stack->args mapping*/\
+        int n = 1+abs(f-s);       /*number of elements to pass (and remove)*/\
+        int minfs = min(f,s);     /*location to store result*/\
+        int excess = 4 - n - minfs; /*number of elements to shift down after*/\
+        DEBUG(3, "s=%d f=%d dir=%d, n=%d, minfs=%d, excess=%d\n", \
                 s, f, dir, n, minfs, excess); \
         items[minfs] = \
             datum_to_stack_element( \
@@ -102,12 +102,12 @@ int min(int x, int y){
                     n>=3? items[s+2*dir].datum: 0, \
                     env) \
                 ); \
-        minfs -= is_mark(items[minfs]); /*suppress "noresult" indicater*/\
+        minfs -= is_mark(items[minfs]);  /*suppress "noresult" indicater*/\
         for (int i=0; i<excess; ++i){ \
-            items[minfs+1+i] = items[minfs+i+n]; \
+            items[minfs+1+i] = items[minfs+i+n]; /*shift down higher elements*/\
         } \
-        stack_reclaim(right, excess+1+minfs); \
-        (void)hack; \
+        stack_reclaim(right, excess+1+minfs);    /*fix stack pointer*/\
+        (void)hack; /*twiddle the mark for fake left paren*/\
     }
 
 
