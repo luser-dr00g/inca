@@ -121,15 +121,14 @@ object punc(object x, object dummy, object dummy2, symtab st);
 
 
 /* stack type
-   the size is generously pre-calculated
-   and so we can skip all bounds checking.
-
-   An idea generously implemented by Tim Rentsch caches the results
-   of the classify() function instead of repeatedly recomputing them.
-   Thus the stack_element has two members. And the special function
-   stack_push_datum() must be used whenever a new object enters the
-   stack 'arena' in order to call classify() upon it.
-
+ * the size is generously pre-calculated
+ * and so we can skip all bounds checking.
+ *
+ * An idea generously implemented by Tim Rentsch caches the results
+ * of the classify() function instead of repeatedly recomputing them.
+ * Thus the stack_element has two members. And the special function
+ * stack_push_datum() must be used whenever a new object enters the
+ * stack 'arena' in order to call classify() upon it.
  */
 
 typedef struct stack_element {
