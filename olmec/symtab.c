@@ -55,7 +55,7 @@ symtab makesymtab(int n){
     symtab z = malloc(sizeof *z);
     if (z){
         z->key = 0;  // key int transitioning into this node
-        z->value = 0;  // associated value (pointer to struct symtab)
+        z->value = 0;  // associated value
         z->n = n;    // num slots in table
         z->tab = calloc(n, sizeof *z->tab);  // hashtable of child nodes
     }
@@ -63,7 +63,7 @@ symtab makesymtab(int n){
 }
 
 int hash(int x){
-    return x<<2;
+    return x^(x<<2);
     //return x^(x<<5)^(x<<14); // fill UCS 21bit space with 7bit ascii
 }
 
