@@ -174,6 +174,7 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
 
 void def(symtab st, object name, object v){
     switch(gettag(name)){
+    default:
     case CHAR:
     case PCHAR:{
         int n = 1;
