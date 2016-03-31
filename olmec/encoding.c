@@ -10,7 +10,11 @@
  *  the array data are always just straight 32bit integers.
  *  but we treat as a 7bit tag and 24bit integer value.
  *  An immediate integer value is indicated by a negative
- *  sign-bit or all-zero tag.
+ *  sign-bit or all-zero tag. In essence, a 25bit sign/magnitude
+ *  rep with no -0. This also means that we're not really using
+ *  up all the available bits. Depending upon the final suite
+ *  of distinct types and the desired "word size", this arrangement
+ *  might be optimized further.
  *
  *  Composite objects (boxed or reference objects) have
  *  an associated pointer stored in an array associated
