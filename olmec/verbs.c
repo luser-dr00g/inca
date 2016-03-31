@@ -129,6 +129,96 @@ recheck:
     return null;
 }
 
+object scalaropfunc(object a, dyad func, object w, int opfunc(int,int), verb v){
+recheck:
+    switch(gettag(a)){
+    case LITERAL: switch(gettag(w)){
+        case LITERAL: return newdata(LITERAL, opfunc(getval(a), getval(w)));
+        case ARRAY: {
+            array W = getptr(w);
+            array Z = array_new_rank_pdims(W->rank, W->dims);
+            int n = productdims(W->rank, W->dims);
+            int scratch[W->rank];
+            for (int i=0; i<n; ++i){
+                vector_index(i, W->dims, W->rank, scratch);
+                *elema(Z, scratch) = func(a, *elema(W, scratch), v);
+            }
+            return cache(ARRAY, Z);
+        }
+        }
+        break;
+    case ARRAY: {
+        array A = getptr(a);
+        if (A->rank == 0
+                || (A->rank == 1 && A->dims[0] == 1)){
+            a = *elem(A, 0);
+            goto recheck;
+        }
+        switch(gettag(w)){
+        case LITERAL: {
+            array Z = array_new_rank_pdims(A->rank, A->dims);
+            int n = productdims(A->rank, A->dims);
+            int scratch[A->rank];
+            for (int i=0; i<n; ++i){
+                vector_index(i, A->dims, A->rank, scratch);
+                *elema(Z, scratch) = func(*elema(A, scratch), w, v);
+            }
+            return cache(ARRAY, Z);
+        }
+        case ARRAY: {
+            array W = getptr(w);
+            array Z = array_new_rank_pdims(W->rank, W->dims);
+            int n = productdims(W->rank, W->dims);
+            int scratch[W->rank];
+            for (int i=0; i<n; ++i){
+                vector_index(i, W->dims, W->rank, scratch);
+                *elema(Z, scratch) =
+                    func(*elema(A, scratch), *elema(W, scratch), v);
+            }
+            return cache(ARRAY, Z);
+        }
+        }
+    }
+    }
+    return null;
+}
+
+object scalarmonad(monad func, object w, char op, verb v){
+    switch(gettag(w)){
+    case LITERAL: switch(op){
+        case '-': return newdata(LITERAL, - getval(w));
+        }
+    case ARRAY: {
+        array W = getptr(w);
+        array Z = array_new_rank_pdims(W->rank, W->dims);
+        int n = productdims(W->rank, W->dims);
+        int scratch[W->rank];
+        for (int i=0; i<n; ++i){
+            vector_index(i, W->dims, W->rank, scratch);
+            *elema(Z, scratch) = func(*elema(W, scratch), v);
+        }
+        return cache(ARRAY, Z);
+    }
+    }
+    return null;
+}
+
+object scalarmonadfunc(monad func, object w, int opfunc(int), verb v){
+    switch(gettag(w)){
+    case LITERAL: return newdata(LITERAL, opfunc(getval(w)));
+    case ARRAY: {
+        array W = getptr(w);
+        array Z = array_new_rank_pdims(W->rank, W->dims);
+        int n = productdims(W->rank, W->dims);
+        int scratch[W->rank];
+        for (int i=0; i<n; ++i){
+            vector_index(i, W->dims, W->rank, scratch);
+            *elema(Z, scratch) = func(*elema(W, scratch), v);
+        }
+        return cache(ARRAY, Z);
+    }
+    }
+}
 
 object vid (object w, verb v){
     if (gettag(w)==ARRAY) return cache(ARRAY, makesolid(getptr(w)));
@@ -164,9 +254,7 @@ object vneg(object w, verb v){
         }
     }
 
-    scalarmonad(vneg,w,-,v)
-
-    return null;
+    return SCALARMONAD(vneg,w,-,v);
 }
 
 object vminus(object a, object w, verb v){
@@ -252,9 +340,7 @@ object vtimes (object a, object w, verb v){
 
 
 object vabs (object w, verb v){
-    scalarmonadfunc(vabs, w, (abs), v);
-
-    return null;
+    return scalarmonadfunc(vabs, w, (abs), v);
 }
 
 static inline void swap(object *x, object *y){
@@ -278,9 +364,7 @@ object vresidue (object a, object w, verb v){
     IFDEBUG(1,print(w, 0));
     common(&a, &w);
 
-    scalaropfunc(a,vresidue,w,resid,v)
-
-    return null;
+    return scalaropfunc(a,vresidue,w,resid,v);
 }
 
 
