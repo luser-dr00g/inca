@@ -37,6 +37,98 @@ void common(object *ap, object *wp){
     //promote smaller number to matching type
 }
 
+object scalarop(object a, dyad func, object w, char op, verb v){
+    DEBUG(3,"scalarop ");
+recheck:
+    switch(gettag(a)){
+    case LITERAL:
+        DEBUG(3,"alit ");
+        switch(gettag(w)){
+        case LITERAL: {
+            DEBUG(3,"wlit ");
+            int z = null;
+            switch(op){
+                case '+': z = newdata(LITERAL, getval(a) + getval(w)); break;
+                case '-': z = newdata(LITERAL, getval(a) - getval(w)); break;
+                case '*': z = newdata(LITERAL, getval(a) * getval(w)); break;
+                case '/': z = newdata(LITERAL, getval(a) / getval(w)); break;
+                case '%': z = newdata(LITERAL, getval(w) % getval(a)); break;
+                default: printf("bad op\n"); break;
+            }
+            DEBUG(3,"z=%08x(%d,%d)\n",
+                    z, gettag(z), getval(z));
+            return z;
+        }
+        case ARRAY: {
+            DEBUG(3,"warr ");
+            array W = getptr(w);
+            if (W->rank == 0
+                    || (W->rank == 1 && W->dims[0] == 1)) {
+                w = *elem(W, 0);
+                goto recheck;
+            }
+            array Z = array_new_rank_pdims(W->rank, W->dims);
+            int n = productdims(W->rank, W->dims);
+            int scratch[W->rank];
+            for (int i=0; i<n; ++i){
+                vector_index(i, W->dims, W->rank, scratch);
+                int z = func(a, *elema(W, scratch), v);
+                DEBUG(3,"z[%d]=%08x(%d,%d)\n",
+                        i, z, gettag(z), getval(z));
+                *elema(Z, scratch) = z;
+            }
+            int z = cache(ARRAY, Z);
+            DEBUG(3,"result=%08x(%d,%d)\n",
+                    z, gettag(z), getval(z));
+            IFDEBUG(3,print(z, 0));
+            return z;
+        }
+        }
+        break;
+    case ARRAY: {
+        DEBUG(3,"aarr ");
+        array A = getptr(a);
+        if (A->rank == 0
+                || (A->rank == 1 && A->dims[0] == 1)) {
+            a = *elem(A, 0);
+            goto recheck;
+        }
+        switch(gettag(w)){
+        case LITERAL: {
+            DEBUG(3,"wlit ");
+            array Z = array_new_rank_pdims(A->rank, A->dims);
+            int n = productdims(A->rank, A->dims);
+            int scratch[A->rank];
+            for (int i=0; i<n; ++i){
+                vector_index(i, A->dims, A->rank, scratch);
+                *elema(Z, scratch) = func(*elema(A, scratch), w, v);
+            }
+            return cache(ARRAY, Z);
+        }
+        case ARRAY: {
+            DEBUG(3,"warr ");
+            array W = getptr(w);
+            if (W->rank == 0
+                    || (W->rank == 1 && W->dims[0] == 1)){
+                w = *elem(W, 0);
+                goto recheck;
+            }
+            array Z = array_new_rank_pdims(W->rank, W->dims);
+            int n = productdims(W->rank, W->dims);
+            int scratch[W->rank];
+            for (int i=0; i<n; ++i){
+                vector_index(i, W->dims, W->rank, scratch);
+                *elema(Z, scratch) =
+                    func(*elema(A, scratch), *elema(W, scratch), v);
+            }
+            return cache(ARRAY, Z);
+        }
+        }
+    }
+    }
+    return null;
+}
+
 
 object vid (object w, verb v){
     if (gettag(w)==ARRAY) return cache(ARRAY, makesolid(getptr(w)));
@@ -45,6 +137,9 @@ object vid (object w, verb v){
 
 object vplus (object a, object w, verb v){
     common(&a,&w);
+    DEBUG(3,"plus %08x(%d,%d),%08x(%d,%d)\n",
+            a, gettag(a), getval(a),
+            w, gettag(w), getval(w));
 
     if (gettag(a)==LITERAL && gettag(w)==ARRAY){
         array W = getptr(w);
@@ -55,9 +150,7 @@ object vplus (object a, object w, verb v){
         }
     }
 
-    scalarop(a,vplus,w,+,v)
-
-    return null;
+    return SCALAROP(a,vplus,w,+,v);
 }
 
 
@@ -96,18 +189,14 @@ object vminus(object a, object w, verb v){
         }
     }
 
-    scalarop(a,vminus,w,-,v)
-
-    return null;
+    return SCALAROP(a,vminus,w,-,v);
 }
 
 
 object vdivide(object a, object w, verb v){
     common(&a, &w);
 
-    scalarop(a,vdivide,w,/,v)
-
-    return null;
+    return SCALAROP(a,vdivide,w,/,v);
 }
 
 object vrecip(object w, verb v){
@@ -157,9 +246,8 @@ object vtimes (object a, object w, verb v){
         } 
     }
 
-    scalarop(a,vtimes,w,*,v)
 
-    return null;
+    return SCALAROP(a,vtimes,w,*,v);
 }
 
 
