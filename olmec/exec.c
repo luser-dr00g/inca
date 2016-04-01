@@ -229,7 +229,7 @@ int penultimate_prereleased_value (stack s){
 
 
 /* Parser Actions,
- * each function is called with x y z parameters defined in
+ * each function is called with items[s..f] parameters defined in
  * PARSE_PRODUCTIONS_FOREACH,
  * except niladic functions which are called at the time the object passes
  * from the left stack to the right stack.
