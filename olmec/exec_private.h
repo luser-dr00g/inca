@@ -64,7 +64,7 @@ _(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
 _(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
 _(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
-_(L10,ANY,      LPAR,     ANY,      NUL,      punc,     2,    1,     0) \
+_(L10,ANY,      LPAR,     ANY,      MARK,     punc,     2,    1,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution

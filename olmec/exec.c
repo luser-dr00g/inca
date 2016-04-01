@@ -34,7 +34,7 @@
  *  both just stacks. The left stack is initialized with a 
  *  mark object (illustrated here as ^) to indicate the left
  *  edge, followed by the entire expression. The right stack
- *  is initialized with a single null object (illustrated
+ *  is initialized with a single mark object (illustrated
  *  here as $) to indicate the right edge. 
 
         |-^2*1+⍳4   $-| 
@@ -90,7 +90,7 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
         |-   ^C$-|        C←2*B
 
  *  Eventually the expression ought to reduce to 3 objects: a mark, 
- *  some result object, and a null. Anything else is an error 
+ *  some result object, and a final mark. Anything else is an error 
  *  TODO handle this error. 
 
         |-   ^C$-|
@@ -140,7 +140,7 @@ object execute_expression(array expr, symtab env){
 
     stack left = new_left_stack_for(expr);
     stack right = new_stack(1+stack_capacity(left));
-    stack_push_datum(right, null);
+    stack_push_datum(right, mark);
     DEBUG(0,"->%08x(%d,%d)\n", null, gettag(null), getval(null));
 
     while(!stack_is_empty(left)){

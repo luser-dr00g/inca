@@ -142,7 +142,7 @@ int main() {
 
         object x = execute_expression(a,env);
 
-        if (!last_was_assn)
+        if (!last_was_assn && x!=mark)
             print(x, 0);
     }
 
