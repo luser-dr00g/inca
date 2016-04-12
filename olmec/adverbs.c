@@ -176,8 +176,24 @@ object abackscan(object w, verb v){
     return DERIV(0x2340, NULL, backscan, 0, w, 0, 0, 0, 0, 0);
 }
 
-void init_av(symtab st){
+void adverbtab_def(
+        object id,
+        nilad *nilad,
+        monad *monad,
+        dyad *dyad,
+        object f, object g, object h, /* operator arguments */
+        int mr, int lr, int rr, /* monadic,left,right rank*/
+        symtab st){
     verb v;
+    v=malloc(sizeof*v);
+    *v=(struct verb){newdata(PCHAR, id), nilad, monad, dyad, f,g,h, mr,lr,rr};
+    def(st, newdata(PCHAR, id), cache(ADVERB, v));
+}
+
+#define ADVERBTAB_DEF(id,...) \
+    adverbtab_def(id, __VA_ARGS__, env);
+
+void init_av(symtab env){
 #define nnone 0
 #define mnone 0
 #define dnone 0
