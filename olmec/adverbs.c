@@ -32,14 +32,32 @@
 #include "adverbs.h"
 #include "adverb_private.h"
 
+typedef struct vtable {
+    verb fv;
+    monad *f1;
+    dyad *f2;
+    verb gv;
+    monad *g1;
+    dyad *g2;
+} vtable;
+vtable loadv(verb v){
+    verb fv = getptr(v->f);
+    monad *f1 = fv?fv->monad:0;
+    dyad *f2 = fv?fv->dyad:0;
+    verb gv = getptr(v->g);
+    monad *g1 = gv?gv->monad:0;
+    dyad *g2 = gv?gv->dyad:0; 
+    return (vtable){fv,f1,f2,gv,g1,g2};
+}
+
 object domerr(object w, verb v){
     return null;
 }
 
-object withl(object w, verb v){ DECLFG; return g2(v->f, w, gv); }
-object withr(object w, verb v){ DECLFG; return f2(w, v->g, fv); }
-object on1(object w, verb v){ DECLFG; return f1(g1(w,gv),fv); }
-object on2(object a, object w, verb v){ DECLFG; return f2(g1(a,gv),g1(w,gv),fv); }
+object withl(object w, verb v){ vtable vt=loadv(v); return vt.g2(v->f, w, vt.gv); }
+object withr(object w, verb v){ vtable vt=loadv(v); return vt.f2(w, v->g, vt.fv); }
+object on1(object w, verb v){ vtable vt=loadv(v); return vt.f1(vt.g1(w,vt.gv),vt.fv); }
+object on2(object a, object w, verb v){ vtable vt=loadv(v); return vt.f2(vt.g1(a,vt.gv),vt.g1(w,vt.gv),vt.fv); }
 
 object amp(object a, object w, verb v){
     switch(CONJCASE(a,w)){
@@ -51,7 +69,7 @@ object amp(object a, object w, verb v){
 }
 
 
-object atop2(object a, object w, verb v){ DECLFG; return f1(g2(a,w,gv),fv); }
+object atop2(object a, object w, verb v){ vtable vt=loadv(v); return vt.f1(vt.g2(a,w,vt.gv),vt.fv); }
 
 object atop(object a, object w, verb v){
     switch(CONJCASE(a,w)){
@@ -67,14 +85,14 @@ object atop(object a, object w, verb v){
 
 
 object reduce(object w, verb v){
-    DECLFG;
+    vtable vt=loadv(v);
     switch(gettag(w)){
     case LITERAL: return w;
     case ARRAY: {
         array W = getptr(w);
         switch(W->rank){
         case 1: switch(W->dims[0]){
-                case 0: return getfill(fv->id);
+                case 0: return getfill(vt.fv->id);
                 case 1: return *elem(W,0);
                 default: {
 #if 0
@@ -82,7 +100,7 @@ object reduce(object w, verb v){
                     for (int i=W->dims[0]-2; i>=0; i--)
                         z=f2(*elem(W,i),z,v);
 #endif
-                    return f2(*elem(W,0), reduce(vdrop(1,w,v), v), v);
+                    return vt.f2(*elem(W,0), reduce(vdrop(1,w,v), v), v);
                 }
                 }
         }
@@ -97,14 +115,14 @@ object areduce(object w, verb v){
 
 
 object scan(object w, verb v){
-    DECLFG;
+    vtable vt=loadv(v);
     switch(gettag(w)){
     case LITERAL: return w;
     case ARRAY: {
         array W = getptr(w);
         switch(W->rank){
         case 1: switch(W->dims[0]){
-                case 0: return getfill(fv->id);
+                case 0: return getfill(vt.fv->id);
                 case 1: return *elem(W,0);
                 default: {
                     array z = array_new_rank_pdims(W->rank, W->dims);
@@ -131,14 +149,14 @@ object ascan(object w, verb v){
 
 
 object backscan(object w, verb v){
-    DECLFG;
+    vtable vt=loadv(v);
     switch(gettag(w)){
     case LITERAL: return w;
     case ARRAY: {
         array W = getptr(w);
         switch(W->rank){
         case 1: switch(W->dims[0]){
-                case 0: return getfill(fv->id);
+                case 0: return getfill(vt.fv->id);
                 case 1: return *elem(W,0);
                 default: {
                     array z = array_new_rank_pdims(W->rank, W->dims);
