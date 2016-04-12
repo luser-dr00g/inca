@@ -298,3 +298,11 @@ and regular minus.
 
 For some reason hi-minus is displaying here as slash. Looks fine from
 github.com.
+
+
+-- 
+
+The next addition, I think, needs to be chaining or stacking of environments
+for variable scoping. This will mean that the symbol lookup might get a little
+more complicated. 
+
