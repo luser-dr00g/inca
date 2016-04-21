@@ -24,13 +24,8 @@
 
 typedef int object;
 
-typedef struct datum {  // these two should be reversed for Big-Endian
-    unsigned int val:24;
-    unsigned int tag:8; // hi-bit of tag should overlay the sign bit
-} datum;
-
 typedef union integer {
-    datum data;
+    uint32_t uint32;
     int32_t int32;
 } integer;
 

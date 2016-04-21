@@ -18,14 +18,16 @@ symtab env;
 
 // quad-neg variable controls minus/hi-minus semantics in
 // the lexical analysis
-void init_qneg(symtab st){
+void init_quad_neg(symtab st){
     define_symbol(st, newdata(PCHAR, 0x2395),newdata(PCHAR, '-'), 0);
 }
 
 // define quad-k variable illustrating alt-keybaord layout
 // type quad with alt-l
-void init_qk(symtab st){
+void init_quad_k(symtab st){
     //alt-keyboard
+    //
+    //-> iterate over string
     array qk = array_new_dims(8,13);
 #define P(_) newdata(PCHAR, inputtobase(*#_,1)),
 #define Q(_) newdata(PCHAR, inputtobase(_,1)),
@@ -101,6 +103,7 @@ int main() {
     int buflen;
     int expn;
     char *prompt = "        ";
+    int last_was_assn;
 
     init_en();
     init_array();
@@ -109,8 +112,8 @@ int main() {
     init_vb(env);
     init_av(env);
     init_xverb(env);
-    init_qneg(env);
-    init_qk(env);
+    init_quad_neg(env);
+    init_quad_k(env);
 
     if (isatty(fileno(stdin))) specialtty();
 
@@ -140,7 +143,7 @@ int main() {
             DEBUG(1,"\n");
             );
 
-        object x = execute_expression(a,env);
+        object x = execute_expression(a, env, &last_was_assn);
 
         if (!last_was_assn && x!=mark)
             print(x, 0);

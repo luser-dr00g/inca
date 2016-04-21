@@ -50,6 +50,18 @@ vtable loadv(verb v){
     return (vtable){fv,f1,f2,gv,g1,g2};
 }
 
+object create_derived_verb(
+			   object id,
+			   nilad *nilad,
+			   monad *monad,
+			   dyad *dyad,
+			   object f, object g, object h,
+			   int mr, int lr, int rr){
+    verb v = malloc(sizeof*v);
+    *v = (struct verb){ newdata(PCHAR, id), nilad, monad, dyad, f, g, h, mr, lr, rr};
+    return cache(VERB, v);
+}
+
 object domerr(object w, verb v){
     return null;
 }
@@ -62,9 +74,9 @@ object on2(object a, object w, verb v){ vtable vt=loadv(v); return vt.f2(vt.g1(a
 object amp(object a, object w, verb v){
     switch(CONJCASE(a,w)){
         case NN: return domerr(0,v);
-        case NV: return DERIV('&', NULL, withl, NULL, a, w, 0, 0, 0, 0);
-        case VN: return DERIV('&', NULL, withr, NULL, a, w, 0, 0, 0, 0);
-        case VV: return DERIV('&', NULL, on1,   on2,  a, w, 0, 0, 0, 0);
+        case NV: return create_derived_verb('&', NULL, withl, NULL, a, w, 0, 0, 0, 0);
+        case VN: return create_derived_verb('&', NULL, withr, NULL, a, w, 0, 0, 0, 0);
+        case VV: return create_derived_verb('&', NULL, on1,   on2,  a, w, 0, 0, 0, 0);
     }
 }
 
@@ -78,7 +90,7 @@ object atop(object a, object w, verb v){
         case VN: return domerr(0,v);
         case VV: {
             v = getptr(w);
-            return DERIV('@', NULL, on1, atop2, a, w, 0, v->mr, v->lr, v->rr);
+            return create_derived_verb('@', NULL, on1, atop2, a, w, 0, v->mr, v->lr, v->rr);
         } 
     }
 }
@@ -110,7 +122,7 @@ object reduce(object w, verb v){
 }
 
 object areduce(object w, verb v){
-    return DERIV('/', NULL, reduce, 0, w, 0, 0, 0, 0, 0);
+    return create_derived_verb('/', NULL, reduce, 0, w, 0, 0, 0, 0, 0);
 }
 
 
@@ -144,7 +156,7 @@ object scan(object w, verb v){
 }
 
 object ascan(object w, verb v){
-    return DERIV('\\', NULL, scan, 0, w, 0, 0, 0, 0, 0);
+    return create_derived_verb('\\', NULL, scan, 0, w, 0, 0, 0, 0, 0);
 }
 
 
@@ -173,7 +185,7 @@ object backscan(object w, verb v){
 }
 
 object abackscan(object w, verb v){
-    return DERIV(0x2340, NULL, backscan, 0, w, 0, 0, 0, 0, 0);
+    return create_derived_verb(0x2340, NULL, backscan, 0, w, 0, 0, 0, 0, 0);
 }
 
 void adverbtab_def(

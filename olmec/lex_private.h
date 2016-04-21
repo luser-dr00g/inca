@@ -34,7 +34,10 @@ enum state {
     sng=110, //copula or other self-delimiting symbol ()
 };
 
-state_and_action_code wdtab[][sizeof "-0.'() <r"] = {
+#define NUM_CLASSES \
+  sizeof((unsigned char[]) \
+       {0,      '-',   '0',   '.',   '\'',  '(',   ')',   ' ',  0x2190, '\r'})
+state_and_action_code wdtab[][NUM_CLASSES] = {
 /* state*/
 /* | *//*character class*/
 /* V *//*none   minus  0-9    .      '      (      )      sp     <-     \r    */
@@ -64,7 +67,7 @@ static unsigned char cctab[64] = {
 };
 
 static inline unsigned char qminus(int ch){
-    return quadneg? ch=='-': ch==0x00af;
+    return ch == (quadneg? '-': 0x00af);
 }
 
 static inline unsigned char character_class(int ch){

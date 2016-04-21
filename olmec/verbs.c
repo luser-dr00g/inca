@@ -775,7 +775,7 @@ object vbase(object a, object w, verb v){
     }
     object pr = areduce(vtab[VERB_PLUS],v);
     int (*plusreduce)(int,verb) = ((verb)getptr(pr))->monad;
-    object times = DERIV(MODE1('='),0,vsignum,vtimes,0,0,0,0,0,0);
+
     object ts = abackscan(vtab[VERB_MUL],v);
     int (*timesscan)(int,verb) = ((verb)getptr(ts))->monad;
     return plusreduce(

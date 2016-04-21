@@ -23,10 +23,5 @@ ADVERBS_FOREACH(DECLARE_ADVERB_FUNCTIONS)
 #undef dnone
 #undef DECLARE_ADVERB_FUNCTIONS
 
-#define DERIV(id,...) \
-    (v=malloc(sizeof*v), \
-    *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}, \
-    cache(VERB, v))
-
 void init_av(symtab st);
 

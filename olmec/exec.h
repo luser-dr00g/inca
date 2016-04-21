@@ -31,7 +31,6 @@ _( NUL  = 32768, qnull, gettag(x)==NULLOBJ ) \
 #define DECLARE_PREDICATE_FUNCTION(enum_def,fname,...) int fname(object);
 PREDICATES_FOREACH(DECLARE_PREDICATE_FUNCTION)
 
-extern int last_was_assn;
 // execute an expression e with environment st
-object execute_expression(array expr, symtab st);
+object execute_expression(array expr, symtab st, int *plast_was_assn);
 

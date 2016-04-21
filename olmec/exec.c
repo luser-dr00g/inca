@@ -64,7 +64,7 @@
 
  *  But this configuration (VERB VERB NOUN NULLOBJ) doesn't match anything.
  *  Move another object and try again.
-
+ 
         |-^2*   1+⍳4$-| 
 
  *  Now, the above case (NOUN VERB VERB NOUN) matches this production: 
@@ -131,11 +131,11 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 
 #include "exec_private.h"
 
-int last_was_assn;
+static int last_was_assn;
 
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
-object execute_expression(array expr, symtab env){
+object execute_expression(array expr, symtab env, int *plast_was_assn){
     last_was_assn = 0;
 
     stack left = new_left_stack_for(expr);
@@ -166,6 +166,7 @@ object execute_expression(array expr, symtab env){
         }
     }
 
+    *plast_was_assn = last_was_assn;
     return stack_release(left), penultimate_prereleased_value(right);
 }
 

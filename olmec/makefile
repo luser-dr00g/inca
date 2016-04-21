@@ -3,8 +3,12 @@ unitprogs= $(subst _test,,$(testprogs))
 tests= $(basename $(testprogs))
 units= $(basename $(unitprogs))
 unitobjs= $(patsubst %,%.o,$(units))
+testexes= $(patsubst %,%.exe,$(tests))
 
 all:olmec test
+
+clean:
+	rm -f *.o olmec.exe all_tests.c all_tests.exe $(testexes)
 
 test:all_tests $(tests)
 	@./all_tests

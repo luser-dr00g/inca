@@ -53,35 +53,36 @@ int gettag(object d){
     if (d<0) return 0; /* negatives are literals */
     integer int32;
     int32.int32 = d;
-    datum dat = int32.data;
-    return dat.tag;
+    
+    return int32.uint32 >> 24;
 }
 
 int getval(object d){
     if (d<0) return d;
     integer int32;
     int32.int32 = d;
-    datum dat = int32.data;
-    return dat.val;
+    return int32.uint32 & ((1<<24)-1);
 }
 
 object newdata(int tag, int val){
     if (tag==LITERAL && val<0) return val;
-    datum dat = { .tag = tag, .val = val };
-    integer int32 = { .data = dat };
+    integer int32;
+    int32.uint32 = ((unsigned)tag << 24) | (unsigned)val;
     int x = int32.int32;
     DEBUG(3,"newdata %x(%d %d)\n", x, tag, val);
     return x;
 }
 
-integer nulldata = { .data = { .tag = NULLOBJ, .val = 0 } };
+integer nulldata;// = { .data = { .tag = NULLOBJ, .val = 0 } };
 object null /* = nulldata.int32 */;
-integer markdata = { .data = { .tag = MARKOBJ, .val = 0 } };
+integer markdata;// = { .data = { .tag = MARKOBJ, .val = 0 } };
 object mark /* = markdata.int32 */;
 object nil;
 
-void init_en(){
+void init_en(void){
+    nulldata.uint32 = newdata(NULLOBJ, 0);
     null = nulldata.int32;
+    markdata.uint32 = newdata(MARKOBJ, 0);
     mark = markdata.int32;
 }
 
@@ -180,7 +181,7 @@ object getfill(object d){
         case PCHAR:
             switch(getval(d)){
             case '+':
-                return 0;
+	                      return 0;
             case MODE1('='):  // Times
             case MODE1('+'):  // Divided-By
             case '*':
