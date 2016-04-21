@@ -55,9 +55,9 @@ $ ./olmec
 #define CTL(x) (x-64)
 #define EOT 004
 #define DEL 127
-#define MODE1(x) (x|1<<7)
 
 
+#include "common.h"
 #include "alpha.h"
 
 

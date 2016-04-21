@@ -47,6 +47,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "common.h"
 #include "encoding.h"
 
 int gettag(object d){
@@ -173,7 +174,6 @@ void *getptr(object d){
     }
 }
 
-#define MODE1(x) (x|1<<7)
 // fill returns a "blank" value for any type
 // and identity elements for verbs
 object getfill(object d){
