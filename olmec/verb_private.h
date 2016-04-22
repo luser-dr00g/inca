@@ -26,3 +26,5 @@ object vectorindexleft(object a, object w, verb v);
 
 #define SCALARMONAD(func,w,op,v) \
     scalarmonad(func,w,*#op,v)
+
+object scalarop(object a, dyad func, object w, char op, verb v);

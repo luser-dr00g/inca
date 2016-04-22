@@ -37,6 +37,78 @@ void common(object *ap, object *wp){
     //promote smaller number to matching type
 }
 
+object scalarop_lit_lit(object a, dyad func, object w, char op, verb v){
+    DEBUG(3,"wlit ");
+    int z = null;
+    switch(op){
+    case '+': z = newdata(LITERAL, getval(a) + getval(w)); break;
+    case '-': z = newdata(LITERAL, getval(a) - getval(w)); break;
+    case '*': z = newdata(LITERAL, getval(a) * getval(w)); break;
+    case '/': z = newdata(LITERAL, getval(a) / getval(w)); break;
+    case '%': z = newdata(LITERAL, getval(w) % getval(a)); break;
+    default: printf("bad op\n"); break;
+    }
+    DEBUG(3,"z=%08x(%d,%d)\n",
+	  z, gettag(z), getval(z));
+    return z;
+}
+
+object scalarop_lit_arr(object a, dyad func, object w, char op, verb v){
+    DEBUG(3,"warr ");
+    array W = getptr(w);
+    if (W->rank == 0
+	|| (W->rank == 1 && W->dims[0] == 1)) {
+      w = *elem(W, 0);
+      return scalarop(a, func, w, op, v);
+    }
+    array Z = array_new_rank_pdims(W->rank, W->dims);
+    int n = productdims(W->rank, W->dims);
+    int scratch[W->rank];
+    for (int i=0; i<n; ++i){
+      vector_index(i, W->dims, W->rank, scratch);
+      int z = func(a, *elema(W, scratch), v);
+      DEBUG(3,"z[%d]=%08x(%d,%d)\n",
+	    i, z, gettag(z), getval(z));
+      *elema(Z, scratch) = z;
+    }
+    int z = cache(ARRAY, Z);
+    DEBUG(3,"result=%08x(%d,%d)\n",
+	  z, gettag(z), getval(z));
+    IFDEBUG(3,print(z, 0));
+    return z;
+}
+
+object scalarop_arr_lit(array A, dyad func, object w, char op, verb v){
+    DEBUG(3,"wlit ");
+    array Z = array_new_rank_pdims(A->rank, A->dims);
+    int n = productdims(A->rank, A->dims);
+    int scratch[A->rank];
+    for (int i=0; i<n; ++i){
+      vector_index(i, A->dims, A->rank, scratch);
+      *elema(Z, scratch) = func(*elema(A, scratch), w, v);
+    }
+    return cache(ARRAY, Z);
+}
+
+object scalarop_arr_arr(object a, array A, dyad func, object w, char op, verb v){
+    DEBUG(3,"warr ");
+    array W = getptr(w);
+    if (W->rank == 0
+	|| (W->rank == 1 && W->dims[0] == 1)){
+      w = *elem(W, 0);
+      return scalarop(a, func, w, op, v);
+    }
+    array Z = array_new_rank_pdims(W->rank, W->dims);
+    int n = productdims(W->rank, W->dims);
+    int scratch[W->rank];
+    for (int i=0; i<n; ++i){
+      vector_index(i, W->dims, W->rank, scratch);
+      *elema(Z, scratch) =
+	func(*elema(A, scratch), *elema(W, scratch), v);
+    }
+    return cache(ARRAY, Z);
+}
+
 object scalarop(object a, dyad func, object w, char op, verb v){
     DEBUG(3,"scalarop ");
 recheck:
@@ -44,45 +116,10 @@ recheck:
     case LITERAL:
         DEBUG(3,"alit ");
         switch(gettag(w)){
-        case LITERAL: {
-            DEBUG(3,"wlit ");
-            int z = null;
-            switch(op){
-                case '+': z = newdata(LITERAL, getval(a) + getval(w)); break;
-                case '-': z = newdata(LITERAL, getval(a) - getval(w)); break;
-                case '*': z = newdata(LITERAL, getval(a) * getval(w)); break;
-                case '/': z = newdata(LITERAL, getval(a) / getval(w)); break;
-                case '%': z = newdata(LITERAL, getval(w) % getval(a)); break;
-                default: printf("bad op\n"); break;
-            }
-            DEBUG(3,"z=%08x(%d,%d)\n",
-                    z, gettag(z), getval(z));
-            return z;
-        }
-        case ARRAY: {
-            DEBUG(3,"warr ");
-            array W = getptr(w);
-            if (W->rank == 0
-                    || (W->rank == 1 && W->dims[0] == 1)) {
-                w = *elem(W, 0);
-                goto recheck;
-            }
-            array Z = array_new_rank_pdims(W->rank, W->dims);
-            int n = productdims(W->rank, W->dims);
-            int scratch[W->rank];
-            for (int i=0; i<n; ++i){
-                vector_index(i, W->dims, W->rank, scratch);
-                int z = func(a, *elema(W, scratch), v);
-                DEBUG(3,"z[%d]=%08x(%d,%d)\n",
-                        i, z, gettag(z), getval(z));
-                *elema(Z, scratch) = z;
-            }
-            int z = cache(ARRAY, Z);
-            DEBUG(3,"result=%08x(%d,%d)\n",
-                    z, gettag(z), getval(z));
-            IFDEBUG(3,print(z, 0));
-            return z;
-        }
+        case LITERAL:
+	  return scalarop_lit_lit(a, func, w, op, v);
+        case ARRAY:
+	  return scalarop_lit_arr(a, func, w, op, v);
         }
         break;
     case ARRAY: {
@@ -94,35 +131,10 @@ recheck:
             goto recheck;
         }
         switch(gettag(w)){
-        case LITERAL: {
-            DEBUG(3,"wlit ");
-            array Z = array_new_rank_pdims(A->rank, A->dims);
-            int n = productdims(A->rank, A->dims);
-            int scratch[A->rank];
-            for (int i=0; i<n; ++i){
-                vector_index(i, A->dims, A->rank, scratch);
-                *elema(Z, scratch) = func(*elema(A, scratch), w, v);
-            }
-            return cache(ARRAY, Z);
-        }
-        case ARRAY: {
-            DEBUG(3,"warr ");
-            array W = getptr(w);
-            if (W->rank == 0
-                    || (W->rank == 1 && W->dims[0] == 1)){
-                w = *elem(W, 0);
-                goto recheck;
-            }
-            array Z = array_new_rank_pdims(W->rank, W->dims);
-            int n = productdims(W->rank, W->dims);
-            int scratch[W->rank];
-            for (int i=0; i<n; ++i){
-                vector_index(i, W->dims, W->rank, scratch);
-                *elema(Z, scratch) =
-                    func(*elema(A, scratch), *elema(W, scratch), v);
-            }
-            return cache(ARRAY, Z);
-        }
+        case LITERAL:
+	  return scalarop_arr_lit(A, func, w, op, v);
+        case ARRAY:
+	  return scalarop_arr_arr(a, A, func, w, op, v);
         }
     }
     }
