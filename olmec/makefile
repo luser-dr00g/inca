@@ -8,7 +8,7 @@ testexes= $(patsubst %,%.exe,$(tests))
 all:olmec test
 
 clean:
-	rm -f *.o olmec.exe all_tests.c all_tests.exe $(testexes)
+	rm -f *.o all_tests.c all_tests.exe $(testexes)
 
 test:all_tests $(tests)
 	@./all_tests
