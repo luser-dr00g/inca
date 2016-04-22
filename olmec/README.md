@@ -28,9 +28,25 @@ The longest-defined prefix of an identifer is partitioned-off and the
 remaining characters are scanned again and again for the next
 longest-defined prefix until the string is exhausted.
 So if you're defining a variable in the middle of an expression, make sure
-it butts up against a paren, number or add a space. Otherwise, you'll be
+it butts-up against a paren, number or add a space. Otherwise, you'll be
 assigning a value to the entire identifer sequence.
 
+This treatment of identifiers naturally supports quad-variables and
+redefinition of functions and operators. It may also be possible to use
+this feature for idiom-replacement.
+
+The Quad-Minus variable `⎕-` swaps the meaning of minus and hi-minus. When set
+to 0 (the default) you get the APL behavior that hi-minus is a decoration
+for numbers designating a negative number, but regular minus is the
+subtraction or negation *function*. When Quad-Minus is set to 1, then the
+regular minus-sign is treated as the the decoration for numbers designating
+a negative number, but hi-minus is now the *function*. This should
+facilitate reading and interpreting of more common comma-separated
+number-vector notations.
+
+The Quad-k variable `⎕k` displays the APL characters accessible by holding
+the ALT-key. The related Quad-a variable `⎕a` shows what olmec considers
+to be the "normal" keyboard layout against which the characters are selected.
 
 ## Design
 
