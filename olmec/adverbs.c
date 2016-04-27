@@ -202,14 +202,14 @@ void adverbtab_def(
     def(st, newdata(PCHAR, id), cache(ADVERB, v));
 }
 
-#define ADVERBTAB_DEF(id,...) \
-    adverbtab_def(id, __VA_ARGS__, env);
+#define ADVERBTAB_DEF(st, id,...) \
+    adverbtab_def(id, __VA_ARGS__, st);
 
 void init_av(symtab env){
 #define nnone 0
 #define mnone 0
 #define dnone 0
-    ADVERBS_FOREACH(ADVERBTAB_DEF)
+    ADVERBS_FOREACH(env, ADVERBTAB_DEF)
 #undef nnone
 #undef mnone
 #undef dnone

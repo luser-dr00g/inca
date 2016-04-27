@@ -141,22 +141,54 @@ recheck:
     return null;
 }
 
+object scalaropfunc_lit_lit(object a, dyad func, object w, int opfunc(int,int), verb v){
+    return newdata(LITERAL, opfunc(getval(a), getval(w)));
+}
+
+object scalaropfunc_lit_arr(object a, dyad func, object w, int opfunc(int,int), verb v){
+    array W = getptr(w);
+    array Z = array_new_rank_pdims(W->rank, W->dims);
+    int n = productdims(W->rank, W->dims);
+    int scratch[W->rank];
+    for (int i=0; i<n; ++i){
+      vector_index(i, W->dims, W->rank, scratch);
+      *elema(Z, scratch) = func(a, *elema(W, scratch), v);
+    }
+    return cache(ARRAY, Z);
+}
+
+object scalaropfunc_arr_lit(array A, dyad func, object w, int opfunc(int,int), verb v){
+    array Z = array_new_rank_pdims(A->rank, A->dims);
+    int n = productdims(A->rank, A->dims);
+    int scratch[A->rank];
+    for (int i=0; i<n; ++i){
+      vector_index(i, A->dims, A->rank, scratch);
+      *elema(Z, scratch) = func(*elema(A, scratch), w, v);
+    }
+    return cache(ARRAY, Z);
+}
+
+object scalaropfunc_arr_arr(object a, array A, dyad func, object w, int opfunc(int,int), verb v){
+    array W = getptr(w);
+    array Z = array_new_rank_pdims(W->rank, W->dims);
+    int n = productdims(W->rank, W->dims);
+    int scratch[W->rank];
+    for (int i=0; i<n; ++i){
+      vector_index(i, W->dims, W->rank, scratch);
+      *elema(Z, scratch) =
+	func(*elema(A, scratch), *elema(W, scratch), v);
+    }
+    return cache(ARRAY, Z);
+}
+
 object scalaropfunc(object a, dyad func, object w, int opfunc(int,int), verb v){
 recheck:
     switch(gettag(a)){
     case LITERAL: switch(gettag(w)){
-        case LITERAL: return newdata(LITERAL, opfunc(getval(a), getval(w)));
-        case ARRAY: {
-            array W = getptr(w);
-            array Z = array_new_rank_pdims(W->rank, W->dims);
-            int n = productdims(W->rank, W->dims);
-            int scratch[W->rank];
-            for (int i=0; i<n; ++i){
-                vector_index(i, W->dims, W->rank, scratch);
-                *elema(Z, scratch) = func(a, *elema(W, scratch), v);
-            }
-            return cache(ARRAY, Z);
-        }
+        case LITERAL:
+	    return scalaropfunc_lit_lit(a, func, w, opfunc, v);
+        case ARRAY:
+	    return scalaropfunc_lit_arr(a, func, w, opfunc, v);
         }
         break;
     case ARRAY: {
@@ -167,28 +199,10 @@ recheck:
             goto recheck;
         }
         switch(gettag(w)){
-        case LITERAL: {
-            array Z = array_new_rank_pdims(A->rank, A->dims);
-            int n = productdims(A->rank, A->dims);
-            int scratch[A->rank];
-            for (int i=0; i<n; ++i){
-                vector_index(i, A->dims, A->rank, scratch);
-                *elema(Z, scratch) = func(*elema(A, scratch), w, v);
-            }
-            return cache(ARRAY, Z);
-        }
-        case ARRAY: {
-            array W = getptr(w);
-            array Z = array_new_rank_pdims(W->rank, W->dims);
-            int n = productdims(W->rank, W->dims);
-            int scratch[W->rank];
-            for (int i=0; i<n; ++i){
-                vector_index(i, W->dims, W->rank, scratch);
-                *elema(Z, scratch) =
-                    func(*elema(A, scratch), *elema(W, scratch), v);
-            }
-            return cache(ARRAY, Z);
-        }
+        case LITERAL:
+	    return scalaropfunc_arr_lit(A, func, w, opfunc, v);
+        case ARRAY:
+	  return scalaropfunc_arr_arr(a, A, func, w, opfunc, v);
         }
     }
     }
@@ -1039,7 +1053,7 @@ void init_vb(symtab st){
 #define nnone 0
 #define mnone 0
 #define dnone 0
-    VERBS_FOREACH(DEFINE_VERB_IN_ENV)
+    VERBS_FOREACH(st,DEFINE_VERB_IN_ENV)
 #undef nnone
 #undef mnone
 #undef dnone

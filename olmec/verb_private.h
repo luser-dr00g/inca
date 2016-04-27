@@ -1,7 +1,7 @@
 
-#define VERBTAB_ENUM(name, ...) \
+#define VERBTAB_ENUM(param,name, ...) \
     VERB_ ## name,
-enum { VERBS_FOREACH(VERBTAB_ENUM) VERB_NOOP };
+enum { VERBS_FOREACH(0,VERBTAB_ENUM) VERB_NOOP };
 
 object vtab[VERB_NOOP];
 
@@ -13,7 +13,7 @@ object vectorindexleft(object a, object w, verb v);
 #define nnone 0
 #define mnone 0
 #define dnone 0
-#define DEFINE_VERB_IN_ENV(name, id,...) \
+#define DEFINE_VERB_IN_ENV(st, name, id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
     def(st, newdata(PCHAR, id), vtab[VERB_##name] = cache(VERB, v));

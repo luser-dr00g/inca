@@ -2,10 +2,10 @@
 #define XVERB_H_
 #include "common.h"
 
-#define XVERBS_FOREACH(_) \
+#define XVERBS_FOREACH(param,_) \
     /*name verb adverb*/\
-    _('/', 0x1f, '/') \
-    _('\\', 0x1e, '\\') \
+    _(param,'/', 0x1f, '/') \
+    _(param,'\\', 0x1e, '\\') \
 /**/
 struct xverb {
     object id;

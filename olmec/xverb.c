@@ -42,10 +42,10 @@ void define_xverb_in_env(int id, int vrb, int adv, symtab st){
     def(st, newdata(PCHAR, id), cache(XVERB, x));
 }
 
-#define DEFINE_XVERB_IN_ENV(id, vrb, adv) \
+#define DEFINE_XVERB_IN_ENV(env,id, vrb, adv) \
     define_xverb_in_env(id, vrb, adv, env);
 
 void init_xverb(symtab env){
-    XVERBS_FOREACH(DEFINE_XVERB_IN_ENV)
+    XVERBS_FOREACH(env,DEFINE_XVERB_IN_ENV)
 }
 
