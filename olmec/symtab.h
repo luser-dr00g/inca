@@ -8,6 +8,7 @@ struct symtab {
     object value;
     int n;
     symtab *tab /*[n]*/ ;
+    symtab prev; //==NULL in root and all leafs. used to chain (stack) new roots.
 };
 
 symtab makesymtab(int n);

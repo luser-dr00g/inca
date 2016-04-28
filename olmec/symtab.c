@@ -58,6 +58,7 @@ symtab makesymtab(int n){
         z->value = 0;  // associated value
         z->n = n;    // num slots in table
         z->tab = calloc(n, sizeof *z->tab);  // hashtable of child nodes
+        z->tab = NULL;
     }
     return z;
 }
@@ -122,6 +123,7 @@ void rehash(symtab st){
     mode=1: defining search
    */
 symtab findsym(symtab st, object **spp, int *n, int mode){
+    symtab root = st;
     symtab last = st; // saved last-match value of st
 #define sp (*spp)     // sp is an (int*) "by reference"
     int *lasp = sp;   // saved last-match pointer
@@ -167,6 +169,8 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
     //*n = nn+1; // undo nn-- and update n
     *n = lasn;
     sp = lasp;
+    if (last == root && root->prev) //not-found::recurse down the chain.
+        return findsym(root->prev, spp, n, mode);
     return last;  // return last-matched node
 }
 #undef sp
