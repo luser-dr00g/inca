@@ -68,7 +68,7 @@ int getval(object d){
 object newdata(int tag, int val){
     if (tag==LITERAL && val<0) return val;
     integer int32;
-    int32.uint32 = ((unsigned)tag << 24) | (unsigned)val;
+    int32.uint32 = ((unsigned)tag << 24) | ((unsigned)val & ((1<<24)-1));
     int x = int32.int32;
     DEBUG(3,"newdata %x(%d %d)\n", x, tag, val);
     return x;
@@ -100,79 +100,32 @@ int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
     return z;
 }
 
-size_t numused, nummax;
-void **numtab;
 
-size_t progused, progmax;
-void **progtab;
-
-size_t arrused, arrmax;
-void **arrtab;
-
-size_t symused, symmax;
-void **symtabtab;
-
-size_t verbused, verbmax;
-void **verbtab;
-
-size_t advused, advmax;
-void **advtab;
-
-size_t xvbused, xvbmax;
-void **xvbtab;
+struct memory_bank {
+    size_t used, max;
+    void **tab;
+} memory_bank[LAST_INDEXED_TYPE - FIRST_INDEXED_TYPE + 1];
 
 object cache(int tag, void *ptr){
-    DEBUG(3,"cache %p\n", ptr);
-    switch(tag){
-        default:
-        case LITERAL: 
-        case CHAR: return null;
-        case NUMBER:
-            return newdata(tag,
-                    addnewtocache(&numused, &nummax, &numtab, ptr));
-        case PROG: {
-            DEBUG(3,"cache prog\n");
-            object x = newdata(tag,
-                    addnewtocache(&progused, &progmax, &progtab, ptr));
-            DEBUG(3,"cache %d(%d,%d) %p\n", x, gettag(x), getval(x), getptr(x));
-            return x;
-        }
-        case ARRAY:
-            DEBUG(3,"cache array\n");
-            return newdata(tag,
-                    addnewtocache(&arrused, &arrmax, &arrtab, ptr));
-        case SYMTAB:
-            return newdata(tag,
-                    addnewtocache(&symused, &symmax, &symtabtab, ptr));
-        case VERB:
-            return newdata(tag,
-                    addnewtocache(&verbused, &verbmax, &verbtab, ptr));
-        case ADVERB:
-            return newdata(tag,
-                    addnewtocache(&advused, &advmax, &advtab, ptr));
-        case XVERB:
-            return newdata(tag,
-                    addnewtocache(&xvbused, &xvbmax, &xvbtab, ptr));
-        case NULLOBJ: return null;
-    }
+    if (tag < FIRST_INDEXED_TYPE || tag > LAST_INDEXED_TYPE)
+        return null;
+    int idx = tag - FIRST_INDEXED_TYPE;
+    return newdata(tag,
+            addnewtocache(&memory_bank[idx].used,
+                          &memory_bank[idx].max,
+                          &memory_bank[idx].tab,
+                          ptr));
 }
 
 void *getptr(object d){
     if (d<0) return NULL;
-    switch(gettag(d)){
-        default:
-        case LITERAL:
-        case CHAR: return NULL;
-        case NUMBER: return numtab[getval(d)];
-        case PROG: return progtab[getval(d)];
-        case ARRAY: return arrtab[getval(d)];
-        case SYMTAB: return symtabtab[getval(d)];
-        case VERB: return verbtab[getval(d)];
-        case ADVERB: return advtab[getval(d)];
-        case XVERB: return xvbtab[getval(d)];
-        case NULLOBJ: return NULL;
-    }
+    int tag = gettag(d);
+    if (tag < FIRST_INDEXED_TYPE || tag > LAST_INDEXED_TYPE)
+        return NULL;
+    int idx = tag - FIRST_INDEXED_TYPE;
+    return memory_bank[idx].tab[getval(d)];
 }
+
 
 // fill returns a "blank" value for any type
 // and identity elements for verbs

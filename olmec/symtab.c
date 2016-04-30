@@ -58,7 +58,7 @@ symtab makesymtab(int n){
         z->value = 0;  // associated value
         z->n = n;    // num slots in table
         z->tab = calloc(n, sizeof *z->tab);  // hashtable of child nodes
-        z->tab = NULL;
+        z->prev = NULL;
     }
     return z;
 }
