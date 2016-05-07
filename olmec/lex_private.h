@@ -36,11 +36,11 @@ enum state {
 
 #define NUM_CLASSES \
   sizeof((unsigned char[]) \
-       {0,      '-',   '0',   '.',   '\'',  '(',   ')',   ' ',  0x2190, '\r'})
+       { 0,     '-',   '0',   '.',   '\'',  '(',   '?',   ' ',  0x2190, '\r'})
 state_and_action_code wdtab[][NUM_CLASSES] = {
 /* state*/
 /* | *//*character class*/
-/* V *//*none   minus  0-9    .      '      (      )      sp     <-     \r    */
+/* V *//*none   minus  0-9    .      '      ()     oth    sp     <-     \r    */
 /* 0 */{ oth+2, min+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
 /* 10*/{ oth+0, min+1, num+0, dot+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 /* 20*/{ oth+0, min+1, fra+0, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
@@ -55,13 +55,13 @@ state_and_action_code wdtab[][NUM_CLASSES] = {
 /*110*/{ oth+1, min+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
 };
 
-static unsigned char cctab[64] = {
+static unsigned char cctab[128] = {
     ['0']=2, ['1']=2, ['2']=2, ['3']=2, ['4']=2,
     ['5']=2, ['6']=2, ['7']=2, ['8']=2, ['9']=2,
     ['.']=3,
     ['\'']=4,
-    ['(']=5,
-    [')']=6,
+    ['(']=5, [')']=5,
+    ['[']=6, [']']=6, [';']=6,
     [' ']=7, ['\t']=7,
     [0x0D]=9,
 };
@@ -73,7 +73,7 @@ static inline unsigned char qminus(int ch){
 static inline unsigned char character_class(int ch){
     return
            qminus(ch)? 1:
-           ch<64? cctab[ch]:
+           ch<sizeof cctab? cctab[ch]:
            ch==0x2190? 8:
            0;
 }

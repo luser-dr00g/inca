@@ -7,7 +7,7 @@
  *
  *  This decision affects the scanner code in that it must deal 
  *  with "int-strings" although the contents are expected to 
- *  primarily be restricted to the ascii domain. One special char 
+ *  mostly be restricted to the ascii domain. One special char 
  *  recognized by the scanner is the left-arrow char ← which is 
  *  used for assignment of values to variables. 
  *
@@ -175,6 +175,8 @@ token new_executable(int *s, int n){
     if (n==1){
         if (*s == '(') return newdata(LPAROBJ, 0);
         if (*s == ')') return newdata(RPAROBJ, 0);
+        if (*s == '[') return newdata(LBRACOBJ, 0);
+        if (*s == ']') return newdata(RBRACOBJ, 0);
         return newdata(PCHAR, *s);
     } else {
         array t=array_new_dims(n);
