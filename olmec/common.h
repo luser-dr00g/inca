@@ -48,6 +48,8 @@ enum tag {
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     LPAROBJ,
     RPAROBJ,
+    LBRACOBJ,
+    RBRACOBJ,
 };
 
 typedef struct array *array;
