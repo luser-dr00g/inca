@@ -24,6 +24,12 @@
  *      int x;
  *      x = cache(ARRAY, array_new_dims(3,3)); //3x3 matrix
  *
+ *  To better convey the abstract use of this integer type,
+ *  we will make use of this typedef to designate such int-handles.
+ *
+ *  commont.h:
+ *      typedef int object;
+ *
  *  the array data structure (which is implicitly a pointer
  *  to its struct) can be retrived from the handle
  *  with
