@@ -15,14 +15,12 @@ _(param,RHO, 0x2374/*rho alt-r*/,   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 
 _(param,RHO2,'$',                   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
 _(param,TAL, '#',                   nnone, vtally,   dnone,      0, 0, 0, 0, 0, 0 ) \
 _(param,IOTA,0x2373/*iota alt-i*/,  nnone, viota,    dnone,      0, 0, 0, 0, 0, 0 ) \
-_(param,TAKE,'{',                   nnone, vhead,    vtake,      0, 0, 0, 0, 1, 0 ) \
-_(param,DROP,'}',                   nnone, vbehead,  vdrop,      0, 0, 0, 0, 0, 0 ) \
 _(param,CAT, ',',                   nnone, vravel,   vcat,       0, 0, 0, 0, 0, 0 ) \
 _(param,LINK,';',                   nnone, vprenul,  vlink,      0, 0, 0, 0, 0, 0 ) \
-_(param,INDR,'[',                   nnone, mnone,    vindexright,0, 0, 0, 0, 0, 0 ) \
-_(param,INDL,']',                   nnone, mnone,    vindexleft, 0, 0, 0, 0, 0, 0 ) \
-_(param,TAK2,0x2191/*up alt-y*/,    nnone, mnone,    vtake,      0, 0, 0, 0, 0, 0 ) \
-_(param,DRO2,0x2193/*down alt-u*/,  nnone, mnone,    vdrop,      0, 0, 0, 0, 0, 0 ) \
+_(param,INDR,'{',                   nnone, mnone,    vindexright,0, 0, 0, 0, 0, 0 ) \
+_(param,INDL,'}',                   nnone, mnone,    vindexleft, 0, 0, 0, 0, 0, 0 ) \
+_(param,TAKE,0x2191/*up alt-y*/,    nnone, vhead,    vtake,      0, 0, 0, 0, 1, 0 ) \
+_(param,DROP,0x2193/*down alt-u*/,  nnone, vbehead,  vdrop,      0, 0, 0, 0, 0, 0 ) \
 _(param,COMP,0x001f,                nnone, mnone,    vcompress,  0, 0, 0, 0, 0, 0 ) \
 _(param,EXP, 0x001e,                nnone, mnone,    vexpand,    0, 0, 0, 0, 0, 0 ) \
 _(param,BASE,0x22a5/*alt-b*/,       nnone, mnone,    vbase,      0, 0, 0, 0, 0, 0 ) \
