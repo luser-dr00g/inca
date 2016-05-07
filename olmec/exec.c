@@ -126,6 +126,7 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 #include "symtab.h"
 #include "lex.h"
 #include "verbs.h"
+#include "verb_private.h"
 #include "xverb.h"
 #include "exec.h"
 
@@ -152,7 +153,7 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
             if (y != 0) return y;
         }
         if (is_nilad(x)) {
-            stack_element y = datum_to_stack_element(niladic(x.datum, 0, 0, env));
+            stack_element y = datum_to_stack_element(niladic(x.datum, 0, 0, 0, env));
             if (!is_mark(y))
                 stack_push(right, y);
         } else
@@ -235,7 +236,7 @@ int penultimate_prereleased_value (stack s){
  * except niladic functions which are called at the time the object passes
  * from the left stack to the right stack.
  */
-object niladic(object f, object dummy, object dummy2, symtab env){
+object niladic(object f, object dummy, object dummy2, object dummy3, symtab env){
     verb v = getptr(f);
     if (!v->nilad){
         printf("nilad undefined\n");
@@ -245,7 +246,7 @@ object niladic(object f, object dummy, object dummy2, symtab env){
     return v->nilad(v);
 }
 
-object monadic(object f, object y, object dummy, symtab env){
+object monadic(object f, object y, object dummy, object dummy3, symtab env){
     DEBUG(1,"monad %08x(%d,%d) %08x(%d,%d)\n",
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
@@ -262,7 +263,7 @@ object monadic(object f, object y, object dummy, symtab env){
     return v->monad(y,v);
 }
 
-object dyadic(object x, object f, object y, symtab env){
+object dyadic(object x, object f, object y, object dummy3, symtab env){
     DEBUG(1,"dyad %08x(%d,%d) %08x(%d,%d) %08x(%d,%d) \n",
             x, gettag(x), getval(x),
             f, gettag(f), getval(f),
@@ -283,7 +284,7 @@ object dyadic(object x, object f, object y, symtab env){
     return v->dyad(x,y,v);
 }
 
-object adv(object f, object g, object dummy, symtab env){
+object adv(object f, object g, object dummy, object dummy3, symtab env){
     DEBUG(1,"adverb\n");
     verb v;
     switch(gettag(g)){
@@ -301,7 +302,7 @@ object adv(object f, object g, object dummy, symtab env){
     return v->monad(f,v);
 }
 
-object conj_(object f, object g, object h, symtab env){
+object conj_(object f, object g, object h, object dummy3, symtab env){
     DEBUG(1,"conj\n");
     verb v;
     switch(gettag(g)){
@@ -317,7 +318,7 @@ object conj_(object f, object g, object h, symtab env){
 }
 
 //specification
-object spec(object name, object assn, object v, symtab env){
+object spec(object name, object assn, object v, object dummy3, symtab env){
     DEBUG(1,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
             name, gettag(name), getval(name),
             v, gettag(v), getval(v));
@@ -326,11 +327,24 @@ object spec(object name, object assn, object v, symtab env){
     return v;
 }
 
-object punc(object paren, object x, object dummy2, symtab env){
+object punc(object paren, object x, object dummy2, object dummy3, symtab env){
     DEBUG(1,"punc %08x(%d,%d)\n",
             x, gettag(x), getval(x));
     last_was_assn = 0;
     return x;
+}
+
+object funcidx(object f, object lbrac, object idx, object rbrac, symtab env){
+    DEBUG(1, "funcidx\n");
+    return f;
+}
+
+object nounidx(object n, object lbrac, object idx, object rbrac, symtab env){
+    DEBUG(1, "nounidx %08x(%d,%d) %08x(%d,%d)\n",
+            n, gettag(n), getval(n),
+            idx, gettag(idx), getval(idx));
+    //return cache(ARRAY, slice(getptr(n), getval(*elem((array)getptr(idx),0))));
+    return vectorindexleft(idx,n,VT(INDL));
 }
 
 // lookup name in environment unless to the left of assignment

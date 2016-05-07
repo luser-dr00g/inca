@@ -65,6 +65,8 @@ _(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
 _(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
 _(L10,ANY,      LPAR,     ANY,      MARK,     punc,     2,    1,     0) \
+_(L11,VRB+ADV,  LBRAC,    ANY,      RBRAC,    funcidx,  3,    0,     0) \
+_(L12,NOUN,     LBRAC,    ANY,      RBRAC,    nounidx,  3,    0,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution
@@ -97,10 +99,11 @@ int min(int x, int y){
                 s, f, dir, n, minfs, excess); \
         items[minfs] = \
             datum_to_stack_element( \
-                func(items[s].datum, \
-                    n>=2? items[s+dir].datum: 0, \
-                    n>=3? items[s+2*dir].datum: 0, \
-                    env) \
+                func(n>=1? items[s+0*dir].datum: 0, \
+                     n>=2? items[s+1*dir].datum: 0, \
+                     n>=3? items[s+2*dir].datum: 0, \
+                     n>=4? items[s+3*dir].datum: 0, \
+                     env) \
                 ); \
         minfs -= is_mark(items[minfs]);  /*suppress "noresult" indicater*/\
         for (int i=0; i<excess; ++i){ \
@@ -111,13 +114,15 @@ int min(int x, int y){
     }
 
 
-object niladic(object f, object dummy, object dummy2, symtab env);
-object monadic(object f, object y, object dummy, symtab st);
-object dyadic(object x, object f, object y, symtab st);
-object adv(object f, object g, object dummy, symtab st);
-object conj_(object f, object g, object h, symtab st);
-object spec(object name, object v, object dummy, symtab st);
-object punc(object x, object dummy, object dummy2, symtab st);
+object niladic(object f,    object dummy, object dummy2, object dummy3, symtab env);
+object monadic(object f,    object y,     object dummy2, object dummy3, symtab st);
+object dyadic (object x,    object f,     object y,      object dummy3, symtab st);
+object adv    (object f,    object g,     object dummy2, object dummy3, symtab st);
+object conj_  (object f,    object g,     object h,      object dummy3, symtab st);
+object spec   (object name, object v,     object dummy2, object dummy3, symtab st);
+object punc   (object x,    object dummy, object dummy2, object dummy3, symtab st);
+object funcidx(object f,    object lbrac, object idx,    object rbrac,  symtab env);
+object nounidx(object f,    object lbrac, object idx,    object rbrac,  symtab env);
 
 
 /* stack type
