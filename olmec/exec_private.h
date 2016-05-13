@@ -13,17 +13,19 @@ PREDICATES_FOREACH(DEFINE_PREDICATE_FUNCTION)
 
 static
 int (*q[])(object) = {
-#define PREDICATE_FUNCTION_NAME(enum_def,fname,...) fname,
+#define PREDICATE_FUNCTION_NAME(enum_def,fname,...) \
+    fname,
     PREDICATES_FOREACH(PREDICATE_FUNCTION_NAME)
 #undef PREDICATE_FUNCTION_NAME
 };
 
 // declare predicate enums and composed patterns
 enum predicate {
-#define PREDICATE_ENUMERATION(enum_def,...) enum_def,
+#define PREDICATE_ENUMERATION(enum_def,...) \
+    enum_def,
     PREDICATES_FOREACH(PREDICATE_ENUMERATION) 
 #undef PREDICATE_ENUMERATION
-    EDGE = MARK+ASSN+LPAR,
+    EDGE = MARK+ASSN+LPAR + LBRAC,
     AVN = VRB+NOUN+ADV
 };
 
@@ -64,9 +66,12 @@ _(L7, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
 _(L8, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
 _(L9, MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
-_(L10,ANY,      LPAR,     ANY,      MARK,     punc,     2,    1,     0) \
-_(L11,VRB+ADV,  LBRAC,    ANY,      RBRAC,    funcidx,  3,    0,     0) \
-_(L12,NOUN,     LBRAC,    ANY,      RBRAC,    nounidx,  3,    0,     0) \
+_(L10,LPAR,     ANY,      MARK,     ANY,      punc,     2,    1,     0) \
+_(L11,LBRAC,    SEMI,     ANY,      ANY,      brasemi,  3,    2,     0) \
+_(L12,LBRAC,    NOUN,     SEMI,     ANY,      branoun,  3,    1,     0) \
+_(L13,LBRAC,    NOUN,     RBRAC,    ANY,      bracket,  3,    2,     0) \
+_(L14,VRB+ADV,  LBRAC,    RBRAC,    ANY,      funcidx,  3,    1,     0) \
+_(L15,NOUN,     LBRAC,    RBRAC,    ANY,      nounidx,  3,    1,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution
@@ -115,12 +120,15 @@ int min(int x, int y){
 
 
 object niladic(object f,    object dummy, object dummy2, object dummy3, symtab env);
-object monadic(object f,    object y,     object dummy2, object dummy3, symtab st);
-object dyadic (object x,    object f,     object y,      object dummy3, symtab st);
-object adv    (object f,    object g,     object dummy2, object dummy3, symtab st);
-object conj_  (object f,    object g,     object h,      object dummy3, symtab st);
-object spec   (object name, object v,     object dummy2, object dummy3, symtab st);
-object punc   (object x,    object dummy, object dummy2, object dummy3, symtab st);
+object monadic(object f,    object y,     object dummy2, object dummy3, symtab env);
+object dyadic (object x,    object f,     object y,      object dummy3, symtab env);
+object adv    (object f,    object g,     object dummy2, object dummy3, symtab env);
+object conj_  (object f,    object g,     object h,      object dummy3, symtab env);
+object spec   (object name, object v,     object dummy2, object dummy3, symtab env);
+object punc   (object x,    object dummy, object dummy2, object dummy3, symtab env);
+object brasemi(object lbrac,object semi,  object dummy2, object dummy3, symtab env);
+object branoun(object lbrac,object n,     object semi,   object dummy3, symtab env);
+object bracket(object lbrac,object n,     object dummy2, object dummy3, symtab env);
 object funcidx(object f,    object lbrac, object idx,    object rbrac,  symtab env);
 object nounidx(object f,    object lbrac, object idx,    object rbrac,  symtab env);
 
@@ -214,7 +222,7 @@ static int is_assn(stack_element x);
 static int is_mark(stack_element x);
 static int is_nilad(stack_element x);
 static size_t sum_symbol_lengths(array e, int n);
-static int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab st);
+static int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env);
 static stack new_left_stack_for (array expr);
 static int matches_ptab_pattern (stack_element items[4], int i);
 static int penultimate_prereleased_value (stack s);

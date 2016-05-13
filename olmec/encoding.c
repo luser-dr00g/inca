@@ -55,6 +55,7 @@
 
 #include "common.h"
 #include "encoding.h"
+#include "array.h"
 
 int gettag(object d){
     if (d<0) return 0; /* negatives are literals */
@@ -91,6 +92,7 @@ void init_en(void){
     null = nulldata.int32;
     markdata.uint32 = newdata(MARKOBJ, 0);
     mark = markdata.int32;
+    cache(LBRACOBJ, array_new_rank_dims(0));
 }
 
 int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){

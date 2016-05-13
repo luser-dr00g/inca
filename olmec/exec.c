@@ -127,6 +127,7 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 #include "lex.h"
 #include "verbs.h"
 #include "verb_private.h"
+#include "adverbs.h"
 #include "xverb.h"
 #include "exec.h"
 
@@ -195,7 +196,7 @@ int is_nilad(stack_element x){
 
 static
 size_t sum_symbol_lengths(array e, int n){
-    int i,j;
+    int i, j;
     for (i=j=0; i<n; i++) {
         if (gettag(e->data[i])==PROG) {
             //printf("%p\n", getptr(e->data[i]));
@@ -260,7 +261,7 @@ object monadic(object f, object y, object dummy, object dummy3, symtab env){
         return null;
     }
     last_was_assn = 0;
-    return v->monad(y,v);
+    return v->monad(y, v);
 }
 
 object dyadic(object x, object f, object y, object dummy3, symtab env){
@@ -281,7 +282,7 @@ object dyadic(object x, object f, object y, object dummy3, symtab env){
         return null;
     }
     last_was_assn = 0;
-    return v->dyad(x,y,v);
+    return v->dyad(x, y, v);
 }
 
 object adv(object f, object g, object dummy, object dummy3, symtab env){
@@ -299,7 +300,7 @@ object adv(object f, object g, object dummy, object dummy3, symtab env){
         return null;
     }
     last_was_assn = 0;
-    return v->monad(f,v);
+    return v->monad(f, v);
 }
 
 object conj_(object f, object g, object h, object dummy3, symtab env){
@@ -314,7 +315,7 @@ object conj_(object f, object g, object h, object dummy3, symtab env){
         return null;
     }
     last_was_assn = 0;
-    return v->dyad(f,h,v);
+    return v->dyad(f, h, v);
 }
 
 //specification
@@ -334,17 +335,46 @@ object punc(object paren, object x, object dummy2, object dummy3, symtab env){
     return x;
 }
 
-object funcidx(object f, object lbrac, object idx, object rbrac, symtab env){
-    DEBUG(1, "funcidx\n");
-    return f;
+
+/* The bracket clauses *consume* indices left-to-right into an internal structure
+ * associated with the left-bracket object (which remains on the stack), evaluating
+ * as needed in order to reduce to a closed (empty) bracket pair.
+ *
+ * [] getval([)== 0
+ * [;] getval([)== 
+ * [n] getval([)== vector(n)
+ * [n;] getval([)== 
+ */
+object brasemi(object lbrac, object semi,  object dummy2, object dummy3, symtab env){
+    DEBUG(1, "brasemi\n");
+    return lbrac;
 }
 
-object nounidx(object n, object lbrac, object idx, object rbrac, symtab env){
+object branoun(object lbrac, object n,     object semi,   object dummy3, symtab env){
+    DEBUG(1, "branoun\n");
+    lbrac = cache(LBRACOBJ, cat(getptr(lbrac), getptr(n)));
+    return lbrac;
+}
+
+object bracket(object lbrac, object n,     object dummy2,   object dummy3, symtab env){
+    DEBUG(1, "branoun\n");
+    lbrac = cache(LBRACOBJ, cat(getptr(lbrac), getptr(n)));
+    return lbrac;
+}
+
+object funcidx(object f, object lbrac, object rbrac, object dummy3, symtab env){
+    object idx = cache(ARRAY, getptr(lbrac));
+    DEBUG(1, "funcidx\n");
+    return rank(f, idx, 0);
+}
+
+object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
+    object idx = cache(ARRAY, getptr(lbrac));
     DEBUG(1, "nounidx %08x(%d,%d) %08x(%d,%d)\n",
             n, gettag(n), getval(n),
             idx, gettag(idx), getval(idx));
-    //return cache(ARRAY, slice(getptr(n), getval(*elem((array)getptr(idx),0))));
-    return vectorindexleft(idx,n,VT(INDL));
+    //return cache(ARRAY, slice(getptr(n), getval(*elem((array)getptr(idx), 0))));
+    return vectorindexleft(idx, n, VT(INDL));
 }
 
 // lookup name in environment unless to the left of assignment
@@ -364,7 +394,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
     if (!is_assn(*stack_top_elements_address(right, 1))) {
         DEBUG(1,"lookup ");
         int *s;
-        int n,n0;
+        int n, n0;
         switch(gettag(x->datum)){
             case PCHAR: {  // single char
                 s = &x->datum;
@@ -379,7 +409,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
 
         object *p = s;
         DEBUG(1,"%d ", n);
-        symtab tab = findsym(env,&p,&n,0);
+        symtab tab = findsym(env,&p,&n, 0);
         if (tab->value == null) {
             printf("error undefined prefix\n");
             return x->datum;
@@ -387,12 +417,12 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
 
         while (n){ //while name not exhausted
             DEBUG(0,"%d<-%08x(%d,%d)\n", n-n0,
-                    tab->value,gettag(tab->value),getval(tab->value));
+                    tab->value, gettag(tab->value), getval(tab->value));
             DEBUG(1,"%d ", n);
             stack_push_datum(left, tab->value);           //pushback value
             s = p;
             n0 = n;
-            tab = findsym(env,&p,&n,0);         //lookup remaining name
+            tab = findsym(env,&p,&n, 0);         //lookup remaining name
             if (tab->value == null) {
                 printf("error undefined internal\n");
                 return x->datum;

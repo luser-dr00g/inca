@@ -39,6 +39,7 @@ enum tag {
     PROG, /* val is an (index to an) executable code fragment (array of PCHAR)*/
     ARRAY, /* val is a(n index to a) boxed array */
     SYMTAB, /* val is a(n index to a) symbol table */
+    LBRACOBJ, /* val is an (index to an) array of the bracket contents */
     VERB, /* val is a(n index to a) verb object */
     ADVERB, /* val is a(n index to a) verb object */
     XVERB, /* val is a(n index to a) struct containing a verb and adverb */
@@ -48,7 +49,6 @@ enum tag {
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     LPAROBJ,
     RPAROBJ,
-    LBRACOBJ,
     RBRACOBJ,
 };
 

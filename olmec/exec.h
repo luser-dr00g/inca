@@ -27,6 +27,7 @@ _( RPAR  = 16384, qrpar, gettag(x)==RPAROBJ ) \
 _( LBRAC = 32768, qlbrac, gettag(x)==LBRACOBJ ) \
 _( RBRAC = 65536, qrbrac, gettag(x)==RBRACOBJ ) \
 _( NUL  = 131072, qnull, gettag(x)==NULLOBJ ) \
+_( SEMI = 262144, qsemi, gettag(x)==PCHAR && getval(x) == ';' ) \
 /**/
 
 // declare predicate functions
@@ -34,5 +35,5 @@ _( NUL  = 131072, qnull, gettag(x)==NULLOBJ ) \
 PREDICATES_FOREACH(DECLARE_PREDICATE_FUNCTION)
 
 // execute an expression e with environment st
-object execute_expression(array expr, symtab st, int *plast_was_assn);
+object execute_expression(array expr, symtab env, int *plast_was_assn);
 
