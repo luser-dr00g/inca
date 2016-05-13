@@ -260,6 +260,14 @@ static char *test_put_get(){
     return 0;
 }
 
+static char *test_new_functions(){
+    symtab st = makesymtab(10);
+    define_symbol(st, 's','y','m','b', 42);
+
+    test_case(symbol_value(st, 's','y','m','b') != 42);
+    return 0;
+}
+
 static char *test_null_all_bits_zero(){
     char **calloc_ed_pointer = calloc(1,sizeof*calloc_ed_pointer);
     test_case(*calloc_ed_pointer!=NULL);
@@ -270,6 +278,7 @@ static char *test_null_all_bits_zero(){
 static char *all_tests(){
     mu_run_test(test_null_all_bits_zero);
     mu_run_test(test_put_get);
+    mu_run_test(test_new_functions);
     return 0;
 }
 
