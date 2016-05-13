@@ -188,6 +188,41 @@ object abackscan(object w, verb v){
     return create_derived_verb(0x2340, NULL, backscan, 0, w, 0, 0, 0, 0, 0);
 }
 
+
+object rank(object a, object w, verb v){
+    switch(CONJCASE(a,w)){
+        case NN: return null;
+        case NV: return null;
+        case VN: {
+            array W = getptr(w);
+            verb va = getptr(a);
+            switch(W->dims[0]){
+                default:
+                case 0: return null;
+                case 1: return
+                        create_derived_verb(getval(va->id),
+                                va->nilad, va->monad, va->dyad,
+                                0, 0, 0, *elem(W,0), *elem(W,0), *elem(W,0));
+                case 2: return
+                        create_derived_verb(getval(va->id),
+                                va->nilad, va->monad, va->dyad,
+                                0, 0, 0, *elem(W,1), *elem(W,0), *elem(W,1));
+                case 3: return
+                        create_derived_verb(getval(va->id),
+                                va->nilad, va->monad, va->dyad,
+                                0, 0, 0, *elem(W,0), *elem(W,1), *elem(W,2));
+            }
+        }
+        case VV: {
+            verb va = getptr(a);
+            verb vw = getptr(w);
+            return create_derived_verb(getval(va->id),
+                    va->nilad, va->monad, va->dyad,
+                    va->f, va->g, va->h, vw->mr, vw->lr, vw->rr);
+        }
+    }
+}
+
 void adverbtab_def(
         object id,
         nilad *nilad,
