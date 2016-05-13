@@ -90,15 +90,6 @@ array scan_expression(int *s, int n, symtab env){
 }
 
 void check_quadneg(symtab st){
-#if 0
-    array name = array_new_dims(2);
-    name->data[0] = newdata(PCHAR, 0x2395);
-    name->data[1] = newdata(PCHAR, '-');
-    int *p = name->data;
-    int n = 2;
-    symtab t = findsym(st, &p, &n, 0);
-    quadneg = t->value;
-#endif
     quadneg = symbol_value(st, newdata(PCHAR, 0x2395), newdata(PCHAR, '-'));
     if (gettag(quadneg)==ARRAY)
         quadneg = ((array)getptr(quadneg))->data[0];
@@ -121,15 +112,6 @@ token *collapse_adjacent_numbers_if_needed(token *p){
     }
     return p;
 }
-#if 0
-    if (gettag(p[-2])==LITERAL && gettag(p[-1])==LITERAL){
-        --p;
-        p[-1]=cache(ARRAY, vector(p[-1],p[0]));
-    } else if (gettag(p[-2])==ARRAY && gettag(p[-1])==LITERAL){
-        --p;
-        p[-1]=cache(ARRAY, cat(getptr(p[-1]), scalar(p[0])));
-    }
-#endif
 
 
 token new_numeric(int *s, int n){
