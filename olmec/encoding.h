@@ -5,6 +5,7 @@
 extern object null;
 extern object mark;
 extern object nil;
+extern object blank;
 
 void init_en();
 

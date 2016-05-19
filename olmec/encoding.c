@@ -86,6 +86,7 @@ object null /* = nulldata.int32 */;
 integer markdata;// = { .data = { .tag = MARKOBJ, .val = 0 } };
 object mark /* = markdata.int32 */;
 object nil;
+object blank;
 
 void init_en(void){
     nulldata.uint32 = newdata(NULLOBJ, 0);
@@ -93,6 +94,7 @@ void init_en(void){
     markdata.uint32 = newdata(MARKOBJ, 0);
     mark = markdata.int32;
     cache(LBRACOBJ, array_new_rank_dims(0));
+    blank = newdata(CHAR, ' ');
 }
 
 int addnewtocache(size_t *used, size_t *max, void ***data, void *ptr){
