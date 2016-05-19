@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include "../ppnarg.h"
 
 #define MODE1(x) (x|1<<7) //add hi bit of ascii char
@@ -49,6 +50,7 @@ enum tag {
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     LPAROBJ,
     RPAROBJ,
+    SEMIOBJ,
     RBRACOBJ,
 };
 

@@ -130,6 +130,7 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 #include "adverbs.h"
 #include "xverb.h"
 #include "exec.h"
+#include "print.h"
 
 #include "exec_private.h"
 
@@ -341,30 +342,62 @@ object punc(object paren, object x, object dummy2, object dummy3, symtab env){
  * as needed in order to reduce to a closed (empty) bracket pair.
  *
  * [] getval([)== 0
- * [;] getval([)== 
- * [n] getval([)== vector(n)
- * [n;] getval([)== 
+ *
+ * [; getval([)== 0->(-1,_)->(-1,-1,_)  (n)->(n,_)
  */
 object brasemi(object lbrac, object semi,  object dummy2, object dummy3, symtab env){
+    int idx = getval(lbrac);
     DEBUG(1, "brasemi\n");
-    return lbrac;
+    if (idx==0)
+        return cache(LBRACOBJ, vector(-1, blank));
+    array iarr = getptr(lbrac);
+    object *last = elemr(iarr,iarr->dims[0]-1);
+    if (*last == blank) {
+        *last = -1;
+    }
+    return cache(LBRACOBJ, cat(iarr,scalar(blank)));
 }
 
+/*
+ * [n; getval([)== 0->(n,_)->(n,n,_)
+ */
 object branoun(object lbrac, object n,     object semi,   object dummy3, symtab env){
     DEBUG(1, "branoun\n");
-    lbrac = cache(LBRACOBJ, cat(getptr(lbrac), getptr(n)));
-    return lbrac;
+    int idx = getval(lbrac);
+    array narr = getptr(n);
+    if (idx==0)
+        return cache(LBRACOBJ, vector(*elem(narr,0), blank));
+    array iarr = getptr(lbrac);
+    object *last = elemr(iarr,iarr->dims[0]-1);
+    if (*last == blank) {
+        *last = *elem(narr,0);
+        return cache(LBRACOBJ, cat(iarr, scalar(blank)));
+    }
+    return cache(LBRACOBJ, cat(iarr, narr));
 }
 
+/*
+ * [n] getval([)== 0->(n) (?,_)->(?,n)
+ */
 object bracket(object lbrac, object n,     object dummy2,   object dummy3, symtab env){
-    DEBUG(1, "branoun\n");
-    lbrac = cache(LBRACOBJ, cat(getptr(lbrac), getptr(n)));
-    return lbrac;
+    DEBUG(1, "bracket\n");
+    int idx = getval(lbrac);
+    if (idx==0)
+        return cache(LBRACOBJ, getptr(n));
+    array iarr = getptr(lbrac);
+    object *last = elemr(iarr,iarr->dims[0]-1);
+    if (*last == blank) {
+        array narr = getptr(n);
+        *last = *elem(narr,0);
+        return lbrac;
+    }
+    return cache(LBRACOBJ, cat(iarr, (array)getptr(n)));
 }
 
 object funcidx(object f, object lbrac, object rbrac, object dummy3, symtab env){
     object idx = cache(ARRAY, getptr(lbrac));
-    DEBUG(1, "funcidx\n");
+    DEBUG(1, "funcidx %08x(%d,%d)\n",
+            lbrac, gettag(lbrac), getval(lbrac));
     return rank(f, idx, 0);
 }
 
@@ -373,7 +406,43 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
     DEBUG(1, "nounidx %08x(%d,%d) %08x(%d,%d)\n",
             n, gettag(n), getval(n),
             idx, gettag(idx), getval(idx));
-    //return cache(ARRAY, slice(getptr(n), getval(*elem((array)getptr(idx), 0))));
+    if (getval(lbrac)==0)
+        return n;
+    array iarr = getptr(idx);
+    object *last = elemr(iarr,iarr->dims[0]-1);
+    if (*last == blank) {
+        *last = -1;
+    }
+    print(idx,0);
+    array narr = getptr(n);
+    switch(iarr->rank){
+    case 0: 
+        printf("index rank=0\n");
+        return cache(ARRAY,
+                        slice(narr, getval(*elem(iarr, 0))));
+    case 1:
+        printf("index rank=1\n");
+        switch(iarr->dims[0]){
+        case 0: return n;
+        case 1: return cache(ARRAY,
+                        slice(narr, getval(*elem(iarr, 0))));
+        default:
+        if (iarr->dims[0]==narr->rank){
+            printf("index dim == arr rank\n");
+            return cache(ARRAY, slicea(narr, iarr->data));
+        } else if (iarr->dims[0]<narr->rank){
+            printf("iterative slicing\n");
+            for(int i=0; i<iarr->dims[0]; i++){
+                narr = slice(narr, getval(*elem(iarr, i)));
+            }
+            return cache(ARRAY, narr);
+        } else {
+            printf("INDEX LENGTH TOO LONG\n");
+        }
+        }
+    default:
+        printf("INDEX RANK TOO HIGH\n");
+    }
     return vectorindexleft(idx, n, VT(INDL));
 }
 

@@ -159,6 +159,7 @@ token new_executable(int *s, int n){
         if (*s == ')') return newdata(RPAROBJ, 0);
         if (*s == '[') return newdata(LBRACOBJ, 0);
         if (*s == ']') return newdata(RBRACOBJ, 0);
+        if (*s == ';') return newdata(SEMIOBJ, 0);
         return newdata(PCHAR, *s);
     } else {
         array t=array_new_dims(n);

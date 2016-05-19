@@ -129,8 +129,8 @@ object punc   (object x,    object dummy, object dummy2, object dummy3, symtab e
 object brasemi(object lbrac,object semi,  object dummy2, object dummy3, symtab env);
 object branoun(object lbrac,object n,     object semi,   object dummy3, symtab env);
 object bracket(object lbrac,object n,     object dummy2, object dummy3, symtab env);
-object funcidx(object f,    object lbrac, object idx,    object rbrac,  symtab env);
-object nounidx(object f,    object lbrac, object idx,    object rbrac,  symtab env);
+object funcidx(object f,    object lbrac, object rbrac,  object dummy3, symtab env);
+object nounidx(object f,    object lbrac, object rbrac,  object dummy3, symtab env);
 
 
 /* stack type
