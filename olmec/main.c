@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "array.h"
 #include "editor.h"
 #include "encoding.h"
@@ -14,6 +15,7 @@
 #include "xverb.h"
 #include "print.h"
 
+// the global symbol table
 symtab env;
 
 // quad-neg variable controls minus/hi-minus semantics in
@@ -98,24 +100,12 @@ void init_quad_k(symtab st){
 #endif
 }
 
-int main() {
+int mainloop(){
     int *buf = NULL;
     int buflen;
     int expn;
     char *prompt = "        ";
     int last_was_assn;
-
-    init_en();
-    init_array();
-    env = makesymtab(10);
-    env->value = null; // set root-node value
-    init_vb(env);
-    init_av(env);
-    init_xverb(env);
-    init_quad_neg(env);
-    init_quad_k(env);
-
-    if (isatty(fileno(stdin))) specialtty();
 
     while(get_line(prompt, &buf, &buflen, &expn)){
 
@@ -148,7 +138,23 @@ int main() {
         if (!last_was_assn && x!=mark)
             print(x, 0);
     }
+    free(buf);
+}
 
+int main() {
+
+    init_en();
+    init_array();
+    env = makesymtab(10);
+    env->value = null; // set root-node value
+    init_vb(env);
+    init_av(env);
+    init_xverb(env);
+    init_quad_neg(env);
+    init_quad_k(env);
+
+    if (isatty(fileno(stdin))) specialtty();
+    mainloop();
     if (isatty(fileno(stdin))) restoretty();
     return 0;
 }
