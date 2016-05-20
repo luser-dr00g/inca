@@ -82,7 +82,10 @@ int mainloop(){
             DEBUG(2,"\n");
             );
 
-        array a = scan_expression(buf, expn, env);
+        array expr = array_new_dims(expn);
+        memcpy(expr->data,buf,expn*sizeof(int));
+
+        array a = scan_expression(expr, env);
 
         IFDEBUG(2,
             DEBUG(2,"\n");

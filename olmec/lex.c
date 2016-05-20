@@ -54,7 +54,9 @@ int quadneg;  // hi-minus v. minus semantics.
 
 #include "lex_private.h"
 
-array scan_expression(int *s, int n, symtab env){
+array scan_expression(array expr, symtab env){
+    int *s = expr->data;
+    int n = expr->dims[0];
     array result = array_new_dims(n+1);
     token *p = result->data, *const p1 = p+1;
     state ss, st; /* last state, current state */
