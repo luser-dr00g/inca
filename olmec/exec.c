@@ -318,6 +318,12 @@ object conj_(object f, object g, object h, object dummy3, symtab env){
     return v->dyad(f, h, v);
 }
 
+object lcurry (object x,    object f,     object dummy2, object dummy3, symtab env){
+    DEBUG(1,"lcurry\n");
+    last_was_assn = 0;
+    return amp(x,f,0);
+}
+
 //specification
 object spec(object name, object assn, object v, object dummy3, symtab env){
     DEBUG(1,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
@@ -346,6 +352,7 @@ object punc(object paren, object x, object dummy2, object dummy3, symtab env){
  */
 object brasemi(object lbrac, object semi,  object dummy2, object dummy3, symtab env){
     int idx = getval(lbrac);
+    last_was_assn = 0;
     DEBUG(1, "brasemi\n");
     if (idx==0)
         return cache(LBRACOBJ, vector(-1, blank));
@@ -363,6 +370,7 @@ object brasemi(object lbrac, object semi,  object dummy2, object dummy3, symtab 
 object branoun(object lbrac, object n,     object semi,   object dummy3, symtab env){
     DEBUG(1, "branoun\n");
     int idx = getval(lbrac);
+    last_was_assn = 0;
     array narr = getptr(n);
     if (idx==0)
         return cache(LBRACOBJ, vector(*elem(narr,0), blank));
@@ -372,6 +380,7 @@ object branoun(object lbrac, object n,     object semi,   object dummy3, symtab 
         *last = *elem(narr,0);
         return cache(LBRACOBJ, cat(iarr, scalar(blank)));
     }
+    last_was_assn = 0;
     return cache(LBRACOBJ, cat(iarr, narr));
 }
 
@@ -381,6 +390,7 @@ object branoun(object lbrac, object n,     object semi,   object dummy3, symtab 
 object bracket(object lbrac, object n,     object dummy2,   object dummy3, symtab env){
     DEBUG(1, "bracket\n");
     int idx = getval(lbrac);
+    last_was_assn = 0;
     if (idx==0)
         return cache(LBRACOBJ, getptr(n));
     array iarr = getptr(lbrac);
@@ -402,6 +412,7 @@ object bracidx(object lbrac,object inner, object rbrac,  object dummy3, symtab e
     for (int i=0; i<idx->dims[0]-1; ++i)
         idx->data[i] = -1;
     idx->data[ idx->dims[0]-1 ] = blank;
+    last_was_assn = 0;
     return cache(LBRACOBJ, idx);
 }
 
@@ -409,11 +420,13 @@ object funcidx(object f, object lbrac, object rbrac, object dummy3, symtab env){
     object idx = cache(ARRAY, getptr(lbrac));
     DEBUG(1, "funcidx %08x(%d,%d)\n",
             lbrac, gettag(lbrac), getval(lbrac));
+    last_was_assn = 0;
     return rank(f, idx, 0);
 }
 
 object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
     object idx = cache(ARRAY, getptr(lbrac));
+    last_was_assn = 0;
     DEBUG(1, "nounidx %08x(%d,%d) %08x(%d,%d)\n",
             n, gettag(n), getval(n),
             idx, gettag(idx), getval(idx));
