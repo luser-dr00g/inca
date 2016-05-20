@@ -30,74 +30,41 @@ void init_quad_k(symtab st){
     //alt-keyboard
     //
     //-> iterate over string
-    array qk = array_new_dims(8,13);
-#define P(_) newdata(PCHAR, inputtobase(*#_,1)),
-#define Q(_) newdata(PCHAR, inputtobase(_,1)),
-    int keys[] = {
-        P(~) P(!) Q('@') P(#) P($) P(%) P(^) P(&) P(*)Q('(') Q(')') P(_) P(+)
-        P(`) P(1) P(2) P(3) P(4) P(5) P(6) P(7) P(8) P(9) P(0) P(-) P(=)
-        P(Q) P(W) P(E) P(R) P(T) P(Y) P(U) P(I) P(O) P(P) Q('{') Q('}') P(|)
-        P(q) P(w) P(e) P(r) P(t) P(y) P(u) P(i) P(o) P(p) Q('[') Q(']')Q('\\')
-        P(A) P(S) P(D) P(F) P(G) P(H) P(J) P(K) P(L) Q(':') Q('"') Q(' ') Q(' ')
-        P(a) P(s) P(d) P(f) P(g) P(h) P(j) P(k) P(l) Q(';') Q('\'') Q(' ') Q(' ')
-        P(Z) P(X) P(C) P(V) P(B) P(N) P(M) P(<) P(>) Q('?') Q(' ')Q(' ')Q(' ')
-        P(z) P(x) P(c) P(v) P(b) P(n) P(m) Q(',') P(.) P(/) Q(' ')Q(' ')Q(' ')
+    char *rows[] = {
+        "~!@#$%^&*()_+",
+        "`1234567890-=",
+        "QWERTYUIOP{}|",
+        "qwertyuiop[]\\",
+        "ASDFGHJKL:\"",
+        "asdfghjkl;'",
+        "ZXCVBNM<>?",
+        "zxcvbnm,./",
     };
-    memcpy(qk->data, keys, sizeof keys);
+    array qk = array_new_dims(8,13);
+    for (int i=0,j; i<8; ++i){
+        for (j=0; j<13; ++j){
+            if (!rows[i][j]) break;
+            *elem(qk,i,j) = newdata(PCHAR, inputtobase(rows[i][j],1));
+        }
+        for (; j<13; ++j){
+            *elem(qk,i,j) = newdata(PCHAR, inputtobase(' ',0));
+        }
+    }
     define_symbol(st,newdata(PCHAR, 0x2395),newdata(PCHAR, 'k'), cache(ARRAY, qk));
 
-#undef P
-#undef Q
 
     //normal keyboard
     array qa = array_new_dims(8,13);
-#define P(_) newdata(PCHAR, inputtobase(*#_,0)),
-#define Q(_) newdata(PCHAR, inputtobase(_,0)),
-    int keysa[] = {
-        P(~) P(!) Q('@') P(#) P($) P(%) P(^) P(&) P(*)Q('(') Q(')') P(_) P(+)
-        P(`) P(1) P(2) P(3) P(4) P(5) P(6) P(7) P(8) P(9) P(0) P(-) P(=)
-        P(Q) P(W) P(E) P(R) P(T) P(Y) P(U) P(I) P(O) P(P) Q('{') Q('}') P(|)
-        P(q) P(w) P(e) P(r) P(t) P(y) P(u) P(i) P(o) P(p) Q('[') Q(']')Q('\\')
-        P(A) P(S) P(D) P(F) P(G) P(H) P(J) P(K) P(L) Q(':') Q('"') Q(' ') Q(' ')
-        P(a) P(s) P(d) P(f) P(g) P(h) P(j) P(k) P(l) Q(';') Q('\'') Q(' ') Q(' ')
-        P(Z) P(X) P(C) P(V) P(B) P(N) P(M) P(<) P(>) Q('?') Q(' ')Q(' ')Q(' ')
-        P(z) P(x) P(c) P(v) P(b) P(n) P(m) Q(',') P(.) P(/) Q(' ')Q(' ')Q(' ')
-    };
-    memcpy(qa->data, keysa, sizeof keysa);
+    for (int i=0,j; i<8; ++i){
+        for (j=0; j<13; ++j){
+            if (!rows[i][j]) break;
+            *elem(qa, i, j) = newdata(PCHAR, inputtobase(rows[i][j],0));
+        }
+        for (; j<13; ++j){
+            *elem(qa, i, j) = newdata(PCHAR, inputtobase(' ',0));
+        }
+    }
     define_symbol(st,newdata(PCHAR, 0x2395),newdata(PCHAR, 'a'), cache(ARRAY, qa));
-#undef P
-#undef Q
-
-#if 0
-    int keys[] = {
-        P(MODE1('~')), P(0x00a8), P(0x00af), P('<'), P(0x2264),
-            P('='), P(0x2265), P('>'), P(MODE1('*')),
-            P(MODE1('(')), P(MODE1(')')),
-            P('_'), P(MODE1('+')),
-        P(MODE1('`')), P('1'), P('2'), P('3'), P('4'), P('5'),
-            P('6'), P('7'), P('8'), P('9'), P('0'),
-            P('-'), P(MODE1('=')),
-        P('Q'), P('W'), P('E'), P('R'), P('T'),
-            P('Y'), P('U'), P('I'), P('O'), P('P'),
-            P(0x2192), P(MODE1('}')), P(MODE1('|')),
-        P('?'), P(0x2375), P(0x2208), P(0x2374), P(0x223c),
-            P(0x2191), P(0x2193), P(0x2373), P(0x25cb), P(0x22c6), P(0x2190),
-            P(']'), P(0x2340),
-        P('A'), P('S'), P('D'), P('F'), P('G'),
-            P('H'), P('J'), P('K'), P('L'), P(':'), P('"'),
-            P(32), P(32),
-        P(0x237a), P(0x2308), P(0x230a), P('_'), P(0x2207),
-            P(0x2206), P(0x2218), P('\''), P(0x2395),
-            P(MODE1(';')), P(MODE1('\'')),
-            P(32), P(32),
-        P('Z'), P('X'), P('C'), P('V'),
-            P('B'), P('N'), P('M'), P(MODE1('<')), P(MODE1('>')), P(MODE1('?')),
-            P(32), P(32), P(32),
-        P(0x2282), P(0x2283), P(0x2229), P(0x222a), P(0x22a5), P(0x22a4), P('|'),
-            P(MODE1(',')), P(MODE1('.')), P(0x233f),
-            P(32), P(32), P(32),
-    };
-#endif
 }
 
 int mainloop(){
@@ -141,8 +108,7 @@ int mainloop(){
     free(buf);
 }
 
-int main() {
-
+int init_all(){
     init_en();
     init_array();
     env = makesymtab(10);
@@ -152,10 +118,17 @@ int main() {
     init_xverb(env);
     init_quad_neg(env);
     init_quad_k(env);
+}
 
-    if (isatty(fileno(stdin))) specialtty();
-    mainloop();
-    if (isatty(fileno(stdin))) restoretty();
+int main() {
+    int do_tty = isatty(fileno(stdin));
+    init_all();
+
+    if (do_tty) specialtty();
+
+        mainloop();
+
+    if (do_tty) restoretty();
     return 0;
 }
 
