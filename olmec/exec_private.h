@@ -70,8 +70,9 @@ _(L10,LPAR,     ANY,      MARK,     ANY,      punc,     2,    1,     0) \
 _(L11,LBRAC,    SEMI,     ANY,      ANY,      brasemi,  3,    2,     0) \
 _(L12,LBRAC,    NOUN,     SEMI,     ANY,      branoun,  3,    1,     0) \
 _(L13,LBRAC,    NOUN,     RBRAC,    ANY,      bracket,  3,    2,     0) \
-_(L14,VRB+ADV,  LBRAC,    RBRAC,    ANY,      funcidx,  3,    1,     0) \
-_(L15,NOUN,     LBRAC,    RBRAC,    ANY,      nounidx,  3,    1,     0) \
+_(L14,LBRAC,    LBRAC,    RBRAC,    ANY,      bracidx,  3,    1,     0) \
+_(L15,VRB+ADV,  LBRAC,    RBRAC,    ANY,      funcidx,  3,    1,     0) \
+_(L16,NOUN,     LBRAC,    RBRAC,    ANY,      nounidx,  3,    1,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution
@@ -129,6 +130,7 @@ object punc   (object x,    object dummy, object dummy2, object dummy3, symtab e
 object brasemi(object lbrac,object semi,  object dummy2, object dummy3, symtab env);
 object branoun(object lbrac,object n,     object semi,   object dummy3, symtab env);
 object bracket(object lbrac,object n,     object dummy2, object dummy3, symtab env);
+object bracidx(object lbrac,object inner, object rbrac,  object dummy3, symtab env);
 object funcidx(object f,    object lbrac, object rbrac,  object dummy3, symtab env);
 object nounidx(object f,    object lbrac, object rbrac,  object dummy3, symtab env);
 
@@ -157,7 +159,7 @@ typedef struct stack {
 
 static
 stack new_stack (unsigned n) {
-    DEBUG(0, "new_stack(%u)\n", n);
+    DEBUG(1, "new_stack(%u)\n", n);
     stack r = malloc(sizeof *r + n * sizeof r->elements[0]);
     return r->next = 0, r->limit = n, r;
 }

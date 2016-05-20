@@ -86,8 +86,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "encoding.h"
 #include "array.h"
+#include "print.h"
 
 array nilarray;
 void init_array(void){
@@ -388,7 +390,10 @@ void transposea(array a, const int *spec){
 
 // return new indirect array of one item of array
 array slice(array a, int i){
-    const int rank = a->rank-1;
+    DEBUG(2, "slice: i=%d\n", i);
+    IFDEBUG(2, printarray(a, 0));
+    const int rank = a->rank-1>0?a->rank-1:0;
+    DEBUG(2, "rank=%d\n", rank);
     array z=malloc(sizeof *z + (2*rank)*sizeof(int));
     z->rank = rank;
 
@@ -398,8 +403,11 @@ array slice(array a, int i){
     z->weight = z->dims + z->rank;
     memcpy(z->weight, a->weight+1, z->rank*sizeof(int));
     z->cons = a->cons + i*a->weight[0];
+    DEBUG(2, "acons=%d  zcons=%d\n", a->cons, z->cons);
 
+    z->type = indirect;
     z->data = a->data;
+    IFDEBUG(2, printarray(z, 0));
     return z;
 }
 

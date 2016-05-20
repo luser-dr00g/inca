@@ -200,7 +200,6 @@ size_t sum_symbol_lengths(array e, int n){
     int i, j;
     for (i=j=0; i<n; i++) {
         if (gettag(e->data[i])==PROG) {
-            //printf("%p\n", getptr(e->data[i]));
             j+=((array)getptr(e->data[i]))->dims[0];
         }
     }
@@ -241,7 +240,7 @@ int penultimate_prereleased_value (stack s){
 object niladic(object f, object dummy, object dummy2, object dummy3, symtab env){
     verb v = getptr(f);
     if (!v->nilad){
-        printf("nilad undefined\n");
+        fprintf(stderr, "nilad undefined\n");
         return null;
     }
     last_was_assn = 0;
@@ -258,7 +257,7 @@ object monadic(object f, object y, object dummy, object dummy3, symtab env){
     case XVERB: {xverb x = getptr(f); v = x->verb;} break;
     }
     if (!v->monad) {
-        printf("monad undefined\n");
+        fprintf(stderr, "monad undefined\n");
         return null;
     }
     last_was_assn = 0;
@@ -279,7 +278,7 @@ object dyadic(object x, object f, object y, object dummy3, symtab env){
                     v = x->verb; } break;
     }
     if (!v->dyad) {
-        printf("dyad undefined\n");
+        fprintf(stderr, "dyad undefined\n");
         return null;
     }
     last_was_assn = 0;
@@ -297,7 +296,7 @@ object adv(object f, object g, object dummy, object dummy3, symtab env){
                     v = x->adverb; } break;
     }
     if (!v->monad) {
-        printf("adv undefined\n");
+        fprintf(stderr, "adv undefined\n");
         return null;
     }
     last_was_assn = 0;
@@ -312,7 +311,7 @@ object conj_(object f, object g, object h, object dummy3, symtab env){
     case XVERB: {xverb x = getptr(g); v = x->adverb;} break;
     }
     if (!v->dyad) {
-        printf("conj undefined\n");
+        fprintf(stderr, "conj undefined\n");
         return null;
     }
     last_was_assn = 0;
@@ -394,6 +393,18 @@ object bracket(object lbrac, object n,     object dummy2,   object dummy3, symta
     return cache(LBRACOBJ, cat(iarr, (array)getptr(n)));
 }
 
+/*
+ * [[n] getval([)== 0->(-1_0,-1_1,-1_...,-1_n,_)
+ */
+object bracidx(object lbrac,object inner, object rbrac,  object dummy3, symtab env){
+    array iarr = getptr(inner);
+    array idx = array_new_dims(iarr->data[iarr->cons]+1);
+    for (int i=0; i<idx->dims[0]-1; ++i)
+        idx->data[i] = -1;
+    idx->data[ idx->dims[0]-1 ] = blank;
+    return cache(LBRACOBJ, idx);
+}
+
 object funcidx(object f, object lbrac, object rbrac, object dummy3, symtab env){
     object idx = cache(ARRAY, getptr(lbrac));
     DEBUG(1, "funcidx %08x(%d,%d)\n",
@@ -413,35 +424,38 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
     if (*last == blank) {
         *last = -1;
     }
-    print(idx,0);
+    IFDEBUG(1, print(idx,0));
     array narr = getptr(n);
+    if (narr->rank == 0)
+        return n;
     switch(iarr->rank){
     case 0: 
-        printf("index rank=0\n");
+        DEBUG(1, "index rank=0\n");
+        DEBUG(1, "getval(index)=%d\n", getval(*elem(iarr, 0)));
         return cache(ARRAY,
                         slice(narr, getval(*elem(iarr, 0))));
     case 1:
-        printf("index rank=1\n");
+        DEBUG(1, "index rank=1\n");
         switch(iarr->dims[0]){
         case 0: return n;
         case 1: return cache(ARRAY,
                         slice(narr, getval(*elem(iarr, 0))));
         default:
         if (iarr->dims[0]==narr->rank){
-            printf("index dim == arr rank\n");
+            DEBUG(1, "index dim == arr rank\n");
             return cache(ARRAY, slicea(narr, iarr->data));
         } else if (iarr->dims[0]<narr->rank){
-            printf("iterative slicing\n");
+            DEBUG(1, "iterative slicing\n");
             for(int i=0; i<iarr->dims[0]; i++){
                 narr = slice(narr, getval(*elem(iarr, i)));
             }
             return cache(ARRAY, narr);
         } else {
-            printf("INDEX LENGTH TOO LONG\n");
+            fprintf(stderr, "INDEX LENGTH TOO LONG\n");
         }
         }
     default:
-        printf("INDEX RANK TOO HIGH\n");
+        fprintf(stderr, "INDEX RANK TOO HIGH\n");
     }
     return vectorindexleft(idx, n, VT(INDL));
 }
@@ -480,7 +494,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
         DEBUG(1,"%d ", n);
         symtab tab = findsym(env,&p,&n, 0);
         if (tab->value == null) {
-            printf("error undefined prefix\n");
+            fprintf(stderr, "error undefined prefix\n");
             return x->datum;
         }
 
@@ -493,7 +507,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
             n0 = n;
             tab = findsym(env,&p,&n, 0);         //lookup remaining name
             if (tab->value == null) {
-                printf("error undefined internal\n");
+                fprintf(stderr, "error undefined internal\n");
                 return x->datum;
             }
         }

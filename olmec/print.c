@@ -135,7 +135,7 @@ int printarray(array t, int width){
     else
         switch(t->rank){
         case 0: //DEBUG(1,"%*d\n", maxwidth, *t->data);
-                printatom(t->data[0], maxwidth);
+                printatom(t->data[t->cons], maxwidth);
                 break;
         case 1: for (int i=0; i<t->dims[0]; ++i) {
                     //DEBUG(1,"%*d\n", maxwidth, *elem(t,i));

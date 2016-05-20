@@ -3,7 +3,7 @@
     VERB_ ## name,
 enum { VERBS_FOREACH(0,VERBTAB_ENUM) VERB_NOOP };
 
-object vtab[VERB_NOOP];
+extern object vtab[VERB_NOOP];
 
 object vectorindexleft(object a, object w, verb v);
 
