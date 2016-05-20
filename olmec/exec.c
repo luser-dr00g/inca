@@ -139,6 +139,7 @@ static int last_was_assn;
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
 object execute_expression(array expr, symtab env, int *plast_was_assn){
+    DEBUG(2, "execute_expression\n");
     last_was_assn = 0;
 
     stack left = new_left_stack_for(expr);
@@ -171,6 +172,35 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
 
     *plast_was_assn = last_was_assn;
     return stack_release(left), penultimate_prereleased_value(right);
+}
+
+object execute_block(array block, symtab env, int *plast_was_assn){
+    DEBUG(2, "execute_block %d\n", block->dims[0]);
+    object result;
+    for (int i=1;i<block->dims[0];++i) {
+        DEBUG(2, "i=%d\n",i);
+        result = execute_expression(getptr(*elem(block,i)), env, plast_was_assn);
+    }
+    return result;
+}
+
+object execute(object exp, symtab env, int *plast_was_assn){
+    DEBUG(2, "execute\n");
+    switch(gettag(exp)){
+    case ARRAY: {
+        array expr = getptr(exp);
+        switch(expr->rank){
+        default: fprintf(stderr, "RANK ERROR\n");
+                 return null;
+        case 1:
+            if (*elem(expr,0)==null)
+                return execute_block(expr, env, plast_was_assn);
+            else
+                return execute_expression(expr, env, plast_was_assn);
+        }
+    }
+    }
+    return null;
 }
 
 static
@@ -334,6 +364,7 @@ object spec(object name, object assn, object v, object dummy3, symtab env){
     return v;
 }
 
+//remove parentheses
 object punc(object paren, object x, object dummy2, object dummy3, symtab env){
     DEBUG(1,"punc %08x(%d,%d)\n",
             x, gettag(x), getval(x));

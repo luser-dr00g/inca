@@ -41,18 +41,18 @@ state_and_action_code wdtab[][NUM_CLASSES] = {
 /* state*/
 /* | *//*character class*/
 /* V *//*none   minus  0-9    .      '      ()     oth    sp     <-     \r    */
-/* 0 */{ oth+2, min+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+0 },
-/* 10*/{ oth+0, min+1, num+0, dot+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 20*/{ oth+0, min+1, fra+0, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 30*/{ oth+1, min+1, num+0, dit+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 40*/{ oth+0, min+1, num+1, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 50*/{ oth+1, min+1, fra+0, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 60*/{ str+0, str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+1 },
-/* 70*/{ oth+1, min+1, num+1, dot+1, str+0, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 80*/{ oth+0, tra+0, num+1, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/* 90*/{ oth+0, tra+0, num+3, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*100*/{ oth+0, tra+0, num+3, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
-/*110*/{ oth+1, min+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+1 },
+/* 0 */{ oth+2, min+2, num+2, dot+2, str+2, sng+2, sng+2, ini+0, sng+2, ini+4 },
+/* 10*/{ oth+0, min+1, num+0, dot+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 20*/{ oth+0, min+1, fra+0, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 30*/{ oth+1, min+1, num+0, dit+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 40*/{ oth+0, min+1, num+1, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 50*/{ oth+1, min+1, fra+0, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 60*/{ str+0, str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+4 },
+/* 70*/{ oth+1, min+1, num+1, dot+1, str+0, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 80*/{ oth+0, tra+0, num+1, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 90*/{ oth+0, tra+0, num+3, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/*100*/{ oth+0, tra+0, num+3, dut+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/*110*/{ oth+1, min+1, num+1, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
 };
 
 static unsigned char cctab[128] = {
@@ -75,6 +75,7 @@ static inline unsigned char character_class(int ch){
            qminus(ch)? 1:
            ch<sizeof cctab? cctab[ch]:
            ch==0x2190? 8:
+           ch==0x22c4? 9:
            0;
 }
 

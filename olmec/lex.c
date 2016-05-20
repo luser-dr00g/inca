@@ -57,8 +57,12 @@ int quadneg;  // hi-minus v. minus semantics.
 array scan_expression(array expr, symtab env){
     int *s = expr->data;
     int n = expr->dims[0];
+
     array result = array_new_dims(n+1);
-    token *p = result->data, *const p1 = p+1;
+    array resultrow = result;
+    int arrayisvector = 1;
+    token *p = resultrow->data, *p1 = p+1;
+
     state ss, st; /* last state, current state */
     state_and_action_code cc;
     int i,j;
@@ -72,6 +76,7 @@ array scan_expression(array expr, symtab env){
             case 0: /* do nothing */
                     break;
 
+emit:
             case 1: *p++ = newobj(s+j, i-j, st*10);
                     j=i;
                     break;
@@ -82,12 +87,39 @@ array scan_expression(array expr, symtab env){
             case 3: *p++ = newobj(s+j, i-1-j, ss*10);
                     j=i-1;
                     break;
+
+            case 4: /* eol */
+                    *p++ = newobj(s+j, i-j, st*10);
+                    j=i;
+                    resultrow->dims[0] = p - resultrow->data; // set length
+                    DEBUG(2, "eol\n");
+                    if (arrayisvector){
+                        arrayisvector = 0;
+                        result = array_new_dims(3);
+                        *elem(result,0) = null;
+                        *elem(result,1) = cache(ARRAY, resultrow);
+                        *elem(result,2) = cache(ARRAY,
+                                resultrow = array_new_dims(n-j));
+                        p = resultrow->data, p1 = p+1;
+                    } else {
+                        array newresult = array_new_dims(result->dims[0]+1);
+                        memcpy(newresult->data,result->data,result->dims[0]*sizeof(int));
+                        *elem(newresult,result->dims[0]) = cache(ARRAY,
+                                resultrow = array_new_dims(n-j));
+                        free(result);
+                        result = newresult;
+                        p = resultrow->data, p1 = p+1;
+                    }
+                    break;
         }
 
         if (p > p1) p=collapse_adjacent_numbers_if_needed(p);
     }
 
-    result->dims[0] = p - result->data; // set actual encoded length
+    resultrow->dims[0] = p - resultrow->data; // set actual encoded length
+    if (!arrayisvector){
+        --result->dims[0];
+    }
     return result;
 }
 

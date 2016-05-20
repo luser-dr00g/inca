@@ -34,6 +34,9 @@ _( SEMI = 262144, qsemi, gettag(x)==SEMIOBJ ) \
 #define DECLARE_PREDICATE_FUNCTION(enum_def,fname,...) int fname(object);
 PREDICATES_FOREACH(DECLARE_PREDICATE_FUNCTION)
 
+// execute expression or block array object
+object execute(object exp, symtab env, int *plast_was_assn);
+
 // execute an expression e with environment st
 object execute_expression(array expr, symtab env, int *plast_was_assn);
 

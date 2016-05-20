@@ -86,6 +86,7 @@ int mainloop(){
         memcpy(expr->data,buf,expn*sizeof(int));
 
         array a = scan_expression(expr, env);
+        object e = cache(ARRAY, a);
 
         IFDEBUG(2,
             DEBUG(2,"\n");
@@ -103,7 +104,8 @@ int mainloop(){
             DEBUG(1,"\n");
             );
 
-        object x = execute_expression(a, env, &last_was_assn);
+        object x = execute(e, env, &last_was_assn);
+        //object x = execute_expression(a, env, &last_was_assn);
 
         if (!last_was_assn && x!=mark)
             print(x, 0);
