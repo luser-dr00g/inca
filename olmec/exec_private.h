@@ -62,18 +62,19 @@ _(L3, EDGE+AVN, NOUN,     DYA,      NOUN,     dyadic,   2,    0,     0) \
 _(L4, EDGE+AVN, NOUN+VRB, ADV,      ANY,      adv,      2,    1,     0) \
 _(L5, ANY,      LEV,      NOUN+VRB, ANY,      adv,      1,    2,     0) \
 _(L6, EDGE+AVN, NOUN+VRB, CONJ,     NOUN+VRB, conj_,    2,    0,     0) \
-_(L7, ANY,      NOUN,     DYA,      RPAR+NUL+MARK, lcurry,   2,    1,     0) \
+_(L7, ANY,      NOUN,     DYA, RPAR+NUL+MARK, lcurry,   2,    1,     0) \
 _(L8, VAR,      ASSN,     AVN,      ANY,      spec,     3,    1,     0) \
-_(L9, LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
-_(L10,MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
+_(L9, NOUN,     ASSN,     NOUN,     ANY,      move,     3,    1,     0) \
+_(L10,LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
+_(L11,MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
-_(L11,LPAR,     ANY,      MARK,     ANY,      punc,     2,    1,     0) \
-_(L12,LBRAC,    SEMI,     ANY,      ANY,      brasemi,  3,    2,     0) \
-_(L13,LBRAC,    NOUN,     SEMI,     ANY,      branoun,  3,    1,     0) \
-_(L14,LBRAC,    NOUN,     RBRAC,    ANY,      bracket,  3,    2,     0) \
-_(L15,LBRAC,    LBRAC,    RBRAC,    ANY,      bracidx,  3,    1,     0) \
-_(L16,VRB+ADV,  LBRAC,    RBRAC,    ANY,      funcidx,  3,    1,     0) \
-_(L17,NOUN,     LBRAC,    RBRAC,    ANY,      nounidx,  3,    1,     0) \
+_(L12,LPAR,     ANY,      MARK,     ANY,      punc,     2,    1,     0) \
+_(L13,LBRAC,    SEMI,     ANY,      ANY,      brasemi,  3,    2,     0) \
+_(L14,LBRAC,    NOUN,     SEMI,     ANY,      branoun,  3,    1,     0) \
+_(L15,LBRAC,    NOUN,     RBRAC,    ANY,      bracket,  3,    2,     0) \
+_(L16,LBRAC,    LBRAC,    RBRAC,    ANY,      bracidx,  3,    1,     0) \
+_(L17,VRB+ADV,  LBRAC,    RBRAC,    ANY,      funcidx,  3,    1,     0) \
+_(L18,NOUN,     LBRAC,    RBRAC,    ANY,      nounidx,  3,    1,     0) \
 /**/
 
 enum { // generate labels to coordinate table and execution
@@ -127,7 +128,8 @@ object dyadic (object x,    object f,     object y,      object dummy3, symtab e
 object adv    (object f,    object g,     object dummy2, object dummy3, symtab env);
 object conj_  (object f,    object g,     object h,      object dummy3, symtab env);
 object lcurry (object x,    object f,     object dummy2, object dummy3, symtab env);
-object spec   (object name, object v,     object dummy2, object dummy3, symtab env);
+object spec   (object name, object assn,  object v,      object dummy3, symtab env);
+object move   (object n,    object assn,  object v,      object dummy3, symtab env);
 object punc   (object x,    object dummy, object dummy2, object dummy3, symtab env);
 object brasemi(object lbrac,object semi,  object dummy2, object dummy3, symtab env);
 object branoun(object lbrac,object n,     object semi,   object dummy3, symtab env);

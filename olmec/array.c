@@ -391,7 +391,7 @@ void transposea(array a, const int *spec){
 // return new indirect array of one item of array
 array slice(array a, int i){
     DEBUG(2, "slice: i=%d\n", i);
-    IFDEBUG(2, printarray(a, 0));
+    //IFDEBUG(2, printarray(a, 0));
     const int rank = a->rank-1>0?a->rank-1:0;
     DEBUG(2, "rank=%d\n", rank);
     array z=malloc(sizeof *z + (2*rank)*sizeof(int));

@@ -482,6 +482,8 @@ recheck:
             for (int i=0; i<wn; i++)
                 z->data[i] = *elema(W, vector_index(i,W->dims,W->rank,scratch));
             if ((n-=wn)>0) mcopy(z->data+wn,z->data,n);
+            //printarray(z, 0);
+            IFDEBUG(1, printindexdisplay(z));
             return cache(ARRAY, z);
         }
         }//switch

@@ -364,6 +364,25 @@ object spec(object name, object assn, object v, object dummy3, symtab env){
     return v;
 }
 
+object move   (object nn,    object assn,  object v,      object dummy3, symtab env){
+    DEBUG(1, "move %08x(%d,%d) <- %08x(%d,%d)\n",
+            nn, gettag(nn), getval(nn),
+            v, gettag(v), getval(v));
+    IFDEBUG(1, print(nn, 0));
+    IFDEBUG(1, print(v, 0));
+    v = vreshape(vshapeof(nn,0),v,0);
+    array narr = getptr(nn);
+    array varr = getptr(v);
+    int scratch[narr->rank];
+    int n = productdims(narr->rank, narr->dims);
+    for (int i=0; i<n; ++i){
+        vector_index(i,narr->dims,narr->rank,scratch);
+        *elema(narr,scratch) = *elema(varr,scratch);
+    }
+    last_was_assn = 1;
+    return nn;
+}
+
 //remove parentheses
 object punc(object paren, object x, object dummy2, object dummy3, symtab env){
     DEBUG(1,"punc %08x(%d,%d)\n",

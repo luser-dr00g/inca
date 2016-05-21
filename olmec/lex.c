@@ -76,7 +76,6 @@ array scan_expression(array expr, symtab env){
             case 0: /* do nothing */
                     break;
 
-emit:
             case 1: *p++ = newobj(s+j, i-j, st*10);
                     j=i;
                     break;
@@ -94,6 +93,7 @@ emit:
                     resultrow->dims[0] = p - resultrow->data; // set length
                     DEBUG(2, "eol\n");
                     if (arrayisvector){
+                        if (j==n-2) break;
                         arrayisvector = 0;
                         result = array_new_dims(3);
                         *elem(result,0) = null;
@@ -106,7 +106,7 @@ emit:
                         memcpy(newresult->data,result->data,result->dims[0]*sizeof(int));
                         *elem(newresult,result->dims[0]) = cache(ARRAY,
                                 resultrow = array_new_dims(n-j));
-                        free(result);
+                        //free(result);
                         result = newresult;
                         p = resultrow->data, p1 = p+1;
                     }
@@ -117,9 +117,7 @@ emit:
     }
 
     resultrow->dims[0] = p - resultrow->data; // set actual encoded length
-    if (!arrayisvector){
-        --result->dims[0];
-    }
+    if (!arrayisvector){ --result->dims[0]; }
     return result;
 }
 
