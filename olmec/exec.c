@@ -492,15 +492,37 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
     case 0: 
         DEBUG(1, "index rank=0\n");
         DEBUG(1, "getval(index)=%d\n", getval(*elem(iarr, 0)));
-        return cache(ARRAY,
-                        slice(narr, getval(*elem(iarr, 0))));
+        {
+            object el = *elem(iarr,0);
+            array elarr = getptr(el);
+            DEBUG(1, "index_0 = %d\n", getval(*elem(elarr, 0)));
+            return cache(ARRAY,
+                        slice(narr, getval(*elem(elarr, 0))));
+        }
     case 1:
         DEBUG(1, "index rank=1\n");
         switch(iarr->dims[0]){
         case 0: return n;
-        case 1: return cache(ARRAY,
-                        slice(narr, getval(*elem(iarr, 0))));
+        case 1: return cache(ARRAY, slice(narr, getval(*elem(iarr, 0))));
         default:
+        if (iarr->dims[0]<narr->rank){
+            //TODO WHAT?? VVV (stupid)
+#if 0
+            DEBUG(1, "iterative slicing\n");
+            for(int i=0; i<iarr->dims[0]; i++){
+                narr = slice(narr, getval(*elem(iarr, i)));
+            }
+            return cache(ARRAY, narr);
+#endif
+            array tmp = array_new_dims(narr->rank);
+            int i;
+            for (i=0; i<iarr->dims[0]; ++i)
+                *elem(tmp,i) = *elem(iarr,i);
+            for (; i<narr->rank; ++i)
+                *elem(tmp,i) = -1;
+            free(iarr);
+            iarr = tmp;
+        }
         if (iarr->dims[0]==narr->rank){
             DEBUG(1, "index dim == arr rank\n");
             //return cache(ARRAY, slicea(narr, iarr->data));
@@ -516,13 +538,6 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
                 }
             }
             return cache(ARRAY, slicec(narr, spec));
-        } else if (iarr->dims[0]<narr->rank){
-            //TODO WHAT?? VVV (stupid)
-            DEBUG(1, "iterative slicing\n");
-            for(int i=0; i<iarr->dims[0]; i++){
-                narr = slice(narr, getval(*elem(iarr, i)));
-            }
-            return cache(ARRAY, narr);
         } else {
             fprintf(stderr, "INDEX LENGTH TOO LONG\n");
         }
