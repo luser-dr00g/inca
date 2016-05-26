@@ -86,28 +86,35 @@ void printindexdisplay(array t){
         for (int j=0; j<t->rank; j++, app=",")
             printf("%s%d", app, scratch[j]);
         printf(": ");
-        DEBUG(1,"%08x(%d,%d)", xx, gettag(xx), getval(xx));
-        printf("\n");
+        DEBUG(3,"%08x(%d,%d)", xx, gettag(xx), getval(xx));
+        //printf("\n");
         switch(gettag(xx)){
             case CHAR:
             case PCHAR:
-                printf(" %s", basetooutput(getval(xx))); break;
+                printf(" %s", basetooutput(getval(xx)));
                 printf("\n");
+                break;
             case ADVERB:
             case VERB:
                 printf(" %s",
                         basetooutput(getval(
-                                ((verb)getptr(xx))->id ))); break;
+                                ((verb)getptr(xx))->id )));
                 printf("\n");
+                break;
             case LITERAL:
-                printf(" %d", getval(xx)); break;
-            case ARRAY: print(xx, 0); break;
+                printf(" %d", getval(xx));
+                printf("\n");
+                break;
+            case ARRAY:
+                print(xx, 0);
+                break;
         }
     }
 }
 
 
 int printarray(array t, int width){
+    IFDEBUG(2, printindexdisplay(t));
     t = makesolid(t);
     int maxwidth;
     int nonscalar = 0;

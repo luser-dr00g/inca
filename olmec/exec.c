@@ -401,13 +401,13 @@ object punc(object paren, object x, object dummy2, object dummy3, symtab env){
  * [; getval([)== 0->(-1,_)->(-1,-1,_)  (n)->(n,_)
  */
 object brasemi(object lbrac, object semi,  object dummy2, object dummy3, symtab env){
-    int idx = getval(lbrac);
-    last_was_assn = 0;
     DEBUG(1, "brasemi\n");
+    last_was_assn = 0;
+    int idx = getval(lbrac);
     if (idx==0)
         return cache(LBRACOBJ, vector(-1, blank));
     array iarr = getptr(lbrac);
-    object *last = elemr(iarr,iarr->dims[0]-1);
+    object *last = elem(iarr,iarr->dims[0]-1);
     if (*last == blank) {
         *last = -1;
     }
@@ -419,19 +419,17 @@ object brasemi(object lbrac, object semi,  object dummy2, object dummy3, symtab 
  */
 object branoun(object lbrac, object n,     object semi,   object dummy3, symtab env){
     DEBUG(1, "branoun\n");
-    int idx = getval(lbrac);
     last_was_assn = 0;
-    array narr = getptr(n);
+    int idx = getval(lbrac);
     if (idx==0)
-        return cache(LBRACOBJ, vector(*elem(narr,0), blank));
+        return cache(LBRACOBJ, vector(n, blank));
     array iarr = getptr(lbrac);
-    object *last = elemr(iarr,iarr->dims[0]-1);
+    object *last = elem(iarr,iarr->dims[0]-1);
     if (*last == blank) {
-        *last = *elem(narr,0);
+        *last = n;
         return cache(LBRACOBJ, cat(iarr, scalar(blank)));
     }
-    last_was_assn = 0;
-    return cache(LBRACOBJ, cat(iarr, narr));
+    return cache(LBRACOBJ, cat(iarr, scalar(n)));
 }
 
 /*
@@ -439,18 +437,17 @@ object branoun(object lbrac, object n,     object semi,   object dummy3, symtab 
  */
 object bracket(object lbrac, object n,     object dummy2,   object dummy3, symtab env){
     DEBUG(1, "bracket\n");
-    int idx = getval(lbrac);
     last_was_assn = 0;
+    int idx = getval(lbrac);
     if (idx==0)
-        return cache(LBRACOBJ, getptr(n));
+        return cache(LBRACOBJ, scalar(n));
     array iarr = getptr(lbrac);
-    object *last = elemr(iarr,iarr->dims[0]-1);
+    object *last = elem(iarr,iarr->dims[0]-1);
     if (*last == blank) {
-        array narr = getptr(n);
-        *last = *elem(narr,0);
+        *last = n;
         return lbrac;
     }
-    return cache(LBRACOBJ, cat(iarr, (array)getptr(n)));
+    return cache(LBRACOBJ, cat(iarr, scalar(n)));
 }
 
 /*
@@ -483,7 +480,7 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
     if (getval(lbrac)==0)
         return n;
     array iarr = getptr(idx);
-    object *last = elemr(iarr,iarr->dims[0]-1);
+    object *last = elem(iarr,iarr->dims[0]-1);
     if (*last == blank) {
         *last = -1;
     }
@@ -506,8 +503,21 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
         default:
         if (iarr->dims[0]==narr->rank){
             DEBUG(1, "index dim == arr rank\n");
-            return cache(ARRAY, slicea(narr, iarr->data));
+            //return cache(ARRAY, slicea(narr, iarr->data));
+            array spec[narr->rank];
+            for (int i=0; i<narr->rank; ++i) {
+                if (gettag(*elem(iarr,i))==ARRAY) {
+                    spec[i] = getptr(*elem(iarr,i));
+                } else {
+                    if (getval(*elem(iarr,i))==-1)
+                        spec[i] = NULL;
+                    else
+                        spec[i] = scalar(getval(*elem(iarr,i)));
+                }
+            }
+            return cache(ARRAY, slicec(narr, spec));
         } else if (iarr->dims[0]<narr->rank){
+            //TODO WHAT?? VVV (stupid)
             DEBUG(1, "iterative slicing\n");
             for(int i=0; i<iarr->dims[0]; i++){
                 narr = slice(narr, getval(*elem(iarr, i)));

@@ -119,6 +119,7 @@ array array_new_rank_pdims(int rank, const int *dims){
     z->type = normal;
     z->rank = rank;
     z->cons = 0;
+    z->translate = 0;
 
     z->dims = (int*)(z+1);
     memmove(z->dims,dims,rank*sizeof(int));
@@ -173,6 +174,7 @@ array array_new_function(int rank, const int *dims,
     z->func = func;
     z->rank = rank;
     z->cons = 0;
+    z->translate = 0;
 
     z->dims = (int*)(z+1);
     memmove(z->dims,dims,rank*sizeof(int));
@@ -194,6 +196,7 @@ array cast_rank_pdims(int *data, int rank, const int *dims){
     z->type = indirect;
     z->rank = rank;
     z->cons = 0;
+    z->translate = 0;
 
     z->dims = (int*)(z+1);
     memmove(z->dims,dims,rank*sizeof(int));
@@ -225,7 +228,8 @@ array clone(array a){
     array z=malloc(sizeof *z + (2*a->rank)*sizeof(int));
     z->type = indirect;
     z->rank = a->rank;
-    z->cons = 0;
+    z->cons = a->cons;
+    z->translate = a->translate;
 
     z->dims = (int*)(z+1);
     memmove(z->dims,a->dims,z->rank*sizeof(int));
@@ -245,6 +249,7 @@ array copy(array a){
     z->type = normal;
     z->rank = a->rank;
     z->cons = 0;
+    z->translate = 0;
 
     z->dims = (int*)(z+1);
     memmove(z->dims,a->dims,z->rank*sizeof(int));
@@ -255,7 +260,7 @@ array copy(array a){
     z->data = z->weight + z->rank;
     int scratch[a->rank];
     for (int i=0; i < datasz; ++i){
-        z->data[i] = *elema(a, vector_index(i,z->dims,z->rank,scratch));
+        z->data[i] = *elema(a, vector_index(i,a->dims,a->rank,scratch));
     }
 
     return z;
@@ -263,6 +268,8 @@ array copy(array a){
 
 int issolid(array a){
     int i,x;
+    if (a->translate)
+        return 0;
     for (i=a->rank-1,x=1; i>=0; i--){
         if (a->weight[i] != x)
             return 0;
@@ -301,6 +308,7 @@ int ravel_index(const int *vec, const int *dims, int n){
 
 // nb. cannot run on the ravel with non-solid indirect array
 object *elemr(array a, int idx){
+    DEBUG(2, "elemr(a,%d)\n", idx);
     if (a->type==function) return a->func(a,idx);
     else return a->data+idx;
 }
@@ -308,7 +316,13 @@ object *elemr(array a, int idx){
 object *elema(array a, const int *ind){
     int idx = 0;
     for (int i=0; i<a->rank; i++){
-        idx += ind[i] * a->weight[i];
+        if (ind[i] >= a->dims[i])
+            fprintf(stderr, "index out of range\n");
+        if (a->translate && a->translate[i]){
+            idx += a->translate[i][ ind[i] ];
+        } else {
+            idx += ind[i] * a->weight[i];
+        }
     }
     return elemr(a,idx + a->cons);
 }
@@ -316,7 +330,14 @@ object *elema(array a, const int *ind){
 object *elemv(array a, va_list ap){
     int idx = 0;
     for (int i=0; i<a->rank; i++){
-        idx += va_arg(ap, int) * a->weight[i];
+        int ind = va_arg(ap, int);
+        if (ind >= a->dims[i])
+            fprintf(stderr, "index out of range\n");
+        if (a->translate && a->translate[i]){
+            idx += a->translate[i][ ind ];
+        } else {
+            idx += ind * a->weight[i];
+        }
     }
     return elemr(a,idx + a->cons);
 }
@@ -339,10 +360,18 @@ static inline void swap(int *x, int *y){
              *y=t;
 }
 
+static inline void swapp(int **x, int **y){
+    int *t=*x;
+           *x=*y;
+              *y=t;
+}
+
 // elem(a,i,j) -> elem(a,j,i)
 void transpose2(array a){
     swap(&a->dims[0],&a->dims[1]);
     swap(&a->weight[0],&a->weight[1]);
+    if (a->translate)
+        swapp(&a->translate[0], &a->translate[1]);
 }
 
 // rotate indices by shift amount
@@ -352,23 +381,35 @@ void transpose(array a, int shift){
     while(shift){
         if (shift>0){
             t=a->dims[0];
-            for(i=1; i<a->rank; i++)
+            for(i=1; i<a->rank; ++i)
                 a->dims[i-1]=a->dims[i];
             a->dims[a->rank-1]=t;
             t=a->weight[0];
-            for(i=1; i<a->rank; i++)
+            for(i=1; i<a->rank; ++i)
                 a->weight[i-1]=a->weight[i];
             a->weight[a->rank-1]=t;
+            if (a->translate){
+                int *tp = a->translate[0];
+                for (i=1; i<a->rank; ++i)
+                    a->translate[i-1]=a->translate[i];
+                a->translate[a->rank-1]=tp;
+            }
             --shift;
         } else {
             t=a->dims[a->rank-1];
-            for (i=a->rank-2; i>=0; i--)
+            for (i=a->rank-2; i>=0; --i)
                 a->dims[i+1]=a->dims[i];
             a->dims[0]=t;
             t=a->weight[a->rank-1];
-            for (i=a->rank-2; i>=0; i--)
+            for (i=a->rank-2; i>=0; --i)
                 a->weight[i+1]=a->weight[i];
             a->weight[0]=t;
+            if (a->translate){
+                int *tp = a->translate[a->rank-1];
+                for (i=a->rank-2; i>=0; --i)
+                    a->translate[i+1]=a->translate[i];
+                a->translate[0]=tp;
+            }
             ++shift;
         }
     }
@@ -378,12 +419,17 @@ void transpose(array a, int shift){
 void transposea(array a, const int *spec){
     int dims[a->rank];
     int weight[a->rank];
+    int *translate[a->rank];
     for (int i=0; i<a->rank; i++){
         dims[i] = a->dims[spec[i]];
         weight[i] = a->weight[spec[i]];
+        if (a->translate)
+            translate[i] = a->translate[spec[i]];
     }
     memcpy(a->dims, dims, a->rank*sizeof(int));
     memcpy(a->weight, weight, a->rank*sizeof(int));
+    if (a->translate)
+        memcpy(a->translate, translate, a->rank*sizeof(int));
 }
 
 
@@ -396,51 +442,72 @@ array slice(array a, int i){
     DEBUG(2, "rank=%d\n", rank);
     array z=malloc(sizeof *z + (2*rank)*sizeof(int));
     z->rank = rank;
+    z->translate = a->translate? a->translate+1: 0;
 
     z->dims = (int *)(z+1);
     memcpy(z->dims, a->dims+1, z->rank*sizeof(int));
 
     z->weight = z->dims + z->rank;
     memcpy(z->weight, a->weight+1, z->rank*sizeof(int));
-    z->cons = a->cons + i*a->weight[0];
+    if (a->translate && a->translate[0])
+        z->cons = a->cons + a->translate[0][i];
+    else
+        z->cons = a->cons + i*a->weight[0];
     DEBUG(2, "acons=%d  zcons=%d\n", a->cons, z->cons);
 
     z->type = indirect;
     z->data = a->data;
-    IFDEBUG(2, printarray(z, 0));
+    IFDEBUG(3, printarray(z, 0));
     return z;
 }
 
 // return new indirect array selecting a single item (if 0<=spec[i]<dims[i])
 // or all items (if spec[i]==-1) from each dimension
 array slicea(array a, const int *spec){
+    DEBUG(1, "slicea\n");
     int rank = 0;
     for (int i=0; i<a->rank; ++i)
         rank += spec[i]==-1;
 
     int dims[rank];
     int weight[rank];
+    int *translate[rank];
     for (int i=0,j=0; i<rank; ++i,++j){
         while (spec[j]!=-1) j++;
         if (j>=a->rank) break;
         dims[i] = a->dims[j];
         weight[i] = a->weight[j];
+        translate[i] = NULL;
+        if (a->translate && a->translate[i]) {
+            translate[i] = a->translate[i];
+            weight[i] = 1;
+        }
     }
 
     array z = cast_rank_pdims(a->data, rank, dims);
     memcpy(z->weight,weight,rank*sizeof(int));
+    if (a->translate){
+        z->translate = malloc(rank * sizeof(int*));
+        memcpy(z->translate, translate, rank * sizeof(int*));
+    }
 
     z->cons = a->cons;
     for (int j=0; j<a->rank; j++){
         if (spec[j]!=-1)
-            z->cons += spec[j] * a->weight[j];
+            if (a->translate && a->translate[j])
+                z->cons += a->translate[j][ spec[j] ];
+            else
+                z->cons += spec[j] * a->weight[j];
     }
 
+    z->type = indirect;
+    z->data = a->data;
     return z;
 }
 
 // select a contiguous range from s[i] to f[i] of each dimension
 array slices(array a, const int *s, const int *f){
+    DEBUG(1, "slices\n");
     int rank = 0;
     for (int i=0; i<a->rank; i++){
         rank += s[i] != f[i];
@@ -448,21 +515,99 @@ array slices(array a, const int *s, const int *f){
 
     int dims[rank];
     int weight[rank];
-    for (int i=0,j=0; i<rank; i++){
+    int *translate[rank];
+    for (int i=0,j=0; i<rank; ++i,++j){
         while (s[j]==f[j]) ++j;
         dims[i] = 1 + (s[j]<f[j] ? f[j]-s[j] : s[j]-f[j] );
         weight[i] =    s[j]<f[j] ? a->weight[j] : -a->weight[j];
-        ++j;
+        translate[i] = NULL;
+        if (a->translate && a->translate[i]){
+            if (s[j]<f[j])
+                translate[i] = a->translate[i] + s[j];
+            else {
+                translate[i] = malloc(dims[i] * sizeof(int));
+                for (int k=0; k<dims[i]; ++k)
+                    translate[i][k] = a->translate[i][ s[j]-k ];
+            }
+            weight[i] = 1;
+        }
     }
 
     array z = cast_rank_pdims(a->data, rank, dims);
     memcpy(z->weight, weight, rank*sizeof(int));
+    if (a->translate){
+        z->translate = malloc(rank * sizeof(int*));
+        memcpy(z->translate, translate, rank * sizeof(int*));
+    }
 
     z->cons = a->cons;
     for (int i=0; i<a->rank; i++){
-        z->cons += s[i] * a->weight[i];
+        if (a->translate && a->translate[i]){
+            if (s[i]==f[i])
+                z->cons += a->translate[i][ s[i] ];
+        } else
+            z->cons += s[i] * a->weight[i];
     }
 
+    z->type = indirect;
+    z->data = a->data;
+    return z;
+}
+
+
+// spec is a C array of `array`s
+//     each element of spec may be
+//         NULL :: select entire underlying dimension
+//         rank=0 array :: select single index from dimension
+//         rank=1 array :: select several indices from dimension
+// spec = { { 0, 1, 2 }, NULL, { 3 }}
+// new dimes:    3,  a->dims[1] 
+// new weight:   1,  a->weight[1]
+// new cons:     += 3 * a->weight[2]
+// new translate: { {0*a->weight[0], 1*a->weight[0], 2*a->weight[0]}, NULL }
+array slicec(array a, array *spec){
+    int rank = 0;
+    for (int i=0; i<a->rank; i++){
+        DEBUG(1, "slicec: spec[%d]=%s\n", i, spec[i]? "array":"null");
+        IFDEBUG(1, if (spec[i]) printarray(spec[i],0); );
+        rank += spec[i] ? spec[i]->rank!=0 : 1;
+    }
+
+    int dims[rank];
+    int weight[rank];
+    int **translate = malloc(rank * sizeof*translate);
+    for (int i=0,j=0; i<rank; ++i,++j){
+        while (spec[j] && spec[j]->rank==0) ++j;
+        if (!spec[j]){
+            dims[i] = a->dims[j];
+            weight[i] = a->weight[j];
+            translate[i] = NULL;
+        } else {
+            dims[i] = spec[j]->dims[0];
+            weight[i] = 1;
+            translate[i] = malloc(dims[i] * sizeof(int));
+            for (int k=0; k<dims[i]; ++k)
+                translate[i][k] = *elem(spec[j],k) * a->weight[j];
+            IFDEBUG(1,
+                for (int k=0; k<dims[i]; ++k)
+                    printf("translate[%d][%d] = %d\n",
+                        i, k, translate[i][k]);
+                    );
+        }
+    }
+
+    array z = cast_rank_pdims(a->data, rank, dims);
+    memcpy(z->weight, weight, rank*sizeof(int));
+    z->translate = translate;
+
+    z->cons = a->cons;
+    for (int i=0; i<a->rank; i++){
+        if (spec[i] && spec[i]->rank==0)
+            z->cons += *elem(spec[i],0) * a->weight[i];
+    }
+
+    z->data = a->data;
+    z->type = indirect;
     return z;
 }
 

@@ -12,6 +12,7 @@ struct array {
     int *dims;   // size of each dimension
     int cons;    // constant term of the indexing formula
     int *weight; // corresponding coefficient in the indexing formula
+    int **translate; // optional index-translation vector for complex slices
     object *data;   // address of first array element
     int *(*func)(array,int); // data function (if function type)
 };
@@ -60,6 +61,8 @@ void transposea(array a, const int *spec);
 array slice(array a, int i); // type=indirect
 array slicea(array a, const int *spec); // type=indirect
 array slices(array a, const int *s, const int *f); // type=indirect
+array slicec(array a, array *spec);
+
 array extend(array a, int extra); // type=indirect
 
 array scalar(int n);
