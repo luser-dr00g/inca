@@ -48,6 +48,24 @@ The Quad-k variable `⎕k` displays the APL characters accessible by holding
 the ALT-key. The related Quad-a variable `⎕a` shows what olmec considers
 to be the "normal" keyboard layout against which the characters are selected.
 
+## Running Environment/Building
+
+The program should compile simply with `make`, assuming GNU make and a
+working C99 compiler.
+
+The program assumes it is running in a VT220-compatible terminal emulator
+such as XTerm or equivalent (AFAIK all modern terminals are ports of XTerm)
+with Unicode support and a US-ASCII keyboard layout.
+
+Currently, the program only operates in an interactive mode, relying upon
+the ALT-key to type APL characters. CTRL-n can also be used as an APL-lock
+key to toggle the need to hold the ALT key. Type `⎕k` to print out the APL
+keyboard.
+
+Output can be selected and copied-out from the terminal, but utf-8 input is
+not currently accepted, so you cannot paste expressions into the terminal
+for the interpreter to execute.
+
 ## Design
 
 A major simplifying assumption in the design of this project is:
