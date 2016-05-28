@@ -113,7 +113,7 @@ int mainloop(){
     free(buf);
 }
 
-int init_all(){
+void init_all(){
     init_en();
     init_array();
     env = makesymtab(10);

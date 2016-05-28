@@ -68,7 +68,7 @@ _(L9, NOUN,     ASSN,     NOUN,     ANY,      move,     3,    1,     0) \
 _(L10,LPAR,     ANY,      RPAR,     ANY,      punc,     3,    1,     0) \
 _(L11,MARK,     ANY,      RPAR,     ANY,      punc,     1,    2,        \
                                     stack_push(left,stack_pop(right)) ) \
-_(L12,LPAR,     ANY,      MARK,     ANY,      punc,     2,    1,     0) \
+_(L12,ANY,      LPAR,     ANY,      MARK,     punc,     2,    1,     0) \
 _(L13,LBRAC,    SEMI,     ANY,      ANY,      brasemi,  3,    2,     0) \
 _(L14,LBRAC,    NOUN,     SEMI,     ANY,      branoun,  3,    1,     0) \
 _(L15,LBRAC,    NOUN,     RBRAC,    ANY,      bracket,  3,    2,     0) \
@@ -130,7 +130,7 @@ object conj_  (object f,    object g,     object h,      object dummy3, symtab e
 object lcurry (object x,    object f,     object dummy2, object dummy3, symtab env);
 object spec   (object name, object assn,  object v,      object dummy3, symtab env);
 object move   (object n,    object assn,  object v,      object dummy3, symtab env);
-object punc   (object x,    object dummy, object dummy2, object dummy3, symtab env);
+object punc   (object paren,object x,     object dummy2, object dummy3, symtab env);
 object brasemi(object lbrac,object semi,  object dummy2, object dummy3, symtab env);
 object branoun(object lbrac,object n,     object semi,   object dummy3, symtab env);
 object bracket(object lbrac,object n,     object dummy2, object dummy3, symtab env);

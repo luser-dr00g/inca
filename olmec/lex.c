@@ -88,7 +88,8 @@ array scan_expression(array expr, symtab env){
                     break;
 
             case 4: /* eol */
-                    *p++ = newobj(s+j, i-j, st*10);
+                    //if ((st*10)!=ini)
+                        *p++ = newobj(s+j, i-j, st*10);
                     j=i;
                     resultrow->dims[0] = p - resultrow->data; // set length
                     DEBUG(2, "eol\n");
@@ -209,7 +210,6 @@ token newobj(int *s, int n, int state){
         case quo:
         case str: return new_string(s, n);
 
-        case ini:
         case min:
         case dot:
         case dut:
@@ -217,6 +217,7 @@ token newobj(int *s, int n, int state){
         case tra:
         case sng: return new_executable(s, n);
 
+        case ini:
         default:  return null;
     }
 }
