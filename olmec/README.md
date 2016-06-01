@@ -129,12 +129,41 @@ exactly the same implementation, And `xverb` is multiply-inherited
 from both `verb` and `adverb`, although it is aware that they share the
 same representation. 
 
-So a verb is an object, with an internal `struct` representation and
+An array is an object, with an internal `struct` representation and
+*semi-atomic* `array` representation which is implicitly a pointer to the
+struct, and a *fully-atomic* representation as an encoded integer.
+The array structure and supporting functions use a dope-vector for
+constructing complicated slices or shared arrays with re-ordered or
+selected indices.
+
+A verb is an object, with an internal `struct` representation and
 *semi-atomic* `verb` representation which is implicitly a pointer to the
 struct, and a *fully-atomic* representation as an encoded integer.
 Verbs are all loaded into the default symbol table as single-character
 identifiers, then adverbs are loaded, then xverbs (using the verb and
 adverb definitions) are loaded.
+
+An adverb is an object, with an internal `struct` representation and
+*semi-atomic* `adverb` representation which is implicitly a pointer to the
+struct, and a *fully-atomic* representation as an encoded integer.
+Adverbs include conjunctions as *dyadic adverbs*, although the two
+are distinguished as separate types by the grammar rules of the parser.
+
+A symbol table is an object, with an internal `struct` representation and
+*semi-atomic* `symtab` representation which is implicitly a pointer to the
+struct, and a *fully-atomic* representation as an encoded integer.
+The symbol table contains associations, or key/value pairs.
+The 'key' is a sequence of encoded integers, which should usually have
+of the PCHAR tag. The 'value' is a single encoded integer, although of course
+almost anything can be packed-up into one of these abstraction and `cache`d
+to produce the requisite encoded integer.
+
+The number type is not currently implemented but is intended allow
+floating-point, arbitrary-precision, and rationals in a flexible,
+encapsulated manner. Until the number type is implemented, all numeric
+values in the system should be restricted to the range of a 24-bit
+integer, to avoid problems of overflow into the tag bits which will
+cause absolute chaos.
 
 The top-level of execution then procedes with the stereotypical
 *READ-EVAL-PRINT* loop, augmented with APL's behavior that definitions
