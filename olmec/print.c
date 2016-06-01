@@ -70,14 +70,14 @@ int printatom(object x, int width){
 
 void printindexdisplay(array t){
     //printf("\n");
-    DEBUG(1,"%d\n",t->rank);
+    DEBUG(3,"%d\n",t->rank);
     printf("%s", basetooutput(0x2374)); // rho
     for (int i=0; i<t->rank; i++)
         printf("%d ", t->dims[i]);
     //printf("\n");
 
     int n = productdims(t->rank,t->dims);
-    DEBUG(1,"n=%d", n);
+    DEBUG(3,"n=%d", n);
     printf("\n");
     int scratch[t->rank];
     for (int i=0; i<n; i++){
@@ -110,11 +110,12 @@ void printindexdisplay(array t){
                 break;
         }
     }
+    printf("\n");
 }
 
 
 int printarray(array t, int width){
-    IFDEBUG(2, printindexdisplay(t));
+    IFDEBUG(3, printindexdisplay(t));
     t = makesolid(t);
     int maxwidth;
     int nonscalar = 0;
@@ -162,7 +163,7 @@ int printarray(array t, int width){
 
 
 void print(object x, int width){
-    DEBUG(1,"%08x(%d,%d)", x, gettag(x), getval(x));
+    DEBUG(3,"%08x(%d,%d)", x, gettag(x), getval(x));
     switch(gettag(x)){
         default: printatom(x, width);
                  printf("\n");

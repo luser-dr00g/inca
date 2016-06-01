@@ -28,6 +28,7 @@
 #include "symtab.h"
 #include "verbs.h"
 #include "exec.h"
+#include "print.h"
 
 #include "adverbs.h"
 #include "adverb_private.h"
@@ -222,6 +223,36 @@ object rank(object a, object w, verb v){
         }
     }
 }
+
+int contains(object needle, object haystack){
+    switch (gettag(haystack)){
+    case PCHAR:
+        return needle == haystack;
+    case ARRAY:
+    case PROG:
+        {
+            array a = getptr(haystack);
+            for (int i=0; i<a->dims[0]; i++){
+                if (contains(needle, *elem(a, i)))
+                    return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+object dfn(object w, symtab env){
+    DEBUG(1, "dfn %08x(%d,%d)\n", w, gettag(w), getval(w));
+    IFDEBUG(1, print(w, 0););
+    int has_alpha = contains(newdata(PCHAR, 0x237a), w);
+    int has_omega = contains(newdata(PCHAR, 0x2375), w);
+    return create_derived_verb(newdata(CHAR, 'D'),
+                !has_alpha && !has_omega ? ndfn : 0,
+                !has_alpha && has_omega ? mdfn : 0,
+                has_alpha && has_omega ? ddfn : 0,
+                w, cache(SYMTAB, env), 0, 0, 0, 0);
+}
+
 
 void adverbtab_def(
         object id,

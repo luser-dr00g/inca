@@ -24,6 +24,7 @@ ADVERBS_FOREACH(0,DECLARE_ADVERB_FUNCTIONS)
 #undef dnone
 #undef DECLARE_ADVERB_FUNCTIONS
 
+object dfn(object w, symtab env);
 object amp(object a, object w, verb v);
 object rank(object a, object w, verb v);
 void init_av(symtab st);

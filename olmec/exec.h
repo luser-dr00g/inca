@@ -28,6 +28,7 @@ _( LBRAC = 32768, qlbrac, gettag(x)==LBRACOBJ ) \
 _( RBRAC = 65536, qrbrac, gettag(x)==RBRACOBJ ) \
 _( NUL  = 131072, qnull, gettag(x)==NULLOBJ ) \
 _( SEMI = 262144, qsemi, gettag(x)==SEMIOBJ ) \
+_( COLON= 524288, qcolon, gettag(x)==PCHAR && getval(x)==':') \
 /**/
 
 // declare predicate functions

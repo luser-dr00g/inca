@@ -142,6 +142,11 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
     DEBUG(2, "execute_expression\n");
     last_was_assn = 0;
 
+    if (is_func_def(expr)) {
+        *plast_was_assn = 1;
+        return func_def(expr, env);
+    }
+
     stack left = new_left_stack_for(expr);
     stack right = new_stack(1+stack_capacity(left));
     stack_push_datum(right, mark);
@@ -186,21 +191,35 @@ object execute_block(array block, symtab env, int *plast_was_assn){
 
 object execute(object exp, symtab env, int *plast_was_assn){
     DEBUG(2, "execute\n");
+    IFDEBUG(2, print(exp, 0););
     switch(gettag(exp)){
+    case PROG:
     case ARRAY: {
         array expr = getptr(exp);
         switch(expr->rank){
         default: fprintf(stderr, "RANK ERROR\n");
                  return null;
         case 1:
-            if (*elem(expr,0)==null)
-                return execute_block(expr, env, plast_was_assn);
-            else
-                return execute_expression(expr, env, plast_was_assn);
+            if (expr->dims[0]) {
+                if (*elem(expr,0)==null)
+                    return execute_block(expr, env, plast_was_assn);
+                else
+                    return execute_expression(expr, env, plast_was_assn);
+            }
         }
     }
     }
     return null;
+}
+
+static
+int is_func_def(array expr){
+    if (expr->rank && expr->dims[0]>=3){
+        if (qprog(*elem(expr,0)) && qcolon(*elem(expr,1))){
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static
@@ -267,7 +286,18 @@ int penultimate_prereleased_value (stack s){
  * except niladic functions which are called at the time the object passes
  * from the left stack to the right stack.
  */
+
+object func_def(array expr, symtab env){
+    DEBUG(1, "func_def\n");
+    object func = dfn(vdrop(2, cache(ARRAY, expr), 0), env);
+    IFDEBUG(2, print(func, 0););
+    def(env, *elem(expr, 0), func);
+    return func;
+}
+
+
 object niladic(object f, object dummy, object dummy2, object dummy3, symtab env){
+    DEBUG(1, "nilad\n");
     verb v = getptr(f);
     if (!v->nilad){
         fprintf(stderr, "nilad undefined\n");

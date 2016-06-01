@@ -31,6 +31,7 @@
 #include "verbs.h"
 #include "adverbs.h"
 #include "print.h"
+#include "exec.h"
 #include "verb_private.h"
 
 object vtab[VERB_NOOP];
@@ -1048,6 +1049,33 @@ object vnoresult(object w, verb v){
 
 object vnoresultd(object a, object w, verb v){
     return vnoresult(w,v);
+}
+
+object ndfn(verb v){
+    IFDEBUG(4, print(v->f, 0););
+    object expr = v->f;
+    symtab env = getptr(v->g);
+    int last_was_assn;
+    return execute(expr, env, &last_was_assn);
+}
+
+object mdfn(object w, verb v){
+    object expr = v->f;
+    symtab env = getptr(v->g);
+    symtab child = makesymtabchain(env, 10);
+    def(child, newdata(PCHAR, 0x2375), w);
+    int last_was_assn;
+    return execute(expr, child, &last_was_assn);
+}
+
+object ddfn(object a, object w, verb v){
+    object expr = v->f;
+    symtab env = getptr(v->g);
+    symtab child = makesymtabchain(env, 10);
+    def(child, newdata(PCHAR, 0x237a), a);
+    def(child, newdata(PCHAR, 0x2375), w);
+    int last_was_assn;
+    return execute(expr, child, &last_was_assn);
 }
 
 

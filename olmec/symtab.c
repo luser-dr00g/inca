@@ -47,6 +47,7 @@
 
 #include "array.h"
 #include "encoding.h"
+#include "print.h"
 
 #include "symtab.h"
 
@@ -54,12 +55,18 @@
 symtab makesymtab(int n){
     symtab z = malloc(sizeof *z);
     if (z){
-        z->key = 0;  // key int transitioning into this node
-        z->value = 0;  // associated value
+        z->key = null;  // key int transitioning into this node
+        z->value = null;  // associated value
         z->n = n;    // num slots in table
         z->tab = calloc(n, sizeof *z->tab);  // hashtable of child nodes
         z->prev = NULL;
     }
+    return z;
+}
+
+symtab makesymtabchain(symtab root, int n){
+    symtab z = makesymtab(n);
+    z->prev = root;
     return z;
 }
 
@@ -131,6 +138,11 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
     int nn = *n;      // working copy of n
     int lasn = nn;    // saved last-match value of n
 
+    IFDEBUG(2,
+                for (int i=0; i<*n; ++i)
+                    print(sp[i], 0);
+            );
+
     while(nn--){
         t = hashlookup(st, *sp);
         if (!t) { // received NULL: table full
@@ -146,12 +158,12 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
                 lasp = sp;
                 lasn = nn;
             }
-        } else {
-            switch(mode){ // slot empty
+        } else { // slot empty
+            switch(mode){
             case 0: // prefix search : return last partial match
                 sp = lasp;
                 *n = lasn;
-                return last;
+                goto ret_last;
             case 1: // defining search
                 *t = calloc(1, sizeof(struct symtab));
                 (*t)->tab = calloc((*t)->n = 11, sizeof(struct symtab));
@@ -169,6 +181,7 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
     //*n = nn+1; // undo nn-- and update n
     *n = lasn;
     sp = lasp;
+ret_last:
     if (last == root && root->prev) //not-found::recurse down the chain.
         return findsym(root->prev, spp, n, mode);
     return last;  // return last-matched node

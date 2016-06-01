@@ -308,7 +308,7 @@ int ravel_index(const int *vec, const int *dims, int n){
 
 // nb. cannot run on the ravel with non-solid indirect array
 object *elemr(array a, int idx){
-    DEBUG(2, "elemr(a,%d)\n", idx);
+    DEBUG(4, "elemr(a,%d)\n", idx);
     if (a->type==function) return a->func(a,idx);
     else return a->data+idx;
 }

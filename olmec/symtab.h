@@ -12,6 +12,7 @@ struct symtab {
 };
 
 symtab makesymtab(int n);
+symtab makesymtabchain(symtab root, int n);
 
 /*  mode=0: prefix match
     mode=1: defining search */

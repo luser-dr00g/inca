@@ -36,20 +36,23 @@ enum tag {
     PCHAR, /* val is a an executable char */
 
     NUMBER, /* val is an index in the number table */
-    FIRST_INDEXED_TYPE = NUMBER,
+FIRST_INDEXED_TYPE = NUMBER,
     PROG, /* val is an (index to an) executable code fragment (array of PCHAR)*/
+
     ARRAY, /* val is a(n index to a) boxed array */
     SYMTAB, /* val is a(n index to a) symbol table */
     LBRACOBJ, /* val is an (index to an) array of the bracket contents */
     VERB, /* val is a(n index to a) verb object */
     ADVERB, /* val is a(n index to a) verb object */
+
     XVERB, /* val is a(n index to a) struct containing a verb and adverb */
-    LAST_INDEXED_TYPE = XVERB,
+LAST_INDEXED_TYPE = XVERB,
 
     MARKOBJ, /* val is irrelevant (s.b. 0) */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     LPAROBJ,
     RPAROBJ,
+
     SEMIOBJ,
     RBRACOBJ,
 };
