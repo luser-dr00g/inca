@@ -369,3 +369,27 @@ The next addition, I think, needs to be chaining or stacking of environments
 for variable scoping. This will mean that the symbol lookup might get a little
 more complicated. 
 
+-- 
+
+Belated Updates: bracket-indexing (including axis for verbs and adverbs, and
+even applying bracket-axis indexing to the left-bracket itself in a bracket-indexing
+operation. For each semicolon-separated dimension, there may be 0, 1, or more 
+indices listed in arbitrary order and even repeated. Assignment to such a
+complex-indexed array may write cells more than once. The copy proceeds along the
+row-major ravelled representation of the re-shape of source array (re-shaped to 
+match the target shape).
+
+dfns! eg.
+
+    josh@LAPTOP-ILO10OOF ~/inca/olmec 
+    $ ./olmec 
+            f:2+3 
+            f 
+    5 
+            g:2+⍵ 
+            g3 
+    5 
+            h:⍺+⍵ 
+            2h3 
+    5 
+
