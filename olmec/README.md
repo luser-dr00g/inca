@@ -10,7 +10,7 @@ by the 'quipu' which emphasizes links and pointers, olmec is guided
 by simpler ideas such as abaci, counting-boards and pebbles.
 The links are de-emphasized, and the values brought to the
 surface. The implementation is composed of thin abstractions. The `int`s
-are visible, moving around, representing. [..additional poetic nonsense..]
+are visible, moving around, representing things.
 
 ## Language
 
