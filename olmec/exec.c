@@ -120,6 +120,7 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "array.h"
 #include "encoding.h"
@@ -131,6 +132,7 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 #include "xverb.h"
 #include "exec.h"
 #include "print.h"
+#include "editor.h"
 
 #include "exec_private.h"
 
@@ -142,6 +144,10 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
     DEBUG(2, "execute_expression\n");
     last_was_assn = 0;
 
+    if (is_del_func(expr)){
+        *plast_was_assn = 1;
+        return read_del_func(expr, env);
+    }
     if (is_func_def(expr)) {
         *plast_was_assn = 1;
         return func_def(expr, env);
@@ -210,6 +216,19 @@ object execute(object exp, symtab env, int *plast_was_assn){
     }
     }
     return null;
+}
+
+int qdel(object x){
+    return gettag(x)==PCHAR && getval(x)==0x2207;
+}
+
+static
+int is_del_func(array expr){
+    if (expr->rank && expr->dims[0]>=2){
+        if (qdel(*elem(expr,0)))
+            return 1;
+    }
+    return 0;
 }
 
 static
@@ -286,6 +305,36 @@ int penultimate_prereleased_value (stack s){
  * except niladic functions which are called at the time the object passes
  * from the left stack to the right stack.
  */
+
+object read_del_func(array header, symtab env){
+    DEBUG(1, "del!\n");
+    char prompt[9]="";
+    static int *buf = NULL;
+    int buflen = 0;
+    int expn = 0;
+    int i = 0;
+    array func = scalar(null);
+    while(1){
+        snprintf(prompt, sizeof prompt, "[%d]      ", i);
+        buf?buf[0]=0:0;
+        get_line(prompt, &buf, &buflen, &expn);
+        int c = buf[0];
+        if (c==0x2207)
+            break;
+
+        array expr = array_new_dims(expn);
+        memcpy(expr->data,buf,expn*sizeof(int));
+
+        array a = scan_expression(expr, env);
+        object e = cache(ARRAY, a);
+
+        ++i;
+        func = cat(func, scalar(e));
+    }
+    object ret = cache(ARRAY, func);
+    def(env, *elem(header,1), ret);
+    return ret;
+}
 
 object func_def(array expr, symtab env){
     DEBUG(1, "func_def\n");

@@ -79,6 +79,10 @@ char *basetooutput(int c){
 
 struct termios tm;
 
+void restoretty(){
+    tcsetattr(0,TCSANOW,&tm);
+}
+
 void specialtty(){
 
     // is the use of these causing my problems
@@ -94,21 +98,23 @@ void specialtty(){
 
     struct termios tt=tm;
     tt.c_iflag |= IGNPAR; //ignore parity errors
-    tt.c_iflag &= ~(IGNBRK | PARMRK | ISTRIP | ICRNL
+    tt.c_iflag &= ~(IGNBRK | PARMRK | ISTRIP | ICRNL |INLCR |IGNCR
                     | IXON | IXANY | IXOFF); //ignore special characters
-    tt.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL | ICANON
+    tt.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL
+                    | ICANON
                     /*| ISIG*/ ); // non-canonical mode, no echo, no kill
     //tt.c_lflag &= ~IEXTEN;
     tt.c_cflag &= ~(CSIZE | PARENB);
     tt.c_cflag |= CS8;
-    //tt.c_oflag &= ~OPOST; // disable special output processing
-    tt.c_oflag |= OPOST;
+    tt.c_oflag &= ~(/*OPOST |*/ ONLCR | OCRNL | ONOCR); // disable special output processing
+    tt.c_oflag |= (/*ONOCR |*/ OPOST | ONLCR );
     tt.c_cc[VMIN] = 3; // min chars to read
     tt.c_cc[VTIME] = 1; // timeout
     //cfmakeraw(&tt);
     if (tcsetattr(0,TCSANOW,&tt) == -1)
         perror("tcsetattr");
 
+    atexit(restoretty);
 #if 0
 #define DO(n,x)  {int i=0,_n=(n);for(;i<_n;++i){x;}}
     fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
@@ -117,8 +123,24 @@ void specialtty(){
 #endif
 }
 
-void restoretty(){
-    tcsetattr(0,TCSANOW,&tm);
+void beep(){
+    fputc(CTL('G'), stdout);
+    fflush(stdout);
+}
+
+void tostartofline(){
+    //fputc(0x0D, stdout);
+    fputc('\r', stdout);
+}
+
+void clearline(){
+    fputs(ESC([0J), stdout);
+    //fputc(CTL('U'), stdout);
+    //fflush(stdout);
+}
+
+void linefeed(){
+    fputc('\n', stdout);
 }
 
 int *get_line(char *prompt, int **bufref, int *len, int *expn){
@@ -126,13 +148,25 @@ int *get_line(char *prompt, int **bufref, int *len, int *expn){
     int tmpmode = 0;
     int *p;
 
-    if (prompt) fputs(prompt,stdout);
-    fflush(stdout);
-    if (!*bufref) *bufref = malloc((sizeof**bufref) * (*len=256));
-    p = *bufref;
+    if (!*bufref) {
+        *bufref = malloc((sizeof**bufref) * (*len=256));
+        p = *bufref;
+    } else {
+        for (p = *bufref; *p; ++p)
+            ;
+    }
 
     while(1){
         int c;
+
+        tostartofline();
+        clearline();
+        if (prompt) fputs(prompt,stdout);
+        for (int *t=*bufref; t<p; ++t){
+            fputs(basetooutput(*t), stdout);
+        }
+        fflush(stdout);
+
         if (p-*bufref>*len){
             int *t = realloc(*bufref,(sizeof**bufref) * (*len*=2));
             if (t) *bufref = t;
@@ -154,11 +188,11 @@ int *get_line(char *prompt, int **bufref, int *len, int *expn){
                   break;
         case ESCCHR:
                 switch(n){
-                case 1:
+                case 1:  // bare ESC key
                     tmpmode = 1;
                     break;
                 case 2:
-                    c = key[1];
+                    c = key[1];  // ESC-$(c)
                     switch(c){
                     default:
                         tmpmode = 1;
@@ -166,28 +200,39 @@ int *get_line(char *prompt, int **bufref, int *len, int *expn){
                         break;
                     }
                 case 3:
-                    c = key[1];
-                    printf("%02x%c%c",key[0],key[1],key[2]);
-                    fflush(stdout);
+                    c = key[2];  // 3-char ESC sequence
+                    //printf("%02x%c%c",key[0],key[1],key[2]);
+                    //fflush(stdout);
+                    switch(c){
+                        case 'A': //up-arrow
+                        case 'B': //down-arrow
+                        case 'C': //right-arrow
+                        case 'D': //left-arrow
+                            ;
+                    }
                     break;
                 }
                 break;
         case '\r':
         case '\n':
-                fputc('\r', stdout);
-                fputc('\n', stdout);
+                tostartofline();
+                linefeed();
                 *p++ = c;
                 goto breakwhile;
         case CTL('N'):
+                beep();
                 mode = !mode;
                 tmpmode = 0;
                 break;
         case CTL('U'):
+                /*
                 while(p>*bufref){
                     fputs("\b \b", stdout);
                     fflush(stdout);
                     --p;
                 }
+                */
+                p = *bufref;
                 tmpmode = 0;
                 break;
         case '\b':
@@ -201,8 +246,8 @@ storechar:
                 c = inputtobase(c,mode^tmpmode);
                 *p++ = c;
                 tmpmode = 0;
-                fputs(basetooutput(c), stdout);
-                fflush(stdout);
+                //fputs(basetooutput(c), stdout);
+                //fflush(stdout);
                 break;
         }
     }

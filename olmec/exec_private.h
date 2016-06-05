@@ -122,6 +122,7 @@ int min(int x, int y){
     }
 
 
+object read_del_func(array expr, symtab env);
 object func_def(array expr, symtab env);
 object niladic(object f,    object dummy, object dummy2, object dummy3, symtab env);
 object monadic(object f,    object y,     object dummy2, object dummy3, symtab env);
@@ -224,6 +225,7 @@ stack_element *stack_top_elements_address (stack s, unsigned n){
     return s->elements + s->next - n;
 }
 
+static int is_del_func(array expr);
 static int is_func_def(array expr);
 
 static int is_pronoun(stack_element x);

@@ -68,13 +68,13 @@ void init_quad_k(symtab st){
 }
 
 int mainloop(){
-    int *buf = NULL;
+    static int *buf = NULL;
     int buflen;
     int expn;
     char *prompt = "        ";
     int last_was_assn;
 
-    while(get_line(prompt, &buf, &buflen, &expn)){
+    while((buf?buf[0]=0:0), get_line(prompt, &buf, &buflen, &expn)){
 
         IFDEBUG(2,
             for (int i=0;i<expn;i++)
@@ -110,7 +110,6 @@ int mainloop(){
         if (!last_was_assn && x!=mark)
             print(x, 0);
     }
-    free(buf);
 }
 
 void init_all(){
