@@ -298,7 +298,7 @@ object del(array head, array body, symtab env){
             a->arity==2? ddel : 0,
             cache(ARRAY, body), cache(SYMTAB, env), cache(ANALYSIS, a),
             0, 0, 0);
-    def(env, a->func, v);
+    def(env, a->func, v,0);
     return v;
 }
 
@@ -344,7 +344,7 @@ void adverbtab_def(
     verb v;
     v=malloc(sizeof*v);
     *v=(struct verb){newdata(PCHAR, id), nilad, monad, dyad, f,g,h, mr,lr,rr};
-    def(st, newdata(PCHAR, id), cache(ADVERB, v));
+    def(st, newdata(PCHAR, id), cache(ADVERB, v),0);
 }
 
 #define ADVERBTAB_DEF(st, id,...) \

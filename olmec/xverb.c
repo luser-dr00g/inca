@@ -25,21 +25,21 @@ void define_xverb_in_env(int id, int vrb, int adv, symtab st){
 
     p=(int[]){newdata(PCHAR, vrb)};
     n=1;
-    t=findsym(st, &p, &n, 0);
+    t=findsym(st, &p, &n, 0,0);
     DEBUG(3,"X%08x(%d,%d)\n",
             t->value, gettag(t->value), getval(t->value));
     v=getptr(t->value);
 
     p=(int[]){newdata(PCHAR, adv)};
     n=1;
-    t=findsym(st, &p, &n, 0);
+    t=findsym(st, &p, &n, 0,0);
     DEBUG(3,"X%08x(%d,%d)\n",
             t->value, gettag(t->value), getval(t->value));
     a=getptr(t->value);
 
     x=malloc(sizeof*x);
     *x=(struct xverb){newdata(PCHAR, id), v, a};
-    def(st, newdata(PCHAR, id), cache(XVERB, x));
+    def(st, newdata(PCHAR, id), cache(XVERB, x),0);
 }
 
 #define DEFINE_XVERB_IN_ENV(env,id, vrb, adv) \

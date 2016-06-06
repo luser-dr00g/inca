@@ -358,7 +358,7 @@ object func_def(array expr, symtab env){
     DEBUG(1, "func_def\n");
     object func = dfn(vdrop(2, cache(ARRAY, expr), 0), env);
     IFDEBUG(2, print(func, 0););
-    def(env, *elem(expr, 0), func);
+    def(env, *elem(expr, 0), func,0);
     last_was_assn = 1;
     return func;
 }
@@ -463,7 +463,7 @@ object spec(object name, object assn, object v, object dummy3, symtab env){
     DEBUG(1,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
             name, gettag(name), getval(name),
             v, gettag(v), getval(v));
-    def(env, name, v);
+    def(env, name, v,1);
     last_was_assn = 1;
     return v;
 }
@@ -684,7 +684,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
 
         object *p = s;
         DEBUG(1,"%d ", n);
-        symtab tab = findsym(env,&p,&n, 0);
+        symtab tab = findsym(env,&p,&n, 0,0);
         if (tab->value == null) {
             fprintf(stderr, "error undefined prefix\n");
             return x->datum;
@@ -697,7 +697,7 @@ int parse_and_lookup_name(stack left, stack right, stack_element *x, symtab env)
             stack_push_datum(left, tab->value);           //pushback value
             s = p;
             n0 = n;
-            tab = findsym(env,&p,&n, 0);         //lookup remaining name
+            tab = findsym(env,&p,&n, 0,0);         //lookup remaining name
             if (tab->value == null) {
                 fprintf(stderr, "error undefined internal\n");
                 return x->datum;

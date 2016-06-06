@@ -16,7 +16,7 @@ object vectorindexleft(object a, object w, verb v);
 #define DEFINE_VERB_IN_ENV(st, name, id,...) \
     v=malloc(sizeof*v); \
     *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
-    def(st, newdata(PCHAR, id), vtab[VERB_##name] = cache(VERB, v));
+    def(st, newdata(PCHAR, id), vtab[VERB_##name] = cache(VERB, v),0);
 #undef nnone
 #undef mnone
 #undef dnone

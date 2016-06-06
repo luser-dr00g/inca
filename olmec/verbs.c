@@ -1055,7 +1055,7 @@ void def_extra(analysis a, symtab child){
     if (a->extra){
         array x = getptr(a->extravars);
         for (int i=0; i<x->dims[0]; ++i)
-            def(child, *elem(x,i), null);
+            def(child, *elem(x,i), mark,0);
     }
 }
 
@@ -1090,7 +1090,7 @@ object mdel(object w, verb v){
     analysis a = getptr(v->h);
     symtab child = makesymtabchain(env, 10);
     def_extra(a, child);
-    def(child, a->omega, w);
+    def(child, a->omega, w,0);
     return call_execute(body, child, a);
 }
 
@@ -1101,8 +1101,8 @@ object ddel(object a, object w, verb v){
     analysis an = getptr(v->h);
     symtab child = makesymtabchain(env, 10);
     def_extra(an, child);
-    def(child, an->alpha, a);
-    def(child, an->omega, w);
+    def(child, an->alpha, a,0);
+    def(child, an->omega, w,0);
     return call_execute(body, child, an);
 }
 
@@ -1118,7 +1118,7 @@ object mdfn(object w, verb v){
     object expr = v->f;
     symtab env = getptr(v->g);
     symtab child = makesymtabchain(env, 10);
-    def(child, newdata(PCHAR, 0x2375), w);
+    def(child, newdata(PCHAR, 0x2375), w,0);
     int last_was_assn;
     return execute(expr, child, &last_was_assn);
 }
@@ -1127,8 +1127,8 @@ object ddfn(object a, object w, verb v){
     object expr = v->f;
     symtab env = getptr(v->g);
     symtab child = makesymtabchain(env, 10);
-    def(child, newdata(PCHAR, 0x237a), a);
-    def(child, newdata(PCHAR, 0x2375), w);
+    def(child, newdata(PCHAR, 0x237a), a,0);
+    def(child, newdata(PCHAR, 0x2375), w,0);
     int last_was_assn;
     return execute(expr, child, &last_was_assn);
 }

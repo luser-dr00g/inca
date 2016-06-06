@@ -16,9 +16,9 @@ symtab makesymtabchain(symtab root, int n);
 
 /*  mode=0: prefix match
     mode=1: defining search */
-symtab findsym(symtab st, object **spp, int *n, int mode);
+symtab findsym(symtab st, object **spp, int *n, int mode, int bias);
 
-void def(symtab st, object name, object v);
+void def(symtab st, object name, object v, int bias);
 
 object find(symtab st, object name);
 

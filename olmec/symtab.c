@@ -128,8 +128,11 @@ void rehash(symtab st){
    to the unmatched remainder.
     mode=0: prefix match
     mode=1: defining search
+
+    bias=0: define local
+    bias=1: define global unless local def exists
    */
-symtab findsym(symtab st, object **spp, int *n, int mode){
+symtab findsym(symtab st, object **spp, int *n, int mode, int bias){
     symtab root = st;
     symtab last = st; // saved last-match value of st
 #define sp (*spp)     // sp is an (int*) "by reference"
@@ -138,10 +141,8 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
     int nn = *n;      // working copy of n
     int lasn = nn;    // saved last-match value of n
 
-    IFDEBUG(2,
-                for (int i=0; i<*n; ++i)
-                    print(sp[i], 0);
-            );
+    IFDEBUG(1, for (int i=0; i<*n; ++i)
+                   print(sp[i], 0); );
 
     while(nn--){
         t = hashlookup(st, *sp);
@@ -165,6 +166,8 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
                 *n = lasn;
                 goto ret_last;
             case 1: // defining search
+                if (bias && root->prev)
+                    goto recurse;
                 *t = calloc(1, sizeof(struct symtab));
                 (*t)->tab = calloc((*t)->n = 11, sizeof(struct symtab));
                 st = *t;
@@ -179,17 +182,18 @@ symtab findsym(symtab st, object **spp, int *n, int mode){
     }
 
     //*n = nn+1; // undo nn-- and update n
-    *n = lasn;
     sp = lasp;
+    *n = lasn;
 ret_last:
     if (last == root && root->prev) //not-found::recurse down the chain.
-        return findsym(root->prev, spp, n, mode);
+recurse:
+        return findsym(root->prev, spp, n, mode, bias);
     return last;  // return last-matched node
 }
 #undef sp
 
 
-void def(symtab st, object name, object v){
+void def(symtab st, object name, object v, int bias){
     switch(gettag(name)){
     default:
     case CHAR:
@@ -199,14 +203,14 @@ void def(symtab st, object name, object v){
         DEBUG(2,"%08x(%d,%d) = %08x(%d,%d)\n",
                 name, gettag(name), getval(name),
                 v, gettag(v), getval(v));
-        symtab tab =findsym(st,&p,&n,1);
+        symtab tab =findsym(st,&p,&n,1,bias);
         tab->value = v;
         } break;
     case PROG: {
         array na = getptr(name);
         int n = na->dims[0];
         object *p = na->data;
-        symtab tab = findsym(st,&p,&n,1);
+        symtab tab = findsym(st,&p,&n,1,bias);
         tab->value = v;
         } break;
     }
@@ -219,14 +223,14 @@ object find(symtab st, object name){
     case PCHAR:{
         int n = 1;
         object *p = &name;
-        symtab tab = findsym(st, &p, &n, 0);
+        symtab tab = findsym(st, &p, &n, 0,0);
         return tab->value;
         } break;
     case PROG: {
         array na = getptr(name);
         int n = na->dims[0];
         object *p = na->data;
-        symtab tab = findsym(st, &p, &n, 0);
+        symtab tab = findsym(st, &p, &n, 0,0);
         return tab->value;
         } break;
     }
@@ -243,7 +247,7 @@ void (define_symbol_n)(symtab st, int n, ...){
     va_end(ap);
     --n;
 
-    symtab tab = findsym(st,&p,&n,1);
+    symtab tab = findsym(st,&p,&n,1,0);
     tab->value = va_arg(ap,int);
 }
 
@@ -257,7 +261,7 @@ object (symbol_value_n)(symtab st, int n, ...){
         key[i]=va_arg(ap,int);
     va_end(ap);
 
-    symtab tab = findsym(st,&p,&n,0);
+    symtab tab = findsym(st,&p,&n,0,0);
     return tab->value;
 }
 
@@ -278,13 +282,13 @@ static char *test_put_get(){
 
     sym = array;
     n = 3;
-    t = findsym(&st,&sym,&n,1);
+    t = findsym(&st,&sym,&n,1,0);
     //printf("%p\n",(void*)t);
     t->value = 42;
 
     sym = array;
     n = 3;
-    t = findsym(&st,&sym,&n,0);
+    t = findsym(&st,&sym,&n,0,0);
     //printf("%p\n",(void*)t);
     test_case(t->value != 42);
     printf("%d\n", n);

@@ -44,16 +44,16 @@ FIRST_INDEXED_TYPE = NUMBER,
     LBRACOBJ, /* val is an (index to an) array of the bracket contents */
     ANALYSIS,
     VERB, /* val is a(n index to a) verb object */
-    ADVERB, /* val is a(n index to a) verb object */
 
+    ADVERB, /* val is a(n index to a) verb object */
     XVERB, /* val is a(n index to a) struct containing a verb and adverb */
 LAST_INDEXED_TYPE = XVERB,
 
     MARKOBJ, /* val is irrelevant (s.b. 0) */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
     LPAROBJ,
-    RPAROBJ,
 
+    RPAROBJ,
     SEMIOBJ,
     RBRACOBJ,
 };
