@@ -328,7 +328,7 @@ object read_del_func(array header, symtab env){
     DEBUG(1, "del!\n");
     char prompt[9]="";
     static int *buf = NULL;
-    int buflen = 0;
+    static int buflen = 0;
     int expn = 0;
     int i = 0;
     array func = scalar(null);

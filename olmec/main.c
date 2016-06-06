@@ -69,7 +69,7 @@ void init_quad_k(symtab st){
 
 int mainloop(){
     static int *buf = NULL;
-    int buflen;
+    static int buflen;
     int expn;
     char *prompt = "        ";
     int last_was_assn;
