@@ -51,8 +51,9 @@ LAST_INDEXED_TYPE = XVERB,
 
     MARKOBJ, /* val is irrelevant (s.b. 0) */
     NULLOBJ, /* val is irrelevant (s.b. 0) */
-    LPAROBJ,
+    LABEL,
 
+    LPAROBJ,
     RPAROBJ,
     SEMIOBJ,
     RBRACOBJ,

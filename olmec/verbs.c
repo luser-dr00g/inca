@@ -1051,6 +1051,18 @@ object vnoresultd(object a, object w, verb v){
     return vnoresult(w,v);
 }
 
+object vbranch(object w, verb v){
+    switch(gettag(w)){
+    case LITERAL: return newdata(LABEL, getval(w));
+    case ARRAY: {
+        array W = getptr(w);
+        return newdata(LABEL, 
+                W->dims[0]? getval(*elem(W,0)): 0);
+    }
+    default: return newdata(LABEL, 0);
+    }
+}
+
 void def_extra(analysis a, symtab child){
     if (a->extra){
         array x = getptr(a->extravars);

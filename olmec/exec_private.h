@@ -113,6 +113,8 @@ int min(int x, int y){
                      n>=4? items[s+3*dir].datum: 0, \
                      env) \
                 ); \
+        if (is_label(items[minfs])) \
+            return branchout(left, right, items[minfs].datum); \
         minfs -= is_mark(items[minfs]);  /*suppress "noresult" indicater*/\
         for (int i=0; i<excess; ++i){ \
             items[minfs+1+i] = items[minfs+i+n]; /*shift down higher elements*/\
@@ -225,9 +227,11 @@ stack_element *stack_top_elements_address (stack s, unsigned n){
     return s->elements + s->next - n;
 }
 
+object branchout(stack left, stack right, object label);
 static int is_del_func(array expr);
 static int is_func_def(array expr);
 
+static int is_label(stack_element x);
 static int is_pronoun(stack_element x);
 static int is_assn(stack_element x);
 static int is_mark(stack_element x);

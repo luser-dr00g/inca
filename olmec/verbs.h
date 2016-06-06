@@ -29,6 +29,7 @@ _(param,ROT, 0x233d/*alt-%*/,       nnone, vreverse, vrotate,    0, 0, 0, 0, 0, 
 _(param,CONC,0x2282/*alt-z*/,       nnone, vconceal, dnone,      0, 0, 0, 0, 0, 0 ) \
 _(param,REVL,0x2283/*alt-x*/,       nnone, vreveal,  dnone,      0, 0, 0, 0, 0, 0 ) \
 _(param,NONE,0x2361/*alt-q*/,       nnone, vnoresult, vnoresultd,0, 0, 0, 0, 0, 0 ) \
+_(param,BRNC,0x2192/*right alt-{*/, nnone, vbranch,  dnone,      0, 0, 0, 0, 0, 0 ) \
 _(param,NIL, 0x2300/*alt-U*/,       vnil,  mnone,    dnone,      0, 0, 0, 0, 0, 0 ) \
 /**/
 

@@ -207,6 +207,16 @@ object execute_block(array block, symtab env, int *plast_was_assn){
     for (int i=1;i<block->dims[0];++i) {
         DEBUG(2, "i=%d\n",i);
         result = execute_expression(getptr(*elem(block,i)), env, plast_was_assn);
+        switch(gettag(result)){
+        case LABEL: {
+            int label = getval(result);
+            printf("label = %d\n");
+            if (label<1 || label>block->dims[0]-1)
+                return mark;
+            i = label-1;
+            continue;
+        }
+        }
     }
     return result;
 }
@@ -261,6 +271,11 @@ int is_func_def(array expr){
         }
     }
     return 0;
+}
+
+static
+int is_label(stack_element x){
+    return !!(x.code & LAB);
 }
 
 static
@@ -329,6 +344,11 @@ int penultimate_prereleased_value (stack s){
  * except niladic functions which are called at the time the object passes
  * from the left stack to the right stack.
  */
+object branchout(stack left, stack right, object label){
+    stack_release(left);
+    stack_release(right);
+    return label;
+}
 
 object read_del_func(array header, symtab env){
     DEBUG(1, "del!\n");
