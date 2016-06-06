@@ -393,3 +393,9 @@ dfns! eg.
             2h3 
     5 
 
+
+-- 
+
+Added del definitions for multi-line functions, and the long-awaited number type.
+It uses gmp and mpfr for multiprecision ints and floats. Currently only input
+and output are defined: no actual math. Stay tuned!

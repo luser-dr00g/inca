@@ -1,3 +1,4 @@
+#include <errno.h>
 
 typedef int token;
 typedef int state;
@@ -45,7 +46,7 @@ state_and_action_code wdtab[][NUM_CLASSES] = {
 /* 10*/{ oth+0, min+1, num+0, dot+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
 /* 20*/{ oth+0, min+1, fra+0, oth+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
 /* 30*/{ oth+1, min+1, num+0, dit+0, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
-/* 40*/{ oth+0, min+1, num+1, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
+/* 40*/{ oth+0, min+1, num+0, dut+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
 /* 50*/{ oth+1, min+1, fra+0, dot+1, str+1, sng+1, sng+1, ini+1, sng+1, ini+4 },
 /* 60*/{ str+0, str+0, str+0, str+0, quo+0, str+0, str+0, str+0, str+0, ini+4 },
 /* 70*/{ oth+1, min+1, num+1, dot+1, str+0, sng+1, sng+1, ini+1, sng+1, ini+4 },

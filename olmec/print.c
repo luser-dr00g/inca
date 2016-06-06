@@ -8,6 +8,7 @@
 #include "array.h"
 #include "verbs.h"
 #include "xverb.h"
+#include "number.h"
 #include "print.h"
 
 
@@ -25,6 +26,9 @@ int checkatom(object x, int *pwidth){
         return 0;
     case LITERAL:
         *pwidth = snprintf(NULL, 0, "%d", getval(x));
+        return 0;
+    case NUMBER:
+        *pwidth = number_print_width(getptr(x));
         return 0;
     default:
         *pwidth = strlen("00000000(00,0000)");
@@ -62,6 +66,8 @@ int printatom(object x, int width){
                 basetooutput(getval( ((xverb)getptr(x))->id ))); break;
     case LITERAL:
         printf(" %*d", width, getval(x)); break;
+    case NUMBER:
+        printf(" %s", number_get_str(getptr(x))); break;
     default:
         printf(" %08x(%d,%d)", x, gettag(x), getval(x));
     }

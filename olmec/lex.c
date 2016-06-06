@@ -45,6 +45,7 @@
 #include "array.h" // array type
 #include "encoding.h" // atomic encoding
 #include "symtab.h"
+#include "number.h"
 
 #include "lex.h"
 
@@ -154,16 +155,20 @@ token new_numeric(int *s, int n){
     buf[n] = 0;
 
     char *p;
+    token t;
     //token t = newdata(LITERAL, strtol(buf,&p,10));
-    token t = cache(ARRAY, scalar(strtol(buf,&p,10)));
-    if (*p) {
-        array z = scalar(t);
-        while(*p) {
-            int u = newdata(LITERAL, strtol(p,&p,10));
-            z = cat(z, scalar(u));
-        }
-        t = cache(ARRAY, z);
+    long ll = strtol(buf,&p,10);
+    if (p && *p=='.'){
+        t = cache(NUMBER, new_number_fr(buf));
+    } else if ((ll==LONG_MAX || ll==LONG_MIN) && errno==ERANGE){
+        t = cache(NUMBER, new_number_z(buf));
+    } else if (ll>=0x00ffffff || ll<=0xff000000){
+        t = cache(NUMBER, new_number_z(buf));
+    } else {
+        t = newdata(LITERAL, ll);
     }
+    t = cache(ARRAY, scalar(t));
+
     return t;
 }
 
@@ -205,6 +210,7 @@ token new_executable(int *s, int n){
 token newobj(int *s, int n, int state){
     switch (state){
         case num:
+        case fra:
         case dit: return new_numeric(s, n);
 
         case quo:
