@@ -211,27 +211,33 @@ object execute_block(array block, symtab env, int *plast_was_assn){
     return result;
 }
 
-object execute(object exp, symtab env, int *plast_was_assn){
-    DEBUG(2, "execute\n");
-    IFDEBUG(2, print(exp, 0););
+int is_block(object exp){
     switch(gettag(exp)){
     case PROG:
     case ARRAY: {
         array expr = getptr(exp);
         switch(expr->rank){
         default: fprintf(stderr, "RANK ERROR\n");
-                 return null;
+                 return 0;
         case 1:
             if (expr->dims[0]) {
                 if (*elem(expr,0)==null)
-                    return execute_block(expr, env, plast_was_assn);
-                else
-                    return execute_expression(expr, env, plast_was_assn);
+                    return 1;
             }
         }
     }
     }
-    return null;
+    return 0;
+}
+
+object execute(object exp, symtab env, int *plast_was_assn){
+    DEBUG(2, "execute\n");
+    IFDEBUG(2, print(exp, 0););
+
+    if (is_block(exp))
+        return execute_block(getptr(exp), env, plast_was_assn);
+    else
+        return execute_expression(getptr(exp), env, plast_was_assn);
 }
 
 int qdel(object x){
@@ -346,8 +352,13 @@ object read_del_func(array header, symtab env){
         array a = scan_expression(expr, env);
         object e = cache(ARRAY, a);
 
-        ++i;
-        func = cat(func, scalar(e));
+        if (is_block(e)) {
+            i += a->dims[0]-1;
+            func = cat(func, slices(a,(int[]){1},(int[]){a->dims[0]-1}));
+        } else {
+            ++i;
+            func = cat(func, scalar(e));
+        }
     }
     object ret = del(header, func, env);
     last_was_assn = 1;
