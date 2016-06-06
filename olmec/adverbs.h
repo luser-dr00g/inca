@@ -35,7 +35,7 @@ typedef struct {
     object extravars;
 } *analysis;
 
-object del(array head, array body, symtab env);
+object del(array head, array body, symtab env, symtab child);
 object dfn(object w, symtab env);
 object amp(object a, object w, verb v);
 object rank(object a, object w, verb v);

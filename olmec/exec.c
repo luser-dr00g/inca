@@ -210,7 +210,7 @@ object execute_block(array block, symtab env, int *plast_was_assn){
         switch(gettag(result)){
         case LABEL: {
             int label = getval(result);
-            printf("label = %d\n");
+            printf("label = %d\n", label);
             if (label<1 || label>block->dims[0]-1)
                 return mark;
             i = label-1;
@@ -356,7 +356,8 @@ object read_del_func(array header, symtab env){
     static int *buf = NULL;
     static int buflen = 0;
     int expn = 0;
-    int i = 0;
+    int i = 1;
+    symtab child = makesymtabchain(env, 10);
     array func = scalar(null);
     while(1){
         snprintf(prompt, sizeof prompt, "[%d]      ", i);
@@ -371,6 +372,11 @@ object read_del_func(array header, symtab env){
 
         array a = scan_expression(expr, env);
         object e = cache(ARRAY, a);
+        if (is_func_def(a)){ // label def
+            def(child, *elem(a,0), newdata(LITERAL, i),0);
+            //a = slices(a, (int[]){2}, (int[]){a->dims[0]-1});
+            e = vdrop(2, e, 0);
+        }
 
         if (is_block(e)) {
             i += a->dims[0]-1;
@@ -380,7 +386,7 @@ object read_del_func(array header, symtab env){
             func = cat(func, scalar(e));
         }
     }
-    object ret = del(header, func, env);
+    object ret = del(header, func, env, child);
     last_was_assn = 1;
     return ret;
 }

@@ -290,13 +290,13 @@ analysis analyze_header(array head){
     return a;
 }
 
-object del(array head, array body, symtab env){
+object del(array head, array body, symtab env, symtab child){
     analysis a = analyze_header(head);
     object v = create_derived_verb( 'G',
             a->arity==0? ndel : 0,
             a->arity==1? mdel : 0,
             a->arity==2? ddel : 0,
-            cache(ARRAY, body), cache(SYMTAB, env), cache(ANALYSIS, a),
+            cache(ARRAY, body), cache(SYMTAB, child), cache(ANALYSIS, a),
             0, 0, 0);
     def(env, a->func, v,0);
     return v;
