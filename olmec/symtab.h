@@ -18,6 +18,10 @@ symtab makesymtabchain(symtab root, int n);
     mode=1: defining search */
 symtab findsym(symtab st, object **spp, int *n, int mode, int bias);
 
+/* get/set node value */
+object getsym(symtab node);
+void putsym(symtab node, object sym);
+
 void def(symtab st, object name, object v, int bias);
 
 object find(symtab st, object name);

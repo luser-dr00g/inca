@@ -47,6 +47,11 @@ char *number_get_str(number_ptr num){
          for (;i<n;++i)
              tmp[i+1] = str[i];
          tmp[n] = 0;
+         for (int i=n-1; i>1; --i)
+             if (tmp[i]=='0')
+                 tmp[i]=0;
+             else
+                 break;
          mpfr_free_str(str);
          str = tmp;
          break;

@@ -162,7 +162,7 @@ token new_numeric(int *s, int n){
         t = cache(NUMBER, new_number_fr(buf));
     } else if ((ll==LONG_MAX || ll==LONG_MIN) && errno==ERANGE){
         t = cache(NUMBER, new_number_z(buf));
-    } else if (ll>=0x00ffffff || ll<=0xff000000){
+    } else if (ll>=(int32_t)0x00ffffffu || ll<=(int32_t)0xff000000u){
         t = cache(NUMBER, new_number_z(buf));
     } else {
         t = newdata(LITERAL, ll);

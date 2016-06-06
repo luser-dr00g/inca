@@ -192,8 +192,16 @@ recurse:
 }
 #undef sp
 
+object getsym(symtab node){
+    return node->value;
+}
+
+void putsym(symtab node, object sym){
+    node->value = sym;
+}
 
 void def(symtab st, object name, object v, int bias){
+    symtab tab;
     switch(gettag(name)){
     default:
     case CHAR:
@@ -203,37 +211,36 @@ void def(symtab st, object name, object v, int bias){
         DEBUG(2,"%08x(%d,%d) = %08x(%d,%d)\n",
                 name, gettag(name), getval(name),
                 v, gettag(v), getval(v));
-        symtab tab =findsym(st,&p,&n,1,bias);
-        tab->value = v;
+        tab = findsym(st,&p,&n,1,bias);
         } break;
     case PROG: {
         array na = getptr(name);
         int n = na->dims[0];
         object *p = na->data;
-        symtab tab = findsym(st,&p,&n,1,bias);
-        tab->value = v;
+        tab = findsym(st,&p,&n,1,bias);
         } break;
     }
+    putsym(tab, v);
 }
 
 object find(symtab st, object name){
+    symtab tab;
     switch(gettag(name)){
     default:
     case CHAR:
     case PCHAR:{
         int n = 1;
         object *p = &name;
-        symtab tab = findsym(st, &p, &n, 0,0);
-        return tab->value;
+        tab = findsym(st, &p, &n, 0,0);
         } break;
     case PROG: {
         array na = getptr(name);
         int n = na->dims[0];
         object *p = na->data;
-        symtab tab = findsym(st, &p, &n, 0,0);
-        return tab->value;
+        tab = findsym(st, &p, &n, 0,0);
         } break;
     }
+    return getsym(tab);
 }
 
 void (define_symbol_n)(symtab st, int n, ...){
@@ -248,7 +255,7 @@ void (define_symbol_n)(symtab st, int n, ...){
     --n;
 
     symtab tab = findsym(st,&p,&n,1,0);
-    tab->value = va_arg(ap,int);
+    putsym(tab, va_arg(ap,int));
 }
 
 object (symbol_value_n)(symtab st, int n, ...){
@@ -262,7 +269,7 @@ object (symbol_value_n)(symtab st, int n, ...){
     va_end(ap);
 
     symtab tab = findsym(st,&p,&n,0,0);
-    return tab->value;
+    return getsym(tab);
 }
 
 
