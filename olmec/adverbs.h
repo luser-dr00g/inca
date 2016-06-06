@@ -24,6 +24,18 @@ ADVERBS_FOREACH(0,DECLARE_ADVERB_FUNCTIONS)
 #undef dnone
 #undef DECLARE_ADVERB_FUNCTIONS
 
+typedef struct {
+    int result;
+    object resultvar;
+    int arity;
+    object alpha;
+    object func;
+    object omega;
+    int extra;
+    object extravars;
+} *analysis;
+
+object del(array head, array body, symtab env);
 object dfn(object w, symtab env);
 object amp(object a, object w, verb v);
 object rank(object a, object w, verb v);

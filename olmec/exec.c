@@ -138,6 +138,18 @@ _(L1, EDGE+AVN, VRB,      MON,      NOUN,     monadic,  1,    0,  0) \
 
 static int last_was_assn;
 
+void dumpstacks(stack left, object x, stack right){
+    int n = stack_element_count(left);
+    stack_element *ptr = stack_top_elements_address(left, n);
+    for (int i=0; i<n; ++i)
+        print(ptr[i].datum, 5);
+    print(x, 10);
+    n = stack_element_count(right);
+    ptr = stack_top_elements_address(right, n);
+    for (int i=0; i<n; ++i)
+        print(ptr[n-1-i].datum, 5);
+}
+
 // execute expression e using environment st and yield result
 //TODO check/handle extra elements on stack (interpolate?, enclose and cat?)
 object execute_expression(array expr, symtab env, int *plast_was_assn){
@@ -161,6 +173,7 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
     while(!stack_is_empty(left)){
         stack_element x = stack_pop(left);
         DEBUG(0,"->%08x(%d,%d)\n", x.datum, gettag(x.datum), getval(x.datum));
+        IFDEBUG(1, dumpstacks(left, x.datum, right););
 
         if (is_pronoun(x)) {
             object y = parse_and_lookup_name(left, right, &x, env);
@@ -168,6 +181,8 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
         }
         if (is_nilad(x)) {
             stack_element y = datum_to_stack_element(niladic(x.datum, 0, 0, 0, env));
+            DEBUG(1, "nilad result: ");
+            IFDEBUG(1, print(y.datum, 0););
             if (!is_mark(y))
                 stack_push(right, y);
         } else
@@ -180,6 +195,7 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
             else break;
         }
     }
+    IFDEBUG(1, puts(""); dumpstacks(left, null, right););
 
     *plast_was_assn = last_was_assn;
     return stack_release(left), penultimate_prereleased_value(right);
@@ -295,6 +311,8 @@ int matches_ptab_pattern (stack_element items[4], int i){
 static
 int penultimate_prereleased_value (stack s){
     int result = stack_top_elements_address(s, 2)->datum;
+    DEBUG(1, "result: ");
+    IFDEBUG(1, print(result, 0));
     return stack_release(s), result;
 }
 
@@ -331,8 +349,8 @@ object read_del_func(array header, symtab env){
         ++i;
         func = cat(func, scalar(e));
     }
-    object ret = cache(ARRAY, func);
-    def(env, *elem(header,1), ret);
+    object ret = del(header, func, env);
+    last_was_assn = 1;
     return ret;
 }
 
@@ -341,6 +359,7 @@ object func_def(array expr, symtab env){
     object func = dfn(vdrop(2, cache(ARRAY, expr), 0), env);
     IFDEBUG(2, print(func, 0););
     def(env, *elem(expr, 0), func);
+    last_was_assn = 1;
     return func;
 }
 
@@ -352,8 +371,9 @@ object niladic(object f, object dummy, object dummy2, object dummy3, symtab env)
         fprintf(stderr, "nilad undefined\n");
         return null;
     }
+    object ret = v->nilad(v);
     last_was_assn = 0;
-    return v->nilad(v);
+    return ret;
 }
 
 object monadic(object f, object y, object dummy, object dummy3, symtab env){
@@ -369,8 +389,9 @@ object monadic(object f, object y, object dummy, object dummy3, symtab env){
         fprintf(stderr, "monad undefined\n");
         return null;
     }
+    object ret = v->monad(y, v);
     last_was_assn = 0;
-    return v->monad(y, v);
+    return ret;
 }
 
 object dyadic(object x, object f, object y, object dummy3, symtab env){
@@ -390,8 +411,9 @@ object dyadic(object x, object f, object y, object dummy3, symtab env){
         fprintf(stderr, "dyad undefined\n");
         return null;
     }
+    object ret = v->dyad(x, y, v);
     last_was_assn = 0;
-    return v->dyad(x, y, v);
+    return ret;
 }
 
 object adv(object f, object g, object dummy, object dummy3, symtab env){
@@ -408,8 +430,9 @@ object adv(object f, object g, object dummy, object dummy3, symtab env){
         fprintf(stderr, "adv undefined\n");
         return null;
     }
+    object ret = v->monad(f, v);
     last_was_assn = 0;
-    return v->monad(f, v);
+    return ret;
 }
 
 object conj_(object f, object g, object h, object dummy3, symtab env){
@@ -423,14 +446,16 @@ object conj_(object f, object g, object h, object dummy3, symtab env){
         fprintf(stderr, "conj undefined\n");
         return null;
     }
+    object ret = v->dyad(f, h, v);
     last_was_assn = 0;
-    return v->dyad(f, h, v);
+    return ret;
 }
 
 object lcurry (object x,    object f,     object dummy2, object dummy3, symtab env){
     DEBUG(1,"lcurry\n");
+    object ret = amp(x,f,0);
     last_was_assn = 0;
-    return amp(x,f,0);
+    return ret;
 }
 
 //specification

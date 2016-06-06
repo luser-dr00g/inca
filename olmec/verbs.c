@@ -1051,6 +1051,61 @@ object vnoresultd(object a, object w, verb v){
     return vnoresult(w,v);
 }
 
+void def_extra(analysis a, symtab child){
+    if (a->extra){
+        array x = getptr(a->extravars);
+        for (int i=0; i<x->dims[0]; ++i)
+            def(child, *elem(x,i), null);
+    }
+}
+
+object call_execute(object body, symtab child, analysis a){
+    int last_was_assn;
+    DEBUG(1, "call_execute\n");
+    object ret = execute(body, child, &last_was_assn);
+    if (a->result){
+        object result = find(child, a->resultvar);
+        IFDEBUG(1, print(a->resultvar, 0);
+                   print(result, 0); );
+        return result;
+    } else {
+        return ret;
+    }
+}
+
+object ndel(verb v){
+    DEBUG(1, "ndel\n");
+    object body = v->f;
+    symtab env = getptr(v->g);
+    analysis a = getptr(v->h);
+    symtab child = makesymtabchain(env, 10);
+    def_extra(a, child);
+    return call_execute(body, child, a);
+}
+
+object mdel(object w, verb v){
+    DEBUG(1, "mdel\n");
+    object body = v->f;
+    symtab env = getptr(v->g);
+    analysis a = getptr(v->h);
+    symtab child = makesymtabchain(env, 10);
+    def_extra(a, child);
+    def(child, a->omega, w);
+    return call_execute(body, child, a);
+}
+
+object ddel(object a, object w, verb v){
+    DEBUG(1, "ddel\n");
+    object body = v->f;
+    symtab env = getptr(v->g);
+    analysis an = getptr(v->h);
+    symtab child = makesymtabchain(env, 10);
+    def_extra(an, child);
+    def(child, an->alpha, a);
+    def(child, an->omega, w);
+    return call_execute(body, child, an);
+}
+
 object ndfn(verb v){
     IFDEBUG(4, print(v->f, 0););
     object expr = v->f;

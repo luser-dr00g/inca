@@ -224,6 +224,84 @@ object rank(object a, object w, verb v){
     }
 }
 
+/*
+ * del f
+ * del f ; x
+ * del z <- f
+ * del z <- f ; x
+ * del f w
+ * del f w ; x
+ * del z <- f w
+ * del z <- f w ; x
+ * del z <- a f w
+ * del z <- a f w ; x
+ * [0] 1 2  3 4 5 6 7
+ *          ^     $
+ */
+analysis analyze_header(array head){
+    int exp,semi;
+    analysis a = malloc(sizeof*a);
+
+    for (exp=1; exp<head->dims[0]; ++exp){
+        if (qassn(*elem(head, exp))) {
+            ++exp;
+            break;
+        }
+    }
+
+    if (a->result = (exp==3 && exp!=head->dims[0])){
+        a->resultvar = *elem(head, 1);
+    } else {
+        exp = 1;
+    }
+    DEBUG(1, "%s result\n", a->result?"has":"no");
+
+    for (semi=1; semi<head->dims[0]; ++semi){
+        if (qsemi(*elem(head, semi)))
+            break;
+    }
+
+    if (a->extra = semi!=head->dims[0]){
+        a->extravars = cache(ARRAY,
+                slices(head, (int[]){semi+1}, (int[]){head->dims[0]-1}));
+    }
+    DEBUG(1, "%s extra vars\n", a->extra?"has":"no");
+
+    switch(semi - exp){
+        default: printf("invalid del header\n");
+        case 1: //niladic
+                 a->arity = 0;
+                 a->func = *elem(head, exp);
+                 DEBUG(1, "niladic del\n");
+                 break;
+        case 2: //monadic
+                 a->arity = 1;
+                 a->func = *elem(head, exp);
+                 a->omega = *elem(head, exp+1);
+                 DEBUG(1, "monadic del\n");
+                 break;
+        case 3: //dyadic
+                 a->arity = 2;
+                 a->alpha = *elem(head, exp);
+                 a->func = *elem(head, exp+1);
+                 a->omega = *elem(head, exp+2);
+                 DEBUG(1, "dyadic del\n");
+    }
+    return a;
+}
+
+object del(array head, array body, symtab env){
+    analysis a = analyze_header(head);
+    object v = create_derived_verb( 'G',
+            a->arity==0? ndel : 0,
+            a->arity==1? mdel : 0,
+            a->arity==2? ddel : 0,
+            cache(ARRAY, body), cache(SYMTAB, env), cache(ANALYSIS, a),
+            0, 0, 0);
+    def(env, a->func, v);
+    return v;
+}
+
 int contains(object needle, object haystack){
     switch (gettag(haystack)){
     case PCHAR:
@@ -246,11 +324,12 @@ object dfn(object w, symtab env){
     IFDEBUG(1, print(w, 0););
     int has_alpha = contains(newdata(PCHAR, 0x237a), w);
     int has_omega = contains(newdata(PCHAR, 0x2375), w);
-    return create_derived_verb(newdata(CHAR, 'D'),
+    return create_derived_verb( 'D',
                 !has_alpha && !has_omega ? ndfn : 0,
                 !has_alpha && has_omega ? mdfn : 0,
                 has_alpha && has_omega ? ddfn : 0,
-                w, cache(SYMTAB, env), 0, 0, 0, 0);
+                w, cache(SYMTAB, env), 0,
+                0, 0, 0);
 }
 
 

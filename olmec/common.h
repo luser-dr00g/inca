@@ -42,6 +42,7 @@ FIRST_INDEXED_TYPE = NUMBER,
     ARRAY, /* val is a(n index to a) boxed array */
     SYMTAB, /* val is a(n index to a) symbol table */
     LBRACOBJ, /* val is an (index to an) array of the bracket contents */
+    ANALYSIS,
     VERB, /* val is a(n index to a) verb object */
     ADVERB, /* val is a(n index to a) verb object */
 

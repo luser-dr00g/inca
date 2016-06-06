@@ -55,6 +55,9 @@ VERBS_FOREACH(0,DECLARE_VERB_FUNCTIONS)
 #undef DECLARE_VERB_FUNCTIONS
 
 extern object vtab[];
+object ndel(verb v);
+object mdel(object w, verb v);
+object ddel(object a, object w, verb v);
 object ndfn(verb v);
 object mdfn(object w, verb v);
 object ddfn(object a, object w, verb v);

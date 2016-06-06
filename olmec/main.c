@@ -106,6 +106,8 @@ int mainloop(){
 
         object x = execute(e, env, &last_was_assn);
         //object x = execute_expression(a, env, &last_was_assn);
+        DEBUG(2, "last_was_assn = %d\n", last_was_assn);
+        IFDEBUG(2, print(x, 10));
 
         if (!last_was_assn && x!=mark)
             print(x, 0);

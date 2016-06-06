@@ -20,6 +20,8 @@ symtab findsym(symtab st, object **spp, int *n, int mode);
 
 void def(symtab st, object name, object v);
 
+object find(symtab st, object name);
+
 #define define_symbol(st, ...) \
     (define_symbol_n)(st, PP_NARG(__VA_ARGS__), __VA_ARGS__)
 void (define_symbol_n)(symtab st, int n, ... /* ..., v */);

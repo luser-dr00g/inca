@@ -212,6 +212,26 @@ void def(symtab st, object name, object v){
     }
 }
 
+object find(symtab st, object name){
+    switch(gettag(name)){
+    default:
+    case CHAR:
+    case PCHAR:{
+        int n = 1;
+        object *p = &name;
+        symtab tab = findsym(st, &p, &n, 0);
+        return tab->value;
+        } break;
+    case PROG: {
+        array na = getptr(name);
+        int n = na->dims[0];
+        object *p = na->data;
+        symtab tab = findsym(st, &p, &n, 0);
+        return tab->value;
+        } break;
+    }
+}
+
 void (define_symbol_n)(symtab st, int n, ...){
     va_list ap;
     int key[n-1];
