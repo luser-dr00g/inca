@@ -23,6 +23,8 @@ array_test:array_test.c
 	$(CC) $(CFLAGS) -o $@ $^ number.o $(extraobjs) $(LDLIBS)
 symtab_test:symtab_test.c
 	$(CC) $(CFLAGS) -o $@ $^ number.o array.o $(extraobjs) $(LDLIBS)
+number_test:number_test.c
+	$(CC) $(CFLAGS) -o $@ $^ array.o $(extraobjs) $(LDLIBS)
 
 olmec:main.o lex.o exec.o verbs.o adverbs.o xverb.o $(extraobjs) $(unitobjs)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)

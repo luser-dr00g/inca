@@ -14,6 +14,7 @@
 #include "adverbs.h"
 #include "xverb.h"
 #include "print.h"
+#include "number.h"
 
 // the global symbol table
 symtab env;
@@ -124,6 +125,9 @@ void init_all(){
     init_xverb(env);
     init_quad_neg(env);
     init_quad_k(env);
+    init_number();
+    //print(inf, 0);
+    //print(neginf, 0);
 }
 
 int main() {

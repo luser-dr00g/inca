@@ -32,6 +32,7 @@
 #include "adverbs.h"
 #include "print.h"
 #include "exec.h"
+#include "number.h"
 #include "verb_private.h"
 
 object vtab[VERB_NOOP];
@@ -54,6 +55,18 @@ object scalarop_lit_lit(object a, dyad func, object w, char op, verb v){
     DEBUG(3,"z=%08x(%d,%d)\n",
 	  z, gettag(z), getval(z));
     return z;
+}
+
+object scalarop_num_num(object a, dyad func, object w, char op, verb v){
+    switch(op){
+    case '+': return cache(NUMBER, number_add(getptr(a), getptr(w)));
+    case '-': return cache(NUMBER, number_sub(getptr(a), getptr(w)));
+    case '*': return cache(NUMBER, number_mul(getptr(a), getptr(w)));
+    case '/': return cache(NUMBER, number_div(getptr(a), getptr(w)));
+    case '%': return cache(NUMBER, number_mod(getptr(a), getptr(w)));
+    default: printf("bad op\n"); break;
+    }
+    return null;
 }
 
 object scalarop_lit_arr(object a, dyad func, object w, char op, verb v){
@@ -116,13 +129,20 @@ object scalarop(object a, dyad func, object w, char op, verb v){
     DEBUG(3,"scalarop ");
 recheck:
     switch(gettag(a)){
+    case NUMBER:
+        switch(gettag(w)){
+        case NUMBER: return scalarop_num_num(a, func, w, op, v);
+        case LITERAL:
+        return scalarop_num_num(a, func, cache(NUMBER, new_number_lit(w)), op, v);
+        case ARRAY: return scalarop_lit_arr(a, func, w, op, v);
+        }
     case LITERAL:
         DEBUG(3,"alit ");
         switch(gettag(w)){
-        case LITERAL:
-	  return scalarop_lit_lit(a, func, w, op, v);
-        case ARRAY:
-	  return scalarop_lit_arr(a, func, w, op, v);
+        case NUMBER:
+        return scalarop_num_num(cache(NUMBER, new_number_lit(a)), func, w, op, v);
+        case LITERAL: return scalarop_lit_lit(a, func, w, op, v);
+        case ARRAY: return scalarop_lit_arr(a, func, w, op, v);
         }
         break;
     case ARRAY: {
@@ -134,10 +154,9 @@ recheck:
             goto recheck;
         }
         switch(gettag(w)){
-        case LITERAL:
-	  return scalarop_arr_lit(A, func, w, op, v);
-        case ARRAY:
-	  return scalarop_arr_arr(a, A, func, w, op, v);
+        case NUMBER:
+        case LITERAL: return scalarop_arr_lit(A, func, w, op, v);
+        case ARRAY: return scalarop_arr_arr(a, A, func, w, op, v);
         }
     }
     }

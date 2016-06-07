@@ -26,8 +26,24 @@ typedef union {
 typedef u_number number[1];
 typedef u_number *number_ptr;
 
+extern object neginf;
+extern object inf;
+
+void init_number();
+
+void init_z(number_ptr z);
+void init_fr(number_ptr fr);
 number_ptr new_number_z(char *str);
 number_ptr new_number_fr(char *str);
+number_ptr new_number_lit(int lit);
+
+number_ptr number_add(number_ptr x, number_ptr y);
+number_ptr number_sub(number_ptr x, number_ptr y);
+number_ptr number_mul(number_ptr x, number_ptr y);
+number_ptr number_div(number_ptr x, number_ptr y);
+number_ptr number_mod(number_ptr x, number_ptr y);
+
+void number_promote(number_ptr n);
 int number_print_width(number_ptr num);
 char *number_get_str(number_ptr num);
 
