@@ -55,6 +55,7 @@ VERBS_FOREACH(0,DECLARE_VERB_FUNCTIONS)
 #undef dnone
 #undef DECLARE_VERB_FUNCTIONS
 
+
 extern object vtab[];
 object ndel(verb v);
 object mdel(object w, verb v);

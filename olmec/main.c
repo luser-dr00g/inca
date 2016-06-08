@@ -113,6 +113,7 @@ int mainloop(){
         if (!last_was_assn && x!=mark)
             print(x, 0);
     }
+    return 0;
 }
 
 void init_all(){

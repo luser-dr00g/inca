@@ -291,6 +291,7 @@ int main(){
     case Z: gmp_printf("%Zd\n", c->z.z); break;
     case FR: mpfr_printf("%Rf\n", c->fr.fr); break;
     }
+    return 0;
 }
 
 #endif

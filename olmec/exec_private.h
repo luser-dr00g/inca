@@ -7,7 +7,7 @@
  * may then be determined easily by masking.
  */
 #define DEFINE_PREDICATE_FUNCTION(enum_def,fname,...) \
-    int fname(object x){ return __VA_ARGS__; }
+    int fname(object x){ (void)x; return __VA_ARGS__; }
 PREDICATES_FOREACH(DEFINE_PREDICATE_FUNCTION)
 #undef DEFINE_PREDICATE_FUNCTION
 
@@ -86,7 +86,7 @@ enum { // generate labels to coordinate table and execution
 static
 struct parsetab { int c[4]; } ptab[] = {
 #define PRODUCTION_PATTERNS(label, pat1, pat2, pat3, pat4, ...) \
-    {pat1, pat2, pat3, pat4},
+    {{pat1, pat2, pat3, pat4}},
     PARSE_PRODUCTIONS_FOREACH(PRODUCTION_PATTERNS)
 #undef PRODUCTION_PATTERNS
 };

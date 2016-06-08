@@ -1,17 +1,28 @@
+CC=gcc --std=c99
+LDLIBS=-lm
+
 testprogs= $(notdir $(wildcard ./*_test.c))
 unitprogs= $(subst _test,,$(testprogs))
 tests= $(basename $(testprogs))
 units= $(basename $(unitprogs))
 unitobjs= $(patsubst %,%.o,$(units))
 testexes= $(patsubst %,%.exe,$(tests))
-LDLIBS = -lmpfr -lgmp
+LDLIBS+= -lmpfr -lgmp
 
 extraobjs= encoding.o print.o editor.o
 
-all:olmec test
+all:olmec test tables.md
 
 clean:
 	rm -f *.o all_tests.c all_tests.exe $(testexes)
+
+%.md: %.tab %s.h
+	cpp -P $< | tail -1 | sed 's/\p* \w* \w* /&\
+	/g' | sed 's/^/    /g' | sed 's/0x/\&#x/g' >$@
+
+tables.md:adverb.md verb.md
+	m4 tables.m4 >$@
+
 
 test:all_tests $(tests)
 	@./all_tests

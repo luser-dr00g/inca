@@ -402,6 +402,7 @@ object func_def(array expr, symtab env){
 
 
 object niladic(object f, object dummy, object dummy2, object dummy3, symtab env){
+    (void)(dummy,dummy2,dummy3,env);
     DEBUG(1, "nilad\n");
     verb v = getptr(f);
     if (!v->nilad){
@@ -413,7 +414,8 @@ object niladic(object f, object dummy, object dummy2, object dummy3, symtab env)
     return ret;
 }
 
-object monadic(object f, object y, object dummy, object dummy3, symtab env){
+object monadic(object f, object y, object dummy2, object dummy3, symtab env){
+    (void)(dummy2,dummy3,env);
     DEBUG(1,"monad %08x(%d,%d) %08x(%d,%d)\n",
             f, gettag(f), getval(f),
             y, gettag(y), getval(y));
@@ -432,6 +434,7 @@ object monadic(object f, object y, object dummy, object dummy3, symtab env){
 }
 
 object dyadic(object x, object f, object y, object dummy3, symtab env){
+    (void)(dummy3,env);
     DEBUG(1,"dyad %08x(%d,%d) %08x(%d,%d) %08x(%d,%d) \n",
             x, gettag(x), getval(x),
             f, gettag(f), getval(f),
@@ -454,6 +457,7 @@ object dyadic(object x, object f, object y, object dummy3, symtab env){
 }
 
 object adv(object f, object g, object dummy, object dummy3, symtab env){
+    (void)(dummy,dummy3,env);
     DEBUG(1,"adverb\n");
     verb v;
     switch(gettag(g)){
@@ -473,6 +477,7 @@ object adv(object f, object g, object dummy, object dummy3, symtab env){
 }
 
 object conj_(object f, object g, object h, object dummy3, symtab env){
+    (void)(dummy3,env);
     DEBUG(1,"conj\n");
     verb v;
     switch(gettag(g)){
@@ -489,6 +494,7 @@ object conj_(object f, object g, object h, object dummy3, symtab env){
 }
 
 object lcurry (object x,    object f,     object dummy2, object dummy3, symtab env){
+    (void)(dummy2,dummy3,env);
     DEBUG(1,"lcurry\n");
     object ret = amp(x,f,0);
     last_was_assn = 0;
@@ -497,6 +503,7 @@ object lcurry (object x,    object f,     object dummy2, object dummy3, symtab e
 
 //specification
 object spec(object name, object assn, object v, object dummy3, symtab env){
+    (void)(assn,dummy3);
     DEBUG(1,"assn %08x(%d,%d) <- %08x(%d,%d)\n",
             name, gettag(name), getval(name),
             v, gettag(v), getval(v));
@@ -506,6 +513,7 @@ object spec(object name, object assn, object v, object dummy3, symtab env){
 }
 
 object move   (object nn,    object assn,  object v,      object dummy3, symtab env){
+    (void)(assn,dummy3);
     DEBUG(1, "move %08x(%d,%d) <- %08x(%d,%d)\n",
             nn, gettag(nn), getval(nn),
             v, gettag(v), getval(v));
@@ -526,6 +534,7 @@ object move   (object nn,    object assn,  object v,      object dummy3, symtab 
 
 //remove parentheses
 object punc(object paren, object x, object dummy2, object dummy3, symtab env){
+    (void)(paren,dummy2,dummy3,env);
     DEBUG(1,"punc %08x(%d,%d)\n",
             x, gettag(x), getval(x));
     last_was_assn = 0;
