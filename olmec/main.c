@@ -125,7 +125,7 @@ void init_all(){
     init_xverb(env);
     init_quad_neg(env);
     init_quad_k(env);
-    init_number();
+    init_number(env);
     //print(inf, 0);
     //print(neginf, 0);
 }

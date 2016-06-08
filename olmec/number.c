@@ -1,32 +1,47 @@
 //number.c
 //$make number LDLIBS='-lmpfr -lgmp'
 
-#include <stdlib.h>
-
-#include "common.h"
-#include "encoding.h"
 #include "number.h"
 
 object neginf;
 object inf;
 
-void init_number(){
+object getprecision(symtab node){
+    return newdata(LITERAL, (int)mpfr_get_default_prec());
+}
+void setprecision(symtab node, object val){
+    switch(gettag(val)){
+    case LITERAL: mpfr_set_default_prec(getval(val)); break;
+    case NUMBER: {
+        number_ptr num = getptr(val);
+        switch(num->tag){
+        case Z: mpfr_set_default_prec(mpz_get_si(num->z.z)); break;
+        case FR: mpfr_set_default_prec(mpfr_get_si(num->fr.fr, MPFR_RNDN)); break;
+        }
+    } break;
+    default: printf("bad type in setprecision()"); break;
+    }
+}
+
+void init_number(symtab env){
     number_ptr num = malloc(sizeof *num);
     double d = strtod("-inf", NULL);
     init_fr(num);
-    //mpfr_log10(num->fr.fr, num->fr.fr, MPFR_RNDN);
-    //mpfr_yn(num->fr.fr, 1, num->fr.fr, MPFR_RNDN);
     mpfr_set_d(num->fr.fr, d, MPFR_RNDN);
     neginf = cache(NUMBER, num);
 
     num = malloc(sizeof *num);
     init_fr(num);
-    //mpfr_set_si(num->fr.fr, -1, MPFR_RNDN);
-    //mpfr_lgamma(num->fr.fr, num->fr.fr, MPFR_RNDN);
-    //mpfr_yn(num->fr.fr, -1, num->fr.fr, MPFR_RNDN);
     d = strtod("inf", NULL);
     mpfr_set_d(num->fr.fr, d, MPFR_RNDN);
     inf = cache(NUMBER, num);
+
+    magic m = malloc(sizeof *m);
+    m->get = getprecision;
+    m->put = setprecision;
+    define_symbol(env, newdata(PCHAR, 0x2395),
+        newdata(PCHAR, 'F'), newdata(PCHAR, 'P'), newdata(PCHAR, 'C'), 
+        cache(MAGIC, m));
 }
 
 void init_z(number_ptr z){

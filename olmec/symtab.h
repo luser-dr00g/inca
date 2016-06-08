@@ -11,6 +11,11 @@ struct symtab {
     symtab prev; //==NULL in root and all leafs. used to chain (stack) new roots.
 };
 
+struct magic {
+    object (*get)(symtab node);
+    void (*put)(symtab node, object val);
+};
+
 symtab makesymtab(int n);
 symtab makesymtabchain(symtab root, int n);
 
@@ -20,7 +25,7 @@ symtab findsym(symtab st, object **spp, int *n, int mode, int bias);
 
 /* get/set node value */
 object getsym(symtab node);
-void putsym(symtab node, object sym);
+void putsym(symtab node, object val);
 
 void def(symtab st, object name, object v, int bias);
 

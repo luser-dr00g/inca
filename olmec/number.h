@@ -3,12 +3,15 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <mpfr.h>
 #include <gmp.h>
 
 #include "common.h"
+#include "encoding.h"
+#include "symtab.h"
 
 enum numtag { NONE, Z, FR };
 
@@ -29,7 +32,7 @@ typedef u_number *number_ptr;
 extern object neginf;
 extern object inf;
 
-void init_number();
+void init_number(symtab env);
 
 void init_z(number_ptr z);
 void init_fr(number_ptr fr);
