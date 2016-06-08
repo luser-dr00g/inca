@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include "../ppnarg.h"
 
-#define MODE1(x) (x|1<<7) //add hi bit of ascii char
+#define MODE1(x) (x+(1<<7)) //add hi bit of ascii char
 
 typedef int object;
 
