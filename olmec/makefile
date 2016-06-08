@@ -18,7 +18,7 @@ clean:
 
 %.md: %.tab %s.h
 	cpp -P $< | tail -1 | sed 's/\p* | \w* | \w* /&\
-	/g' | sed 's/0x/\&#x/g' >$@
+	/g' | sed 's/0x\(\w*\)/\&#x\1;/g' >$@
 
 tables.md:adverb.md verb.md
 	m4 tables.m4 >$@
