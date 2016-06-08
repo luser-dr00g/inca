@@ -48,7 +48,8 @@ object scalarop_lit_lit(object a, dyad func, object w, char op, verb v){
     case '+': z = newdata(LITERAL, getval(a) + getval(w)); break;
     case '-': z = newdata(LITERAL, getval(a) - getval(w)); break;
     case '*': z = newdata(LITERAL, getval(a) * getval(w)); break;
-    case '/': z = newdata(LITERAL, getval(a) / getval(w)); break;
+    case '/': //z = newdata(LITERAL, getval(a) / getval(w)); break;
+        z = cache(NUMBER, number_div(new_number_lit(getval(a)), new_number_lit(w))); break;
     case '%': z = newdata(LITERAL, getval(w) % getval(a)); break;
     default: printf("bad op\n"); break;
     }

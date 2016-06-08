@@ -1,15 +1,19 @@
 //number.c
 //$make number LDLIBS='-lmpfr -lgmp'
 
+#include "array.h"
 #include "number.h"
 
 object neginf;
 object inf;
 
 object getprecision(symtab node){
+    //printf("getprecision()\n");
     return newdata(LITERAL, (int)mpfr_get_default_prec());
 }
 void setprecision(symtab node, object val){
+    //printf("setprecision()\n");
+retry:
     switch(gettag(val)){
     case LITERAL: mpfr_set_default_prec(getval(val)); break;
     case NUMBER: {
@@ -19,8 +23,46 @@ void setprecision(symtab node, object val){
         case FR: mpfr_set_default_prec(mpfr_get_si(num->fr.fr, MPFR_RNDN)); break;
         }
     } break;
+    case ARRAY: {
+        array a = getptr(val);
+        val = *elem(a,0);
+        goto retry;
+    }
     default: printf("bad type in setprecision()"); break;
     }
+}
+
+static int printprec;
+static char *printfmt = NULL;
+
+object getprintprec(symtab node){
+    //printf("getprintprec()\n");
+    return newdata(LITERAL, printprec);
+}
+void setprintprec(symtab node, object val){
+    //printf("setprintprec()\n");
+retry:
+    switch(gettag(val)){
+    case LITERAL: printprec = getval(val); break;
+    case NUMBER: {
+        number_ptr num = getptr(val);
+        switch(num->tag){
+        case Z: printprec = mpz_get_si(num->z.z); break;
+        case FR: printprec = mpfr_get_si(num->fr.fr, MPFR_RNDN); break;
+        } break;
+    }
+    case ARRAY: {
+        array a = getptr(val);
+        val = *elem(a,0);
+        goto retry;
+    }
+    default: printf("bad type in setprintprec()"); return;
+    }
+
+    int n;
+    printfmt = realloc(printfmt, (n = 1+ snprintf(NULL, 0, "%%.%dRf", printprec)));
+    snprintf(printfmt, n, "%%.%dRf", printprec);
+    //printf("using fmt:%s\n", printfmt);
 }
 
 void init_number(symtab env){
@@ -42,6 +84,14 @@ void init_number(symtab env){
     define_symbol(env, newdata(PCHAR, 0x2395),
         newdata(PCHAR, 'F'), newdata(PCHAR, 'P'), newdata(PCHAR, 'C'), 
         cache(MAGIC, m));
+
+    m = malloc(sizeof *m);
+    m->get = getprintprec;
+    m->put = setprintprec;
+    define_symbol(env, newdata(PCHAR, 0x2395),
+        newdata(PCHAR, 'P'), newdata(PCHAR, 'P'),
+        cache(MAGIC, m));
+    setprintprec(NULL, 6);
 }
 
 void init_z(number_ptr z){
@@ -164,47 +214,27 @@ number_ptr number_mod(number_ptr x, number_ptr y){
 }
 
 char *number_get_str(number_ptr num){
+    char *fmt = printfmt;
     char *str;
     switch(num->tag){
     case Z: str = mpz_get_str(NULL, 10, num->z.z);
             break;
     case FR: {
-         int n = mpfr_snprintf(NULL, 0, "%Rf", num->fr.fr);
+         int n = mpfr_snprintf(NULL, 0, fmt, num->fr.fr);
          str = malloc(n+1);
-         mpfr_snprintf(str, n+1, "%Rf", num->fr.fr);
-         /*
-         mpfr_exp_t exp;
-         str = mpfr_get_str(NULL, &exp, 10, 0, num->fr.fr, MPFR_RNDN);
-         DEBUG(2, "exp = %lld\n", (long long)exp);
-         int n = strlen(str);
-         if (exp > n) return str;
-         char *tmp = malloc(n + 2);
-         int i=0;
-         exp += str[0]=='-';
-         for (;i<exp;++i)
-             tmp[i] = str[i];
-         tmp[i]='.';
-         for (;i<n;++i)
-             tmp[i+1] = str[i];
-         tmp[n] = 0;
-         for (int i=n-1; i>1; --i)
-             if (tmp[i]=='0')
-                 tmp[i]=0;
-             else
-                 break;
-         mpfr_free_str(str);
-         str = tmp;
-         break;
-         */
+         mpfr_snprintf(str, n+1, fmt, num->fr.fr);
      }
     }
     return str;
 }
 
 int number_print_width(number_ptr num){
-    char *str = number_get_str(num);
-    int len = strlen(str);
-    return len;
+    switch(num->tag){
+    case Z:
+        return mpz_sizeinbase(num->z.z, 10) + mpz_sgn(num->z.z)==-1;
+    case FR:
+        return mpfr_snprintf(NULL, 0, printfmt, num->fr.fr);
+    }
 }
 
 void number_promote(number_ptr n){

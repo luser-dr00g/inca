@@ -204,9 +204,9 @@ void putsym(symtab node, object val){
     if (gettag(node->value)==MAGIC){
         magic m = getptr(node->value);
         m->put(node, val);
+        return;
     }
     node->value = val;
-    return;
 }
 
 void def(symtab st, object name, object v, int bias){
