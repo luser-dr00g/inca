@@ -66,6 +66,7 @@ int inputtobase(int c, int mode){
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
         if (c==*alphatab[i].input && mode==alphatab[i].ext)
             return alphatab[i].base;
+    printf("input not in alpha: using MODE1\n");
     return mode? MODE1(c): c;
 }
 
@@ -74,6 +75,7 @@ char *basetooutput(int c){
     for (i=0;i<(sizeof alphatab/sizeof*alphatab);i++)
         if (c==alphatab[i].base)
             return alphatab[i].output;
+    printf("output not in alpha: yielding empty string\n");
     return "";
 }
 
@@ -84,6 +86,13 @@ void restoretty(){
 }
 
 void specialtty(){
+#if 0
+#define DO(n,x)  {int i=0,_n=(n);for(;i<_n;++i){x;}}
+    fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
+    fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
+    fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
+    fputc(CTL('N'),stdout);
+#endif
 
     // is the use of these causing my problems
     // outputing macron as \xc2\xaf or \xaf ?
@@ -93,6 +102,7 @@ void specialtty(){
     fputc(CTL('N'),stdout); // select G1 charset
                             // ESC(n): select G2
                             // ESC(o): select G3
+    fflush(stdout);
 
     tcgetattr(0,&tm);
 
@@ -115,12 +125,6 @@ void specialtty(){
         perror("tcsetattr");
 
     atexit(restoretty);
-#if 0
-#define DO(n,x)  {int i=0,_n=(n);for(;i<_n;++i){x;}}
-    fputs("\x1B*0\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
-    fputs("\x1B*A\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
-    fputs("\x1B*B\x1Bn",stdout); DO('~'-' ',printf("%c",' '+i))printf("\x1Bo\n");
-#endif
 }
 
 void beep(){

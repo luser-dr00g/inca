@@ -145,8 +145,8 @@ object getfill(object d){
             switch(getval(d)){
             case '+':
 	                      return 0;
-            case MODE1('='):  // Times
-            case MODE1('+'):  // Divided-By
+            case 0x00d7:  // Times
+            case 0x00f7:  // Divided-By
             case '*':
                  return 1;
             } /*fallthru*/

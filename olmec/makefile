@@ -1,4 +1,4 @@
-CC=gcc --std=c99
+CC=gcc --std=gnu99
 LDLIBS=-lm
 
 testprogs= $(notdir $(wildcard ./*_test.c))

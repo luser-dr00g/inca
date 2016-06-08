@@ -114,6 +114,8 @@
     /* ALPHA_NAME base      ext input output */ \
     /*_( PLUSMINUS, MODE1('g'), 1, "g", ESC(n)"g""\xE" ) */\
     /* xterm alt graphics chars */ \
+    _( TIMES,     0x00d7,     1, "-", ESC(o)"W""\xE" ) \
+    _( DIVIDE_,   0x00f7,     1, "=", ESC(o)"w""\xE" ) \
     _( IBEAM,     0x2336,     1, "!", "\xe2\x8c\xb6" ) \
     _( DELTILDE,  0x236b,     1, "@", "\xe2\x8d\xab" ) \
     _( DELTASTIL, 0x234b,     1, "#", "\xe2\x8d\x8b" ) \
@@ -254,8 +256,6 @@
     _( GUILLEFT,  MODE1('<'), 1, "<", ESC(o)"+""\xE" ) \
     _( GUILRIGHT, MODE1('>'), 1, ">", ESC(o)";""\xE" ) \
     _( COMPL,     MODE1('^'), 1, "^", ESC(o)",""\xE" ) \
-    _( TIMES,     MODE1('='), 1, "-", ESC(o)"W""\xE" ) \
-    _( DIVIDE,    MODE1('/'), 1, "/", ESC(o)"w""\xE" ) \
     _( PARAGRAPH, MODE1(','), 1, "?", ESC(o)"6""\xE" ) \
     _( CDOT,      MODE1('.'), 1, ".", ESC(o)"7""\xE" ) \
     _( HYPHEN,    MODE1('-'), 1, "-", ESC(o)"-""\xE" ) \
@@ -269,8 +269,6 @@
     _( BARA,      MODE1('@'), 1, "@", ESC(o)"*""\xE" ) \
     _( CIRCR,     MODE1('#'), 1, "#", ESC(o)".""\xE" ) \
     _( MU,        MODE1('$'), 1, "$", ESC(o)"5""\xE" ) \
-    _( COLONBAR,  MODE1('+'), 1, "=", ESC(o)"w""\xE" ) \
-    _( COLONBR,   0x00f7, 1, "+", "\xC3\xb7" ) \
     _( DEL,       MODE1('&'), 1, "&", ESC(o)"P""\xE" ) \
     _( SUPONE,    MODE1('('), 1, "(", ESC(o)"9""\xE" ) \
     _( SUPTWO,    MODE1(')'), 1, ")", ESC(o)"2""\xE" ) \

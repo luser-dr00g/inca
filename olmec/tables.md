@@ -18,9 +18,9 @@ symbol | monadic | dyadic
 '+' | vid | vplus 
 '-' | vneg | vminus 
 &#x00af; | vneg | vminus 
-('='+(1<<7)) | vsignum | vtimes 
+&#x00d7; | vsignum | vtimes 
 '*' | vsignum | vtimes 
-('+'+(1<<7)) | vrecip | vdivide 
+&#x00f7; | vrecip | vdivide 
 '|' | vabs | vresidue 
 &#x2374; | vshapeof | vreshape 
 '$' | vshapeof | vreshape 

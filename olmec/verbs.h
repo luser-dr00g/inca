@@ -7,9 +7,9 @@
 _(param,PLUS,'+',                   nnone, vid,      vplus,      0, 0, 0, 0, 0, 0 ) \
 _(param,SUB, '-',                   nnone, vneg,     vminus,     0, 0, 0, 0, 0, 0 ) \
 _(param,SUB2,0x00af,                nnone, vneg,     vminus,     0, 0, 0, 0, 0, 0 ) \
-_(param,MUL, MODE1('='),            nnone, vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
+_(param,MUL, 0x00d7,                nnone, vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
 _(param,MUL2,'*',                   nnone, vsignum,  vtimes,     0, 0, 0, 0, 0, 0 ) \
-_(param,DIV, MODE1('+'),            nnone, vrecip,   vdivide,    0, 0, 0, 0, 0, 0 ) \
+_(param,DIV, 0x00f7,                nnone, vrecip,   vdivide,    0, 0, 0, 0, 0, 0 ) \
 _(param,MOD, '|',                   nnone, vabs,     vresidue,   0, 0, 0, 0, 0, 0 ) \
 _(param,RHO, 0x2374/*rho alt-r*/,   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
 _(param,RHO2,'$',                   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0 ) \
