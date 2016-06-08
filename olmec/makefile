@@ -17,8 +17,13 @@ clean:
 	rm -f *.o all_tests.c all_tests.exe $(testexes)
 
 %.md: %.tab %s.h
-	cpp -P $< | tail -1 | sed 's/\p* | \w* | \w* /&\
-	/g' | sed 's/0x\(\w*\)/\&#x\1;/g' >$@
+	cpp -P $< | \
+	tail -1 | \
+	sed 's/\p* | \w* | \w* /&\
+	/g' | \
+	sed 's/0x\(\w*\)/\&#x\1;/g' | \
+	sed 's/\\\\/\\/' | \
+	sed "s/'\(.\)'/\1/" >$@
 
 tables.md:adverb.md verb.md
 	m4 tables.m4 >$@

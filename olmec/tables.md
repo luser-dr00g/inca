@@ -3,10 +3,10 @@
 
 symbol | adverb | conjunction
 --- | --- | ---
-'&' | _ | amp 
-'@' | _ | atop 
-'/' | areduce | _ 
-'\\' | ascan | _ 
+& | _ | amp 
+@ | _ | atop 
+/ | areduce | _ 
+\ | ascan | _ 
 &#x2340; | abackscan | _ 
 &#x00a8; | _ | rank
 
@@ -15,21 +15,21 @@ symbol | adverb | conjunction
 
 symbol | monadic | dyadic
 --- | --- | ---
-'+' | vid | vplus 
-'-' | vneg | vminus 
++ | vid | vplus 
+- | vneg | vminus 
 &#x00af; | vneg | vminus 
 &#x00d7; | vsignum | vtimes 
-'*' | vsignum | vtimes 
+* | vsignum | vtimes 
 &#x00f7; | vrecip | vdivide 
-'|' | vabs | vresidue 
+| | vabs | vresidue 
 &#x2374; | vshapeof | vreshape 
-'$' | vshapeof | vreshape 
-'#' | vtally | _ 
+$ | vshapeof | vreshape 
+# | vtally | _ 
 &#x2373; | viota | _ 
-',' | vravel | vcat 
-';' | vprenul | vlink 
-'{' | _ | vindexright 
-'}' | _ | vindexleft 
+, | vravel | vcat 
+; | vprenul | vlink 
+{ | _ | vindexright 
+} | _ | vindexleft 
 &#x2191; | vhead | vtake 
 &#x2193; | vbehead | vdrop 
 &#x001f; | _ | vcompress 
