@@ -48,6 +48,8 @@ The Quad-k variable `⎕k` displays the APL characters accessible by holding
 the ALT-key. The related Quad-a variable `⎕a` shows what olmec considers
 to be the "normal" keyboard layout against which the characters are selected.
 
+Consult the file `tables.md` for a listing of implemented adverbs and verbs.
+
 ## Running Environment/Building
 
 The program should compile simply with `make`, assuming GNU make and a
