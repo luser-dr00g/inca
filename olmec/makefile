@@ -17,7 +17,7 @@ clean:
 	rm -f *.o all_tests.c all_tests.exe $(testexes)
 
 %.md: %.tab %s.h
-	cpp -P $< | tail -1 | sed 's/\p* \w* \w* /&\
+	cpp -P $< | tail -1 | sed 's/\p* | \w* | \w* /&\
 	/g' | sed 's/0x/\&#x/g' >$@
 
 tables.md:adverb.md verb.md
