@@ -22,7 +22,7 @@
 | &#x00d7; | vsignum | sign of | vtimes | multiply | 
 | * | vsignum | sign of | vtimes | multiply | 
 | &#x00f7; | vrecip | reciprocal | vdivide | divide | 
-| | | vabs | absolute value | vresidue | residue | 
+| &#x2223; | vabs | absolute value | vresidue | residue | 
 | &#x2374; | vshapeof | yield dimension vector | vreshape | new array with specified dimensions populated by elements from right array | 
 | $ | vshapeof | yield dimension vector | vreshape | new array with specified dimensions populated by elements from right array | 
 | # | vtally | number of items | _ | none | 
