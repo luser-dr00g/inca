@@ -13,9 +13,9 @@ object vectorindexleft(object a, object w, verb v);
 #define nnone 0
 #define mnone 0
 #define dnone 0
-#define DEFINE_VERB_IN_ENV(st, name, id,...) \
+#define DEFINE_VERB_IN_ENV(st, name, id, nil,mon,dy, f,g,h ,m,l,r, ...)\
     v=malloc(sizeof*v); \
-    *v=(struct verb){newdata(PCHAR, id), __VA_ARGS__}; \
+    *v=(struct verb){newdata(PCHAR, id), nil,mon,dy, f,g,h, m,l,r}; \
     def(st, newdata(PCHAR, id), vtab[VERB_##name] = cache(VERB, v),0);
 #undef nnone
 #undef mnone

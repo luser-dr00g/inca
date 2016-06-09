@@ -347,8 +347,8 @@ void adverbtab_def(
     def(st, newdata(PCHAR, id), cache(ADVERB, v),0);
 }
 
-#define ADVERBTAB_DEF(st, id,...) \
-    adverbtab_def(id, __VA_ARGS__, st);
+#define ADVERBTAB_DEF(st, id, nil,mon,dy, f,g,h, m,l,r,...) \
+    adverbtab_def(id, nil,mon,dy, f,g,h, m,l,r, st);
 
 void init_av(symtab env){
 #define nnone 0

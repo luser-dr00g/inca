@@ -1,13 +1,13 @@
 #include "common.h"
 
 #define ADVERBS_FOREACH(param,_) \
-/*      base,   nilad, monad,     dyad,  f, g, h, mr,lr,rr*/ \
-_(param,'&',    nnone, mnone,     amp,   0, 0, 0, 0, 0, 0 ) \
-_(param,'@',    nnone, mnone,     atop,  0, 0, 0, 0, 0, 0 ) \
-_(param,'/',    nnone, areduce,   dnone, 0, 0, 0, 0, 0, 0 ) \
-_(param,'\\',   nnone, ascan,     dnone, 0, 0, 0, 0, 0, 0 ) \
-_(param,0x2340, nnone, abackscan, dnone, 0, 0, 0, 0, 0, 0 ) \
-_(param,0x00a8, nnone, mnone,     rank,  0, 0, 0, 0, 0, 0 ) \
+/*      base,   nilad, monad,     dyad,  f, g, h, mr,lr,rr,mdesc,ddesc*/ \
+_(param,'&',    nnone, mnone,     amp,   0, 0, 0, 0, 0, 0, none, compose functions or curry argument) \
+_(param,'@',    nnone, mnone,     atop,  0, 0, 0, 0, 0, 0, none, compose functions ) \
+_(param,'/',    nnone, areduce,   dnone, 0, 0, 0, 0, 0, 0, reduce using verb, none) \
+_(param,'\\',   nnone, ascan,     dnone, 0, 0, 0, 0, 0, 0, scan using verb, none) \
+_(param,0x2340, nnone, abackscan, dnone, 0, 0, 0, 0, 0, 0, scan right-to-left using verb, none) \
+_(param,0x00a8, nnone, mnone,     rank,  0, 0, 0, 0, 0, 0, none, derive new verb with specified or borrowed rank) \
 /**/
 /* see verbs.h for struct verb {} def */
 

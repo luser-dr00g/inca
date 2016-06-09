@@ -1,12 +1,12 @@
 
 ## Adverbs:
 
-symbol | adverb | conjunction
---- | --- | ---
+symbol | adverb | desc | conjunction | desc
+--- | --- | --- | --- | ---
 include(adverb.md)
 
 ## Verbs:
 
-symbol | monadic | dyadic
---- | --- | ---
+symbol | monadic | desc | dyadic | desc
+--- | --- | --- | --- | ---
 include(verb.md)
