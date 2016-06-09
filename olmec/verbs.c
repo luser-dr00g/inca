@@ -41,20 +41,39 @@ void common(object *ap, object *wp){
     //promote smaller number to matching type
 }
 
+
 object scalarop_lit_lit(object a, dyad func, object w, char op, verb v){
     DEBUG(3,"wlit ");
-    int z = null;
+    object z = null;
+    int64_t t;
     switch(op){
-    case '+': z = newdata(LITERAL, getval(a) + getval(w)); break;
-    case '-': z = newdata(LITERAL, getval(a) - getval(w)); break;
-    case '*': z = newdata(LITERAL, getval(a) * getval(w)); break;
+    case '+':
+        t = (int64_t)getval(a) + getval(w);
+        if (t>0x00ffffff || t<~(int64_t)0x00ffffff) \
+            z = cache(NUMBER, number_add(new_number_lit(getval(a)), new_number_lit(getval(w)))); \
+        else z = newdata(LITERAL, t);
+        break;
+    case '-':
+        t = (int64_t)getval(a) - getval(w);
+        if (t>0x00ffffff || t<~(int64_t)0x00ffffff) \
+            z = cache(NUMBER, number_sub(new_number_lit(getval(a)), new_number_lit(getval(w)))); \
+        else z = newdata(LITERAL, t);
+        break;
+    case '*':
+        t = (int64_t)getval(a) * getval(w);
+        if (t>0x00ffffff || t<~(int64_t)0x00ffffff) \
+            z = cache(NUMBER, number_mul(new_number_lit(getval(a)), new_number_lit(getval(w)))); \
+        else z = newdata(LITERAL, t);
+        break;
     case '/': //z = newdata(LITERAL, getval(a) / getval(w)); break;
-        z = cache(NUMBER, number_div(new_number_lit(getval(a)), new_number_lit(w))); break;
-    case '%': z = newdata(LITERAL, getval(w) % getval(a)); break;
-    default: printf("bad op\n"); break;
+        z = cache(NUMBER, number_div(new_number_lit(getval(a)), new_number_lit(w)));
+        break;
+    case '%': z = newdata(LITERAL, getval(w) % getval(a));
+              break;
+    default: printf("bad op\n");
+             break;
     }
-    DEBUG(3,"z=%08x(%d,%d)\n",
-	  z, gettag(z), getval(z));
+    DEBUG(3,"z=%08x(%d,%d)\n", z, gettag(z), getval(z));
     return z;
 }
 
