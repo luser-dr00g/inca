@@ -15,7 +15,7 @@ typedef int state_and_action_code;
  * since it is heavily overloaded. If the dot has a digit
  * on either or both sides, then it is considered a decimal
  * point separating the integer and fractional parts of a
- * floating-point number. TODO: add floating-point numbers.
+ * floating-point number. 
  * Otherwise, the dot is considered part of an identifier.
  *
  * Note, the state enum codes are 10* the corresponding table index.

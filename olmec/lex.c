@@ -35,7 +35,6 @@
  *  The state-machine itself is "programmed" by the table and
  *  enum definitions in wd_private.h.
  *
- *  TODO handle fractional values
  */
 
 #include <stdio.h>
