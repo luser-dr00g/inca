@@ -160,12 +160,8 @@ of the PCHAR tag. The 'value' is a single encoded integer, although of course
 almost anything can be packed-up into one of these abstraction and `cache`d
 to produce the requisite encoded integer.
 
-The number type is not currently implemented but is intended allow
-floating-point, arbitrary-precision, and rationals in a flexible,
-encapsulated manner. Until the number type is implemented, all numeric
-values in the system should be restricted to the range of a 24-bit
-integer, to avoid problems of overflow into the tag bits which will
-cause absolute chaos.
+The number type allows arbitrary-precision floating-point and integer values,
+The operations are handled by the GMP and MPFR libraries.
 
 The top-level of execution then procedes with the stereotypical
 *READ-EVAL-PRINT* loop, augmented with APL's behavior that definitions
