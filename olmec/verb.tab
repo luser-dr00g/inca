@@ -1,0 +1,12 @@
+#include "verbs.h"
+
+#define nnone _
+#define mnone _
+#define dnone _
+#define PRINT_VERB_TABLE(param,name, base, fnilad, fmonad, fdyad, ...) \
+        base  | fmonad  |  fdyad
+VERBS_FOREACH(0,PRINT_VERB_TABLE)
+#undef nnone
+#undef mnone
+#undef dnone
+#undef PRINT_VERB_TABLE

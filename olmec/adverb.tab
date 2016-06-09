@@ -1,0 +1,12 @@
+#include "adverbs.h"
+
+#define nnone _
+#define mnone _
+#define dnone _
+#define PRINT_ADVERB_TABLE(param,base, fnilad, fmonad, fdyad, ...) \
+        base  | fmonad  |  fdyad
+ADVERBS_FOREACH(0,PRINT_ADVERB_TABLE)
+#undef nnone
+#undef mnone
+#undef dnone
+#undef PRINT_ADVERB_TABLE
