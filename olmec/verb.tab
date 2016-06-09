@@ -4,7 +4,7 @@
 #define mnone _
 #define dnone _
 #define PRINT_VERB_TABLE(param,name, base, fnilad, fmonad, fdyad, f,g,h, m,l,r, mdesc, ddesc) \
-     |   base  | fmonad  |  mdesc | fdyad | ddesc | EOL
+        base  | fmonad  |  mdesc | fdyad | ddesc EOL
 VERBS_FOREACH(0,PRINT_VERB_TABLE)
 #undef nnone
 #undef mnone
