@@ -1,8 +1,8 @@
 
 ## Adverbs:
 
- symbol | adverb | desc | conjunction | desc 
- --- :| --- :| --- | --- :| --- 
+symbol | adverb | desc | conjunction | desc 
+--- | --- | --- | --- | --- 
 & | _ | none | amp | compose functions or curry argument 
 @ | _ | none | atop | compose functions 
 / | areduce | reduce using verb | _ | none 
@@ -14,8 +14,8 @@
 
 ## Verbs:
 
- symbol | monadic | desc | dyadic | desc 
- --- :| --- :| --- | --- :| --- 
+symbol | monadic | desc | dyadic | desc 
+--- | --- | --- | --- | --- 
 + | vid | identity | vplus | add 
 - | vneg | negate/negative | vminus | subtract 
 &#x00af; | vneg | negative/negate | vminus | subtract 
