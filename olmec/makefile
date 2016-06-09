@@ -19,7 +19,7 @@ clean:
 %.md: %.tab %s.h
 	cpp -P $< | \
 	tail -1 | \
-	sed 's/\p* | \w* | [^|]* *| \w* | [^|]* |/&\
+	sed 's/EOL */\
 	/g' | \
 	sed 's/0x\(\w*\)/\&#x\1;/g' | \
 	sed 's/\\\\/\\/' | \
