@@ -19,6 +19,8 @@ clean:
 %.md: %.tab %s.h
 	cpp -P $< | \
 	tail -1 | \
+	sed 's/0x001f/\//g' | \
+	sed 's/0x001e/\\/g' | \
 	sed "s/'|'/0x2223/g" | \
 	sed 's/EOL */\
 	/g' | \

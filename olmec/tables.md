@@ -33,8 +33,8 @@ $ | vshapeof | yield dimension vector | vreshape | new array with specified dime
 } | _ | none | vindexleft | left is data and right is indices 
 &#x2191; | vhead | first element | vtake | first n elements 
 &#x2193; | vbehead | all but the first | vdrop | all but first n elements 
-&#x001f; | _ | none | vcompress | select from right according to bools in left 
-&#x001e; | _ | none | vexpand | accumulate from right or zeros according to bools in left 
+/ | _ | none | vcompress | select from right according to bools in left 
+\ | _ | none | vexpand | accumulate from right or zeros according to bools in left 
 &#x22a5; | _ | none | vbase | interpret vector right using base left 
 &#x22a4; | _ | none | vencode | produce encoded vector of value right according to base left 
 &#x233d; | vreverse | reverse order of elements | vrotate | rotate through elements 
