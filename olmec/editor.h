@@ -4,6 +4,9 @@
 int inputtobase(int c, int mode);
 char *basetooutput(int c);
 
+enum cursor {blockblink, blockblink_, block, underblink, under, barblink, bar};
+void setcursor(enum cursor cursor);
+
 /* setup special raw terminal mode and save restore variable */
 void specialtty();
 

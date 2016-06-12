@@ -113,6 +113,7 @@ void init_all(){
     init_number(env);
     //print(inf, 0, 1);
     //print(neginf, 0, 1);
+    setcursor(bar);
 }
 
 int main() {
@@ -124,6 +125,7 @@ int main() {
         mainloop();
 
     if (do_tty) restoretty();
+    setcursor(block);
     return 0;
 }
 

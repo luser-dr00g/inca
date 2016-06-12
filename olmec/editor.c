@@ -59,6 +59,7 @@ $ ./olmec
 
 #include "common.h"
 #include "alpha.h"
+#include "editor.h"
 
 
 int inputtobase(int c, int mode){
@@ -77,6 +78,10 @@ char *basetooutput(int c){
             return alphatab[i].output;
     printf("output not in alpha: yielding empty string\n");
     return "";
+}
+
+void setcursor(enum cursor cursor){
+    printf(ESC([)"%d q",cursor);
 }
 
 struct termios tm;
