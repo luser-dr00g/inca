@@ -141,13 +141,19 @@ static int last_was_assn;
 void dumpstacks(stack left, object x, stack right){
     int n = stack_element_count(left);
     stack_element *ptr = stack_top_elements_address(left, n);
-    for (int i=0; i<n; ++i)
-        print(ptr[i].datum, 5, 1);
-    print(x, 10, 1);
+    if (n)
+        for (int i=0; i<n; ++i)
+            print(ptr[i].datum, 0, 0);
+    else
+        fputs("    ", stdout);
+    fputs("   ", stdout);
+    print(x, 0, 0);
+    fputs("   ", stdout);
     n = stack_element_count(right);
     ptr = stack_top_elements_address(right, n);
     for (int i=0; i<n; ++i)
-        print(ptr[n-1-i].datum, 5, 1);
+        print(ptr[n-1-i].datum, 0, 0);
+    fputc('\n',stdout);
 }
 
 // execute expression e using environment st and yield result
@@ -167,12 +173,16 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
 
     stack left = new_left_stack_for(expr);
     stack right = new_stack(1+stack_capacity(left));
+
+    DEBUG(0,"->%08x(%d,%d)", mark, gettag(mark), getval(mark));
+    IFDEBUG(0, print(mark,0,1));
+    IFDEBUG(1, dumpstacks(left, mark, right););
     stack_push_datum(right, mark);
-    DEBUG(0,"->%08x(%d,%d)\n", null, gettag(null), getval(null));
 
     while(!stack_is_empty(left)){
         stack_element x = stack_pop(left);
-        DEBUG(0,"->%08x(%d,%d)\n", x.datum, gettag(x.datum), getval(x.datum));
+        DEBUG(0,"->%08x(%d,%d)", x.datum, gettag(x.datum), getval(x.datum));
+        IFDEBUG(0, print(x.datum,0,1));
         IFDEBUG(1, dumpstacks(left, x.datum, right););
 
         if (is_pronoun(x)) {

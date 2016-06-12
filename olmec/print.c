@@ -49,6 +49,8 @@ int printatom(object x, int width){
     switch(gettag(x)){
     case NULLOBJ: printf("NULL");
                   break;
+    case MARKOBJ: printf("%s", basetooutput(0x22c4));
+                  break;
     case CHAR:
     case PCHAR:
         if (width)
