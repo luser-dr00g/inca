@@ -296,7 +296,7 @@ object del(array head, array body, symtab env, symtab child){
             a->arity==0? ndel : 0,
             a->arity==1? mdel : 0,
             a->arity==2? ddel : 0,
-            cache(ARRAY, body), cache(SYMTAB, child), cache(ANALYSIS, a),
+            cache(BLOCK, body), cache(SYMTAB, child), cache(ANALYSIS, a),
             0, 0, 0);
     def(env, a->func, v,0);
     return v;

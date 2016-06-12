@@ -54,9 +54,10 @@ int quadneg;  // hi-minus v. minus semantics.
 
 #include "lex_private.h"
 
-array scan_expression(array expr, symtab env){
+object scan_expression(array expr, symtab env){
     int *s = expr->data;
     int n = expr->dims[0];
+    int tag = EXPR;
 
     array result = array_new_dims(n+1);
     array resultrow = result;
@@ -96,17 +97,17 @@ array scan_expression(array expr, symtab env){
                     if (arrayisvector){
                         if (j==n-2) break;
                         arrayisvector = 0;
+                        tag = BLOCK;
                         result = array_new_dims(3);
                         *elem(result,0) = null;
-                        *elem(result,1) = cache(ARRAY, resultrow);
-                        *elem(result,2) = cache(ARRAY,
-                                resultrow = array_new_dims(n-j));
+                        *elem(result,1) = cache(EXPR, resultrow);
+                        *elem(result,2) = cache(EXPR, resultrow = array_new_dims(n-j));
                         p = resultrow->data, p1 = p+1;
                     } else {
                         array newresult = array_new_dims(result->dims[0]+1);
                         memcpy(newresult->data,result->data,result->dims[0]*sizeof(int));
-                        *elem(newresult,result->dims[0]) = cache(ARRAY,
-                                resultrow = array_new_dims(n-j));
+                        *elem(newresult,result->dims[0]) =
+                            cache(EXPR, resultrow = array_new_dims(n-j));
                         //free(result);
                         result = newresult;
                         p = resultrow->data, p1 = p+1;
@@ -119,7 +120,7 @@ array scan_expression(array expr, symtab env){
 
     resultrow->dims[0] = p - resultrow->data; // set actual encoded length
     if (!arrayisvector){ --result->dims[0]; }
-    return result;
+    return cache(tag, result);
 }
 
 void check_quadneg(symtab st){

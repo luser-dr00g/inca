@@ -31,7 +31,14 @@ int checkatom(object x, int *pwidth){
         *pwidth = number_print_width(getptr(x));
         return 0;
     case PROG:
+        *pwidth = 0;
         return 0;
+    case EXPR:
+        *pwidth = 1;
+        return 1;
+    case ARRAY:
+        *pwidth = 2;
+        return 1;
     default:
         *pwidth = strlen("00000000(00,0000)");
         return 1;
@@ -116,6 +123,8 @@ void printindexdisplay(array t){
             case PROG:
                 print(xx, 1, 1);
                 break;
+            case EXPR:
+            case BLOCK:
             case ARRAY:
                 print(xx, 0, 1);
                 break;
@@ -179,6 +188,8 @@ void print(object x, int width, int newline){
         default: printatom(x, width);
                  if (newline) printf("\n");
                  break;
+        case EXPR:
+        case BLOCK:
         case PROG:
         case ARRAY: {
             array t = getptr(x);

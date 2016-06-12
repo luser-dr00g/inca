@@ -87,24 +87,7 @@ int mainloop(){
         array expr = array_new_dims(expn);
         memcpy(expr->data,buf,expn*sizeof(int));
 
-        array a = scan_expression(expr, env);
-        object e = cache(ARRAY, a);
-
-        IFDEBUG(2,
-            DEBUG(2,"\n");
-
-            DEBUG(2,"%d\n", a->rank);
-            for (int i=0;i<a->rank;i++)
-                DEBUG(2,"%d ", a->dims[i]);
-            DEBUG(1,"\n");
-            );
-
-        IFDEBUG(1,
-            for (int i=0;i<a->dims[0];i++)
-                DEBUG(1,"%08x(%d,%d) ", a->data[i],
-                    gettag(a->data[i]), getval(a->data[i]));
-            DEBUG(1,"\n");
-            );
+        object e = scan_expression(expr, env);
 
         object x = execute(e, env, &last_was_assn);
         //object x = execute_expression(a, env, &last_was_assn);

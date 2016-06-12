@@ -55,7 +55,10 @@ FIRST_INDEXED_TYPE,
     VERB, /* val is a(n index to a) verb object */
     ADVERB, /* val is a(n index to a) verb object */
     XVERB, /* val is a(n index to a) struct containing a verb and adverb */
-LAST_INDEXED_TYPE = XVERB,
+
+    EXPR, /* val is a(n index to a) vector of the expression contents */
+    BLOCK, /* val is a(n index to a) vector of expressions, a PROGN */
+LAST_INDEXED_TYPE = BLOCK,
 };
 
 typedef struct array *array;

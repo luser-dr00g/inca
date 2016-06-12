@@ -210,7 +210,7 @@ object execute_block(array block, symtab env, int *plast_was_assn){
         switch(gettag(result)){
         case LABEL: {
             int label = getval(result);
-            printf("label = %d\n", label);
+            DEBUG(1,"label = %d\n", label);
             if (label<1 || label>block->dims[0]-1)
                 return mark;
             i = label-1;
@@ -222,6 +222,8 @@ object execute_block(array block, symtab env, int *plast_was_assn){
 }
 
 int is_block(object exp){
+    return gettag(exp)==BLOCK;
+        /*
     switch(gettag(exp)){
     case PROG:
     case ARRAY: {
@@ -237,6 +239,7 @@ int is_block(object exp){
         }
     }
     }
+    */
     return 0;
 }
 
@@ -316,7 +319,7 @@ stack new_left_stack_for (array expr){
     int n = expr->dims[0];
     stack r = new_stack(n + sum_symbol_lengths(expr, n) + 2);
     stack_push_datum(r, mark);
-    for (int i=0; i<n; i++) stack_push_datum(r, expr->data[i]);
+    for (int i=0; i<n; i++) stack_push_datum(r, *elem(expr, i));
     return r;
 }
 
@@ -370,15 +373,22 @@ object read_del_func(array header, symtab env){
         array expr = array_new_dims(expn);
         memcpy(expr->data,buf,expn*sizeof(int));
 
-        array a = scan_expression(expr, env);
-        object e = cache(ARRAY, a);
-        if (is_func_def(a)){ // label def
-            def(child, *elem(a,0), newdata(LITERAL, i),0);
-            //a = slices(a, (int[]){2}, (int[]){a->dims[0]-1});
-            e = vdrop(2, e, 0);
+        object e = scan_expression(expr, env);
+        if (gettag(e)==EXPR){
+            array a = getptr(e);
+            if (is_func_def(a)){ // ie. label def
+                def(child, *elem(a,0), newdata(LITERAL, i),0);
+                //a = slices(a, (int[]){2}, (int[]){a->dims[0]-1});
+                //e = cache(EXPR, a);
+                a->cons += 2;
+                a->dims[0] -= 2;
+                //e = vdrop(2, e, 0);
+            }
+            IFDEBUG(1, printindexdisplay(getptr(e)); );
         }
 
         if (is_block(e)) {
+            array a = getptr(e);
             i += a->dims[0]-1;
             func = cat(func, slices(a,(int[]){1},(int[]){a->dims[0]-1}));
         } else {

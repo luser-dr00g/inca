@@ -2,5 +2,5 @@
 
 
 // scan up to n chars from s and produce 1D array of encoded expression
-array scan_expression(array expr, symtab env);
+object scan_expression(array expr, symtab env);
 

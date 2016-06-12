@@ -538,7 +538,8 @@ array slices(array a, const int *s, const int *f){
     if (a->translate){
         z->translate = malloc(rank * sizeof(int*));
         memcpy(z->translate, translate, rank * sizeof(int*));
-    }
+    } else
+        z->translate = NULL;
 
     z->cons = a->cons;
     for (int i=0; i<a->rank; i++){
