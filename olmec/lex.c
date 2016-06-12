@@ -65,7 +65,7 @@ object scan_expression(array expr, symtab env){
     token *p = resultrow->data, *p1 = p+1;
 
     state ss, st; /* last state, current state */
-    state_and_action_code cc;
+    state_and_action_code cc = 0;
     int i,j;
 
     check_quadneg(env);
