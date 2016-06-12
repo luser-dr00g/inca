@@ -110,7 +110,7 @@ object scalarop_lit_arr(object a, dyad func, object w, char op, verb v){
     int z = cache(ARRAY, Z);
     DEBUG(3,"result=%08x(%d,%d)\n",
 	  z, gettag(z), getval(z));
-    IFDEBUG(3,print(z, 0));
+    IFDEBUG(3,print(z, 0, 1));
     return z;
 }
 
@@ -430,8 +430,8 @@ int resid(int a, int w){
 
 object vresidue (object a, object w, verb v){
     DEBUG(1,"residue\n");
-    IFDEBUG(1,print(a, 0));
-    IFDEBUG(1,print(w, 0));
+    IFDEBUG(1,print(a, 0, 1));
+    IFDEBUG(1,print(w, 0, 1));
     common(&a, &w);
 
     return scalaropfunc(a,vresidue,w,resid,v);
@@ -461,8 +461,8 @@ void mcopy(object *dest, object *src, int n){
 
 object vreshape (object a, object w, verb v){
     DEBUG(1,"reshape\n");
-    IFDEBUG(1,print(a, 0));
-    IFDEBUG(1,print(w, 0));
+    IFDEBUG(1,print(a, 0, 1));
+    IFDEBUG(1,print(w, 0, 1));
 recheck:
     switch(gettag(a)){
     case LITERAL:
@@ -593,8 +593,8 @@ object vravel (object w, verb v){
 
 object vcat (object a, object w, verb v){
     DEBUG(1,"cat\n");
-    IFDEBUG(1, print(a,0));
-    IFDEBUG(1, print(w,0));
+    IFDEBUG(1, print(a,0, 1));
+    IFDEBUG(1, print(w,0, 1));
     switch(gettag(a)){
         case NULLOBJ:
             return w;
@@ -779,8 +779,8 @@ object vectorindexleft(object a, object w, verb v){
 
 object unitindexleft(object a, object w, verb v){
     DEBUG(1, "unitindexleft\n");
-    IFDEBUG(1, print(a, 0));
-    IFDEBUG(1, print(w, 0));
+    IFDEBUG(1, print(a, 0, 1));
+    IFDEBUG(1, print(w, 0, 1));
 recheck:
     switch(gettag(a)){
     case LITERAL:
@@ -861,8 +861,8 @@ object vbase(object a, object w, verb v){
 
 object vencode(object a, object w, verb v){
     DEBUG(1,"------\nencode\n");
-    IFDEBUG(1,print(a,0));
-    IFDEBUG(1,print(w,0));
+    IFDEBUG(1,print(a,0, 1));
+    IFDEBUG(1,print(w,0, 1));
     if (gettag(w)==ARRAY){
         array W = getptr(w);
         if (W->rank==0 || productdims(W->rank, W->dims)==1){
@@ -882,26 +882,26 @@ object vencode(object a, object w, verb v){
                     case 1: {
                             object drop = vdrop(-1,a, VT(DROP));
                             DEBUG(1,"drop:");
-                            IFDEBUG(1,print(drop, 0));
+                            IFDEBUG(1,print(drop, 0, 1));
                             if (A->dims[0]
                                     && *elem(A, A->dims[0]-1)== 0)
                                 return vcat( vencode(drop,
                                             0,VT(ENC)),
                                         w,VT(CAT));
                             object tail = vtake(-1, a, VT(TAKE));
-                            IFDEBUG(1,print(tail, 0));
+                            IFDEBUG(1,print(tail, 0, 1));
                             object mod = vresidue(tail, w, VT(MOD));
-                            IFDEBUG(1,print(mod, 0));
+                            IFDEBUG(1,print(mod, 0, 1));
                             object e = vencode( drop,
                                         vdivide( vminus(w,
                                                 mod, VT(SUB)),
                                             tail, VT(DIV)),
                                         VT(ENC));
-                            IFDEBUG(1,print(e, 0));
+                            IFDEBUG(1,print(e, 0, 1));
                             object z = vcat(e, mod, VT(CAT));
                             //z = vreshape(A->dims[0], z, VT(RHO));
                             z = vtake(-A->dims[0], z, VT(TAKE));
-                            IFDEBUG(1,print(z, 0));
+                            IFDEBUG(1,print(z, 0, 1));
                             return z;
                     }
                     }
@@ -913,8 +913,8 @@ object vencode(object a, object w, verb v){
 
 object vcompress(object a, object w, verb v){
     DEBUG(1,"compress\n");
-    IFDEBUG(1,print(a,0));
-    IFDEBUG(1,print(w,0));
+    IFDEBUG(1,print(a,0, 1));
+    IFDEBUG(1,print(w,0, 1));
 recheck:
     switch (gettag(a)){
     case LITERAL: if (getval(a)) return w;
@@ -956,8 +956,8 @@ recheckw:
 
 object vexpand(object a, object w, verb v){
     DEBUG(1,"expand\n");
-    IFDEBUG(1,print(a,0));
-    IFDEBUG(1,print(w,0));
+    IFDEBUG(1,print(a,0, 1));
+    IFDEBUG(1,print(w,0, 1));
     object sum = areduce(vtab[VERB_PLUS],v);
     int (*sumf)(int,verb) = ((verb)getptr(sum))->monad;
 
@@ -1021,17 +1021,17 @@ recheckw:
 
 object vreverse(object w, verb v){
     //printf("reverse\n");
-    //print(w, 0);
+    //print(w, 0, 1);
     object shapew = vshapeof(w, VT(RHO));
-    //print(shapew, 0);
+    //print(shapew, 0, 1);
     object plus = vplus(-1,shapew, VT(PLUS));
-    //print(plus, 0);
+    //print(plus, 0, 1);
     object iot = viota(vreshape(nil, shapew, VT(RHO)), VT(IOTA));
-    //print(iot, 0);
+    //print(iot, 0, 1);
     object idx = vminus(plus, iot , VT(SUB));
-    //print(idx, 0);
+    //print(idx, 0, 1);
     object idxw = vectorindexleft(idx, w, VT(INDL));
-    //print(idxw, 0);
+    //print(idxw, 0, 1);
     return idxw;
 }
 
@@ -1039,13 +1039,13 @@ object vreverse(object w, verb v){
 object vrotate(object a, object w, verb v){
     //printf("rotate\n");
     object shapew = vshapeof(w, VT(RHO));
-    //print(shapew, 0);
+    //print(shapew, 0, 1);
     object iot = viota(shapew, VT(IOTA));
-    //print(iot, 0);
+    //print(iot, 0, 1);
     object plus = vplus(a, iot, VT(PLUS));
-    //print(plus, 0);
+    //print(plus, 0, 1);
     object idx = vresidue(shapew, plus, VT(MOD));
-    //print(idx, 0);
+    //print(idx, 0, 1);
     return vectorindexleft(idx, w, VT(INDL));
 }
 
@@ -1119,8 +1119,8 @@ object call_execute(object body, symtab child, analysis a){
     object ret = execute(body, child, &last_was_assn);
     if (a->result){
         object result = find(child, a->resultvar);
-        IFDEBUG(1, print(a->resultvar, 0);
-                   print(result, 0); );
+        IFDEBUG(1, print(a->resultvar, 0, 1);
+                   print(result, 0, 1); );
         return result;
     } else {
         return ret;
@@ -1161,7 +1161,7 @@ object ddel(object a, object w, verb v){
 }
 
 object ndfn(verb v){
-    IFDEBUG(4, print(v->f, 0););
+    IFDEBUG(4, print(v->f, 0, 1););
     object expr = v->f;
     symtab env = getptr(v->g);
     int last_was_assn;

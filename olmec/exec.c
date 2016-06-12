@@ -142,12 +142,12 @@ void dumpstacks(stack left, object x, stack right){
     int n = stack_element_count(left);
     stack_element *ptr = stack_top_elements_address(left, n);
     for (int i=0; i<n; ++i)
-        print(ptr[i].datum, 5);
-    print(x, 10);
+        print(ptr[i].datum, 5, 1);
+    print(x, 10, 1);
     n = stack_element_count(right);
     ptr = stack_top_elements_address(right, n);
     for (int i=0; i<n; ++i)
-        print(ptr[n-1-i].datum, 5);
+        print(ptr[n-1-i].datum, 5, 1);
 }
 
 // execute expression e using environment st and yield result
@@ -182,7 +182,7 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
         if (is_nilad(x)) {
             stack_element y = datum_to_stack_element(niladic(x.datum, 0, 0, 0, env));
             DEBUG(1, "nilad result: ");
-            IFDEBUG(1, print(y.datum, 0););
+            IFDEBUG(1, print(y.datum, 0, 1););
             if (!is_mark(y))
                 stack_push(right, y);
         } else
@@ -242,7 +242,7 @@ int is_block(object exp){
 
 object execute(object exp, symtab env, int *plast_was_assn){
     DEBUG(2, "execute\n");
-    IFDEBUG(2, print(exp, 0););
+    IFDEBUG(2, print(exp, 0, 1););
 
     if (is_block(exp))
         return execute_block(getptr(exp), env, plast_was_assn);
@@ -333,7 +333,7 @@ static
 int penultimate_prereleased_value (stack s){
     int result = stack_top_elements_address(s, 2)->datum;
     DEBUG(1, "result: ");
-    IFDEBUG(1, print(result, 0));
+    IFDEBUG(1, print(result, 0, 1));
     return stack_release(s), result;
 }
 
@@ -394,7 +394,7 @@ object read_del_func(array header, symtab env){
 object func_def(array expr, symtab env){
     DEBUG(1, "func_def\n");
     object func = dfn(vdrop(2, cache(ARRAY, expr), 0), env);
-    IFDEBUG(2, print(func, 0););
+    IFDEBUG(2, print(func, 0, 1););
     def(env, *elem(expr, 0), func,0);
     last_was_assn = 1;
     return func;
@@ -517,8 +517,8 @@ object move   (object nn,    object assn,  object v,      object dummy3, symtab 
     DEBUG(1, "move %08x(%d,%d) <- %08x(%d,%d)\n",
             nn, gettag(nn), getval(nn),
             v, gettag(v), getval(v));
-    IFDEBUG(1, print(nn, 0));
-    IFDEBUG(1, print(v, 0));
+    IFDEBUG(1, print(nn, 0, 1));
+    IFDEBUG(1, print(v, 0, 1));
     v = vreshape(vshapeof(nn,0),v,0);
     array narr = getptr(nn);
     array varr = getptr(v);
@@ -634,7 +634,7 @@ object nounidx(object n, object lbrac, object rbrac, object dummy3, symtab env){
     if (*last == blank) {
         *last = -1;
     }
-    IFDEBUG(1, print(idx,0));
+    IFDEBUG(1, print(idx,0, 1));
     array narr = getptr(n);
     if (narr->rank == 0)
         return n;

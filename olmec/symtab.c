@@ -142,7 +142,7 @@ symtab findsym(symtab st, object **spp, int *n, int mode, int bias){
     int lasn = nn;    // saved last-match value of n
 
     IFDEBUG(1, for (int i=0; i<*n; ++i)
-                   print(sp[i], 0); );
+                   print(sp[i], 0, 1); );
 
     while(nn--){
         t = hashlookup(st, *sp);

@@ -6,6 +6,7 @@ _( ANY   =      1, qany, 1 ) \
 _( VAR   =      2, qprog, gettag(x)==PROG \
                   || (gettag(x)==PCHAR && getval(x)!=0x2190 /*leftarrow*/ ) ) \
 _( NOUN  =      4, qnoun, gettag(x)==LITERAL \
+                   || gettag(x)==NUMBER \
                    || gettag(x)==CHAR \
                    || gettag(x)==ARRAY ) \
 _( NIL   =      8, qnil, (gettag(x)==VERB && ((verb)getptr(x))->nilad) ) \

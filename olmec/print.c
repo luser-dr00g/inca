@@ -30,6 +30,8 @@ int checkatom(object x, int *pwidth){
     case NUMBER:
         *pwidth = number_print_width(getptr(x));
         return 0;
+    case PROG:
+        return 0;
     default:
         *pwidth = strlen("00000000(00,0000)");
         return 1;
@@ -49,16 +51,16 @@ int printatom(object x, int width){
         break;
     case VERB: {
         verb v = getptr(x);
-        if (v->f) print(v->f, width);
+        if (v->f) print(v->f, width, 1);
         printf("%*s", width, basetooutput(getval(v->id)));
-        if (v->g) print(v->g, width);
+        if (v->g) print(v->g, width, 1);
         break;
     }
     case ADVERB: {
         verb v = getptr(x);
-        if (v->f) print(v->f, width);
+        if (v->f) print(v->f, width, 1);
         printf("%*s", width, basetooutput(getval(v->id)));
-        if (v->g) print(v->g, width);
+        if (v->g) print(v->g, width, 1);
         break;
     }
     case XVERB:
@@ -111,8 +113,11 @@ void printindexdisplay(array t){
                 printf(" %d", getval(xx));
                 printf("\n");
                 break;
+            case PROG:
+                print(xx, 1, 1);
+                break;
             case ARRAY:
-                print(xx, 0);
+                print(xx, 0, 1);
                 break;
         }
     }
@@ -168,17 +173,17 @@ int printarray(array t, int width){
 }
 
 
-void print(object x, int width){
+void print(object x, int width, int newline){
     DEBUG(3,"%08x(%d,%d)", x, gettag(x), getval(x));
     switch(gettag(x)){
         default: printatom(x, width);
-                 printf("\n");
+                 if (newline) printf("\n");
                  break;
         case PROG:
         case ARRAY: {
             array t = getptr(x);
             printarray(t, width);
-            printf("\n");
+            if (newline) printf("\n");
 
         } break;
     }

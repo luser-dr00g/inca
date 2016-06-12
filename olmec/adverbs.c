@@ -321,7 +321,7 @@ int contains(object needle, object haystack){
 
 object dfn(object w, symtab env){
     DEBUG(1, "dfn %08x(%d,%d)\n", w, gettag(w), getval(w));
-    IFDEBUG(1, print(w, 0););
+    IFDEBUG(1, print(w, 0, 1););
     int has_alpha = contains(newdata(PCHAR, 0x237a), w);
     int has_omega = contains(newdata(PCHAR, 0x2375), w);
     return create_derived_verb( 'D',

@@ -109,10 +109,10 @@ int mainloop(){
         object x = execute(e, env, &last_was_assn);
         //object x = execute_expression(a, env, &last_was_assn);
         DEBUG(2, "last_was_assn = %d\n", last_was_assn);
-        IFDEBUG(2, print(x, 10));
+        IFDEBUG(2, print(x, 10, 1));
 
         if (!last_was_assn && x!=mark)
-            print(x, 0);
+            print(x, 0, 1);
     }
     return 0;
 }
@@ -128,8 +128,8 @@ void init_all(){
     init_quad_neg(env);
     init_quad_k(env);
     init_number(env);
-    //print(inf, 0);
-    //print(neginf, 0);
+    //print(inf, 0, 1);
+    //print(neginf, 0, 1);
 }
 
 int main() {
