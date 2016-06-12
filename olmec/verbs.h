@@ -83,7 +83,13 @@ VERBS_FOREACH(0,DECLARE_VERB_FUNCTIONS)
 #undef DECLARE_VERB_FUNCTIONS
 
 
-extern object vtab[];
+#define VERBTAB_ENUM(param,name, ...) \
+    VERB_ ## name,
+enum { VERBS_FOREACH(0,VERBTAB_ENUM) VERB_NOOP };
+extern object vtab[VERB_NOOP];
+// yield verb from verbtab given enum short name
+#define VT(x) getptr(vtab[VERB_##x])
+
 object ndel(verb v);
 object mdel(object w, verb v);
 object ddel(object a, object w, verb v);

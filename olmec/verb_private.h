@@ -1,15 +1,4 @@
 
-#define VERBTAB_ENUM(param,name, ...) \
-    VERB_ ## name,
-enum { VERBS_FOREACH(0,VERBTAB_ENUM) VERB_NOOP };
-
-extern object vtab[VERB_NOOP];
-
-object vectorindexleft(object a, object w, verb v);
-
-// yield verb from verbtab given enum short name
-#define VT(x) getptr(vtab[VERB_##x])
-
 #define nnone 0
 #define mnone 0
 #define dnone 0
@@ -28,3 +17,4 @@ object vectorindexleft(object a, object w, verb v);
     scalarmonad(func,w,*#op,v)
 
 object scalarop(object a, dyad func, object w, char op, verb v);
+object vectorindexleft(object a, object w, verb v);

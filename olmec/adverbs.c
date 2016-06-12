@@ -100,6 +100,7 @@ object atop(object a, object w, verb v){
 object reduce(object w, verb v){
     vtable vt=loadv(v);
     switch(gettag(w)){
+    case NUMBER:
     case LITERAL: return w;
     case ARRAY: {
         array W = getptr(w);
@@ -130,6 +131,7 @@ object areduce(object w, verb v){
 object scan(object w, verb v){
     vtable vt=loadv(v);
     switch(gettag(w)){
+    case NUMBER:
     case LITERAL: return w;
     case ARRAY: {
         array W = getptr(w);
@@ -164,6 +166,7 @@ object ascan(object w, verb v){
 object backscan(object w, verb v){
     vtable vt=loadv(v);
     switch(gettag(w)){
+    case NUMBER:
     case LITERAL: return w;
     case ARRAY: {
         array W = getptr(w);

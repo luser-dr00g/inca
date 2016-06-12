@@ -2,12 +2,18 @@
 
 #define ADVERBS_FOREACH(param,_) \
 /*      base,   nilad, monad,     dyad,  f, g, h, mr,lr,rr,mdesc,ddesc*/ \
-_(param,'&',    nnone, mnone,     amp,   0, 0, 0, 0, 0, 0, none, compose functions or curry argument) \
-_(param,'@',    nnone, mnone,     atop,  0, 0, 0, 0, 0, 0, none, compose functions ) \
-_(param,'/',    nnone, areduce,   dnone, 0, 0, 0, 0, 0, 0, reduce using verb, none) \
-_(param,'\\',   nnone, ascan,     dnone, 0, 0, 0, 0, 0, 0, scan using verb, none) \
-_(param,0x2340, nnone, abackscan, dnone, 0, 0, 0, 0, 0, 0, scan right-to-left using verb, none) \
-_(param,0x00a8, nnone, mnone,     rank,  0, 0, 0, 0, 0, 0, none, derive new verb with specified or borrowed rank) \
+_(param,'&',    nnone, mnone,     amp,   0, 0, 0, 0, 0, 0, \
+        none, compose functions or curry argument) \
+_(param,'@',    nnone, mnone,     atop,  0, 0, 0, 0, 0, 0, \
+        none, compose functions ) \
+_(param,'/',    nnone, areduce,   dnone, 0, 0, 0, 0, 0, 0, \
+        reduce using verb, none) \
+_(param,'\\',   nnone, ascan,     dnone, 0, 0, 0, 0, 0, 0, \
+        scan using verb, none) \
+_(param,0x2340, nnone, abackscan, dnone, 0, 0, 0, 0, 0, 0, \
+        scan right-to-left using verb, none) \
+_(param,0x00a8, nnone, mnone,     rank,  0, 0, 0, 0, 0, 0, \
+        none, derive new verb with specified or borrowed rank) \
 /**/
 /* see verbs.h for struct verb {} def */
 
@@ -24,7 +30,7 @@ ADVERBS_FOREACH(0,DECLARE_ADVERB_FUNCTIONS)
 #undef dnone
 #undef DECLARE_ADVERB_FUNCTIONS
 
-typedef struct {
+typedef struct { /* information gleaned from del func header line */
     int result;
     object resultvar;
     int arity;

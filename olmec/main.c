@@ -100,6 +100,14 @@ int mainloop(){
     return 0;
 }
 
+void init_shortcuts(symtab st){
+    define_symbol(st, newdata(PCHAR, 'S'), areduce(vtab[VERB_PLUS], 0));
+    define_symbol(st, newdata(PCHAR, 'D'), ascan(vtab[VERB_PLUS], 0));
+    define_symbol(st, newdata(PCHAR, 'P'), areduce(vtab[VERB_MUL], 0));
+    define_symbol(st, newdata(PCHAR, 'R'), ascan(vtab[VERB_MUL], 0));
+    define_symbol(st, newdata(PCHAR, 'i'), amp(amp(newdata(LITERAL, 1), vtab[VERB_PLUS], 0) ,vtab[VERB_IOTA], 0));
+}
+
 void init_all(){
     init_en();
     init_array();
@@ -111,6 +119,7 @@ void init_all(){
     init_quad_neg(env);
     init_quad_k(env);
     init_number(env);
+    init_shortcuts(env);
     //print(inf, 0, 1);
     //print(neginf, 0, 1);
     setcursor(bar);

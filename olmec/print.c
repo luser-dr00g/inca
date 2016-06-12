@@ -60,16 +60,20 @@ int printatom(object x, int width){
         break;
     case VERB: {
         verb v = getptr(x);
-        if (v->f) print(v->f, width, 1);
+        if (v->f||v->g) printf("(");
+        if (v->f) print(v->f, width, 0);
         printf("%*s", width, basetooutput(getval(v->id)));
-        if (v->g) print(v->g, width, 1);
+        if (v->g) print(v->g, width, 0);
+        if (v->f||v->g) printf(")");
         break;
     }
     case ADVERB: {
         verb v = getptr(x);
-        if (v->f) print(v->f, width, 1);
+        if (v->f||v->g) printf("(");
+        if (v->f) print(v->f, width, 0);
         printf("%*s", width, basetooutput(getval(v->id)));
-        if (v->g) print(v->g, width, 1);
+        if (v->g) print(v->g, width, 0);
+        if (v->f||v->g) printf(")");
         break;
     }
     case XVERB:
