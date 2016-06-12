@@ -255,6 +255,9 @@ object scalarmonad(monad func, object w, char op, verb v){
     case LITERAL: switch(op){
         case '-': return newdata(LITERAL, - getval(w));
         }
+    case NUMBER: switch(op){
+        case '-': return cache(NUMBER, number_neg(getptr(w)));
+        }
     case ARRAY: {
         array W = getptr(w);
         array Z = array_new_rank_pdims(W->rank, W->dims);

@@ -213,6 +213,15 @@ number_ptr number_mod(number_ptr x, number_ptr y){
     return z;
 }
 
+number_ptr number_neg(number_ptr x){
+    number_ptr z = malloc(sizeof *z);
+    switch(x->tag){
+    case Z: init_z(z); mpz_neg(z->z.z,x->z.z); break;
+    case FR: init_fr(z); mpfr_neg(z->fr.fr, x->fr.fr, MPFR_RNDN); break;
+    }
+    return z;
+}
+
 char *number_get_str(number_ptr num){
     char *fmt = printfmt;
     char *str;

@@ -45,6 +45,7 @@ number_ptr number_sub(number_ptr x, number_ptr y);
 number_ptr number_mul(number_ptr x, number_ptr y);
 number_ptr number_div(number_ptr x, number_ptr y);
 number_ptr number_mod(number_ptr x, number_ptr y);
+number_ptr number_neg(number_ptr x);
 
 void number_promote(number_ptr n);
 int number_print_width(number_ptr num);
