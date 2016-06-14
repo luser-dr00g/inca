@@ -376,6 +376,7 @@ indices listed in arbitrary order and even repeated. Assignment to such a
 complex-indexed array may write cells more than once. The copy proceeds along the
 row-major ravelled representation of the re-shape of source array (re-shaped to 
 match the target shape).
+https://groups.google.com/d/msg/comp.lang.apl/dZZmWVGH_VY/L9OFVK6JBAAJ 
 
 dfns! eg.
 
@@ -391,9 +392,15 @@ dfns! eg.
             2h3 
     5 
 
+Thread: https://groups.google.com/d/topic/comp.lang.apl/Q329hQDXQZA/discussion
 
 -- 
 
 Added del definitions for multi-line functions, and the long-awaited number type.
-It uses gmp and mpfr for multiprecision ints and floats. Currently only input
-and output are defined: no actual math. Stay tuned!
+It uses gmp and mpfr for multiprecision ints and floats.
+
+https://groups.google.com/d/topic/comp.lang.apl/SiiSUxkrKFk/discussion
+
+
+It's a struggle to keep the number handling from getting too complicated.
+
