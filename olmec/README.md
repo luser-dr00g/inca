@@ -377,6 +377,8 @@ complex-indexed array may write cells more than once. The copy proceeds along th
 row-major ravelled representation of the re-shape of source array (re-shaped to 
 match the target shape).
 https://groups.google.com/d/msg/comp.lang.apl/dZZmWVGH_VY/L9OFVK6JBAAJ 
+https://groups.google.com/d/topic/comp.lang.c/oQOyn7b02jA/discussion
+https://groups.google.com/d/topic/comp.programming/FT6iEqnThds/discussion
 
 dfns! eg.
 
@@ -399,8 +401,11 @@ Thread: https://groups.google.com/d/topic/comp.lang.apl/Q329hQDXQZA/discussion
 Added del definitions for multi-line functions, and the long-awaited number type.
 It uses gmp and mpfr for multiprecision ints and floats.
 
+Del defs thread:
 https://groups.google.com/d/topic/comp.lang.apl/SiiSUxkrKFk/discussion
 
+Prototype GMP calculator:
+https://groups.google.com/d/topic/comp.lang.c/Gg19upCIwZU/discussion
 
 It's a struggle to keep the number handling from getting too complicated.
 
