@@ -105,7 +105,9 @@ void init_shortcuts(symtab st){
     define_symbol(st, newdata(PCHAR, 'D'), ascan(vtab[VERB_PLUS], 0));
     define_symbol(st, newdata(PCHAR, 'P'), areduce(vtab[VERB_MUL], 0));
     define_symbol(st, newdata(PCHAR, 'R'), ascan(vtab[VERB_MUL], 0));
-    define_symbol(st, newdata(PCHAR, 'i'), amp(amp(newdata(LITERAL, 1), vtab[VERB_PLUS], 0) ,vtab[VERB_IOTA], 0));
+    object i;
+    define_symbol(st, newdata(PCHAR, 'i'), i = amp(amp(newdata(LITERAL, 1), vtab[VERB_PLUS], 0) ,vtab[VERB_IOTA], 0));
+    define_symbol(st, newdata(PCHAR, '!'), amp(areduce(vtab[VERB_MUL], 0), i, 0));
 }
 
 void init_all(){

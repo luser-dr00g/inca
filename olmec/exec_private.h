@@ -126,6 +126,7 @@ int min(int x, int y){
 
 object read_del_func(array expr, symtab env);
 object func_def(array expr, symtab env);
+object cond_exp(array expr, symtab env, int *plast_was_assn);
 object niladic(object f,    object dummy, object dummy2, object dummy3, symtab env);
 object monadic(object f,    object y,     object dummy2, object dummy3, symtab env);
 object dyadic (object x,    object f,     object y,      object dummy3, symtab env);
@@ -230,6 +231,7 @@ stack_element *stack_top_elements_address (stack s, unsigned n){
 object branchout(stack left, stack right, object label);
 static int is_del_func(array expr);
 static int is_func_def(array expr);
+static int is_cond_exp(array expr);
 
 static int is_label(stack_element x);
 static int is_pronoun(stack_element x);

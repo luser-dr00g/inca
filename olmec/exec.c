@@ -166,9 +166,12 @@ object execute_expression(array expr, symtab env, int *plast_was_assn){
         *plast_was_assn = 1;
         return read_del_func(expr, env);
     }
-    if (is_func_def(expr)) {
+    if (is_func_def(expr)){
         *plast_was_assn = 1;
         return func_def(expr, env);
+    }
+    if (is_cond_exp(expr)){
+        return cond_exp(expr, env, plast_was_assn);
     }
 
     stack left = new_left_stack_for(expr);
@@ -233,24 +236,6 @@ object execute_block(array block, symtab env, int *plast_was_assn){
 
 int is_block(object exp){
     return gettag(exp)==BLOCK;
-        /*
-    switch(gettag(exp)){
-    case PROG:
-    case ARRAY: {
-        array expr = getptr(exp);
-        switch(expr->rank){
-        default: fprintf(stderr, "RANK ERROR\n");
-                 return 0;
-        case 1:
-            if (expr->dims[0]) {
-                if (*elem(expr,0)==null)
-                    return 1;
-            }
-        }
-    }
-    }
-    */
-    return 0;
 }
 
 object execute(object exp, symtab env, int *plast_was_assn){
@@ -261,6 +246,53 @@ object execute(object exp, symtab env, int *plast_was_assn){
         return execute_block(getptr(exp), env, plast_was_assn);
     else
         return execute_expression(getptr(exp), env, plast_was_assn);
+}
+
+object cond_exp(array expr, symtab env, int *plast_was_assn){
+    DEBUG(2, "cond_exp\n");
+    int first,second;
+    for (int i=0; i<expr->dims[0]; ++i)
+        if (qcolon(*elem(expr,i))){
+            first = i;
+            break;
+        }
+    for (int i=first+1; i<expr->dims[0]; ++i)
+        if (qcolon(*elem(expr,i))){
+            second = i;
+            break;
+        }
+    array part = clone(expr);
+    int cons = part->cons;
+    part->cons += first + 1;
+    int extent = part->dims[0];
+    part->dims[0] = second-first - 1;
+    object x = execute_expression(part, env, plast_was_assn);
+recheck:
+    switch(gettag(x)){
+    case LITERAL:
+        if (getval(x)==0){
+            DEBUG(2, "false clause\n");
+            part->cons = cons;
+            part->dims[0] = first;
+            return execute_expression(part, env, plast_was_assn);
+        } else {
+            DEBUG(2, "true clause\n");
+            part->cons = cons + second + 1;
+            part->dims[0] = extent-second - 1;
+            return execute_expression(part, env, plast_was_assn);
+        }
+    case ARRAY: {
+            array X = getptr(x);
+            if (X->rank == 0 ||
+                    (X->rank == 1 && X->dims[0] == 1)){
+                x = *elem(X,0);
+                goto recheck;
+            }
+        }
+    default:
+        DEBUG(2, "%08x(%d,%d)\n", x, gettag(x), getval(x));
+        return null;
+    }
 }
 
 int qdel(object x){
@@ -282,6 +314,17 @@ int is_func_def(array expr){
         if (qprog(*elem(expr,0)) && qcolon(*elem(expr,1))){
             return 1;
         }
+    }
+    return 0;
+}
+
+static
+int is_cond_exp(array expr){
+    if (expr->rank && expr->dims[0]){
+        int count =0;
+        for (int i=0; i<expr->dims[0]; ++i)
+            count += qcolon(*elem(expr,i));
+        return count==2;
     }
     return 0;
 }

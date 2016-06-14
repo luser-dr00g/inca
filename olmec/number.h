@@ -46,7 +46,10 @@ number_ptr number_mul(number_ptr x, number_ptr y);
 number_ptr number_div(number_ptr x, number_ptr y);
 number_ptr number_mod(number_ptr x, number_ptr y);
 number_ptr number_neg(number_ptr x);
+number_ptr number_abs(number_ptr x);
+number_ptr number_eq(number_ptr x, number_ptr y);
 
+int number_get_int(number_ptr x);
 void number_promote(number_ptr n);
 int number_print_width(number_ptr num);
 char *number_get_str(number_ptr num);

@@ -216,10 +216,47 @@ number_ptr number_mod(number_ptr x, number_ptr y){
 number_ptr number_neg(number_ptr x){
     number_ptr z = malloc(sizeof *z);
     switch(x->tag){
-    case Z: init_z(z); mpz_neg(z->z.z,x->z.z); break;
+    case Z: init_z(z); mpz_neg(z->z.z, x->z.z); break;
     case FR: init_fr(z); mpfr_neg(z->fr.fr, x->fr.fr, MPFR_RNDN); break;
     }
     return z;
+}
+
+number_ptr number_abs(number_ptr x){
+    number_ptr z = malloc(sizeof *z);
+    switch(x->tag){
+    case Z: init_z(z); mpz_abs(z->z.z, x->z.z); break;
+    case FR: init_fr(z); mpfr_abs(z->fr.fr, x->fr.fr, MPFR_RNDN); break;
+    }
+    return z;
+}
+
+int number_cmp(number_ptr x, number_ptr y){
+    switch(x->tag){
+    case Z: switch(y->tag){
+        case Z: return mpz_cmp(x->z.z, y->z.z);
+        case FR: return mpfr_cmp_z(x->fr.fr, y->z.z);
+        }
+    case FR: switch(y->tag){
+        case Z: return mpfr_cmp_z(y->fr.fr, x->z.z);
+        case FR: return mpfr_cmp(x->fr.fr, y->fr.fr);
+        }
+    }
+    return 0;
+}
+
+number_ptr number_eq(number_ptr x, number_ptr y){
+    number_ptr z = malloc(sizeof *z);
+    init_z(z);
+    mpz_set_si(z->z.z, number_cmp(x,y)==0);
+    return z;
+}
+
+int number_get_int(number_ptr x){
+    switch(x->tag){
+    case Z: return mpz_get_si(x->z.z);
+    case FR: return mpfr_get_si(x->fr.fr, MPFR_RNDN);
+    }
 }
 
 char *number_get_str(number_ptr num){
@@ -232,7 +269,7 @@ char *number_get_str(number_ptr num){
          int n = mpfr_snprintf(NULL, 0, fmt, num->fr.fr);
          str = malloc(n+1);
          mpfr_snprintf(str, n+1, fmt, num->fr.fr);
-     }
+    }
     }
     return str;
 }

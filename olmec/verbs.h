@@ -18,6 +18,8 @@ _(param,DIV, 0x00f7,                nnone, vrecip,   vdivide,    0, 0, 0, 0, 0, 
         reciprocal, divide) \
 _(param,MOD, '|',                   nnone, vabs,     vresidue,   0, 0, 0, 0, 0, 0, \
         absolute value, residue) \
+_(param,EQ,  '=',                   nnone, mnone,    veq,        0, 0, 0, 0, 0, 0, \
+        none, compare for equality) \
 _(param,RHO, 0x2374/*rho alt-r*/,   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0, \
         yield dimension vector, new array with specified dimensions populated by elements from right array) \
 _(param,RHO2,'$',                   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0, \
