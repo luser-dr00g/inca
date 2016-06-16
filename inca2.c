@@ -1,3 +1,6 @@
+//make inca2 CFLAGS='-Wno-implicit-int -Wno-int-conversion -Wno-incompatible-pointer-types'
+
+#define _POSIX_SOURCE /* put before any #include's */
 #include <ctype.h>
 #include <limits.h>
 #include <math.h>
@@ -31,7 +34,7 @@ typedef double   D;
 
 /* The universal array structure, or archetype
  */
-typedef struct a{I t,x,f,k,n,r,d[0];} *ARC; /* array header */
+typedef struct a{I t,x,f,k,n,r,d[/*flexible array member*/];} *ARC; /* array header */
 #define AT(a) ((a)->t)  /* type <-- nb. must be first in struct, see ga() */
 #define AX(a) ((a)->x)  /* allocation metadata (gc) */
 #define AF(a) ((a)->f)  /* flags */
@@ -75,6 +78,9 @@ ARC transposeop(I f, ARC w);
 ARC firstaxis(I f, ARC w);
 ARC notopm(I f, ARC w);
 ARC notopmd(ARC a, I f, ARC w);
+I qp(uintptr_t a);
+I qd(uintptr_t a);
+I qv(uintptr_t a);
 
 /* Interpreter data
  */
@@ -162,7 +168,7 @@ I *ma(I n){R(I*) apush(&ahead, (I)malloc(n));}       //make allocation
 void mv(C *d,C *s,I n){DO(n,d[i]=s[i]);}                 //move bytes
 I tr(I r,I *d){I z=1;DO(r,z=z*d[i]);R z;}                //table rank
 ARC ga(I t,I r,I *d){I n =tr(r,d);                       //generate new array
-    struct a a = {t}; //initialize template with type, hence type must be first
+    struct a a = {t,0,0,0,0,0}; //initialize template with type, hence type must be first
     ARC z;
     if (r<0)r=0;
     I sz;
@@ -662,6 +668,9 @@ V1(wfile){
     pr(w,(FILE*)*AV(cofile));
     R w;
 }
+#ifndef M_E
+#   define M_E 2.71828183
+#endif
 
 #define FUNCNAME(name,      c,    id,  vd,         vm,         odd,   omm,         omd) \
                  name,
@@ -713,13 +722,13 @@ struct{             C c; D id;
 ARC vid(I f){ R qd(f)?  vid(AV((ARC)f)[1]) : scalarD(ftab[f].id); }
 
 /* typed element print functions */
-I pi(I i, FILE *f){R fprintf(f,"%d ",i);}
-I pc(I c, FILE *f){R fprintf(f,"%c",c);}
+I pi(I i, FILE *f){R fprintf(f,"%jd ",(intmax_t){i});}
+I pc(I c, FILE *f){R fprintf(f,"%c",(int){c});}
 I pd(D d, FILE *f){R fprintf(f,"%f ",d);}
 I po(I c, FILE *f){R fprintf(f,"%c", ftab[c].c);}
 I pf(I i, FILE *f){
     if (labs(i) < 256){
-        if (qp(i)){R fprintf(f,"%c",i);}
+        if (qp(i)){R fprintf(f,"%c",(int){i});}
         if (qv(i)){R po(i,f);}
         R pc(i,f);
     }
@@ -741,7 +750,7 @@ I pr(ARC w, FILE *f){
         R nl(f);
     }
     I r=AR(w),*d=AD(w),n=AN(w);
-    int j,k,l,(*p)();
+    I j,k,l,(*p)();
     //printf("%d:",AT(w)); DO(r,pi(d[i])); nl(f);
     switch(AT(w)){
     default: R fprintf(f,"unprintable type\n");
@@ -798,15 +807,15 @@ I pr(ARC w, FILE *f){
 }
 
 /* predicates q?*() */
-qp(unsigned a){R (a<255) && isalpha(a);} /* question: is a variable? */
-qd(unsigned a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN || AT((ARC)a)==FIL);} /* derived function */
-qv(unsigned a){R qd(a) /* verb */
+I qp(uintptr_t a){R (a<255) && isalpha(a);} /* question: is a variable? */
+I qd(uintptr_t a){R (a>255) && (AT((ARC)a)==OPR || AT((ARC)a)==FUN || AT((ARC)a)==FIL);} /* derived function */
+I qv(uintptr_t a){R qd(a) /* verb */
               || ((a<NFUNC) && (ftab[a].vd || ftab[a].vm));}
-qo(unsigned a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);} /* operator */
-qf(unsigned a){R a>255 && AT((ARC)a)==FIL;} /* is a file */
-qomm(unsigned a){R (a<NFUNC) && (ftab[a].omm);} /* operator-monadic : dyadic */
-qodd(unsigned a){R (a<NFUNC) && (ftab[a].odd);} /* operator-dyadic : dyadic */
-qomd(unsigned a){R (a<NFUNC) && (ftab[a].omd);} /* operator-monadic : dyadic */
+I qo(uintptr_t a){R (a<NFUNC) && (ftab[a].odd || ftab[a].omm || ftab[a].omd);} /* operator */
+I qf(uintptr_t a){R a>255 && AT((ARC)a)==FIL;} /* is a file */
+I qomm(uintptr_t a){R (a<NFUNC) && (ftab[a].omm);} /* operator-monadic : dyadic */
+I qodd(uintptr_t a){R (a<NFUNC) && (ftab[a].odd);} /* operator-dyadic : dyadic */
+I qomd(uintptr_t a){R (a<NFUNC) && (ftab[a].omd);} /* operator-monadic : dyadic */
 
 ARC dotdot(ARC a, I f, ARC w){ /* iota shortcut */
     if (AT(a)!=INT || AT(w)!=INT) longjmp(mainloop, TYPE);
@@ -1138,8 +1147,8 @@ mon_verb:
             if (qo(b)){
                 if(qomm(b)){ a=nommv(a,b); ABCD goto mon_verb; } 
                 if (c && qodd(b) && qv(c)){ a=noddv(a,b,c); ADV ABCD
-                    printf("%d %c\n", *e, (*e)& 127);
-                    printf("%d %c\n", b, (b)& 127);
+                    printf("%jd %c\n", (intmax_t){*e}, (int){(*e)& 127});
+                    printf("%jd %c\n", (intmax_t){b}, (int){(b)& 127});
                     goto mon_verb; }
                 if (qomd(b)){ a=nomdv(a,b); ABCD goto mon_verb; }
             }
@@ -1190,8 +1199,8 @@ dy_verb:
 }
 
 //scanning predicates/converters
-noun(c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
-verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
+I noun(I c){ARC z;if(!isdigit(c))R 0;z=ga(INT,0,0);*AV(z)=c-'0';R (I)z;}
+I verb(c){I i=1;for(;ftab[i].c;)if(ftab[i++].c==c)R i-1;R 0;}
 
 //scan string and construct a functional representation,
 //converting literals to arrays and basic functions to opcodes.

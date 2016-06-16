@@ -1,3 +1,5 @@
+//make inca CFLAGS='-Wno-implicit-int -Wno-int-conversion -Wno-incompatible-pointer-types'
+
 #include <ctype.h>
 #include <math.h>
 #include <stdint.h>
@@ -30,7 +32,7 @@ V2(minus);
 #define DO(n,x) {INT i=0,_n=(n);for(;i<_n;++i){x;}}
 
 INT st[28] = {0}; /* symbol table */
-INT qp(a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
+INT qp(int a){return a>='`'&&a<='z';}  /* int a is a variable iff '`' <= a <= 'z'. nb. '`'=='a'-1 */
 
 struct alist { INT x; int mark; struct alist *next; } *ahead = NULL;
 
@@ -598,8 +600,8 @@ V1(execute){
     return z;
 }
 
-V1(mfunc){ } /* handled specially in ex() */
-V2(dfunc){ }
+V1(mfunc){ return 0; } /* handled specially in ex() */
+V2(dfunc){ return 0; }
 
 // these masks define the set of functions permitted by operators
 #define reducemask 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,0
@@ -778,7 +780,7 @@ ARC dot(ARC a,INT f,INT g,ARC w){
     }
 }
 
-void pi(INT i){printf("%d ",i);}
+void pi(INT i){printf("%jd ",(intmax_t){i});}
 void nl(){printf("\n");}
 void no(){}
 void pv(INT i){
@@ -788,12 +790,12 @@ void pv(INT i){
         printf("%c", vt[abs(i)-1]);
     else if (abs(i) < 255) {
         if (isprint(i))
-            printf("%c", i);
+            printf("%c", (int)i);
         else
-            printf("0%o", i);
+            printf("0%jo", (uintmax_t){i});
     } else
         //pr((ARC)i);
-        printf("%d", ((ARC)i)->p[0]);
+        printf("%jd", (intmax_t)((ARC)i)->p[0]);
 }
 void pr(ARC w){
     if (w==0){printf("null\n"); return;}
@@ -801,7 +803,7 @@ void pr(ARC w){
     INT r=w->r,*d=w->d,n=tr(r,d);INT j,k;
     void (*p)(INT) = pi;
     void (*eol)() = nl;
-    printf("%d:", w->t);
+    printf("%jd:", (intmax_t){w->t});
     DO(r,p(d[i]));eol();
     if(w->t == 2){
         p = pv;
@@ -850,7 +852,7 @@ ARC ex(INT*e){INT a=*e,w=e[1],d=w,o;
 EX:
     //{int i;for(i=0;e[i];i++)printf("%d ",e[i]);printf("\n");} // dump command-"string"
     if (a==COLON){ /* monadic ':' denotes capture of remaining command string */
-        int i;
+        INT i;
         ARC _a;
         ++e;
         for(i=0;e[i];i++) ;
