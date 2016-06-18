@@ -195,6 +195,14 @@ The very start is UTF-8, the basis of the I/O module.
 It has been reviewed extensively
 (https://codereview.stackexchange.com/questions/98838/utf-8-encoding-decoding).
 
+First olmec commit: https://github.com/luser-dr00g/inca/commit/25203d8bef674e14e8df6e2d621dec87316c7e39
+
+For posterity, here's the first inca3 commit:
+https://github.com/luser-dr00g/inca/commit/d66d44653f053e74696d5b2f33427e955d059def 
+First inca2 commit:
+https://github.com/luser-dr00g/inca/commit/3e81b6e4d9b6cb73eefd1dc3b04036a4de7f8cd6 
+First inca commit:
+https://github.com/luser-dr00g/inca/commit/7f4b13de2ba23a4a82b600fd4444ec2114e86b3c
 
 In fact, these first pieces shall be part of a library from which the
 application will draw. This was a crowning achievement for my xpost Postscript interpreter.
