@@ -389,9 +389,14 @@ int number_cmp(number_ptr x, number_ptr y){
 }
 
 number_ptr number_eq(number_ptr x, number_ptr y){
-    number_ptr z = calloc(1, sizeof *z);
-    init_z(z);
+    number_ptr z = new_z();
     mpz_set_si(z->z.z, number_cmp(x,y)==0);
+    return z;
+}
+
+number_ptr number_ne(number_ptr x, number_ptr y){
+    number_ptr z = new_z();
+    mpz_set_si(z->z.z, number_cmp(x,y)!=0);
     return z;
 }
 

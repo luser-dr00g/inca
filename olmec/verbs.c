@@ -717,6 +717,26 @@ object veq (object a, object w, verb v){
 }
 
 
+int ine(int x, int y){
+    return x!=y;
+}
+
+object oine(int x, int y){
+    return newdata(LITERAL, ine(x,y));
+}
+
+object onumber_ne(number_ptr a, number_ptr w){
+    return cache(NUMBER, number_ne(a,w));
+}
+
+object vne (object a, object w, verb v){
+    object z = scalaropfunc(a, vne, w, oine, onumber_ne, v);
+    if (gettag(z)==NUMBER)
+        z = newdata(LITERAL, number_get_int(getptr(z)));
+    return z;
+}
+
+
 object vlink (object a, object w, verb v){
     switch(gettag(w)){
         case ARRAY: return vcat(vbox(a,v),w,v);
@@ -1168,6 +1188,10 @@ object vnoresultd(object a, object w, verb v){
     return vnoresult(w,v);
 }
 
+
+/*  if called within a block structure,
+ *  cause transfer of control to specified line
+ */
 object vbranch(object w, verb v){
     switch(gettag(w)){
     case LITERAL: return newdata(LABEL, getval(w));
@@ -1179,6 +1203,9 @@ object vbranch(object w, verb v){
     default: return newdata(LABEL, 0);
     }
 }
+
+/* Handler functions for del func defs
+ */
 
 void def_extra(analysis a, symtab child){
     if (a->extra){
@@ -1234,6 +1261,10 @@ object ddel(object a, object w, verb v){
     def(child, an->omega, w,0);
     return call_execute(body, child, an);
 }
+
+
+/* Handler functions for direct defs
+ */
 
 object ndfn(verb v){
     IFDEBUG(4, print(v->f, 0, 1););

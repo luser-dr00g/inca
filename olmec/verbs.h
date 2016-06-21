@@ -22,6 +22,8 @@ _(param,MOD, '|',                   nnone, vabs,     vresidue,   0, 0, 0, 0, 0, 
         absolute value, residue) \
 _(param,EQ,  '=',                   nnone, mnone,    veq,        0, 0, 0, 0, 0, 0, \
         none, compare for equality) \
+_(param,NE,  0x2260,                nnone, mnone,    vne,        0, 0, 0, 0, 0, 0, \
+        none, compare for inequality) \
 _(param,RHO, 0x2374/*rho alt-r*/,   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0, \
         yield dimension vector, new array with specified dimensions populated by elements from right array) \
 _(param,RHO2,'$',                   nnone, vshapeof, vreshape,   0, 0, 0, 0, 0, 0, \

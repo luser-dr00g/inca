@@ -49,6 +49,7 @@ number_ptr number_pow(number_ptr x, number_ptr y);
 number_ptr number_neg(number_ptr x);
 number_ptr number_abs(number_ptr x);
 number_ptr number_eq(number_ptr x, number_ptr y);
+number_ptr number_ne(number_ptr x, number_ptr y);
 
 int number_get_int(number_ptr x);
 void number_promote(number_ptr n);

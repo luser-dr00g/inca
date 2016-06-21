@@ -25,6 +25,7 @@ symbol | monadic | desc | dyadic | desc
 &#x22c6; | _ | none | vpow | power 
 &#x2223; | vabs | absolute value | vresidue | residue 
 = | _ | none | veq | compare for equality 
+&#x2260; | _ | none | vne | compare for inequality 
 &#x2374; | vshapeof | yield dimension vector | vreshape | new array with specified dimensions populated by elements from right array 
 $ | vshapeof | yield dimension vector | vreshape | new array with specified dimensions populated by elements from right array 
 # | vtally | number of items | _ | none 
