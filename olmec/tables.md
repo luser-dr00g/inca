@@ -22,6 +22,7 @@ symbol | monadic | desc | dyadic | desc
 &#x00d7; | vsignum | sign of | vtimes | multiply 
 * | vsignum | sign of | vtimes | multiply 
 &#x00f7; | vrecip | reciprocal | vdivide | divide 
+&#x22c6; | _ | none | vpow | power 
 &#x2223; | vabs | absolute value | vresidue | residue 
 = | _ | none | veq | compare for equality 
 &#x2374; | vshapeof | yield dimension vector | vreshape | new array with specified dimensions populated by elements from right array 

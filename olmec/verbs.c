@@ -43,27 +43,30 @@ void common(object *ap, object *wp){
 
 
 object scalarop_lit_lit(object a, dyad func, object w, char op, verb v){
-    DEBUG(3,"wlit ");
+    DEBUG(1,"wlit ");
     object z = null;
     int64_t t;
     switch(op){
     case '+':
         t = (int64_t)getval(a) + getval(w);
-        if (t>0x00ffffff || t<~(int64_t)0x00ffffff) \
-            z = cache(NUMBER, number_add(new_number_lit(getval(a)), new_number_lit(getval(w)))); \
-        else z = newdata(LITERAL, t);
+        if (t>((1U<<24)-1) || t<=~(int64_t)((1U<<24)-1))
+            z = cache(NUMBER, number_add(new_number_lit(getval(a)), new_number_lit(getval(w))));
+        else
+            z = newdata(LITERAL, t);
         break;
     case '-':
         t = (int64_t)getval(a) - getval(w);
-        if (t>0x00ffffff || t<~(int64_t)0x00ffffff) \
-            z = cache(NUMBER, number_sub(new_number_lit(getval(a)), new_number_lit(getval(w)))); \
-        else z = newdata(LITERAL, t);
+        if (t>((1U<<24)-1) || t<=~(int64_t)((1U<<24)-1))
+            z = cache(NUMBER, number_sub(new_number_lit(getval(a)), new_number_lit(getval(w))));
+        else
+            z = newdata(LITERAL, t);
         break;
     case '*':
         t = (int64_t)getval(a) * getval(w);
-        if (t>0x00ffffff || t<~(int64_t)0x00ffffff) \
-            z = cache(NUMBER, number_mul(new_number_lit(getval(a)), new_number_lit(getval(w)))); \
-        else z = newdata(LITERAL, t);
+        if (t>((1U<<24)-1) || t<=~(int64_t)((1U<<24)-1))
+            z = cache(NUMBER, number_mul(new_number_lit(getval(a)), new_number_lit(getval(w))));
+        else
+            z = newdata(LITERAL, t);
         break;
     case '/': //z = newdata(LITERAL, getval(a) / getval(w)); break;
         z = cache(NUMBER, number_div(new_number_lit(getval(a)), new_number_lit(w)));
@@ -73,7 +76,7 @@ object scalarop_lit_lit(object a, dyad func, object w, char op, verb v){
     default: printf("bad op\n");
              break;
     }
-    DEBUG(3,"z=%08x(%d,%d)\n", z, gettag(z), getval(z));
+    DEBUG(1,"z=%08x(%d,%d)\n", z, gettag(z), getval(z));
     return z;
 }
 
@@ -90,7 +93,7 @@ object scalarop_num_num(object a, dyad func, object w, char op, verb v){
 }
 
 object scalarop_lit_arr(object a, dyad func, object w, char op, verb v){
-    DEBUG(3,"warr ");
+    DEBUG(1,"warr ");
     array W = getptr(w);
     if (W->rank == 0
 	|| (W->rank == 1 && W->dims[0] == 1)) {
@@ -103,19 +106,19 @@ object scalarop_lit_arr(object a, dyad func, object w, char op, verb v){
     for (int i=0; i<n; ++i){
       vector_index(i, W->dims, W->rank, scratch);
       int z = func(a, *elema(W, scratch), v);
-      DEBUG(3,"z[%d]=%08x(%d,%d)\n",
+      DEBUG(1,"z[%d]=%08x(%d,%d)\n",
 	    i, z, gettag(z), getval(z));
       *elema(Z, scratch) = z;
     }
     int z = cache(ARRAY, Z);
-    DEBUG(3,"result=%08x(%d,%d)\n",
+    DEBUG(1,"result=%08x(%d,%d)\n",
 	  z, gettag(z), getval(z));
-    IFDEBUG(3,print(z, 0, 1));
+    IFDEBUG(1,print(z, 0, 1));
     return z;
 }
 
 object scalarop_arr_lit(array A, dyad func, object w, char op, verb v){
-    DEBUG(3,"wlit ");
+    DEBUG(1,"wlit ");
     array Z = array_new_rank_pdims(A->rank, A->dims);
     int n = productdims(A->rank, A->dims);
     int scratch[A->rank];
@@ -127,7 +130,7 @@ object scalarop_arr_lit(array A, dyad func, object w, char op, verb v){
 }
 
 object scalarop_arr_arr(object a, array A, dyad func, object w, char op, verb v){
-    DEBUG(3,"warr ");
+    DEBUG(1,"warr ");
     array W = getptr(w);
     if (W->rank == 0
 	|| (W->rank == 1 && W->dims[0] == 1)){
@@ -146,7 +149,7 @@ object scalarop_arr_arr(object a, array A, dyad func, object w, char op, verb v)
 }
 
 object scalarop(object a, dyad func, object w, char op, verb v){
-    DEBUG(3,"scalarop ");
+    DEBUG(1,"scalarop ");
 recheck:
     switch(gettag(a)){
     case NUMBER:
@@ -157,7 +160,7 @@ recheck:
         case ARRAY: return scalarop_lit_arr(a, func, w, op, v);
         }
     case LITERAL:
-        DEBUG(3,"alit ");
+        DEBUG(1,"alit ");
         switch(gettag(w)){
         case NUMBER:
         return scalarop_num_num(cache(NUMBER, new_number_lit(a)), func, w, op, v);
@@ -166,7 +169,7 @@ recheck:
         }
         break;
     case ARRAY: {
-        DEBUG(3,"aarr ");
+        DEBUG(1,"aarr ");
         array A = getptr(a);
         if (A->rank == 0
                 || (A->rank == 1 && A->dims[0] == 1)) {
@@ -183,16 +186,16 @@ recheck:
     return null;
 }
 
-object scalaropfunc_lit_lit(object a, dyad func, object w, int opfunc(int,int), verb v){
-    return newdata(LITERAL, opfunc(getval(a), getval(w)));
+object scalaropfunc_lit_lit(object a, dyad func, object w, object opfunc(int,int), verb v){
+    return opfunc(getval(a), getval(w));
 }
 
 object scalaropfunc_num_num(number_ptr a, dyad func, number_ptr w,
-        int opfunc(int,int), number_ptr numfunc(number_ptr,number_ptr), verb v){
-    return cache(NUMBER, numfunc(a, w));
+        object opfunc(int,int), object numfunc(number_ptr,number_ptr), verb v){
+    return numfunc(a, w);
 }
 
-object scalaropfunc_lit_arr(object a, dyad func, object w, int opfunc(int,int), verb v){
+object scalaropfunc_lit_arr(object a, dyad func, object w, object opfunc(int,int), verb v){
     array W = getptr(w);
     array Z = array_new_rank_pdims(W->rank, W->dims);
     int n = productdims(W->rank, W->dims);
@@ -204,7 +207,7 @@ object scalaropfunc_lit_arr(object a, dyad func, object w, int opfunc(int,int), 
     return cache(ARRAY, Z);
 }
 
-object scalaropfunc_arr_lit(array A, dyad func, object w, int opfunc(int,int), verb v){
+object scalaropfunc_arr_lit(array A, dyad func, object w, object opfunc(int,int), verb v){
     array Z = array_new_rank_pdims(A->rank, A->dims);
     int n = productdims(A->rank, A->dims);
     int scratch[A->rank];
@@ -215,7 +218,7 @@ object scalaropfunc_arr_lit(array A, dyad func, object w, int opfunc(int,int), v
     return cache(ARRAY, Z);
 }
 
-object scalaropfunc_arr_arr(object a, array A, dyad func, object w, int opfunc(int,int), verb v){
+object scalaropfunc_arr_arr(object a, array A, dyad func, object w, object opfunc(int,int), verb v){
     array W = getptr(w);
     array Z = array_new_rank_pdims(W->rank, W->dims);
     int n = productdims(W->rank, W->dims);
@@ -228,7 +231,7 @@ object scalaropfunc_arr_arr(object a, array A, dyad func, object w, int opfunc(i
 }
 
 object scalaropfunc(object a, dyad func, object w,
-        int opfunc(int,int), number_ptr numfunc(number_ptr,number_ptr), verb v){
+        object opfunc(int,int), object numfunc(number_ptr,number_ptr), verb v){
 recheck:
     switch(gettag(a)){
     case NUMBER: switch(gettag(w)){
@@ -317,7 +320,7 @@ object vid (object w, verb v){
 
 object vplus (object a, object w, verb v){
     common(&a,&w);
-    DEBUG(3,"plus %08x(%d,%d),%08x(%d,%d)\n",
+    DEBUG(1,"plus %08x(%d,%d),%08x(%d,%d)\n",
             a, gettag(a), getval(a),
             w, gettag(w), getval(w));
 
@@ -445,6 +448,14 @@ int resid(int a, int w){
     return w % a;
 }
 
+object oresid(int a, int w){
+    return newdata(LITERAL, resid(a,w));
+}
+
+object onumber_mod(number_ptr a, number_ptr w){
+    return cache(NUMBER, number_mod(a, w));
+}
+
 object vresidue (object a, object w, verb v){
     DEBUG(1,"residue\n");
     IFDEBUG(1,print(a, 0, 1));
@@ -452,7 +463,33 @@ object vresidue (object a, object w, verb v){
     common(&a, &w);
     swap(&a, &w);
 
-    return scalaropfunc(a, vresidue, w, resid, number_mod, v);
+    return scalaropfunc(a, vresidue, w, oresid, onumber_mod, v);
+}
+
+
+int ipow(int x, int y){
+    int z = 1;
+    for (int i=0; i<y; ++i)
+        z *= x;
+    return z;
+}
+
+object oipow(int x, int y){
+    object z = newdata(LITERAL, 1);
+    for (int i=0; i<y; ++i){
+        z = vtimes(z, newdata(LITERAL, x), VT(MUL));
+        IFDEBUG(1, print(z,0,1));
+    }
+    return z;
+}
+
+object onumber_pow(number_ptr a, number_ptr w){
+    return cache(NUMBER, number_pow(a,w));
+}
+
+object vpow (object a, object w, verb v){
+    common(&a, &w);
+    return scalaropfunc(a, vpow, w, oipow, onumber_pow, v);
 }
 
 
@@ -663,8 +700,17 @@ object vgreaterthan (object a, object w, verb v){
 int ieq(int x, int y){
     return x==y;
 }
+
+object oieq(int x, int y){
+    return newdata(LITERAL, ieq(x,y));
+}
+
+object onumber_eq(number_ptr a, number_ptr w){
+    return cache(NUMBER, number_eq(a,w));
+}
+
 object veq (object a, object w, verb v){
-    object z = scalaropfunc(a, veq, w, ieq, number_eq, v);
+    object z = scalaropfunc(a, veq, w, oieq, onumber_eq, v);
     if (gettag(z)==NUMBER)
         z = newdata(LITERAL, number_get_int(getptr(z)));
     return z;

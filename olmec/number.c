@@ -66,26 +66,26 @@ retry:
 }
 
 void init_number(symtab env){
-    number_ptr num = malloc(sizeof *num);
+    number_ptr num = calloc(1, sizeof *num);
     double d = strtod("-inf", NULL);
     init_fr(num);
     mpfr_set_d(num->fr.fr, d, MPFR_RNDN);
     neginf = cache(NUMBER, num);
 
-    num = malloc(sizeof *num);
+    num = calloc(1, sizeof *num);
     init_fr(num);
     d = strtod("inf", NULL);
     mpfr_set_d(num->fr.fr, d, MPFR_RNDN);
     inf = cache(NUMBER, num);
 
-    magic m = malloc(sizeof *m);
+    magic m = calloc(1, sizeof *m);
     m->get = getprecision;
     m->put = setprecision;
-    define_symbol(env, newdata(PCHAR, 0x2395),
+    define_symbol(env, newdata(PCHAR, 0x2395), //quad
         newdata(PCHAR, 'F'), newdata(PCHAR, 'P'), newdata(PCHAR, 'C'), 
         cache(MAGIC, m));
 
-    m = malloc(sizeof *m);
+    m = calloc(1, sizeof *m);
     m->get = getprintprec;
     m->put = setprintprec;
     define_symbol(env, newdata(PCHAR, 0x2395),
@@ -104,117 +104,260 @@ void init_fr(number_ptr fr){
     mpfr_init(fr->fr.fr);
 }
 
-number_ptr new_number_z(char *str){
-    number_ptr num = malloc(sizeof *num);
+number_ptr new_z(){
+    number_ptr num = calloc(1, sizeof *num);
     num->z.tag = Z;
     mpz_init(num->z.z);
+    return num;
+}
+
+number_ptr new_fr(){
+    number_ptr num = calloc(1, sizeof *num);
+    num->fr.tag = FR;
+    mpfr_init(num->fr.fr);
+    return num;
+}
+
+number_ptr new_number_z(char *str){
+    number_ptr num = new_z();
     mpz_set_str(num->z.z, str, 10);
     return num;
 }
 
 number_ptr new_number_fr(char *str){
-    number_ptr num = malloc(sizeof *num);
+    number_ptr num = calloc(1, sizeof *num);
     num->fr.tag = FR;
     mpfr_init_set_str(num->fr.fr, str, 10, MPFR_RNDN);
     return num;
 }
 
 number_ptr new_number_lit(int lit){
-    number_ptr num = malloc(sizeof *num);
+    number_ptr num = calloc(1, sizeof *num);
     num->z.tag = Z;
     mpz_init_set_si(num->z.z, lit);
     return num;
 }
 
+typedef number_ptr binop(number_ptr x, number_ptr y);
+typedef number_ptr unop(number_ptr x);
+
+number_ptr return_inf(number_ptr dummy1, number_ptr dummy2){
+    return getptr(inf);
+}
+
+
+number_ptr add_z_z(number_ptr x, number_ptr y){
+    number_ptr z = new_z();
+    mpz_add(z->z.z, x->z.z, y->z.z);
+    return z;
+}
+
+number_ptr add_z_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_add_z(z->fr.fr, y->fr.fr, x->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr add_fr_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_add_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr add_fr_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_add(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
 number_ptr number_add(number_ptr x, number_ptr y){
-    number_ptr z = malloc(sizeof *z);
-    switch(x->tag){
-    case Z:
-        switch(y->tag){
-        case Z: init_z(z); mpz_add(z->z.z, x->z.z, y->z.z); break;
-        case FR: init_fr(z); mpfr_add_z(z->fr.fr, y->fr.fr, x->z.z, MPFR_RNDN); break;
-        } break;
-    case FR:
-        switch(y->tag){
-        case Z: init_fr(z); mpfr_add_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN); break;
-        case FR: init_fr(z); mpfr_add(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    }
+    binop *f[] = {
+        return_inf, return_inf, return_inf,
+        return_inf, add_z_z, add_z_fr,
+        return_inf, add_fr_z, add_fr_fr
+    };
+    return f [x->tag*NTAGS+y->tag] (x,y);
+}
+
+
+number_ptr sub_z_z(number_ptr x, number_ptr y){
+    number_ptr z = new_z();
+    mpz_sub(z->z.z, x->z.z, y->z.z);
+    return z;
+}
+
+number_ptr sub_z_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_z_sub(z->fr.fr, x->z.z, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
+number_ptr sub_fr_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_sub_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr sub_fr_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_sub(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
     return z;
 }
 
 number_ptr number_sub(number_ptr x, number_ptr y){
-    number_ptr z = malloc(sizeof *z);
-    switch(x->tag){
-    case Z:
-        switch(y->tag){
-        case Z: init_z(z); mpz_sub(z->z.z, x->z.z, y->z.z); break;
-        case FR: init_fr(z); mpfr_z_sub(z->fr.fr, x->z.z, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    case FR:
-        switch(y->tag){
-        case Z: init_fr(z); mpfr_sub_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN); break;
-        case FR: init_fr(z); mpfr_sub(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    }
+    binop *f[] = {
+        return_inf, return_inf, return_inf,
+        return_inf, sub_z_z, sub_z_fr,
+        return_inf, sub_fr_z, sub_fr_fr
+    };
+    return f [x->tag*NTAGS+y->tag] (x,y);
+}
+
+
+number_ptr mul_z_z(number_ptr x, number_ptr y){
+    number_ptr z = new_z();
+    mpz_mul(z->z.z, x->z.z, y->z.z);
+    return z;
+}
+
+number_ptr mul_z_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_mul_z(z->fr.fr, y->fr.fr, x->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr mul_fr_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_mul_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr mul_fr_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_mul(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
     return z;
 }
 
 number_ptr number_mul(number_ptr x, number_ptr y){
-    number_ptr z = malloc(sizeof *z);
-    switch(x->tag){
-    case Z:
-        switch(y->tag){
-        case Z: init_z(z); mpz_mul(z->z.z, x->z.z, y->z.z); break;
-        case FR: init_fr(z); mpfr_mul_z(z->fr.fr, y->fr.fr, x->z.z, MPFR_RNDN); break;
-        } break;
-    case FR:
-        switch(y->tag){
-        case Z: init_fr(z); mpfr_mul_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN); break;
-        case FR: init_fr(z); mpfr_mul(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    }
+    binop *f[] = {
+        return_inf, return_inf, return_inf,
+        return_inf, mul_z_z, mul_z_fr,
+        return_inf, mul_fr_z, mul_fr_fr
+    };
+    return f [x->tag*NTAGS+y->tag] (x,y);
+}
+
+
+number_ptr div_z_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    number_promote(x);
+    mpfr_div_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr div_z_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    number_promote(x);
+    mpfr_div(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
+number_ptr div_fr_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_div_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr div_fr_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_div(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
     return z;
 }
 
 number_ptr number_div(number_ptr x, number_ptr y){
-    number_ptr z = malloc(sizeof *z);
-    switch(x->tag){
-    case Z:
-        number_promote(x);
-        switch(y->tag){
-        case Z: init_fr(z); mpfr_div_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN); break;
-        case FR: init_fr(z); mpfr_div(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    case FR:
-        switch(y->tag){
-        case Z: init_fr(z); mpfr_div_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN); break;
-        case FR: init_fr(z); mpfr_div(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    }
+    binop *f[] = {
+        return_inf, return_inf, return_inf,
+        return_inf, div_z_z, div_z_fr,
+        return_inf, div_fr_z, div_fr_fr
+    };
+    return f [x->tag*NTAGS+y->tag] (x,y);
+}
+
+
+number_ptr mod_z_z(number_ptr x, number_ptr y){
+    number_ptr z = new_z();
+    mpz_mod(z->z.z, x->z.z, y->z.z);
+    return z;
+}
+
+number_ptr mod_z_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    number_promote(x);
+    mpfr_fmod(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
+number_ptr mod_fr_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    number_promote(y);
+    mpfr_fmod(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
+number_ptr mod_fr_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_fmod(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
     return z;
 }
 
 number_ptr number_mod(number_ptr x, number_ptr y){
-    number_ptr z = malloc(sizeof *z);
-    switch(x->tag){
-    case Z:
-        switch(y->tag){
-        case Z: init_z(z); mpz_mod(z->z.z, x->z.z, y->z.z); break;
-        case FR: init_fr(z); number_promote(x);
-                 mpfr_fmod(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        } break;
-    case FR:
-        switch(y->tag){
-        case Z: number_promote(y); //fall-thru
-        case FR: init_fr(z); mpfr_fmod(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN); break;
-        }
-    }
+    binop *f[] = {
+        return_inf, return_inf, return_inf,
+        return_inf, mod_z_z, mod_z_fr,
+        return_inf, mod_fr_z, mod_fr_fr
+    };
+    return f [x->tag*NTAGS+y->tag] (x,y);
+}
+
+
+number_ptr pow_z_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    number_promote(x);
+    mpfr_pow_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
     return z;
 }
 
+number_ptr pow_z_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    number_promote(x);
+    mpfr_pow(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
+number_ptr pow_fr_z(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_pow_z(z->fr.fr, x->fr.fr, y->z.z, MPFR_RNDN);
+    return z;
+}
+
+number_ptr pow_fr_fr(number_ptr x, number_ptr y){
+    number_ptr z = new_fr();
+    mpfr_pow(z->fr.fr, x->fr.fr, y->fr.fr, MPFR_RNDN);
+    return z;
+}
+
+number_ptr number_pow(number_ptr x, number_ptr y){
+    binop *f[] = {
+        return_inf, return_inf, return_inf,
+        return_inf, pow_z_z, pow_z_fr,
+        return_inf, pow_fr_z, pow_fr_fr
+    };
+    return f [x->tag*NTAGS+y->tag] (x,y);
+}
+
+
 number_ptr number_neg(number_ptr x){
-    number_ptr z = malloc(sizeof *z);
+    number_ptr z = calloc(1, sizeof *z);
     switch(x->tag){
     case Z: init_z(z); mpz_neg(z->z.z, x->z.z); break;
     case FR: init_fr(z); mpfr_neg(z->fr.fr, x->fr.fr, MPFR_RNDN); break;
@@ -223,7 +366,7 @@ number_ptr number_neg(number_ptr x){
 }
 
 number_ptr number_abs(number_ptr x){
-    number_ptr z = malloc(sizeof *z);
+    number_ptr z = calloc(1, sizeof *z);
     switch(x->tag){
     case Z: init_z(z); mpz_abs(z->z.z, x->z.z); break;
     case FR: init_fr(z); mpfr_abs(z->fr.fr, x->fr.fr, MPFR_RNDN); break;
@@ -246,7 +389,7 @@ int number_cmp(number_ptr x, number_ptr y){
 }
 
 number_ptr number_eq(number_ptr x, number_ptr y){
-    number_ptr z = malloc(sizeof *z);
+    number_ptr z = calloc(1, sizeof *z);
     init_z(z);
     mpz_set_si(z->z.z, number_cmp(x,y)==0);
     return z;
@@ -267,7 +410,7 @@ char *number_get_str(number_ptr num){
             break;
     case FR: {
          int n = mpfr_snprintf(NULL, 0, fmt, num->fr.fr);
-         str = malloc(n+1);
+         str = calloc(1, n+1);
          mpfr_snprintf(str, n+1, fmt, num->fr.fr);
     }
     }
@@ -281,6 +424,7 @@ int number_print_width(number_ptr num){
     case FR:
         return mpfr_snprintf(NULL, 0, printfmt, num->fr.fr);
     }
+    return 0;
 }
 
 void number_promote(number_ptr n){

@@ -13,7 +13,7 @@
 #include "encoding.h"
 #include "symtab.h"
 
-enum numtag { NONE, Z, FR };
+enum numtag { NONE, Z, FR, NTAGS };
 
 typedef union {
     enum numtag tag;
@@ -45,6 +45,7 @@ number_ptr number_sub(number_ptr x, number_ptr y);
 number_ptr number_mul(number_ptr x, number_ptr y);
 number_ptr number_div(number_ptr x, number_ptr y);
 number_ptr number_mod(number_ptr x, number_ptr y);
+number_ptr number_pow(number_ptr x, number_ptr y);
 number_ptr number_neg(number_ptr x);
 number_ptr number_abs(number_ptr x);
 number_ptr number_eq(number_ptr x, number_ptr y);

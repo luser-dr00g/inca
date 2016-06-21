@@ -69,13 +69,13 @@ int getval(object d){
     if (d<0) return d;
     integer int32;
     int32.int32 = d;
-    return int32.uint32 & ((1<<24)-1);
+    return int32.uint32 & ((1U<<24)-1);
 }
 
 object newdata(int tag, int val){
     if (tag==LITERAL && val<0) return val;
     integer int32;
-    int32.uint32 = ((unsigned)tag << 24) | ((unsigned)val & ((1<<24)-1));
+    int32.uint32 = ((unsigned)tag << 24) | ((unsigned)val & ((1U<<24)-1));
     int x = int32.int32;
     DEBUG(3,"newdata %x(%d %d)\n", x, tag, val);
     return x;

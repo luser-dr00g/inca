@@ -16,6 +16,8 @@ _(param,MUL2,'*',                   nnone, vsignum,  vtimes,     0, 0, 0, 0, 0, 
         sign of, multiply) \
 _(param,DIV, 0x00f7,                nnone, vrecip,   vdivide,    0, 0, 0, 0, 0, 0, \
         reciprocal, divide) \
+_(param,POW, 0x22c6/*alt-p*/,       nnone, mnone,    vpow,       0, 0, 0, 0, 0, 0, \
+        none, power)\
 _(param,MOD, '|',                   nnone, vabs,     vresidue,   0, 0, 0, 0, 0, 0, \
         absolute value, residue) \
 _(param,EQ,  '=',                   nnone, mnone,    veq,        0, 0, 0, 0, 0, 0, \
