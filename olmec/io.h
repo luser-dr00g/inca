@@ -16,6 +16,12 @@ enum errinfo {
     code_point_out_of_range = 32,
 };
 
+typedef struct {
+    int n;
+    unsigned char b[4];
+} utfcp;
+int32_t to_ucs4(utfcp c);
+utfcp to_utf8(int32_t u);
 int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo);
 char *utf8(int32_t *ar, int n, int *an, enum errinfo *errinfo);
 

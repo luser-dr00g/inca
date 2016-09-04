@@ -41,6 +41,21 @@
  * cannot be found. Assuming this to represent two (or more)
  * juxtaposed symbols, symbol-lookup may then proceed upon
  * the remainder of the key string. see ex.c:parse_and_lookup_name
+ *
+ * The master lookup function has two search modes:
+ * a prefix mode where it returns the first defined value and
+ * updates the symbol-string pointer and returns.
+ * Or it can be called in the "defining" mode where
+ * it follows existing links and creates new nodes until
+ * the search string is exhausted.
+ *
+ * In support of Weizenbaum environment chaining for functions
+ * there is now another search option called "bias" which is only
+ * relevant for defining searches. If bias is nonzero, search
+ * will restart on the prev root before defining new nodes on
+ * the current root. This is because defined functions must
+ * declare the local variables to be used. Remaining variable 
+ * references are to global variables (in the "workspace" or session).
  */
 #include <stdio.h>
 #include <stdlib.h>

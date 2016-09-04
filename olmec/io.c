@@ -20,6 +20,45 @@ static int leading0s(uint_least32_t x){ return 7 - (x? floor(log2(x)): -1); }
 /* generate byte mask of x ones in the most-significant position */
 #define himask(x) (0xFF^lomask(8-(x)))
 
+int32_t expand_shortcut(unsigned char b){
+    return REPLACEMENT;
+}
+
+int32_t to_ucs4(utfcp c){
+    int prefix = leading1s(c.b[0]);
+    int n = prefix? prefix: 1;
+    int32_t u;
+    //if (n != c.n)
+    switch(prefix){
+    case 0: u = c.b[0]; break;
+    case 1: return u = expand_shortcut(c.b[0]);
+    case 2: u = c.b[0] & 0x1f; break;
+    case 3: u = c.b[0] & 0x0f; break;
+    case 4: u = c.b[0] & 0x07; break;
+    }
+    for(int i=1; i<n; ++i){
+        u = (u << 6) | (c.b[n] & 0x3f);
+    }
+
+    if (u < ((int[]){0,0,0x80,0x800,0x10000})[prefix]) {
+        //error |= over_length_encoding;
+        u=REPLACEMENT;
+    }
+    return u;
+}
+
+utfcp to_utf8(int32_t u){
+    if (u<0x80) return (utfcp){1,u};
+    if (u<0x800) return (utfcp){2,0xC0|(u>>6),
+		     0x80|(u&0x3f)};
+    if (u<0x10000) return (utfcp){3,0xE0|(u>>12),
+		       0x80|((u>>6)&0x3f),0x80|(u&0x3f)};
+    if (u<0x110000) return (utfcp){4,0xF0|(u>>18),
+			0x80|((u>>12)&0x3f),0x80|((u>>6)&0x3f),0x80|(u&0x3f)};
+    //(else) error RANGE
+    return (utfcp){0,0};
+}
+
 int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
     unsigned char *p=str;
     int32_t *u,*buf;
@@ -35,6 +74,7 @@ int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
     else {
         for (i=0; i<n && *p; i++){
             prefix=leading1s(x=*p++);
+
             switch(prefix){
                 case 0: break;
                 case 1: error |= invalid_encoding;
@@ -61,6 +101,7 @@ int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
                 x=REPLACEMENT;
             }
             *u++=x;
+	    
         }
     }
 
