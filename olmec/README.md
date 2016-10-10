@@ -1,3 +1,5 @@
+![olmec wizard](ihttps://raw.githubusercontent.com/luser-dr00g/inca/master/olmec/olmec_wizard.jpg)
+
 ## olmec
 
 A work-in-progress APL interpreter intended for code-golfing.
