@@ -181,6 +181,9 @@ defined in `alpha.h` and used by the editor functions. So the full
 enormity of Unicode characters are not yet unleashed for the identifier
 set, although the implementation has support (mostly) available for this.
 
+
+![dresden codec](https://raw.githubusercontent.com/luser-dr00g/inca/master/olmec/Dresden43b.jpg)
+
 ## Notes, links, updates
 
 The problem I ran into with inca3 appears to be lack of overall design.
