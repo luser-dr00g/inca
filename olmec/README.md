@@ -1,4 +1,4 @@
-![olmec wizard](ihttps://raw.githubusercontent.com/luser-dr00g/inca/master/olmec/olmec_wizard.jpg)
+![olmec wizard](https://raw.githubusercontent.com/luser-dr00g/inca/master/olmec/olmec_wizard.jpg)
 
 ## olmec
 
