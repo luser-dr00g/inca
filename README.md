@@ -11,6 +11,8 @@ and documented in README2.md and in
 A third rewrite has begun in inca3.c. Its documentation is (predictably)
 named README3.md. 
 
+The newest (incomplete) version is code-named 'olmec'. See olmec/README.md .
+
 The final two commits of inca.c illustrate the problem inherent in
 the design. Add the new feature (user-function call without the ' or '' 
 function-call functions) broke the existing code in tea.sh
