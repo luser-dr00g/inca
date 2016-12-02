@@ -160,7 +160,7 @@ typedef struct editor {
 typedef unsigned Decoder(editor*, character);
 
 
-void print(editor *ed, character c){
+void print(character c){
     if (c.bytes.n==1)
         putchar(c.bytes.b[0]);
     else
@@ -193,7 +193,7 @@ unsigned ignore(editor *ed, character c){
 
 unsigned eot(editor *ed, character c){
     //printf("EOT\n");
-    print(ed, c);
+    print(c);
     character eod = { .unicode = 0x4, .bytes = { 1, 0x4 }};
     store(ed, eod);
     return EOF;
@@ -232,7 +232,7 @@ unsigned formfeed(editor *ed, character c){
 unsigned carriage(editor *ed, character c){
     //printf("carriage\n");
     character nl = { .unicode = '\n', .bytes = { 1, '\n' }};
-    print(ed, nl);
+    print(nl);
     store(ed, nl);
     return '\n';
 }
@@ -305,7 +305,7 @@ unsigned apl_alphabet[96] = {
 unsigned alpha(editor *ed, character c){
     c.unicode = apl_alphabet[c.bytes.b[1] - ' '];
     c.bytes = to_utf8(c.unicode);
-    print(ed, c);
+    print(c);
     store(ed, c);
     return c.unicode;
 }
@@ -389,7 +389,7 @@ unsigned ascii(editor *ed, character c){
         c.bytes.b[0] = 27;
         return escape(ed, c);
     }
-    print(ed, c);
+    print(c);
     store(ed, c);
     return c.unicode;
 }
@@ -399,19 +399,19 @@ unsigned extended(editor *ed, character c){
 }
 
 unsigned unicode2(editor *ed, character c){
-    print(ed, c);
+    print(c);
     store(ed, c);
     return c.unicode;
 }
 
 unsigned unicode3(editor *ed, character c){
-    print(ed, c);
+    print(c);
     store(ed, c);
     return c.unicode;
 }
 
 unsigned unicode4(editor *ed, character c){
-    print(ed, c);
+    print(c);
     store(ed, c);
     return c.unicode;
 }
@@ -489,6 +489,13 @@ unsigned *read_line(char *prompt, unsigned **bufp, int *lenp){
     }
     return *bufp;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// main()
+//
+///////////////////////////////////////////////////////////////////////////////
 
 int main(void){
     init_terminal();
