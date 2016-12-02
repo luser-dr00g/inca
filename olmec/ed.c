@@ -1,9 +1,14 @@
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <math.h> // log2
+//#include <sys/bitops.h> // ilog2
 
+// type to contain 1 utf-8 "character" up to 4 bytes
 
 typedef struct {
     int n;
@@ -13,12 +18,6 @@ uint32_t to_ucs4(utfcp c);
 utfcp to_utf8(uint32_t u);
 
 #define REPLACEMENT 0xFFFD
-
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h> // log2
-//#include <sys/bitops.h> // ilog2
 
 /* number of leading zeros of byte-sized value */
 static int leading0s(uint_least32_t x){ return 7 - (x? floor(log2(x)): -1); }
@@ -106,10 +105,14 @@ typedef struct {
     utfcp bytes;
 } character;
 
+// read up to 4 bytes from keyboard/stdin
+// and attempt to decode it as a utf-8 encoding
+//
 character read_character(void){
     int len;
     char buf[4];
     do {
+        memset(buf, 0, sizeof buf);
         len = read(fileno(stdin), buf, 4);
     } while(len == -1 && errno == EAGAIN);
     //printf("%d:", len);
@@ -120,65 +123,94 @@ character read_character(void){
     return (character){ len==0 ? EOF : to_ucs4(u), u };
 }
 
-typedef unsigned Decode(character);
 
-unsigned ignore(character c){
+typedef struct editor {
+    unsigned *bufp;
+    int n;
+    unsigned *p;
+} editor;
+
+void print(editor *ed, character c){
+    if (c.bytes.n==1)
+        putchar(c.bytes.b[0]);
+    else
+        printf("%*s", c.bytes.n, c.bytes.b);
+    fflush(stdout);
+}
+
+void store(editor *ed, character c){
+    *ed->p++ = c.unicode;
+}
+
+typedef unsigned Decoder(editor*, character);
+
+unsigned ignore(editor *ed, character c){
     return 0;
 }
 
-unsigned eot(character c){
-    printf("EOT\n");
+unsigned eot(editor *ed, character c){
+    //printf("EOT\n");
+    print(ed, c);
+    character eod = { .unicode = 0x4, .bytes = { 1, 0x4 }};
+    store(ed, eod);
     return EOF;
 }
 
-unsigned bell(character c){
+unsigned bell(editor *ed, character c){
     printf("ding!\n");
     return c.unicode;
 }
 
-unsigned backspace(character c){
+unsigned backspace(editor *ed, character c){
+    if (ed->p > ed->bufp){
+        printf("\b \b"), fflush(stdout);
+        ed->p--;
+    }
     return c.unicode;
 }
 
-unsigned tab(character c){
+unsigned tab(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned linefeed(character c){
+unsigned linefeed(editor *ed, character c){
     printf("linefeed\n");
     return c.unicode;
 }
 
-unsigned vtab(character c){
+unsigned vtab(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned formfeed(character c){
+unsigned formfeed(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned carriage(character c){
-    printf("carriage\n");
+unsigned carriage(editor *ed, character c){
+    //printf("carriage\n");
+    character nl = { .unicode = '\n', .bytes = { 1, '\n' }};
+    print(ed, nl);
+    store(ed, nl);
     return '\n';
 }
 
-unsigned shiftout(character c){
+unsigned shiftout(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned shiftin(character c){
+unsigned shiftin(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned nak(character c){
+unsigned nak(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned escape(character c){
+unsigned escape(editor *ed, character c){
     return c.unicode;
 }
 
-Decode *controltable[32] = {
+Decoder *controltable[32] = {
     //^@    ^A      ^B      ^C      ^D   ^E      ^F      ^G
     ignore, ignore, ignore, ignore, eot, ignore, ignore, bell,
     //^H       ^I   ^J        ^K    ^L        ^M        ^N        ^O
@@ -189,33 +221,41 @@ Decode *controltable[32] = {
     ignore, ignore, ignore, escape, ignore, ignore, ignore, ignore,
 };
 
-unsigned control(character c){
-    printf("control character\n");
+unsigned control(editor *ed, character c){
+    //printf("control character\n");
     c.bytes = (utfcp){ 2, '^', c.unicode + '@', 0, 0 };
-    return controltable[c.unicode](c);
+    return controltable[c.unicode](ed, c);
 }
 
-unsigned ascii(character c){
+unsigned ascii(editor *ed, character c){
+    print(ed, c);
+    store(ed, c);
     return c.unicode;
 }
 
-unsigned extended(character c){
+unsigned extended(editor *ed, character c){
     return 0;
 }
 
-unsigned unicode2(character c){
+unsigned unicode2(editor *ed, character c){
+    print(ed, c);
+    store(ed, c);
     return c.unicode;
 }
 
-unsigned unicode3(character c){
+unsigned unicode3(editor *ed, character c){
+    print(ed, c);
+    store(ed, c);
     return c.unicode;
 }
 
-unsigned unicode4(character c){
+unsigned unicode4(editor *ed, character c){
+    print(ed, c);
+    store(ed, c);
     return c.unicode;
 }
 
-Decode *chartable[256] = {
+Decoder *chartable[256] = {
 control, control, control, control, control, control, control, control, 
 control, control, control, control, control, control, control, control, 
 control, control, control, control, control, control, control, control, 
@@ -251,25 +291,28 @@ unicode4, unicode4, unicode4, unicode4, unicode4, unicode4, unicode4, unicode4,
 };
 
 
-int *read_line(char *prompt, int **bufp, int *lenp){
+unsigned *read_line(char *prompt, unsigned **bufp, int *lenp){
     if (prompt) fputs(prompt, stdout), fflush(stdout);
     if (!*bufp) *bufp = malloc( (sizeof**bufp) * (*lenp = 256));
-    int *p = *bufp;
+    unsigned *p = *bufp;
 
     character c;
     utfcp u;
+    editor ed = { .bufp = p, .n = *lenp, .p = p };
     unsigned x;
     do {
         c = read_character();
         //printf("U%04x\n", c.unicode);
         //printf("%*s", u.n, u.b);
-        x = chartable[c.unicode](c);
+        x = chartable[c.bytes.b[0]](&ed, c);
         u = to_utf8(x);
         //printf("U%04x\n", x);
-        printf("%*s", u.n, u.b);
-        fflush(stdout);
-        if (x) *p++ = x;
+        //if (x) printf("%*s", u.n, u.b), fflush(stdout);
+        //if (x) *p++ = x;
     } while (x != (unsigned)'\n' && x != (unsigned)EOF);
+    *bufp = ed.bufp;
+    *lenp = ed.n;
+    p = ed.p;
 
     if (p[-1] == EOF) p[-1] = '\n';
     if (p == (*bufp+1) && x == EOF){
@@ -284,7 +327,7 @@ int main(void){
     //printf("%u\n", (unsigned)'\n');
 
     char *prompt = "> ";
-    int *buf = NULL;
+    unsigned *buf = NULL;
     int len;
     while (read_line(prompt, &buf, &len)){
         for (int i = 0; buf[i]!='\n'; ++i)
