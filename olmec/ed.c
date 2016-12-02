@@ -8,15 +8,24 @@
 #include <math.h> // log2
 //#include <sys/bitops.h> // ilog2
 
-// type to contain 1 utf-8 "character" up to 4 bytes
 
+///////////////////////////////////////////////////////////////////////////////
+// 
+// UTF-8 <-> UCS-4 processing
+//
+///////////////////////////////////////////////////////////////////////////////
+
+// type to contain 1 utf-8 "character" up to 4 bytes
+// if b[4] is 0, then b is a string
+//
 typedef struct {
     int n;
-    unsigned char b[4];
+    unsigned char b[5];
 } utfcp;
 uint32_t to_ucs4(utfcp c);
 utfcp to_utf8(uint32_t u);
 
+// Unicode-defined replacement for miscoded chars
 #define REPLACEMENT 0xFFFD
 
 /* number of leading zeros of byte-sized value */
@@ -25,6 +34,8 @@ static int leading0s(uint_least32_t x){ return 7 - (x? floor(log2(x)): -1); }
 /* number of leading ones of byte-sized value */
 #define leading1s(x) leading0s(0xFF^(x))
 
+// rather than signal an error,
+// we pass this through to allow for a special encoding
 uint32_t expand_shortcut(unsigned char b){
     return b;
 }
@@ -56,7 +67,7 @@ uint32_t to_ucs4(utfcp c){
 }
 
 utfcp to_utf8(uint32_t u){
-    if (u<0x20) return (utfcp){2, '^', u+'@'};
+    if (u<0x20) return (utfcp){2, '^', u+'@'}; // sanitize control codes
     if (u<0x80) return (utfcp){1,u};
     if (u<0x800) return (utfcp){2,0xC0|(u>>6),
 		     0x80|(u&0x3f)};
@@ -67,6 +78,13 @@ utfcp to_utf8(uint32_t u){
     //(else) error RANGE
     return (utfcp){0,0};
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Terminal handling
+//
+///////////////////////////////////////////////////////////////////////////////
 
 
 struct termios saved_settings;
@@ -110,7 +128,7 @@ typedef struct {
 //
 character read_character(void){
     int len;
-    char buf[4];
+    char buf[5];
     do {
         memset(buf, 0, sizeof buf);
         len = read(fileno(stdin), buf, 4);
@@ -119,16 +137,28 @@ character read_character(void){
     //for (int i=0; i<len; ++i) printf(" %02x", (unsigned)(unsigned char)buf[i]);
     //puts("");
 
-    utfcp u = {len, buf[0], buf[1], buf[2], buf[3]};
+    utfcp u = {len, buf[0], buf[1], buf[2], buf[3], buf[4]};
     return (character){ len==0 ? EOF : to_ucs4(u), u };
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// The Line Editor
+//
+///////////////////////////////////////////////////////////////////////////////
 
 
 typedef struct editor {
     unsigned *bufp;
     int n;
     unsigned *p;
+    int mode;
 } editor;
+
+typedef unsigned Decoder(editor*, character);
+
 
 void print(editor *ed, character c){
     if (c.bytes.n==1)
@@ -138,11 +168,24 @@ void print(editor *ed, character c){
     fflush(stdout);
 }
 
+void printbytes(character c){
+    printf("%d:",c.bytes.n);
+    for (int i=0; i<c.bytes.n; ++i) printf("%04x ", c.bytes.b[i]);
+    fflush(stdout);
+}
+
 void store(editor *ed, character c){
     *ed->p++ = c.unicode;
 }
 
-typedef unsigned Decoder(editor*, character);
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+// Key Handlers (Decoders)
+//
+///////////////////////////////////////////////////////////////////////////////
+
 
 unsigned ignore(editor *ed, character c){
     return 0;
@@ -206,8 +249,120 @@ unsigned nak(editor *ed, character c){
     return c.unicode;
 }
 
-unsigned escape(editor *ed, character c){
+//
+// The special APL keys accessed with ALT- or ESC+
+//
+unsigned apl_alphabet[96] = {
+    //SP      !       "       #        $       %       &    '
+    //    IBEAM DELTILD DELTASTIL DELSTIL CIRCSTIL CIRCBAR 
+    ' ', 0x2336, 0x236b, 0x234b,  0x2352, 0x233d, 0x2296, '\'',
+
+    //  (        )       *       +       ,     -       .     /
+    //NOR     NAND CIRCSTAR DOMINO COMMABAR TIMES   ERGO SLASHBAR
+    0x2371, 0x2372, 0x235f, 0x2339, 0x236a, 0xd7, 0x2235, 0x233f,
+
+    //   0      1       2    3       4    5       6   7   
+    // AND DIAERESIS MACRON      LT|EQ        GT|EQ
+    0x2227,  0xa8,   0xaf, '<', 0x2264, '=', 0x2265, '>',
+
+    //   8       9   :    ;      <     =     >     ?
+    //NOTEQ     OR              << DIVIDES  >> PILCROW
+    0x2260, 0x2228, ':', ';', 0xab, 0xf7, 0xbb, 0xb6,
+
+    //   @       A       B       C   D        E       F   G
+    //DELTIL _ALPHA_  EXEC    LAMP        _EPS_    SAME  DELTASTIL
+    0x236b, 0x2376, 0x234e, 0x235d, 'D', 0x2377, 0x2261, 0x234b,
+
+    //   H       I       J   K        L   M        N       O
+    //DELSTL   _I_  DIAJOT        'QUAD       FORMAT DIACIRC
+    0x2352, 0x2378, 0x2364, 'K', 0x235e, 'M', 0x2355, 0x2365,
+
+    // P      Q       R       S       T       U       V      W
+    //POUND inv?   REAL  SQUISH  TILSTL    NULL     PHI _OMEGA_
+    0xa3,  0xbf, 0x211d, 0x2337, 0x236d, 0x2300, 0x2366, 0x2379,
+
+    //X     Y       Z       [       \       ]   ^       _
+    //    YEN  SUBSTIL     <- BACKBAR      ->  BACKCIRC
+    'X', 0xa5, 0x2367, 0x2190, 0x2340, 0x2192, 0x2349, '_',
+
+    //   `       a       b       c       d       e   f       g
+    //DIAMOND ALPHA   BASE     CAP   FLOOR EPSILON        NABLA
+    0x22c4, 0x237a, 0x22a5, 0x2229, 0x230a, 0x2208, 'f', 0x2207,
+
+    //   h       i       j   k        l   m        n       o
+    //INCR    IOTA     JOT         QUAD       ENCODE    CIRC
+    0x2206, 0x2373, 0x2218, 'k', 0x2395, 'm', 0x22a4, 0x25cb,
+
+    //   p   q        r       s   t        u       v     w
+    //STAR          RHO    CEIL         DOWN     CUP OMEGA
+    0x22c6, '?', 0x2374, 0x2308, '~', 0x2193, 0x222a, 0x2375,
+
+    //   x       y       z       {   |        }   ~   DEL
+    //SUPER     UP     SUB    LEFT        RIGHT
+    0x2283, 0x2191, 0x2282, 0x22a3, '|', 0x22a2, '~', 0
+};
+
+unsigned alpha(editor *ed, character c){
+    c.unicode = apl_alphabet[c.bytes.b[1] - ' '];
+    c.bytes = to_utf8(c.unicode);
+    print(ed, c);
+    store(ed, c);
     return c.unicode;
+}
+
+Decoder *metatable[256] = {
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+    alpha, alpha, alpha, alpha, alpha, alpha, alpha, alpha,
+
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+    ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
+
+};
+
+unsigned escape(editor *ed, character c){
+    //printbytes(c);
+    switch(c.bytes.n){
+        case 1: ed->mode = 1 - ed->mode; break;
+        case 2: ed->mode = 0;
+                return metatable[c.bytes.b[1]](ed, c);
+        case 3: ed->mode = 0;
+                // TODO
+    }
+    return 0;
 }
 
 Decoder *controltable[32] = {
@@ -223,11 +378,17 @@ Decoder *controltable[32] = {
 
 unsigned control(editor *ed, character c){
     //printf("control character\n");
-    c.bytes = (utfcp){ 2, '^', c.unicode + '@', 0, 0 };
-    return controltable[c.unicode](ed, c);
+    //c.bytes = (utfcp){ 2, '^', c.unicode + '@', 0, 0 };
+    return controltable[c.bytes.b[0]](ed, c);
 }
 
 unsigned ascii(editor *ed, character c){
+    if (ed->mode){
+        c.bytes.n = 2;
+        c.bytes.b[1] = c.bytes.b[0];
+        c.bytes.b[0] = 27;
+        return escape(ed, c);
+    }
     print(ed, c);
     store(ed, c);
     return c.unicode;
@@ -260,32 +421,40 @@ control, control, control, control, control, control, control, control,
 control, control, control, control, control, control, control, control, 
 control, control, control, control, control, control, control, control, 
 control, control, control, control, control, control, control, control, 
+
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
+
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
+
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
 ascii, ascii, ascii, ascii, ascii, ascii, ascii, ascii,
+
 extended, extended, extended, extended, extended, extended, extended, extended,
 extended, extended, extended, extended, extended, extended, extended, extended,
 extended, extended, extended, extended, extended, extended, extended, extended,
 extended, extended, extended, extended, extended, extended, extended, extended,
+
 extended, extended, extended, extended, extended, extended, extended, extended,
 extended, extended, extended, extended, extended, extended, extended, extended,
 extended, extended, extended, extended, extended, extended, extended, extended,
 extended, extended, extended, extended, extended, extended, extended, extended,
+
 unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2,
 unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2,
 unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2,
 unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2, unicode2,
+
 unicode3, unicode3, unicode3, unicode3, unicode3, unicode3, unicode3, unicode3,
 unicode3, unicode3, unicode3, unicode3, unicode3, unicode3, unicode3, unicode3,
+
 unicode4, unicode4, unicode4, unicode4, unicode4, unicode4, unicode4, unicode4,
 unicode4, unicode4, unicode4, unicode4, unicode4, unicode4, unicode4, unicode4,
 };
@@ -298,7 +467,7 @@ unsigned *read_line(char *prompt, unsigned **bufp, int *lenp){
 
     character c;
     utfcp u;
-    editor ed = { .bufp = p, .n = *lenp, .p = p };
+    editor ed = { .bufp = p, .n = *lenp, .p = p, .mode = 0 };
     unsigned x;
     do {
         c = read_character();
