@@ -14,20 +14,21 @@ static int leading0s(uint_least32_t x){ return 7 - (x? floor(log2(x)): -1); }
 /* number of leading ones of byte-sized value */
 #define leading1s(x) leading0s(0xFF^(x))
 
-/* generate unsigned long mask of x ones in the least-significant position */
+/*generate unsigned long mask of x ones in the least-significant position */
 #define lomask(x) ((1UL<<(x))-1)
 
 /* generate byte mask of x ones in the most-significant position */
 #define himask(x) (0xFF^lomask(8-(x)))
 
-int32_t expand_shortcut(unsigned char b){
+uint32_t expand_shortcut(unsigned char b){
     return REPLACEMENT;
 }
 
-int32_t to_ucs4(utfcp c){
+uint32_t to_ucs4(utfcp c){
     int prefix = leading1s(c.b[0]);
     int n = prefix? prefix: 1;
-    int32_t u;
+    uint32_t u;
+    //printf("prefix:%d\n",n);
     //if (n != c.n)
     switch(prefix){
     case 0: u = c.b[0]; break;
@@ -36,8 +37,10 @@ int32_t to_ucs4(utfcp c){
     case 3: u = c.b[0] & 0x0f; break;
     case 4: u = c.b[0] & 0x07; break;
     }
+    //printf("%04x\n", u);
     for(int i=1; i<n; ++i){
-        u = (u << 6) | (c.b[n] & 0x3f);
+        u = (u << 6) | (c.b[i] & 0x3f);
+        //printf("%04x\n", u);
     }
 
     if (u < ((int[]){0,0,0x80,0x800,0x10000})[prefix]) {
@@ -47,7 +50,7 @@ int32_t to_ucs4(utfcp c){
     return u;
 }
 
-utfcp to_utf8(int32_t u){
+utfcp to_utf8(uint32_t u){
     if (u<0x80) return (utfcp){1,u};
     if (u<0x800) return (utfcp){2,0xC0|(u>>6),
 		     0x80|(u&0x3f)};
@@ -59,7 +62,7 @@ utfcp to_utf8(int32_t u){
     return (utfcp){0,0};
 }
 
-int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
+uint32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
     unsigned char *p=str;
     int32_t *u,*buf;
     uint_least32_t x;
@@ -110,7 +113,7 @@ int32_t *ucs4(char *str, int n, int *an, enum errinfo *errinfo){
     return buf;
 }
 
-char *utf8(int32_t *ar, int n, int *an, enum errinfo *errinfo){
+char *utf8(uint32_t *ar, int n, int *an, enum errinfo *errinfo){
     int i;
     uint_least32_t x;
     char *p,*buf;
